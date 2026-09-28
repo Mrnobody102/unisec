@@ -1,0 +1,31 @@
+{
+  "schema": "terrain-phase7-benchmark-v1",
+  "generated_at": "2026-09-26T04:54:30Z",
+  "profile_samples": 2000,
+  "profile_ms": 7.6851,
+  "profile_finite_samples": 2000,
+  "metadata_validation_ms": 0.0958,
+  "asset_load_ms": 14.7334,
+  "asset_bytes": {
+    "glb": 731112,
+    "grid": 81920,
+    "metadata": 879,
+    "total": 813911
+  },
+  "thresholds": {
+    "profile_target_ms": 200.0,
+    "profile_status": "PASS",
+    "browser_hover_fps_target": 30.0
+  },
+  "browser_hover_fps": {
+    "status": "NOT_MEASURED",
+    "value": null,
+    "reason": "No browser/WebGL harness is part of this offline command."
+  },
+  "environment": {
+    "python": "3.12.4",
+    "numpy": "2.5.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel"
+  }
+}

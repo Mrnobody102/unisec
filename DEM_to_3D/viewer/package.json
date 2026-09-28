@@ -1,0 +1,30 @@
+{
+  "name": "terrain-3d-viewer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "geotiff": "^3.0.5",
+    "proj4": "^2.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0",
+    "three-mesh-bvh": "^0.8.3"
+  },
+  "devDependencies": {
+    "@types/proj4": "^2.5.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^4.5.5",
+    "vitest": "^1.6.1"
+  }
+}

@@ -1,0 +1,38 @@
+# Python caches and local environments
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+wheels/
+
+# Generated DEM assets and test outputs
+DEM_to_3D/tests/*.tif
+DEM_to_3D/tests/*.glb
+DEM_to_3D/tests/*.bin
+DEM_to_3D/tests/*.terrain.json
+DEM_to_3D/tests/__pycache__/
+
+# Large source data (re-downloadable, not tracked)
+DEM_to_3D/*.tif
+DEM_to_3D/*.zip
+DEM_to_3D/Shapefile_PX_VN_34/
+
+# Generated terrain assets — keep only the canonical sample (che_tao_v2_tex)
+DEM_to_3D/*.glb
+DEM_to_3D/*.grid.bin
+DEM_to_3D/*.terrain.json
+!DEM_to_3D/che_tao_v2_tex.glb
+!DEM_to_3D/che_tao_v2_tex.grid.bin
+!DEM_to_3D/che_tao_v2_tex.terrain.json
+DEM_to_3D/viewer/public/*.glb
+DEM_to_3D/viewer/public/*.grid.bin
+DEM_to_3D/viewer/public/*.terrain.json
+
+# Debug/temp artifacts
+.debug-canvas.png
+run_log.txt
+
+# Frontend dependencies/build output
+DEM_to_3D/viewer/node_modules/
+DEM_to_3D/viewer/dist/
+DEM_to_3D/viewer/tsconfig.tsbuildinfo
