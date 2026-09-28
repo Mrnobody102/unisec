@@ -21,6 +21,12 @@ DEM_to_3D/Shapefile_PX_VN_34/
 DEM_to_3D/*.glb
 DEM_to_3D/*.grid.bin
 DEM_to_3D/*.terrain.json
+!DEM_to_3D/lao_chai_v2_tex.glb
+!DEM_to_3D/lao_chai_v2_tex.grid.bin
+!DEM_to_3D/lao_chai_v2_tex.terrain.json
+!DEM_to_3D/pung_luong_v2_tex.glb
+!DEM_to_3D/pung_luong_v2_tex.grid.bin
+!DEM_to_3D/pung_luong_v2_tex.terrain.json
 !DEM_to_3D/che_tao_v2_tex.glb
 !DEM_to_3D/che_tao_v2_tex.grid.bin
 !DEM_to_3D/che_tao_v2_tex.terrain.json
