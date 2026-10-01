@@ -33,6 +33,9 @@ DEM_to_3D/*.terrain.json
 !DEM_to_3D/che_tao_v2_tex.glb
 !DEM_to_3D/che_tao_v2_tex.grid.bin
 !DEM_to_3D/che_tao_v2_tex.terrain.json
+DEM_to_3D/viewer/public/**/*.glb
+DEM_to_3D/viewer/public/**/*.grid.bin
+DEM_to_3D/viewer/public/**/*.terrain.json
 DEM_to_3D/viewer/public/*.glb
 DEM_to_3D/viewer/public/*.grid.bin
 DEM_to_3D/viewer/public/*.terrain.json

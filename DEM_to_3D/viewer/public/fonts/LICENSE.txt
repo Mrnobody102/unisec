@@ -1,0 +1,2 @@
+Inter (rsms.me/inter) and JetBrains Mono (jetbrains.com/mono) are licensed under the SIL Open Font License 1.1.
+Files here are subsets (Latin + Vietnamese) of Inter 4.1 variable and JetBrains Mono 1.0.6 Regular/Medium.
