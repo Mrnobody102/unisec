@@ -14,6 +14,7 @@
 | Thế nào là hoàn thành? | [Tiêu chí nghiệm thu](quality/acceptance.md) | Cả nhóm |
 | Luồng ứng phó hiện tại đã ổn chưa? | [Rà soát giao diện](quality/workspace-review.md) | PO, SW, RS |
 | Dùng công nghệ gì, chia phần mềm thế nào? | [Kiến trúc hệ thống](architecture/overview.md) | SW, AI |
+| Mức ưu tiên và tuyến được tính từ đâu? | [Phân tích ứng phó](architecture/response-analysis.md) | Cả nhóm |
 | Dữ liệu bàn giao theo định dạng nào? | [Đặc tả dữ liệu](architecture/data-contract.md) | SW, AI, RS |
 | Khi viết schema cần những trường nào? | [Danh mục trường](architecture/data-fields.md) | SW, AI |
 | Sau SIC phát triển gì với QTT? | [Kế hoạch thử nghiệm thực tế](plans/pilot.md) | PO, RS |

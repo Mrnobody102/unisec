@@ -29,14 +29,14 @@ DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh g
 
 Phạm vi theo [S02](../../references/SIC2026/DEAR_SIC2026.docx) và [S03](../../references/SIC2026/DEAR_SIC2026_WebApp.pdf). Cách kiểm tra từng chức năng: [A01–A10](../quality/acceptance.md). Bố cục màn hình: [thiết kế giao diện](interface.md).
 
-**Bản chạy 03/10:** đã có bản đồ địa hình, danh sách đường/địa bàn, hai tuyến cho Nậm Khắt, nguồn và thời điểm của bộ dữ liệu mô phỏng. Chưa có ảnh trước/sau để so sánh, ETA có căn cứ, PNG/JSON hay chế độ 2D độc lập WebGL. Không giới thiệu các mục này như chức năng đang hoạt động.
+**Bản chạy 03/10:** có 2D độc lập WebGL, 3D với fallback, AOI mô phỏng, địa bàn/đường, tính tuyến từ network, ưu tiên theo quy tắc, ETA theo tốc độ giả định, nguồn và cập nhật bản tin. Gói JSON có schema và API snapshot chỉ đọc. Chưa có ảnh trước/sau, bản xuất hay dữ liệu thực được duyệt.
 
 | Phạm vi | Quyết định |
 |---|---|
 | Phải có | Luồng 2D đầy đủ, bằng chứng, hai tuyến đã kiểm tra, xuất PNG |
 | Chốt tại G2 | 3D và so ảnh trước/sau; nếu không đạt chất lượng thì ghi rõ phần rút gọn |
 | Làm thêm khi luồng chính ổn định | Xuất PDF |
-| Sau SIC | Nhận/xử lý ảnh tự động, điểm cô lập tự động, tự tìm tuyến, vùng đáp trực thăng, dự báo ngập, GeoPackage, nhiều sự kiện/tài khoản |
+| Sau SIC | Nhận/xử lý ảnh tự động, điểm cô lập được kiểm chứng, routing theo điều kiện phương tiện và dữ liệu thực, bãi đáp được khảo sát, dự báo ngập, GeoPackage, nhiều sự kiện/tài khoản |
 
 ## Chọn dữ liệu và diễn giải kết quả
 

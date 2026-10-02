@@ -2,7 +2,7 @@
 
 ## Web DEAR
 
-Web ứng phó sạt lở/lũ quét tại `DEM_to_3D/viewer`. Hiện chạy bằng dữ liệu mô phỏng Chế Tạo, chưa có backend. Bắt đầu đọc [tài liệu dự án](docs/README.md); luồng trình diễn ở [demo.md](docs/operations/demo.md).
+Web ứng phó sạt lở/lũ quét tại `DEM_to_3D/viewer`. Hiện dùng gói dữ liệu mô phỏng Chế Tạo và có API snapshot cục bộ để thử tích hợp. Bắt đầu đọc [tài liệu dự án](docs/README.md); luồng trình diễn ở [demo.md](docs/operations/demo.md).
 
 Cần Node.js/npm và Python 3.11 trở lên:
 
@@ -12,17 +12,18 @@ npm ci
 npm run dev
 ```
 
-Các lệnh chạy, test và build tự kiểm tra rồi chép ba file địa hình chuẩn từ `DEM_to_3D/` vào `public/terrain/`. File nguồn đã có trong Git; không cần thêm các bản chép hoặc thư mục `dist` vào commit.
+Các lệnh chạy, test và build tự kiểm tra gói rồi chuẩn bị GLB, grid, metadata và ảnh PNG cho 2D từ bản nguồn trong Git. Không thêm các bản sinh ra trong `public/terrain/` hoặc `dist` vào commit.
 
 ```powershell
 npm run typecheck
 npm test
 npm run test:dataset
+npm run test:api
 npm run build
-python -m http.server 5211 --bind 127.0.0.1 --directory dist
+npm run serve:workspace
 ```
 
-Mở bản build tại `http://127.0.0.1:5211`. Nền EOX cần Internet; địa hình và dữ liệu tình huống dùng file local. Cả 2D và 3D hiện đều cần WebGL. Phạm vi đang chạy và phần còn thiếu nằm trong [công việc SIC](docs/tasks/sic-2026.md).
+Mở bản build tại `http://127.0.0.1:5212`. Lệnh cuối chạy web và API snapshot chỉ đọc. `npm run dev` dùng gói prepared, không cần API riêng. Nền EOX cần Internet, dữ liệu khu vực dùng file local. 2D không cần WebGL; GLB/GPU lỗi chuyển về 2D. Quy tắc tính tại [phân tích ứng phó](docs/architecture/response-analysis.md), tiến độ tại [công việc SIC](docs/tasks/sic-2026.md).
 
 ## DEM_to_3D — Chuyển DEM thành mô hình 3D
 

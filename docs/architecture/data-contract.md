@@ -1,88 +1,57 @@
-# Đặc tả dữ liệu
+# Hợp đồng dữ liệu
 
-> Trạng thái: Triển khai từng phần · Phụ trách: SW / AI / RS · Cập nhật: 2026-10-02
+Cập nhật: 2026-10-02. Gói hiện hành: [Chế Tạo v0.2](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.2/manifest.json), dữ liệu mô phỏng ở trạng thái `draft`.
 
-Đã có [manifest v0.1](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.1/manifest.json) cho địa hình và lệnh `npm run validate:dataset` kiểm tra file, kích thước, SHA-256, CRS. Dữ liệu Incident/Community/Road/Hazard/Route/Evidence vẫn nằm trong TypeScript; phần schema nghiệp vụ bên dưới chưa triển khai đầy đủ. Tên trường kỹ thuật nằm trong [danh mục trường](data-fields.md).
+## Gói hiện hành
 
-## Gói dữ liệu bàn giao
-
-Mỗi tình huống có một thư mục `<scenario>/<version>/`. File `manifest` liệt kê các file trong gói; app đọc danh mục này để tải đúng phiên bản.
-
-| Thành phần | Nội dung |
+| File | Trách nhiệm |
 |---|---|
-| Manifest | Mã tình huống/phiên bản, khu vực, trạng thái duyệt, danh sách file, chức năng dùng được |
-| Lớp địa lý | Ảnh, đường, cộng đồng, vùng tác động, điểm ứng phó |
-| Bằng chứng và nhận định | Ảnh/báo cáo, nguồn/ngày; nội dung nhận định và mức kiểm chứng |
-| Hai tuyến | Hình tuyến, đoạn đường, độ dài, biểu đồ độ cao, giả định ETA |
-| Hồ sơ kiểm tra | Người/ngày kiểm tra, hạn chế còn lại, quyền dùng và checksum của file |
+| `manifest.json` | Phiên bản, sự kiện, snapshot, CRS, số đối tượng, URL, kích thước và SHA-256 |
+| `incident.json` | Sự kiện, AOI, địa bàn, đường, điểm ảnh hưởng, nguồn, liên lạc, điểm ứng phó, báo cáo mới và giả định di chuyển |
+| `incident-v1.schema.json` | JSON Schema draft-07 kiểm tra cấu trúc. Prepared và API dùng chung |
+| GLB, grid, metadata | Mô hình 3D, lưới độ cao và phép biến đổi tọa độ |
+| PNG nền cục bộ | Trích từ texture GLB đã kiểm tra, dùng cho bản đồ 2D độc lập |
 
-Mối liên hệ cần truy được: **cộng đồng/đường/tuyến → nhận định → bằng chứng → nguồn**.
+[Schema thực thi](../../DEM_to_3D/viewer/public/scenarios/incident-v1.schema.json) và [validator](../../DEM_to_3D/viewer/src/data/incidentPacket.ts) là chuẩn cho gói đang chạy. Ajv kiểm tra schema và định dạng thời gian theo [tài liệu chính thức](https://ajv.js.org/guide/formats.html).
 
-| Quy ước | Giá trị |
+| Quy ước hiện tại | Giá trị |
 |---|---|
-| Tọa độ | GeoJSON WGS84: `[longitude, latitude]`; bbox: `[west, south, east, north]` |
-| Đơn vị | Độ dài/độ cao: m; ETA: giây; độ dốc dọc tuyến: %; góc dốc: độ |
-| Thời gian | ISO 8601 có múi giờ; nếu chỉ biết ngày thì ghi rõ độ chính xác |
-| Giá trị thiếu | `null` và `missingReason`; không dùng 0 để thay dữ liệu chưa biết |
-| Phiên bản | `schemaVersion` là định dạng; `datasetVersion` là nội dung; không trộn hai phiên bản dữ liệu trong một phiên app |
-| Loại dữ liệu | `synthetic`: giả lập; `historical`: sự kiện quá khứ; `operational`: phục vụ vận hành |
-| Chức năng chưa có | Khai `unavailable` và lý do cho so ảnh, 3D hoặc 2D offline |
+| Tọa độ | `{x, y}` theo EPSG:32648, đơn vị m |
+| Hình học | Đường gồm ít nhất hai điểm, AOI là vòng kín có diện tích. Đầu mút trùng tọa độ tạo kết nối mạng |
+| Chiều dài | `len` và `lengthKm` là km, tính từ hình học. Độ cao m, độ dốc % |
+| Thời gian nguồn | ISO 8601 có múi giờ. `detected` là chuỗi hiển thị cũ; bản ghi evidence giữ giờ quan sát và nhận tin |
+| Dữ liệu thiếu | Bỏ trường tùy chọn hoặc không có tuyến. Không dùng 0 thay cho giá trị chưa biết |
+| Phiên bản | `schemaVersion` là định dạng, `datasetVersion` là nội dung. Không ghép gói nghiệp vụ và manifest khác phiên bản |
+| Loại dữ liệu | `synthetic`, `historical`, `operational`. Mô phỏng không tự chuyển thành dữ liệu vận hành |
 
-## Nhận định và bằng chứng
+Ưu tiên, tuyến và ETA được tính từ gói, không lưu sẵn như kết luận cố định trong JSON. Phương pháp tại [phân tích ứng phó](response-analysis.md).
 
-| Trường | Giá trị và ý nghĩa |
+## Kiểm tra và tham chiếu
+
+| Kiểm tra | Điều kiện |
 |---|---|
-| `basis` | `observed`: quan sát; `inferred`: suy luận; `reported`: báo cáo; `field_verified`: xác minh thực địa |
-| `reviewStatus` | `draft`: chưa duyệt; `reviewed`: đã duyệt; `rejected`: không chấp nhận |
-| `confidence` | `low / medium / high / unknown`; luôn có lý do, không thay thế bằng chứng |
-| `temporalRole` của lớp | `baseline`: dữ liệu nền; `post_event`: sau sự kiện; `forecast`: dự báo |
+| ID | Không trùng trong từng loại. Đường, báo cáo và bằng chứng tham chiếu đến đối tượng tồn tại |
+| Thời gian | Quan sát trước nhận tin. Nguồn nền không vượt snapshot. Báo cáo mới thuộc snapshot tiếp theo |
+| Đường | Chiều dài khớp hình học. Đoạn bị chặn phải có điểm ảnh hưởng liên quan |
+| AOI | Vòng kín, diện tích khác 0. Địa bàn ngoài AOI không vào tổng hợp ưu tiên |
+| Liên lạc | Mỗi địa bàn có bản ghi tín hiệu, kể cả giá trị `unknown` |
+| Giả định ETA | Tốc độ dương, khoảng min/max hợp lệ. Đoạn bị chặn không có ETA thực thi |
+| File | Kích thước và checksum khớp manifest. Nghiệp vụ và địa hình cùng CRS |
 
-**Đã duyệt không đồng nghĩa đã xác minh thực địa.** Người duyệt có thể chấp nhận một suy luận nếu nguồn và giới hạn được ghi đúng.
+Liên hệ cần truy được: **địa bàn, tuyến, đoạn đường, điểm ảnh hưởng, bản ghi nguồn**. Nghi sạt lở gần đường không tự chứng minh đường bị chặn. Dân số tham chiếu không phải số người bị ảnh hưởng.
 
-| Tình trạng đường | Điều kiện dùng |
+## API snapshot
+
+| Endpoint | Kết quả |
 |---|---|
-| `unknown` | Chưa đủ thông tin |
-| `suspected_affected` | Có dấu hiệu ảnh hưởng; ví dụ đường giao vùng nghi sạt lở |
-| `verified_restricted` | Có xác nhận hạn chế đi lại |
-| `verified_blocked` | Có xác nhận không đi qua được |
-| `verified_passable` | Có xác nhận đi qua được, cho loại phương tiện cụ thể |
+| `GET /api/v1/incidents/{id}/workspace` | Cùng cấu trúc `incident.json` |
+| `GET /api/v1/schema/incident-v1` | Schema của gói |
+| `GET /api/health` | Trạng thái và phiên bản dữ liệu |
 
-Ba trạng thái `verified_*` cần kiểm tra thực địa hoặc báo cáo chính thức xác nhận trực tiếp đoạn đường, kèm thời gian, phương tiện và người duyệt. Báo cáo chưa kiểm chứng hoặc hết hiệu lực không đủ xác nhận hiện trạng.
+Chạy bằng `npm run serve:workspace` sau build. Đây là dịch vụ cục bộ chỉ đọc. Chưa có tiếp nhận tin, xử lý ảnh, phân quyền hoặc lưu thay đổi. `workspace-config.json` chọn nguồn `prepared` hoặc `api`; API lỗi phải báo lỗi, không lấy bộ mô phỏng thay thế.
 
-SIC dùng lý do ưu tiên cộng đồng có bằng chứng, chưa tự tính điểm cô lập. Dân số nền không phải số người bị ảnh hưởng; chỉ ước lượng người trong vùng nguy cơ khi đã có ranh giới vùng và dữ liệu dân cư phù hợp. Không có ranh giới thì để trống ước lượng.
+## Mở rộng cho dữ liệu thực
 
-## Ảnh, độ cao và ETA
+[Danh mục trường dự kiến](data-fields.md) bổ sung GeoJSON WGS84, sensor/ngày ảnh, footprint, mây/nodata, provenance DEM và hệ độ cao, quyền dùng, trạng thái duyệt, người kiểm tra và điều kiện phương tiện. Đường được xác nhận đi được cần nguồn, thời điểm và loại phương tiện. AOI, vùng quan sát và vùng ảnh hưởng là ba hình học khác nhau.
 
-| Dữ liệu | Quy tắc |
-|---|---|
-| Ảnh | Giữ sensor, thời điểm chụp, mức xử lý, phạm vi, mây/nodata và cách căn chỉnh |
-| Kích thước pixel và độ phân giải | Ghi riêng `pixelSpacing` và `spatialResolution`, mỗi trường có `{x, y, unit}`; không suy cái này từ cái kia |
-| DEM — dữ liệu độ cao | Ghi nguồn, CRS, hệ độ cao và loại `DSM / DTM / unknown` |
-| DSM / DTM | DSM thể hiện bề mặt, có cây/công trình; DTM thể hiện địa hình mặt đất |
-| Biểu đồ dọc tuyến | Tính trước; ghi khoảng lấy mẫu, cách làm mượt, phiên bản xử lý và tỷ lệ thiếu dữ liệu |
-| ETA | Ghi phương tiện, khoảng tốc độ, chậm trễ giả định và khoảng thời gian ước tính |
-| So tuyến | Cùng điểm đầu/cuối; ưu tiên cùng loại phương tiện |
-
-Quy tắc tính cho AI/SW:
-
-1. Tính chiều dài bằng geodesic hoặc hệ tọa độ mét phù hợp. Chuyển tọa độ sang CRS của DEM trước khi lấy mẫu. [Rasterio](https://rasterio.readthedocs.io/en/stable/api/rasterio.sample.html).
-2. Khoảng lấy mẫu/làm mượt phù hợp độ phân giải; vùng thiếu dữ liệu giữ null.
-3. `gradePct = 100 × ΔelevationM / horizontalDistanceM`; bỏ mẫu có khoảng cách 0. Trung bình độ dốc tuyệt đối tính theo trọng số chiều dài; RS chọn ngưỡng đoạn dốc.
-4. AW3D30 là DSM. Profile từ nguồn chưa đủ chất lượng chỉ hiển thị **Surface elevation along route**; grade giữ null và lý do. Ngay cả DTM cũng có thể không phản ánh cầu/hầm hoặc dốc đường ngắn. [JAXA](https://www.eorc.jaxa.jp/ALOS/en/dataset/aw3d30/aw3d30_e.htm).
-5. Đường chưa rõ: ETA phải ghi “giả định thông tuyến”. Đường đã xác nhận bị chặn: ETA thực thi là null. Không tự đặt tốc độ để lấp dữ liệu thiếu.
-
-## Duyệt và công bố
-
-`draft` — tạo dữ liệu → `validated` — qua kiểm tra kỹ thuật → `reviewed` — duyệt nội dung → `published` — app sử dụng.
-
-| Người kiểm tra | Nội dung |
-|---|---|
-| SW / AI | Đúng schema, ID tham chiếu, file/checksum, đơn vị và thứ tự thời gian |
-| AI / RS | Vị trí, đầu/cuối tuyến, thứ tự mẫu độ cao, nodata và cách tính ETA |
-| RS / AI | Chất lượng/căn chỉnh ảnh, phương pháp và quyền sử dụng |
-| RS / PO | Nhận định, tình trạng đường và điểm chưa xác minh |
-
-- RS xác định ngưỡng sai lệch vị trí theo nguồn và khu vực.
-- File đã công bố không sửa đè; thay đổi thì tạo phiên bản mới. Checksum không bao gồm hash của chính file chứa nó.
-- G3 dùng dữ liệu thực đã duyệt; dữ liệu giả lập chỉ dùng phát triển giao diện.
-- Khi đo mục tiêu 3–6 giờ, lưu riêng mốc chờ ảnh, xử lý và duyệt/công bố. Trường đo thời gian nằm trong [danh mục trường](data-fields.md); chưa có định nghĩa phép đo được chốt.
+RS/PO duyệt nội dung trước công bố. Kiểm tra schema không thay cho kiểm chứng dữ liệu hoặc nghiệm thu nghiệp vụ.

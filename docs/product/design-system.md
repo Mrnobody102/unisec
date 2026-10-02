@@ -6,7 +6,7 @@ Hiện hành, cập nhật 2026-10-02. Web React là bản triển khai chuẩn.
 
 | Thành phần | Quy tắc |
 |---|---|
-| Bố cục | Desktop trên 900 px: panel trái 384 px, giảm còn 344 px ở 901–1150 px. Bản đồ dùng phần còn lại. Mobile có hai chế độ Thông tin và Bản đồ |
+| Bố cục | Panel và bản đồ liền nhau, không bo góc hoặc chừa viền ngoài. Panel mặc định 384 px, kéo để đổi trong khoảng 320 đến 560 px và giới hạn theo cửa sổ. Mobile có hai chế độ Thông tin và Bản đồ |
 | Chữ | Inter mặc định. Cài đặt có IBM Plex Sans và Space Grotesk/Be Vietnam Pro. Nội dung 13–14 px, tiêu đề panel 23 px. Dùng font mono cho tọa độ hoặc mã cần đối chiếu |
 | Khoảng cách | Thang 4, 8, 12, 16, 20, 24, 32 px. Căn theo khối nội dung, không chèn khoảng trắng để căn nút |
 | Màu | Mặc định sáng, header tối. Bề mặt trung tính. Màu chọn giao diện tách khỏi màu tình trạng đường |
@@ -21,13 +21,16 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Tab | Chữ đậm và gạch chân cho lựa chọn. Không dùng badge làm tab |
 | Trạng thái | `StatusText`: chữ và ký hiệu nhỏ. Không chỉ dựa vào màu, không đóng hộp mọi trạng thái |
 | Hàng danh sách | Tên trước, dữ kiện sau. Tên dài xuống dòng, trạng thái không chen giữa tên |
-| Panel chi tiết | Một tiêu đề, một trạng thái, các dữ kiện phục vụ xử lý. X đóng chi tiết. Chỉ có lối về mang tên địa bàn khi mở đối tượng từ địa bàn |
+| Panel chi tiết | Một tiêu đề, một trạng thái. Đường: ghi nhận, việc cần xử lý, nguồn. Địa bàn: tiếp cận, tuyến, căn cứ. X đóng về ngữ cảnh mở |
+| Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption`. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Hộp xem nhanh | Nội dung ngắn và hành động xem chi tiết. Không khóa bản đồ |
 | Hộp thoại | Focus vào khi mở. Tab giữ bên trong, Escape đóng và trả focus về nút mở |
 | Câu chữ | Tên cụ thể, trạng thái nhất quán, câu ngắn. Không dùng chấm phẩy để ghép nhiều ý, mũi tên trang trí hoặc dấu gạch dài để ngăn dữ kiện |
 | Dữ liệu chưa có | Ghi ở nơi liên quan đến quyết định hoặc phân tích. Không rải ghi chú kỹ thuật trên mọi nhãn. Không dùng số 0 thay cho chưa xác định |
-| Mã tham chiếu | Mã đoạn và mã mô phỏng nằm trong thông tin tham chiếu. Số hiệu đường chính thức chỉ hiện khi có nguồn xác nhận |
+| Mã tham chiếu | Mã dùng cho tìm kiếm và đối chiếu dữ liệu, không tạo mục mở ra chỉ có một ID. Số hiệu đường chính thức chỉ hiện khi có nguồn xác nhận |
+| Đổi độ rộng panel | Kéo đường phân cách hoặc dùng phím mũi tên. Nhấp đúp về mặc định. Lưu tùy chọn tại máy |
+| Nguồn bản đồ | Nút thông tin nhỏ mở nguồn, trạng thái tải và license. Giữ credit tối thiểu trên map khi nhà cung cấp yêu cầu |
 
 Bản đồ dùng chung [ký hiệu SVG](../../DEM_to_3D/viewer/src/terrain/mapSymbols.ts) và [màu đường](../../DEM_to_3D/viewer/src/terrain/roadStyle.ts). Quy tắc chuyên môn nằm tại [hiển thị bản đồ](cartography.md), luồng tại [thiết kế giao diện](interface.md).
 

@@ -1,24 +1,36 @@
-# Kịch bản demo ngày 03/10/2026
+# Demo ngày 03/10/2026
 
-Đây là bản chạy thử bằng **dữ liệu mô phỏng Chế Tạo**. Luồng trình diễn bám câu hỏi của người trực: địa bàn nào cần chú ý, vì sao, có thể tiếp cận ra sao và cần xác minh điều gì. Bộ dữ liệu chưa có phạm vi ngập hoặc số hộ bị ảnh hưởng được kiểm chứng. Không giới thiệu kết quả như cảnh báo hoặc quyết định điều phối thực tế.
+Dùng bộ dữ liệu mô phỏng Chế Tạo. Mở đầu nói rõ phạm vi này. Mục tiêu trình diễn là đánh giá địa bàn và phương án tiếp cận, chưa phải điều phối thực địa.
 
-| Thời gian | Thao tác trên màn hình | Điều cần nói |
+| Thời gian | Thao tác | Điều cần thể hiện |
 |---|---|---|
-| 00:00–00:35 | Mở **Sự kiện**, nhìn vị trí và mốc thời gian | “Có tình huống sạt lở và nguy cơ lũ quét tại thung lũng Nậm Kha. Đây là bộ dữ liệu mô phỏng cho buổi trình diễn.” |
-| 00:35–01:20 | Chọn **Nậm Khắt** ngay trong mục Địa bàn cần ưu tiên | Chỉ lý do ưu tiên và trạng thái tiếp cận. Dân số tham chiếu không phải số người bị nạn. |
-| 01:20–02:20 | Mở **Tuyến**, so đường chính với đường vòng | “Đường chính bị chặn. Đường vòng có điểm vượt khe chưa rõ tình trạng, cần xác minh trước khi sử dụng.” |
-| 02:20–03:15 | Chọn điểm vượt khe; xem thời điểm và nguồn; bấm **Nậm Khắt** hoặc X để đóng chi tiết | Trở về đúng địa bàn, tab và tuyến đang xem. Không cần mở hết nguồn của sự kiện. |
-| 03:15–04:20 | Mở **Thông báo**, chọn **Xem chi tiết**, đọc tin về điểm vượt khe; chọn **Cập nhật bản đồ** | “Tin quan sát 09:40, nhận 09:45 cho biết đường vòng cũng bị chặn. Cả hai tuyến trong dữ liệu đều có đoạn bị chặn; phải xác minh phương án tiếp cận khác.” |
-| 04:20–05:00 | Mở **Mặt cắt địa hình**, đọc vị trí trên biểu đồ và bản đồ. Xem 3D nếu cần | Địa hình dọc hình tuyến, độ dốc từ DEM. Không coi là số đo mặt đường. |
+| 00:00–00:40 | Sự kiện, mở vùng đánh giá nếu cần | Mưa kích hoạt đánh giá sạt lở. AOI khác phạm vi DEM. Dữ liệu đến 09:31 |
+| 00:40–01:30 | Chọn **Đánh giá tiếp cận: Nậm Khắt** | Ưu tiên cao do báo cáo chặn đường và mất liên lạc. Việc tiếp theo là kiểm tra phương án tiếp cận |
+| 01:30–02:30 | Tab **Tuyến**, so đường chính và đường vòng | Đường chính bị chặn. Đường vòng cần xác minh điểm vượt khe. Khoảng thời gian giả định 40 đến 85 phút, nếu thông tuyến |
+| 02:30–03:20 | Chọn đoạn vượt khe, mở **Xem bản ghi** | Phân biệt quan sát, nhận tin, ảnh hưởng và điều chưa xác minh. X đóng về đúng ngữ cảnh |
+| 03:20–04:15 | Chuông, **Xem chi tiết**, **Cập nhật bản đồ** | Đọc tin không đổi bản đồ. Áp dụng tin 09:45 tính lại tuyến và đánh giá. Hai tuyến đã biết có đoạn bị chặn, ETA bị bỏ |
+| 04:15–05:10 | Mặt cắt, thử 3D khi cần | Đọc độ cao và vị trí tương ứng trên bản đồ. Độ dốc DEM không phải độ dốc mặt đường đã khảo sát |
 
-Nếu cần đối chiếu mã đường, mở chi tiết đoạn: **NR-18** cho đường chính và **PR-7** cho phần đường vòng qua sườn núi. Đây là mã trong bộ mô phỏng, chưa xác nhận là số hiệu đường ngoài thực địa; không cần đọc ID từng đoạn.
+Nguồn và phương pháp: [phân tích ứng phó](../architecture/response-analysis.md). Mã NR-18/PR-7/T-5 là mã mô phỏng, không đọc chúng như số hiệu đường chính thức. Ký hiệu H là vị trí hạ cánh đề xuất, chưa khảo sát.
 
-Không mở so ảnh, ETA hay xuất PNG: bản hiện tại chưa có những kết quả đó. Đọc thông báo không đổi bản đồ; chỉ nút **Cập nhật bản đồ** áp dụng tin từ bộ dữ liệu chuẩn bị trước. Nếu rút ngắn buổi trình diễn, giữ phần địa bàn, tuyến và tin mới; bỏ phần 3D/mặt cắt. Tab **Đường sá** dùng khi cần rà toàn mạng, không bắt buộc trong luồng này.
+Nếu cần rút ngắn, giữ địa bàn, tuyến và tin mới. So ảnh trước/sau và xuất PNG/PDF chưa có. Không giới thiệu chúng như chức năng đang chạy.
 
-## Trước khi trình diễn
+## Chuẩn bị
 
-- Chạy `npm ci` nếu chưa cài dependency; `npm test`, `npm run test:dataset`, `npm run build` trong `DEM_to_3D/viewer`. Các lệnh tự chuẩn bị file địa hình từ bản chuẩn trong Git; `npm run validate:dataset` kiểm tra riêng bản chép. Mở thư mục `dist` qua HTTP trên máy trình chiếu theo [README](../../README.md).
-- Thử luồng trên đúng trình duyệt, độ phân giải và GPU sẽ dùng. Tải lại bằng trình duyệt sạch khi ngắt Internet; nền EOX có thể thiếu nhưng địa hình và luồng chính vẫn phải mở.
-- Chuẩn bị ảnh hoặc video quay từ cùng bản build để dự phòng. Nếu WebGL lỗi, dùng bản ghi; chế độ 2D hiện cũng phụ thuộc WebGL.
+```powershell
+cd DEM_to_3D/viewer
+npm ci
+npm test
+npm run test:dataset
+npm run test:api
+npm run build
+npm run serve:workspace
+```
 
-Các đầu ra còn thiếu và mốc hoàn thiện nằm trong [bảng công việc SIC](../tasks/sic-2026.md).
+Mở `http://127.0.0.1:5212`. Lệnh cuối chạy web cùng API đọc snapshot tại máy. `npm run dev` dùng gói prepared, không cần API riêng.
+
+- Tập trên đúng máy và trình duyệt trình chiếu. Thử một lượt khi ngắt Internet và một lượt cập nhật bản tin.
+- 2D mặc định không cần WebGL. GLB/GPU lỗi chuyển về 2D và giữ địa bàn đang xem.
+- Tải lại để trở về snapshot 09:31. Giữ ảnh/video cùng phiên bản cho lỗi ngoài phạm vi đã thử.
+
+[Tiến độ SIC](../tasks/sic-2026.md) tách chức năng mô phỏng đã chạy khỏi dữ liệu và nghiệm thu còn thiếu.

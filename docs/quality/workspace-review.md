@@ -1,50 +1,49 @@
 # Rà soát giao diện và luồng ứng phó
 
-Cập nhật: 2026-10-02. Phạm vi: web React và bộ dữ liệu Chế Tạo. Kiểm tra mã và trình duyệt, chưa có thử nghiệm với người trực thực tế.
+Cập nhật: 2026-10-02. Phạm vi: web React, gói Chế Tạo v0.2 và API snapshot cục bộ. Chưa thử với người trực thực tế.
 
-## Kết quả theo nghiệp vụ
+## Kết quả nghiệp vụ
 
-| Câu hỏi của người dùng | Hiện tại | Còn thiếu |
+| Người dùng cần biết | Đã có | Cần bổ sung |
 |---|---|---|
-| Chuyện gì xảy ra, dữ liệu đến lúc nào? | Sự kiện, giờ kích hoạt, giờ tổng hợp, đường bị chặn/chưa rõ | Nguồn sự kiện trực tiếp và ranh giới AOI |
-| Ưu tiên địa bàn nào? | Danh sách ưu tiên, lý do ngắn, tình trạng tiếp cận | RS/PO duyệt tên, tọa độ và căn cứ |
-| Đường nào cản trở tiếp cận? | Trạng thái từng đoạn, điểm ảnh hưởng, giờ báo cáo | Bằng chứng gốc và kiểm tra hiện trường |
-| Có phương án nào khác? | Hai hình tuyến Nậm Khắt, khoảng cách, đoạn cần xác minh | Tính tuyến từ mạng đường, điều kiện phương tiện và ETA |
-| Tin mới thay đổi gì? | Xem nhanh, chi tiết, áp dụng có chủ đích. Không đổi dữ liệu khi chỉ đọc | Feed và quy trình duyệt cập nhật |
-| Địa hình dọc tuyến thế nào? | Biểu đồ có trục, vị trí đọc nối bản đồ, độ dốc DEM, giữ khoảng thiếu | Nguồn DEM, vertical datum và kiểm chứng độ cao |
-| Đủ yếu tố bản đồ proposal chưa? | Có nền, đường, địa bàn, ưu tiên, điểm ảnh hưởng và tuyến | Polygon sạt lở/ngập, xác nhận đi được, cô lập, HLZ |
+| Sự kiện và phạm vi đánh giá | Trigger, snapshot, AOI và số địa bàn trong vùng | AOI và nguồn sự kiện được duyệt |
+| Địa bàn cần ưu tiên | Quy tắc từ ảnh hưởng, liên lạc, nhu cầu khẩn cấp. Có lý do và việc cần xử lý | Duyệt chính sách, Community Isolation Score |
+| Đường cản trở tiếp cận | Trạng thái đoạn, bản ghi nguồn, giờ quan sát và nhận tin | Bằng chứng gốc, kiểm tra hiện trường |
+| Phương án tiếp cận | Dijkstra trên mạng đường, khoảng cách, ETA có điều kiện | Mạng đường đủ vùng, tốc độ và phương tiện được kiểm chứng |
+| Tin mới thay đổi gì | Đọc không đổi dữ liệu. Áp dụng tin tạo lại đường, tuyến và ưu tiên | Feed, duyệt công bố, lưu lịch sử |
+| Địa hình dọc tuyến | Mặt cắt theo hình tuyến, vị trí nối bản đồ, độ dốc DEM, khoảng thiếu | Nguồn DEM, vertical datum, kiểm chứng độ cao |
+| Ký hiệu theo proposal | Địa bàn, đường, điểm ảnh hưởng, tập kết, H đề xuất | Polygon sạt lở/ngập, xác nhận đi được hoặc cô lập |
 
-Đối chiếu từng ký hiệu và điều kiện dữ liệu: [hiển thị bản đồ](../product/cartography.md). Không coi cộng đồng ưu tiên là cộng đồng cô lập, hay chưa ghi nhận chặn là đã xác nhận đi được.
+Ưu tiên cứu hộ không đồng nghĩa cô lập. Chưa ghi nhận chặn không đồng nghĩa đã xác nhận đi được. H là vị trí mô phỏng chưa khảo sát. Quy tắc và giả định ở [phân tích ứng phó](../architecture/response-analysis.md).
 
-## Giao diện hiện hành
+## Thiết kế hiện hành
 
-| Nhóm | Quyết định |
+| Thành phần | Cách tổ chức |
 |---|---|
-| Panel | Một vị trí cố định. Chi tiết thay nội dung, X trở về ngữ cảnh mở. Giữ tìm kiếm, tab và tuyến |
-| Mật độ | Tổng hợp giữ tiếp cận, phương án, khoảng cách và cản trở. Dân số ở Nguồn, mã ở phần tham chiếu |
-| Bản đồ | Lớp riêng ở góc trên trái, chú giải phía dưới. Hướng Bắc lưới, thước 2D theo zoom. Nhãn tránh chồng và ưu tiên đối tượng đang chọn |
-| Mặt cắt | Lấy mẫu dọc hình tuyến. Khoảng cách panel và biểu đồ cùng nguồn. Không nối qua nodata hoặc vẽ đường xanh che cảnh báo |
-| Popup | Hộp xem nhanh không khóa bản đồ. Nguồn chỉ giữ nhận định, loại căn cứ, thời điểm và trạng thái tài liệu gốc |
-| Mobile | Bản đồ và mặt cắt có diện tích riêng. Nội dung mặt cắt cuộn, chú giải đầy đủ mở khi cần |
+| Panel | Cố định bên trái, dùng toàn bộ chiều cao, rộng 320–560 px tùy diện tích màn hình. Chi tiết đóng về ngữ cảnh đã mở |
+| Địa bàn | Tiếp cận, Tuyến, Căn cứ. Màn chính giữ trạng thái, phương án, thời gian có điều kiện và việc cần xử lý |
+| Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
+| Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
+| Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm điểm gần nhau, nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
+| Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
 
-![Tổng hợp địa bàn](assets/workspace-summary.png)
+![Tiếp cận Nậm Khắt](assets/workspace-summary.png)
 
-![Địa hình dọc tuyến](assets/workspace-profile.png)
+![Bản ghi ảnh hưởng tại cầu](assets/workspace-evidence.png)
 
-Ảnh từ bản build khi chặn Internet. DEM và dữ liệu sự kiện vẫn dùng được. Khoảng trống quanh DEM không phải phạm vi đã xác nhận không có thiên tai.
+Ảnh từ bản build khi chặn Internet. Khoảng trống ngoài ảnh địa hình là vùng thiếu nền cục bộ, không phải vùng đã xác nhận không có thiên tai.
 
 ## Kiểm tra kỹ thuật
 
 | Kiểm tra | Kết quả |
 |---|---|
-| TypeScript, build | Đạt. Build còn cảnh báo gói JavaScript lớn |
-| Kiểm thử tự động | 68 kiểm thử đạt, gồm hình tuyến, khoảng thiếu DEM, độ dốc, chiều dài và thước tỷ lệ |
-| Chrome: luồng ứng phó | Chọn địa bàn, so tuyến, mở nguồn, tin mới, giữ ngữ cảnh, cập nhật trạng thái đạt |
-| Chrome: bản đồ và mặt cắt | Zoom đổi thước, 3D ẩn thước phẳng, đọc bằng chuột/bàn phím, thiếu DEM giữ trống đạt |
-| Chrome: bố cục | Desktop 1440/1366/1024 px, mobile 390/320 px. Không tràn ngang, lớp cuộn riêng |
-| Mô hình khác CRS | Không ghép sai lớp sự kiện hay mặt cắt. Hộp dữ liệu ghi CRS thực |
-| Mất mạng | Luồng chính vẫn chạy với DEM và dữ liệu cục bộ. Đây không phải thử GPU/WebGL lỗi |
+| TypeScript và build | Đạt. Gói JavaScript đầu vào còn khoảng 1,3 MB trước gzip |
+| TypeScript unit tests | 93 kiểm thử đạt: hợp đồng, tham chiếu, quy tắc, mạng đường, ETA, thời điểm, DEM, ký hiệu và tọa độ |
+| Python | 8 kiểm thử gói dữ liệu và 2 kiểm thử HTTP API đạt |
+| Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
+| Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
+| Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
 
-Backend, ảnh trước/sau, bản xuất và 2D độc lập WebGL chưa có. Chưa nghiệm thu dữ liệu, chưa đo mục tiêu 3–6 giờ hoặc phiên chạy dài.
+Kiểm tra trình duyệt có thể chạy lại bằng `scripts/check_workspace.py` sau khi mở bản build qua HTTP. Cần Python Playwright và Chromium hoặc tham số `--chrome` trỏ đến Chrome đã cài.
 
-Việc còn lại theo [danh sách công việc](../tasks/sic-2026.md). Luồng trình diễn theo [demo](../operations/demo.md), xác nhận bàn giao theo [tiêu chí nghiệm thu](acceptance.md).
+Chưa tích hợp xử lý ảnh vệ tinh, ảnh trước/sau, xuất kết quả, backend vận hành hoặc nghiệm thu dữ liệu. Chưa đo mục tiêu 3–6 giờ hay độ ổn định phiên dài. Tiến độ ở [công việc SIC](../tasks/sic-2026.md), thao tác trình diễn ở [demo](../operations/demo.md).

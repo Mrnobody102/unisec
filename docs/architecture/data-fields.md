@@ -2,7 +2,7 @@
 
 > Trạng thái: Đề xuất · Phụ trách: SW / AI · Cập nhật: 2026-09-24
 
-Tên trường cho schema v0.1; dùng cùng [quy tắc dữ liệu](data-contract.md). Đây là danh mục thiết kế, chưa phải JSON Schema thực thi.
+Danh mục dự kiến cho gói dữ liệu vận hành, dùng cùng [hợp đồng dữ liệu](data-contract.md). Gói mô phỏng đang chạy dùng [JSON Schema v1](../../DEM_to_3D/viewer/public/scenarios/incident-v1.schema.json); tên trường bên dưới là phần cần mở rộng, không phải định dạng đã triển khai đầy đủ.
 
 ## Đối tượng và trường
 
