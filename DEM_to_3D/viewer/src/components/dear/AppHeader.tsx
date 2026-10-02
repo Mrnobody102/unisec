@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import type { Locale } from '../../types/dear';
+import React, { useEffect, useRef, useState } from 'react';
+import type { FontChoice, Locale } from '../../types/dear';
+import { NotificationPopover } from './NotificationPopover';
+import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 
 type Props = {
   locale: Locale;
   theme: 'light' | 'dark';
+  fontChoice: FontChoice;
   updated: boolean;
   alertRead: boolean;
   onToggleTheme: () => void;
   onToggleLocale: () => void;
+  onChangeFontChoice: (font: FontChoice) => void;
   onOpenAlerts: () => void;
   onOpenData: () => void;
   onOpenUpload: () => void;
@@ -17,50 +21,68 @@ type Props = {
 export const AppHeader: React.FC<Props> = ({
   locale,
   theme,
+  fontChoice,
   updated,
   alertRead,
   onToggleTheme,
   onToggleLocale,
+  onChangeFontChoice,
   onOpenAlerts,
   onOpenData,
   onOpenUpload,
   activeModelName
 }) => {
   const [prefOpen, setPrefOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  useDismissiblePopover(notificationsRef, notificationsOpen, () => setNotificationsOpen(false));
+  const prefRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!prefOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!prefRef.current?.contains(event.target as Node)) setPrefOpen(false);
+    };
+    const closeEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setPrefOpen(false); prefRef.current?.querySelector('button')?.focus(); }
+    };
+    document.addEventListener('pointerdown', closeOutside, true);
+    document.addEventListener('keydown', closeEscape);
+    return () => { document.removeEventListener('pointerdown', closeOutside, true); document.removeEventListener('keydown', closeEscape); };
+  }, [prefOpen]);
 
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
 
   return (
     <header className="app-header">
       <div className="brand">
-        <span className="brand-symbol">D</span>
+        <span className="brand-symbol"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 18l9 5 9-5"/></svg></span>
         <span className="brand-word">DEAR</span>
       </div>
 
       <div className="incident-badge-group">
-        <strong>{t('Bản đồ ứng phó thiên tai 3D', '3D Disaster Response Map')}</strong>
+        <strong>{t('Bản đồ ứng phó', 'Response map')}</strong>
         <div className="incident-meta">
           <span>{t('Thung lũng Nậm Kha (Chế Tạo)', 'Nậm Kha Valley (Chế Tạo)')}</span>
-          <time dateTime="2026-09-29">29/09/2026</time>
-          {activeModelName && (
-            <span className="small" style={{ color: 'var(--select-ink)' }}>
-              · {activeModelName}
-            </span>
-          )}
         </div>
       </div>
 
       <div className="header-actions">
         <div className="header-data">
           <span className="update-label">
-            {t('Cập nhật lúc', 'Updated at')} <strong>{updated ? '09:45' : '09:31'}</strong>
+            {t('Dữ liệu đến', 'Data as of')}{' '}
+            <strong><time dateTime={updated ? '2026-09-29T09:45:00+07:00' : '2026-09-29T09:31:00+07:00'}>
+              {t('29/09/2026', '29 Sep 2026')}, {updated ? '09:45' : '09:31'}
+            </time></strong>
           </span>
-          <span className="demo-badge">{t('Kịch bản SIC 2026', 'SIC 2026 Scenario')}</span>
         </div>
 
+        <div className="notification-anchor" ref={notificationsRef}>
         <button
           className="icon-button notification-button"
-          onClick={onOpenAlerts}
+          onClick={() => { setPrefOpen(false); setNotificationsOpen(open => !open); }}
+          aria-expanded={notificationsOpen}
+          aria-controls="incident-notifications"
+          aria-haspopup="dialog"
           title={t('Thông báo sự kiện', 'Incident notifications')}
           aria-label={t('Thông báo sự kiện', 'Incident notifications')}
         >
@@ -70,9 +92,11 @@ export const AppHeader: React.FC<Props> = ({
           </svg>
           {!alertRead && <span className="unread-indicator" />}
         </button>
+        {notificationsOpen && <NotificationPopover locale={locale} updated={updated} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
+        </div>
 
         <button
-          className="button"
+          className="button header-data-button"
           onClick={onOpenData}
           title={t('Thông tin dữ liệu', 'Data information')}
         >
@@ -83,24 +107,14 @@ export const AppHeader: React.FC<Props> = ({
           <span>{t('Dữ liệu', 'Data')}</span>
         </button>
 
-        <button
-          className="button soft"
-          onClick={onOpenUpload}
-          title={t('Tải thêm hoặc ghép model 3D', 'Upload or merge 3D models')}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-          </svg>
-          <span>{t('Mô hình 3D', '3D Models')}</span>
-        </button>
-
         <span className="header-divider" aria-hidden="true" />
 
-        <div style={{ position: 'relative' }}>
+        <div ref={prefRef} className="settings-anchor">
           <button
             className="icon-button"
-            onClick={() => setPrefOpen(!prefOpen)}
+            onClick={() => { setNotificationsOpen(false); setPrefOpen(!prefOpen); }}
             aria-label={t('Cài đặt hiển thị', 'Display settings')}
+            aria-expanded={prefOpen}
             title={t('Cài đặt hiển thị', 'Display settings')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -110,31 +124,14 @@ export const AppHeader: React.FC<Props> = ({
           </button>
 
           {prefOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '210px',
-                background: 'var(--ws-surface)',
-                border: '1px solid var(--ws-line)',
-                borderRadius: '10px',
-                padding: '14px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                zIndex: 50,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }}
-            >
-              <div>
-                <strong style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
-                  {t('Giao diện', 'Theme')}
+            <div className="settings-menu" aria-label={t('Tùy chọn hiển thị', 'Display options')}>
+              <div className="settings-group">
+                <strong className="settings-label">
+                  {t('Giao diện', 'Appearance')}
                 </strong>
-                <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                <div className="settings-options">
                   <button
-                    className="button"
-                    style={{ flex: 1, padding: '4px' }}
+                    className="settings-option"
                     aria-pressed={theme === 'light'}
                     onClick={() => {
                       if (theme !== 'light') onToggleTheme();
@@ -143,8 +140,7 @@ export const AppHeader: React.FC<Props> = ({
                     {t('Sáng', 'Light')}
                   </button>
                   <button
-                    className="button"
-                    style={{ flex: 1, padding: '4px' }}
+                    className="settings-option"
                     aria-pressed={theme === 'dark'}
                     onClick={() => {
                       if (theme !== 'dark') onToggleTheme();
@@ -155,14 +151,13 @@ export const AppHeader: React.FC<Props> = ({
                 </div>
               </div>
 
-              <div>
-                <strong style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
+              <div className="settings-group">
+                <strong className="settings-label">
                   {t('Ngôn ngữ', 'Language')}
                 </strong>
-                <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                <div className="settings-options">
                   <button
-                    className="button"
-                    style={{ flex: 1, padding: '4px' }}
+                    className="settings-option"
                     aria-pressed={locale === 'vi'}
                     onClick={() => {
                       if (locale !== 'vi') onToggleLocale();
@@ -171,8 +166,7 @@ export const AppHeader: React.FC<Props> = ({
                     Tiếng Việt
                   </button>
                   <button
-                    className="button"
-                    style={{ flex: 1, padding: '4px' }}
+                    className="settings-option"
                     aria-pressed={locale === 'en'}
                     onClick={() => {
                       if (locale !== 'en') onToggleLocale();
@@ -181,6 +175,27 @@ export const AppHeader: React.FC<Props> = ({
                     English
                   </button>
                 </div>
+              </div>
+              <div className="settings-group">
+                <strong className="settings-label">{t('Kiểu chữ', 'Typography')}</strong>
+                <div className="font-options" role="group" aria-label={t('Kiểu chữ', 'Typography')}>
+                  <button className="font-option" aria-pressed={fontChoice === 'classic'} onClick={() => onChangeFontChoice('classic')}>
+                    <span className="font-sample font-sample-classic" aria-hidden="true">Aa</span>
+                    <span className="font-option-copy"><strong>Inter</strong></span>
+                  </button>
+                  <button className="font-option" aria-pressed={fontChoice === 'plex'} onClick={() => onChangeFontChoice('plex')}>
+                    <span className="font-sample font-sample-plex" aria-hidden="true">Aa</span>
+                    <span className="font-option-copy"><strong>IBM Plex Sans</strong></span>
+                  </button>
+                  <button className="font-option" aria-pressed={fontChoice === 'modern'} onClick={() => onChangeFontChoice('modern')}>
+                    <span className="font-sample font-sample-modern" aria-hidden="true">Aa</span>
+                    <span className="font-option-copy"><strong>Space Grotesk</strong><small>Be Vietnam Pro</small></span>
+                  </button>
+                </div>
+              </div>
+              <div className="model-settings">
+                <button className="settings-link" onClick={() => { setPrefOpen(false); onOpenUpload(); }}>{t('Mô hình địa hình', 'Terrain model')}</button>
+                {activeModelName && <small>{activeModelName}</small>}
               </div>
             </div>
           )}

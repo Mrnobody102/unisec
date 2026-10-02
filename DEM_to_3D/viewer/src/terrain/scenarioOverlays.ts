@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type {
   Community,
   Hazard,
@@ -8,6 +11,7 @@ import type {
 import type { TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
+import { roadColors } from './roadStyle';
 
 export type OverlayHit =
   | { type: 'community'; id: string }
@@ -25,6 +29,8 @@ type ScenarioOverlayOptions = {
   selectedCommunityId: string | null;
   selectedObjectId: string | null;
   layers: Record<string, boolean>;
+  screenMarkers?: boolean;
+  resolution?: { width: number; height: number };
 };
 
 function getSurfaceElevation(grid: Float32Array, metadata: TerrainMetadata, x: number, y: number): number {
@@ -66,7 +72,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
   rootGroup.name = 'dear-scenario-overlays';
 
   // 1. Roads Layer
-  if (layers.roads) {
+  if (layers.roads || (layers.route && selectedRoute)) {
     const roadGroup = new THREE.Group();
     roadGroup.name = 'scenario-roads';
 
@@ -82,6 +88,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
 
       const isRoadSelected = selectedObjectId === `road:${road.id}`;
       const isPartOfSelectedRoute = selectedRoute?.segs.some((s) => s.id === road.id);
+      const routeVisible = Boolean(isPartOfSelectedRoute && layers.route);
+      if (!layers.roads && !routeVisible) return;
 
       const positions: number[] = [];
       densePoints.forEach((pt) => {
@@ -90,43 +98,34 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         positions.push(scenePt.x, scenePt.y, scenePt.z);
       });
 
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-      let lineColor = 0x9aa3ad; // default neutral road
-      let lineWidth = 2;
-
-      if (layers.status) {
-        if (road.status === 'blocked') lineColor = 0xef4444; // red
-        else if (road.status === 'uncertain') lineColor = 0xf59e0b; // amber
-      }
-
-      if (isPartOfSelectedRoute && layers.route) {
-        lineColor = 0x2563eb; // blue
-        lineWidth = 4;
-      }
-
-      if (isRoadSelected) {
-        lineColor = 0x60a5fa; // bright highlight
-        lineWidth = 5;
-      }
-
-      const material = new THREE.LineBasicMaterial({
-        color: lineColor,
-        linewidth: lineWidth,
-        depthTest: true
-      });
-
-      const line = new THREE.Line(geometry, material);
-      line.userData = { type: 'road', id: road.id };
-      roadGroup.add(line);
+      let lineColor: THREE.ColorRepresentation = routeVisible || isRoadSelected ? roadColors.selected : (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain);
+      // Route selection must preserve the warning on blocked or uncertain segments.
+      if (layers.status && road.status === 'blocked') lineColor = roadColors.blocked;
+      if (layers.status && road.status === 'uncertain') lineColor = roadColors.uncertain;
+      const lineWidth = routeVisible || isRoadSelected ? 4 : 2.5;
+      const addLine = (color: THREE.ColorRepresentation, width: number, casing: boolean): void => {
+        const geometry = new LineGeometry();
+        geometry.setPositions(positions);
+        const material = new LineMaterial({ color, linewidth: width, depthTest: false,
+          dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 });
+        material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
+        const line = new Line2(geometry, material);
+        line.computeLineDistances();
+        line.renderOrder = casing ? 3 : 4;
+        line.userData = { type: 'road', id: road.id, casing };
+        roadGroup.add(line);
+      };
+      const hasWarning = layers.status && road.status !== 'open';
+      // A blue casing under warning dashes looks like two overlapping routes.
+      addLine((routeVisible || isRoadSelected) && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + 2, true);
+      addLine(lineColor, lineWidth, false);
     });
 
     rootGroup.add(roadGroup);
   }
 
   // 2. Communities Layer
-  if (layers.communities) {
+  if (layers.communities && !options.screenMarkers) {
     const commGroup = new THREE.Group();
     commGroup.name = 'scenario-communities';
 
@@ -179,11 +178,12 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
   }
 
   // 3. Hazards Layer
-  if (layers.landslide) {
+  if (!options.screenMarkers && (layers.landslide || layers.flood || layers.status)) {
     const hazardGroup = new THREE.Group();
     hazardGroup.name = 'scenario-hazards';
 
     hazards.forEach((hz) => {
+      if (!(hz.kind === 'landslide' ? layers.landslide : hz.kind === 'flood' ? layers.flood : layers.status)) return;
       const elev = getSurfaceElevation(grid, metadata, hz.projected.x, hz.projected.y);
       const scenePos = projectedToScene(metadata, hz.projected, elev + 16);
 
@@ -210,7 +210,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
   }
 
   // 4. Staging FOB Point
-  if (layers.staging) {
+  if (layers.staging && !options.screenMarkers) {
     const stagingGroup = new THREE.Group();
     stagingGroup.name = 'scenario-staging';
     const stagingCoords = { x: 399500, y: 2397000 };

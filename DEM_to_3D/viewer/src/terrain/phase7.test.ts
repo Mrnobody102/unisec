@@ -97,7 +97,7 @@ describe('Phase 7 affine/profile correctness', () => {
     expect(short.samples).toHaveLength(2);
   });
 
-  it('keeps outside-grid lines invalid and bridges a nodata crossing with flagged samples', () => {
+  it('keeps outside-grid lines and nodata crossings invalid', () => {
     const grid = makePlaneGrid();
     const outside = createSurfaceProfile(grid, metadata, { x: 50, y: 50 }, { x: 60, y: 60 }, 5);
     expect(outside.samples.every((sample) => sample.elevation === undefined)).toBe(true);
@@ -105,10 +105,9 @@ describe('Phase 7 affine/profile correctness', () => {
     const start = pixelToProjected(metadata, 6, 8);
     const end = pixelToProjected(metadata, 10, 8);
     const profile = createSurfaceProfile(grid, metadata, start, end, 5);
-    // The nodata crossing is bridged so the line stays connected…
-    expect(profile.samples.every((sample) => sample.elevation !== undefined)).toBe(true);
-    // …but the bridged samples are flagged so they render distinctly.
-    expect(profile.samples.some((sample) => Boolean(sample.gapFilled))).toBe(true);
+    expect(profile.samples.some(sample => sample.elevation === undefined)).toBe(true);
+    expect(profile.samples.some(sample => Boolean(sample.gapFilled))).toBe(false);
+    expect(profile.segments.length).toBeGreaterThan(1);
   });
 });
 

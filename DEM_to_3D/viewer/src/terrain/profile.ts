@@ -17,6 +17,7 @@ export type ProfileSample = {
 };
 
 export type SurfaceProfile = {
+  geometry?: 'line' | 'route';
   start: ProjectedPoint;
   end: ProjectedPoint;
   length: number;
@@ -169,6 +170,36 @@ export function createSurfaceProfile(
     const sampled = sampler(projected.x, projected.y);
     return { index, distance, projected, elevation: sampled.elevation, pixel: sampled.pixel };
   });
-  const samples = fillNodataGaps(rawSamples);
+  const samples = rawSamples;
   return { start, end, length, azimuth, sampleInterval, samples, segments: splitValidSegments(samples) };
+}
+
+/** Sample the projected road geometry, preserving bends and genuine DEM gaps. */
+export function createRouteProfile(
+  gridOrTiles: Float32Array | readonly TerrainTile[], metadata: TerrainMetadata,
+  points: readonly ProjectedPoint[], sampleInterval: number,
+): SurfaceProfile {
+  if (points.length < 2 || points.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
+    throw new Error('A route requires at least two finite projected points');
+  }
+  if (!Number.isFinite(sampleInterval) || sampleInterval <= 0) throw new Error('sampleInterval must be greater than zero');
+  const sampler: ElevationSampler = gridOrTiles instanceof Float32Array
+    ? (x, y) => strictBilinearSample(gridOrTiles, metadata, { x, y }) : samplerFromTiles(gridOrTiles);
+  const cumulative = [0];
+  for (let i = 1; i < points.length; i++) cumulative.push(cumulative[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
+  const length = cumulative[cumulative.length - 1];
+  // Include vertices so a bend cannot be replaced by a chord between samples.
+  const distances = [...new Set([...buildDistances(length, sampleInterval), ...cumulative])].sort((a, b) => a - b);
+  let segment = 1;
+  const samples: ProfileSample[] = distances.map((distance, index) => {
+    while (segment < points.length - 1 && cumulative[segment] <= distance) segment++;
+    const span = cumulative[segment] - cumulative[segment - 1];
+    const ratio = span > 0 ? (distance - cumulative[segment - 1]) / span : 0;
+    const a = points[segment - 1], b = points[segment];
+    const projected = { x: a.x + (b.x - a.x) * ratio, y: a.y + (b.y - a.y) * ratio };
+    return { index, distance, projected, ...sampler(projected.x, projected.y) };
+  });
+  const start = points[0], end = points[points.length - 1];
+  const azimuth = (Math.atan2(end.x - start.x, end.y - start.y) * 180 / Math.PI + 360) % 360;
+  return { geometry: 'route', start, end, length, azimuth, sampleInterval, samples, segments: splitValidSegments(samples) };
 }

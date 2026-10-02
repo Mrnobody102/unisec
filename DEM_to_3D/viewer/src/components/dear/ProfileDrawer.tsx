@@ -1,124 +1,55 @@
-import React, { useState } from 'react';
-import type { Locale, ScenarioRoute } from '../../types/dear';
+import { useEffect, useMemo, useState } from 'react';
+import type { Locale } from '../../types/dear';
 import { ProfileChart } from '../ProfileChart';
-import type { ExtremaPoint } from '../../terrain/extrema';
 import type { SurfaceProfile } from '../../terrain/profile';
-import type { SegmentSlope } from '../../terrain/slope';
-import type { VertexProfilePoint } from '../../terrain/vertex';
+import { nearestProfileSample, profileGrade, profileMetrics } from '../../terrain/profileMetrics';
+import { UiIcon } from './UiIcon';
 
 type Props = {
   locale: Locale;
-  route: ScenarioRoute;
   profile: SurfaceProfile | null;
-  vertices: VertexProfilePoint[];
-  extrema: ExtremaPoint[];
-  smoothed: Array<number | undefined>;
-  segmentSlopes: SegmentSlope[];
   onHoverDistance: (distance: number | null) => void;
   onClose: () => void;
 };
 
-export const ProfileDrawer: React.FC<Props> = ({
-  locale,
-  route,
-  profile,
-  vertices,
-  extrema,
-  smoothed,
-  segmentSlopes,
-  onHoverDistance,
-  onClose
-}) => {
-  const [sliderDist, setSliderDist] = useState(0);
-
-  const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
-
-  if (!profile) return null;
-
-  const currentSample = profile.samples.reduce((nearest, cand) => {
-    return Math.abs(cand.distance - sliderDist) < Math.abs(nearest.distance - sliderDist) ? cand : nearest;
-  }, profile.samples[0]);
-
-  return (
-    <div className="profile-panel">
-      <div className="profile-heading">
-        <div>
-          <strong style={{ fontSize: '13.5px' }}>
-            {t('Mặt cắt địa hình trích xuất từ DEM', 'Terrain profile extracted from DEM')}
-          </strong>
-          <span className="small" style={{ marginLeft: '10px' }}>
-            {t(route.name[0], route.name[1])} · {route.lengthKm} km
-          </span>
-        </div>
-        <button
-          className="icon-button"
-          onClick={onClose}
-          aria-label={t('Đóng mặt cắt', 'Close profile')}
-          style={{ width: '28px', height: '28px' }}
-        >
-          ×
-        </button>
-      </div>
-
-      <div className="profile-body">
-        <div className="profile-chart-container">
-          <ProfileChart
-            profile={profile}
-            vertices={vertices}
-            extrema={extrema}
-            smoothed={smoothed}
-            onHoverDistance={onHoverDistance}
-          />
-        </div>
-
-        <div className="profile-controls">
-          <div>
-            <label htmlFor="profile-dist-slider" style={{ fontWeight: 600, color: 'var(--ws-muted)' }}>
-              {t('Vị trí dọc tuyến', 'Position along route')}
-            </label>
-            <input
-              id="profile-dist-slider"
-              type="range"
-              min={0}
-              max={profile.length}
-              step={20}
-              value={sliderDist}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setSliderDist(val);
-                onHoverDistance(val);
-              }}
-              style={{ width: '100%', marginTop: '4px' }}
-            />
-            <div style={{ marginTop: '4px', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-              {(sliderDist / 1000).toFixed(2)} km ·{' '}
-              {currentSample?.elevation !== undefined ? `${Math.round(currentSample.elevation)} m` : 'N/A'}
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid var(--ws-line)', paddingTop: '8px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ws-muted)', display: 'block', marginBottom: '4px' }}>
-              {t('Độ dốc dọc tuyến', 'Notable slopes')}
-            </span>
-            <div style={{ maxHeight: '85px', overflowY: 'auto', fontSize: '11px', scrollbarWidth: 'thin' }}>
-              {segmentSlopes.slice(0, 4).map((s, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '2px 0',
-                    color: Math.abs(s.percent) > 12 ? 'var(--critical-ink)' : 'inherit'
-                  }}
-                >
-                  <span>Mẫu {s.fromIndex}–{s.toIndex}</span>
-                  <strong>{s.percent > 0 ? `+${s.percent.toFixed(1)}%` : `${s.percent.toFixed(1)}%`}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+export function ProfileDrawer({ locale, profile, onHoverDistance, onClose }: Props): JSX.Element | null {
+  const [distance, setDistance] = useState(0);
+  const metrics = useMemo(() => profile ? profileMetrics(profile) : null, [profile]);
+  useEffect(() => { setDistance(0); onHoverDistance(profile ? 0 : null); }, [profile, onHoverDistance]);
+  const t = (vi: string, en: string) => locale === 'en' ? en : vi;
+  if (!profile || !metrics) return null;
+  const current = nearestProfileSample(profile, distance);
+  const grade = profileGrade(profile, current.index);
+  const value = (n: number | undefined, unit: string) => n === undefined ? t('Không có dữ liệu', 'No data') : `${Math.round(n)} ${unit}`;
+  const selectDistance = (next: number | null) => {
+    if (next === null) return;
+    const sample = nearestProfileSample(profile, next);
+    setDistance(sample.distance);
+    onHoverDistance(sample.distance);
+  };
+  return <section className="profile-panel" aria-label={t('Địa hình dọc tuyến', 'Terrain along route')}>
+    <div className="profile-heading">
+      <div><strong>{t('Địa hình dọc tuyến', 'Terrain along route')}</strong><span className="small">{(profile.length / 1000).toFixed(2)} km</span></div>
+      <button className="icon-button" onClick={onClose} aria-label={t('Đóng mặt cắt', 'Close profile')}><UiIcon name="close" /></button>
+    </div>
+    <dl className="profile-stats">
+      <div><dt>{t('Thấp nhất', 'Lowest')}</dt><dd>{value(metrics.min, 'm')}</dd></div>
+      <div><dt>{t('Cao nhất', 'Highest')}</dt><dd>{value(metrics.max, 'm')}</dd></div>
+      {metrics.complete && <><div><dt>{t('Tổng lên cao', 'Elevation gain')}</dt><dd>{value(metrics.ascent, 'm')}</dd></div><div><dt>{t('Tổng xuống thấp', 'Elevation loss')}</dt><dd>{value(metrics.descent, 'm')}</dd></div></>}
+      {!metrics.complete && <div className="profile-coverage"><dt>{t('DEM phủ tuyến', 'DEM coverage')}</dt><dd>{Math.round(metrics.coverage * 100)}%</dd></div>}
+    </dl>
+    <div className="profile-body">
+      <div className="profile-chart-container"><ProfileChart compact locale={locale} profile={profile} selectedDistance={current.distance} onHoverDistance={selectDistance} /></div>
+      <div className="profile-controls">
+        <label htmlFor="profile-dist-slider">{t('Vị trí trên tuyến', 'Position on route')}</label>
+        <input id="profile-dist-slider" type="range" min={0} max={profile.length} step={profile.sampleInterval} value={distance} onChange={e => selectDistance(Number(e.target.value))} />
+        <dl className="profile-readout">
+          <div><dt>{t('Khoảng cách', 'Distance')}</dt><dd>{(current.distance / 1000).toFixed(2)} km</dd></div>
+          <div><dt>{t('Độ cao', 'Elevation')}</dt><dd>{value(current.elevation, 'm')}</dd></div>
+          <div><dt>{t('Độ dốc dọc DEM', 'DEM path slope')}</dt><dd>{grade === undefined ? t('Không có dữ liệu', 'No data') : `${grade > 0 ? '+' : ''}${grade.toFixed(1)}%`}</dd></div>
+        </dl>
+        <p className="profile-method-note">{t('Tính từ DEM dọc hình tuyến. Bước lấy mẫu', 'From DEM along route geometry. Sample interval')} {Math.round(profile.sampleInterval)} m.</p>
       </div>
     </div>
-  );
-};
+  </section>;
+}

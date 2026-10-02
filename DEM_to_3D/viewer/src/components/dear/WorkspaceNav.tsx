@@ -12,12 +12,12 @@ export const WorkspaceNav: React.FC<Props> = ({ view, locale, onChangeView }) =>
 
   const navItems: Array<{ id: WorkspaceView; vi: string; en: string }> = [
     { id: 'incident', vi: 'Sự kiện', en: 'Incident' },
-    { id: 'impact', vi: 'Tác động', en: 'Impact' },
+    { id: 'impact', vi: 'Đường sá', en: 'Roads' },
     { id: 'priority', vi: 'Địa bàn', en: 'Communities' }
   ];
 
   return (
-    <nav className="workspace-nav" aria-label="Nghiệp vụ ứng phó">
+    <nav className="workspace-nav" aria-label={t('Nghiệp vụ ứng phó', 'Response workspace')}>
       {navItems.map((item) => (
         <button
           key={item.id}

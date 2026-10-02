@@ -3,24 +3,26 @@ import {
   cheTaoIncident,
   initialCommunities,
   initialHazards,
+  scenarioHazards,
   initialRoadSegments,
   buildScenarioRoutes
 } from '../data/cheTaoScenario';
 import { buildScenarioOverlays } from './scenarioOverlays';
 import type { TerrainMetadata } from '../types/terrain';
+import type { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { projectedPathLength } from './pathGeometry';
 
 describe('DEAR Scenario & Overlays', () => {
   it('validates Che Tao incident metadata and timeline', () => {
     expect(cheTaoIncident.id).toBe('INC-2026-0412');
     expect(cheTaoIncident.timeline.length).toBeGreaterThanOrEqual(6);
     expect(cheTaoIncident.sources.length).toBe(4);
-    expect(cheTaoIncident.areaKm2).toBe(214);
   });
 
   it('validates 7 communities and priority ranking', () => {
     expect(initialCommunities.length).toBe(7);
     const prio1 = initialCommunities.filter((c) => c.prio === 1);
-    expect(prio1.length).toBe(3); // NK, KM, NL
+    expect(prio1.map(community => community.id)).toEqual(['NK', 'KM']);
     const namKhat = initialCommunities.find((c) => c.id === 'NK');
     expect(namKhat).toBeDefined();
     expect(namKhat?.pop).toBe(640);
@@ -30,10 +32,20 @@ describe('DEAR Scenario & Overlays', () => {
     const routes = buildScenarioRoutes(initialRoadSegments);
     const nk = routes.get('NK');
     expect(nk).toBeDefined();
-    expect(nk?.candidate.status).toBe('uncertain');
+    expect(nk?.candidate?.status).toBe('uncertain');
     expect(nk?.direct?.status).toBe('blocked');
-    expect(nk?.candidate.lengthKm).toBeGreaterThan(0);
+    expect(nk?.candidate?.lengthKm).toBeGreaterThan(0);
     expect(nk?.direct?.lengthKm).toBeGreaterThan(0);
+  });
+
+  it('uses the same geometry for displayed distances and terrain profiles', () => {
+    const routes = buildScenarioRoutes(initialRoadSegments);
+    for (const pair of routes.values()) for (const route of [pair.direct, pair.candidate]) {
+      if (!route) continue;
+      expect(Math.abs(route.lengthKm * 1000 - projectedPathLength(route.points))).toBeLessThanOrEqual(5);
+      expect(Math.abs(route.segs.reduce((sum, seg) => sum + seg.len, 0) - route.lengthKm)).toBeLessThan(0.03);
+      for (let i = 1; i < route.segs.length; i++) expect(route.segs[i].points[0]).toEqual(route.segs[i - 1].points.at(-1));
+    }
   });
 
   it('validates simulated U-1 field update on PR-7 route', () => {
@@ -42,10 +54,16 @@ describe('DEAR Scenario & Overlays', () => {
     );
     const routes = buildScenarioRoutes(updatedRoads);
     const nk = routes.get('NK');
-    expect(nk?.candidate.status).toBe('blocked');
+    expect(nk?.candidate?.status).toBe('blocked');
+    expect(scenarioHazards(true).find(hazard => hazard.id === 'U-1')?.detected).toBe('09:40 29/09/2026');
+    expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('08:58 29/09/2026');
   });
 
-  it('builds Three.js overlay hierarchy without errors', () => {
+  it.each([
+    { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: 0xf59e0b, dashed: true },
+    { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: 0xef4444, dashed: false },
+    { routeType: 'candidate' as const, roadsVisible: false, warningId: 'E13', color: 0xf59e0b, dashed: true }
+  ])('preserves road warnings on $routeType route with network visible=$roadsVisible', ({ routeType, roadsVisible, warningId, color, dashed }) => {
     const dummyMetadata: TerrainMetadata = {
       schema_version: 1,
       asset_id: 'test_terrain',
@@ -87,17 +105,18 @@ describe('DEAR Scenario & Overlays', () => {
     const dummyGrid = new Float32Array(100).fill(500);
 
     const routes = buildScenarioRoutes(initialRoadSegments);
+    const selectedRoute = routes.get('NK')![routeType]!;
     const overlays = buildScenarioOverlays({
       metadata: dummyMetadata,
       grid: dummyGrid,
       communities: initialCommunities,
       hazards: initialHazards,
       roads: initialRoadSegments,
-      selectedRoute: routes.get('NK')!.candidate,
+      selectedRoute,
       selectedCommunityId: 'NK',
       selectedObjectId: null,
       layers: {
-        roads: true,
+        roads: roadsVisible,
         status: true,
         communities: true,
         landslide: true,
@@ -108,5 +127,21 @@ describe('DEAR Scenario & Overlays', () => {
 
     expect(overlays.name).toBe('dear-scenario-overlays');
     expect(overlays.children.length).toBe(4); // roads, communities, hazards, staging
+    const roadLines = overlays.getObjectByName('scenario-roads')!.children as Line2[];
+    const warning = roadLines.find(line => line.userData.id === warningId && !line.userData.casing)!;
+    expect(warning.material.color.getHex()).toBe(color);
+    expect(warning.material.dashed).toBe(dashed);
+    const casing = roadLines.find(line => line.userData.id === warningId && line.userData.casing)!;
+    expect(casing.material.color.getHex()).toBe(0x243f45);
+    if (!roadsVisible) {
+      const renderedIds = new Set(roadLines.map(line => line.userData.id));
+      expect(renderedIds).toEqual(new Set(selectedRoute.segs.map(segment => segment.id)));
+    }
+    overlays.traverse(object => {
+      const mesh = object as Line2;
+      mesh.geometry?.dispose();
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      materials.forEach(material => material?.dispose());
+    });
   });
 });

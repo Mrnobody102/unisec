@@ -1,4 +1,5 @@
 export type Locale = 'vi' | 'en';
+export type FontChoice = 'modern' | 'plex' | 'classic';
 
 export type IncidentTimelineItem = [
   time: string,
@@ -12,7 +13,7 @@ export type IncidentSource = {
   id: string;
   name: [vi: string, en: string];
   observedAt: string;
-  time: string;
+  observedAtUpdated?: string;
   note: [vi: string, en: string];
 };
 
@@ -23,7 +24,6 @@ export type IncidentModel = {
   triggeredAt: string;
   asOf: string;
   asOfUpdated: string;
-  areaKm2: number;
   timeline: IncidentTimelineItem[];
   sources: IncidentSource[];
 };
@@ -44,7 +44,8 @@ export type RoadStatus = 'open' | 'blocked' | 'uncertain';
 
 export type RoadSegment = {
   id: string;
-  ref: [vi: string, en: string];
+  name: [vi: string, en: string];
+  scenarioRoadCode?: string;
   cls: 'primary' | 'secondary' | 'track';
   len: number;
   status: RoadStatus;
@@ -55,11 +56,13 @@ export type RoadSegment = {
   points: Array<{ x: number; y: number }>;
 };
 
-export type HazardKind = 'landslide' | 'flood' | 'bridge';
+export type HazardKind = 'landslide' | 'flood' | 'bridge' | 'crossing';
 
 export type Hazard = {
   id: string;
+  name: [vi: string, en: string];
   kind: HazardKind;
+  observation: 'suspected' | 'reported';
   area?: number;
   src: [vi: string, en: string];
   detected: string;
@@ -77,11 +80,16 @@ export type ScenarioRoute = {
   points: Array<{ x: number; y: number }>;
 };
 
+export type ScenarioRoutePair = {
+  candidate: ScenarioRoute | null;
+  direct: ScenarioRoute | null;
+};
+
 export type WorkspaceView = 'incident' | 'impact' | 'priority';
 export type DetailTab = 'decision' | 'route' | 'evidence';
 export type RoadFilter = 'all' | 'blocked' | 'uncertain';
 export type ImpactTab = 'roads' | 'hazards';
-export type CommunityFilter = 'all' | 'priority' | 'uncertain';
+export type CommunityFilter = 'all' | 'priority' | 'monitor';
 
 export type ActiveDialog =
   | null

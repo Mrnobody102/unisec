@@ -1,72 +1,55 @@
-import React from 'react';
 import type { Locale } from '../../types/dear';
+import { cheTaoIncident } from '../../data/cheTaoScenario';
+import { UiIcon } from './UiIcon';
+import type { ScenarioManifest } from '../../data/scenarioManifest';
+import type { TerrainMetadata } from '../../types/terrain';
+import { localClock, sourceObservedAt } from '../../features/incident/sourceTime';
 
 type Props = {
   locale: Locale;
   updated: boolean;
+  manifest: ScenarioManifest | null;
+  terrainMetadata?: TerrainMetadata;
   onClose: () => void;
-  onPrint: () => void;
 };
 
-export const DataDialog: React.FC<Props> = ({
-  locale,
-  updated,
-  onClose,
-  onPrint
-}) => {
-  const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h2>{t('Dữ liệu sự kiện & Mô hình 3D', 'Event Data & 3D Model')}</h2>
-          <button className="icon-button" onClick={onClose}>
-            ×
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <span className="demo-badge">{t('Hợp đồng dữ liệu v1', 'Asset Contract v1')}</span>
-
-          <dl className="incident-facts" style={{ marginTop: '16px' }}>
-            <div>
-              <dt>{t('Khu vực phân tích', 'Analysis Area')}</dt>
-              <dd style={{ fontSize: '14px' }}>{t('Xã Chế Tạo, Lào Cai', 'Chế Tạo, Lào Cai')}</dd>
-            </div>
-            <div>
-              <dt>{t('Thời điểm cập nhật', 'Snapshot time')}</dt>
-              <dd style={{ fontSize: '14px' }}>
-                {updated ? '09:45' : '09:31'}, 29/09/2026 (UTC+7)
-              </dd>
-            </div>
-            <div>
-              <dt>{t('Hệ tọa độ (CRS)', 'Coordinate Reference')}</dt>
-              <dd style={{ fontSize: '13px', fontFamily: 'var(--font-mono)' }}>EPSG:32648 (UTM 48N)</dd>
-            </div>
-            <div>
-              <dt>{t('Mô hình số độ cao (DEM)', 'Elevation Model')}</dt>
-              <dd style={{ fontSize: '13px' }}>SRTM 30m / AW3D30 (Float32 Grid)</dd>
-            </div>
-          </dl>
-
-          <p style={{ marginTop: '12px' }}>
-            {t(
-              'Mô hình 3D được tái tạo từ DEM thực tế kết hợp ảnh vệ tinh Sentinel-2 RGB. Toàn bộ cao độ trích xuất dọc tuyến và tính toán độ dốc được tính trực tiếp từ tệp lưới độ cao nguyên bản.',
-              'The 3D model is generated from real DEM raster fused with Sentinel-2 RGB satellite imagery. Route elevations and slopes are calculated directly from the raw grid.'
-            )}
-          </p>
-
-          <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
-            <button className="button primary" onClick={onPrint}>
-              {t('In / Lưu tài liệu PDF', 'Print / Save PDF')}
-            </button>
-            <button className="button" onClick={onClose}>
-              {t('Đóng', 'Close')}
-            </button>
-          </div>
-        </div>
+export function DataDialog({ locale, updated, manifest, terrainMetadata, onClose }: Props): JSX.Element {
+  const t = (vi: string, en: string) => locale === 'en' ? en : vi;
+  return <div className="modal-overlay" onClick={onClose}>
+    <section className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="data-title" onClick={event => event.stopPropagation()}>
+      <div className="modal-head">
+        <h2 id="data-title">{t('Nguồn và thời điểm dữ liệu', 'Data sources and timestamps')}</h2>
+        <button className="icon-button" onClick={onClose} aria-label={t('Đóng', 'Close')}><UiIcon name="close" /></button>
       </div>
-    </div>
-  );
-};
+      <div className="modal-body">
+        <div className="data-snapshot">
+          <span>{t('Thời điểm tổng hợp', 'Snapshot')}</span>
+          <strong>{updated ? '09:45' : '09:31'}, 29/09/2026 (UTC+7)</strong>
+        </div>
+        {manifest && <div className="data-snapshot">
+          <span>{t('Phiên bản dữ liệu', 'Dataset version')}</span>
+          <strong>{manifest.datasetVersion}</strong>
+        </div>}
+        {manifest?.dataKind === 'synthetic' && <p className="data-context data-review-status">
+          {t('Bộ dữ liệu mô phỏng cho phiên trình diễn.', 'Simulated dataset for this demonstration.')}
+        </p>}
+        {manifest?.dataKind === 'synthetic' && <p className="data-context">
+          {t('NR-18, PR-7 và T-5 là mã đường trong kịch bản, chưa xác nhận là số hiệu ngoài thực địa.', 'NR-18, PR-7 and T-5 are scenario road codes, not verified real-world route numbers.')}
+        </p>}
+        <h3 className="data-section-title">{t('Nguồn dữ liệu', 'Data sources')}</h3>
+        <div className="data-source-list">
+          {cheTaoIncident.sources.map(source => <div className="data-source-row" key={source.id}>
+            <div><strong>{t(source.name[0], source.name[1])}</strong><small>{t(source.note[0], source.note[1])}</small></div>
+            <time dateTime={sourceObservedAt(source, updated)}>{localClock(sourceObservedAt(source, updated))}</time>
+          </div>)}
+        </div>
+        <h3 className="data-section-title">{t('Mô hình địa hình', 'Terrain model')}</h3>
+        <p className="data-context">{manifest
+          ? t('Lưới độ cao của mô hình Chế Tạo: EPSG:32648, bước lưới khoảng 28,8 m. Metadata ghi ảnh nền Sentinel-2. Chưa ghi nguồn gốc của DEM.', 'Chế Tạo elevation grid: EPSG:32648, approximately 28.8 m cell spacing. Metadata records Sentinel-2 imagery. DEM provenance is not recorded.')
+          : terrainMetadata
+          ? `${t('Mô hình được tải lên', 'Uploaded model')}: ${terrainMetadata.crs.authority}:${terrainMetadata.crs.code}.`
+          : t('Chưa có metadata của mô hình địa hình.', 'Terrain model metadata is unavailable.')}</p>
+      </div>
+    </section>
+  </div>;
+}

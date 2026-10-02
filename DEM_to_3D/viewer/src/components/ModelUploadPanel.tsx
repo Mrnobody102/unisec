@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 export type UploadMode = 'single' | 'merge';
 
 type Props = {
+  locale?: 'vi' | 'en';
   mode: UploadMode;
   geographicMerge: boolean;
   fileNames: string[];
@@ -14,57 +15,40 @@ type Props = {
   onClear: () => void;
 };
 
-const viCopy = {
-  importLabel: '\u004e\u1ea1p \u006d\u00f4 \u0068\u00ec\u006e\u0068 3D',
-  title: '\u0054\u1ea3i terrain l\u00ean \u0062\u1ea3n \u0111\u1ed3',
-  single: '\u004d\u1ed9t model',
-  singleHint: '\u0048i\u1ec3n th\u1ecb m\u1ed9t m\u00f4 h\u00ecnh',
-  merge: '\u0047h\u00e9p nhi\u1ec1u model',
-  mergeHint: '\u0048i\u1ec3n th\u1ecb nhi\u1ec1u m\u00f4 h\u00ecnh',
-  geographic: '\u0054\u1ef1 gh\u00e9p theo v\u1ecb tr\u00ed \u0111\u1ecba l\u00fd',
-  geographicHint: '\u0044\u00f9ng .terrain.json c\u1ee7a t\u1eebng model; CRS ph\u1ea3i tr\u00f9ng v\u00e0 \u0111\u01a1n v\u1ecb l\u00e0 m\u00e9t.',
-  busy: '\u0110ang t\u1ea3i model...',
-  choose: '\u0043h\u1ecdn file 3D v\u00e0 sidecar',
-  singleUpload: '\u0043h\u1ecdn m\u1ed9t .glb/.gltf',
-  mergeUpload: '\u0043h\u1ecdn nhi\u1ec1u .glb/.gltf v\u00e0 sidecar t\u01b0\u01a1ng \u1ee9ng',
-  clear: '\u0058\u00f3a model \u0111\u00e3 t\u1ea3i',
-  help: '\u0047h\u00e9p ch\u00ednh x\u00e1c: ch\u1ecdn c\u00f9ng t\u00ean name.glb, name.terrain.json v\u00e0 t\u00f9y ch\u1ecdn name.grid.bin.',
-  textureHelp: 'D\u00e1n \u1ea3nh ngo\u00e0i: k\u00e8m th\u00eam name.png/.jpg/.webp/.tif (c\u00f9ng t\u00ean v\u1edbi model). \u1ea2nh GeoTIFF (.tif) kh\u1edbp s\u1eb5n v\u1ecb tr\u00ed; \u1ea3nh PNG/JPG y\u00eau c\u1ea7u GLB \u0111\u00e3 c\u00f3 UV (xu\u1ea5t k\u00e8m --texture).',
-} as const;
-
-export function ModelUploadPanel({ mode, geographicMerge, fileNames, busy, error, onModeChange, onGeographicMergeChange, onFiles, onClear }: Props): JSX.Element {
+export function ModelUploadPanel({ locale = 'vi', mode, geographicMerge, fileNames, busy, error, onModeChange, onGeographicMergeChange, onFiles, onClear }: Props): JSX.Element {
+  const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const handleFiles = (event: ChangeEvent<HTMLInputElement>): void => {
     onFiles(Array.from(event.target.files ?? []));
     event.target.value = '';
   };
-
-  return (
-    <section className='upload-panel' aria-labelledby='upload-title'>
-      <div className='upload-heading'>
-        <div><span className='eyebrow'>{viCopy.importLabel}</span><h2 id='upload-title'>{viCopy.title}</h2></div>
-        <span className='upload-format'>GLB / GLTF</span>
-      </div>
-      <div className='upload-modes' role='radiogroup' aria-label='Model display mode'>
-        <label className={mode === 'single' ? 'upload-mode active' : 'upload-mode'}>
-          <input type='radio' name='upload-mode' checked={mode === 'single'} onChange={() => onModeChange('single')} />
-          <span><strong>{viCopy.single}</strong><small>{viCopy.singleHint}</small></span>
-        </label>
-        <label className={mode === 'merge' ? 'upload-mode active' : 'upload-mode'}>
-          <input type='radio' name='upload-mode' checked={mode === 'merge'} onChange={() => onModeChange('merge')} />
-          <span><strong>{viCopy.merge}</strong><small>{viCopy.mergeHint}</small></span>
-        </label>
-      </div>
-      {mode === 'merge' && <label className='geographic-toggle'><input type='checkbox' checked={geographicMerge} onChange={(event) => onGeographicMergeChange(event.target.checked)} /><span><strong>{viCopy.geographic}</strong><small>{viCopy.geographicHint}</small></span></label>}
-      <label className='upload-dropzone'>
-        <input type='file' multiple accept='.glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json' onChange={handleFiles} disabled={busy} />
-        <strong>{busy ? viCopy.busy : viCopy.choose}</strong>
-        <small>{mode === 'single' ? viCopy.singleUpload : viCopy.mergeUpload}</small>
+  return <section className="upload-panel" aria-label={t('Nạp mô hình địa hình', 'Import terrain model')}>
+    <div className="upload-modes" role="radiogroup" aria-label={t('Số mô hình', 'Model count')}>
+      <label className={mode === 'single' ? 'upload-mode active' : 'upload-mode'}>
+        <input type="radio" name="upload-mode" checked={mode === 'single'} onChange={() => onModeChange('single')} />
+        <strong>{t('Một mô hình', 'Single model')}</strong>
       </label>
-      {fileNames.length > 0 && <div className='upload-files' aria-live='polite'>{fileNames.map((name) => <span key={name}>{name}</span>)}</div>}
-      {fileNames.length > 0 && <button type='button' className='upload-clear' onClick={onClear}>{viCopy.clear}</button>}
-      {error && <div className='upload-error' role='alert'>{error}</div>}
-      <p className='upload-help'>{viCopy.help}</p>
-      <p className='upload-help'>{viCopy.textureHelp}</p>
-    </section>
-  );
+      <label className={mode === 'merge' ? 'upload-mode active' : 'upload-mode'}>
+        <input type="radio" name="upload-mode" checked={mode === 'merge'} onChange={() => onModeChange('merge')} />
+        <strong>{t('Nhiều mô hình', 'Multiple models')}</strong>
+      </label>
+    </div>
+    {mode === 'merge' && <label className="geographic-toggle"><input type="checkbox" checked={geographicMerge} onChange={event => onGeographicMergeChange(event.target.checked)} /><span><strong>{t('Ghép theo tọa độ', 'Align by coordinates')}</strong><small>{t('Các mô hình cần cùng hệ tọa độ theo mét.', 'Models require the same coordinate system in meters.')}</small></span></label>}
+    <label className="upload-dropzone">
+      <strong>{busy ? t('Đang tải mô hình…', 'Loading model…') : t('Chọn tệp mô hình', 'Choose model files')}</strong>
+      <input type="file" multiple accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json" onChange={handleFiles} disabled={busy} />
+      <small>{t('GLB hoặc GLTF, kèm dữ liệu địa hình và ảnh nếu có.', 'GLB or GLTF, with terrain data and imagery when available.')}</small>
+    </label>
+    {fileNames.length > 0 && <div className="upload-files" aria-live="polite">{fileNames.map(name => <span key={name}>{name}</span>)}</div>}
+    {fileNames.length > 0 && <button type="button" className="upload-clear" disabled={busy} onClick={onClear}>{t('Gỡ mô hình đã tải', 'Remove uploaded models')}</button>}
+    {error && <div className="upload-error" role="alert">{error}</div>}
+    <details className="upload-requirements">
+      <summary>{t('Định dạng dữ liệu', 'Data formats')}</summary>
+      <dl>
+        <div><dt>{t('Hiển thị 3D', '3D display')}</dt><dd>GLB / GLTF</dd></div>
+        <div><dt>{t('Tọa độ', 'Coordinates')}</dt><dd>{t('Tệp .terrain.json cùng tên mô hình', '.terrain.json with the model name')}</dd></div>
+        <div><dt>{t('Phân tích độ cao', 'Elevation analysis')}</dt><dd>{t('Lưới .grid.bin theo metadata', '.grid.bin matching the metadata')}</dd></div>
+        <div><dt>{t('Ảnh nền', 'Imagery')}</dt><dd>{t('GeoTIFF có tọa độ hoặc PNG/JPG/WebP cùng tên mô hình có UV', 'Georeferenced GeoTIFF or PNG/JPG/WebP matching a UV-mapped model')}</dd></div>
+      </dl>
+    </details>
+  </section>;
 }

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Community, CommunityFilter, Locale } from '../../types/dear';
+import { StatusText } from '../../shared/ui/StatusText';
 
 type Props = {
   communities: Community[];
   locale: Locale;
   filter: CommunityFilter;
+  query: string;
+  onChangeQuery: (query: string) => void;
   onChangeFilter: (f: CommunityFilter) => void;
   onSelectCommunity: (id: string) => void;
   selectedId: string | null;
@@ -14,11 +17,12 @@ export const CommunityListView: React.FC<Props> = ({
   communities,
   locale,
   filter,
+  query,
+  onChangeQuery,
   onChangeFilter,
   onSelectCommunity,
   selectedId
 }) => {
-  const [query, setQuery] = useState('');
 
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
 
@@ -26,7 +30,7 @@ export const CommunityListView: React.FC<Props> = ({
     .sort((a, b) => a.prio - b.prio)
     .filter((c) => {
       if (filter === 'priority') return c.prio === 1;
-      if (filter === 'uncertain') return c.prio === 1 || c.prio === 2;
+      if (filter === 'monitor') return c.prio !== 1;
       return true;
     })
     .filter((c) => {
@@ -37,11 +41,7 @@ export const CommunityListView: React.FC<Props> = ({
   return (
     <>
       <div className="sidebar-top">
-        <div className="eyebrow">{t('ĐỊA BÀN', 'COMMUNITIES')}</div>
-        <h1 style={{ marginTop: '4px' }}>{t('Địa bàn cần chú ý', 'Communities to review')}</h1>
-        <p className="sidebar-intro">
-          {t('Chọn địa bàn để xem đường tiếp cận và căn cứ ưu tiên.', 'Select a community to review access and priority.')}
-        </p>
+        <h1>{t('Địa bàn cần chú ý', 'Communities to review')}</h1>
 
         <div className="search-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -50,9 +50,10 @@ export const CommunityListView: React.FC<Props> = ({
           </svg>
           <input
             type="search"
+            aria-label={t('Tìm địa bàn', 'Find community')}
             placeholder={t('Tìm thôn, bản…', 'Find village…')}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => onChangeQuery(e.target.value)}
           />
         </div>
 
@@ -73,10 +74,10 @@ export const CommunityListView: React.FC<Props> = ({
           </button>
           <button
             className="filter"
-            aria-pressed={filter === 'uncertain'}
-            onClick={() => onChangeFilter('uncertain')}
+            aria-pressed={filter === 'monitor'}
+            onClick={() => onChangeFilter('monitor')}
           >
-            {t('Cần xác minh', 'Uncertain')}
+            {t('Theo dõi', 'Monitor')}
           </button>
         </div>
       </div>
@@ -84,9 +85,8 @@ export const CommunityListView: React.FC<Props> = ({
       <div className="sidebar-scroll">
         <div className="list-label">
           <span>
-            {filtered.length} {t('địa điểm', 'places')}
+            {filtered.length} {t('địa bàn', 'communities')}
           </span>
-          <span>{t('Theo mức ưu tiên', 'Ordered by priority')}</span>
         </div>
 
         {filtered.length === 0 ? (
@@ -100,20 +100,13 @@ export const CommunityListView: React.FC<Props> = ({
               className={`community ${selectedId === c.id ? 'active' : ''}`}
               onClick={() => onSelectCommunity(c.id)}
             >
-              <span className="community-name">
-                <span className={`priority-dot p${c.prio}`} />
-                {c.name}
-                <span className="arrow">↗</span>
+              <span className="community-heading">
+                <strong>{c.name}</strong>
+                <StatusText tone={c.prio === 1 ? 'critical' : 'neutral'} icon={c.prio === 1 ? 'priority' : undefined}>
+                  {c.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
+                </StatusText>
               </span>
               <p>{t(c.desc[0], c.desc[1])}</p>
-              <div className="community-meta">
-                <span className={`tag ${c.prio === 1 ? 'danger' : 'warn'}`}>
-                  {c.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Cần theo dõi', 'Monitor')}
-                </span>
-                <span className="small">
-                  {c.pop} {t('người (tham chiếu)', 'residents (baseline)')}
-                </span>
-              </div>
             </button>
           ))
         )}

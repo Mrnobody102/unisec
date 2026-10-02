@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Locale } from '../../types/dear';
+import { UiIcon } from './UiIcon';
 
 type Props = {
   evidenceId: string;
@@ -16,95 +17,98 @@ export const EvidenceDialog: React.FC<Props> = ({
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
 
-  const findings: Record<string, { title: [string, string]; desc: [string, string]; meta: string }> = {
+  const findings: Record<string, { title: [string, string]; desc: [string, string]; meta: [string, string] }> = {
     'LS-02': {
-      title: ['NR-18 có điểm chặn tại LS-02', 'NR-18 blocked at LS-02'],
+      title: ['Sạt lở chặn đường chính vào Nậm Khắt', 'Landslide blocks the main road to Nậm Khắt'],
       desc: [
         'Báo cáo hiện trường xác nhận sạt lở taluy dương vùi lấp mặt đường. Xe cơ giới không thể qua.',
         'Field report confirms debris blocking the roadway. Motor vehicles cannot pass.'
       ],
-      meta: 'Hiện trường 07:40 · SAR 06:12 · VHR 07:52'
+      meta: ['Hiện trường 07:40, SAR 06:12', 'Field report 07:40, SAR 06:12']
     },
     'U-1': {
       title: updated
-        ? ['PR-7 bị chặn tại vị trí khe U-1', 'PR-7 blocked at U-1 gully crossing']
-        : ['Chưa rõ khả năng đi qua khe U-1', 'Passability at U-1 gully is unconfirmed'],
+        ? ['Đường vòng bị chặn tại điểm vượt khe', 'Mountain bypass blocked at the gully crossing']
+        : ['Chưa rõ khả năng đi qua điểm vượt khe', 'Gully crossing passability is unconfirmed'],
       desc: updated
         ? [
-            'Tin mới lúc 09:45: Đoạn qua khe bị đất đá tràn lấp hoàn toàn. Tuyến qua U-1 không thể sử dụng.',
-            'Update at 09:45: Gully crossing completely blocked by mud and rock. Reassess route.'
+            'Quan sát lúc 09:40, nhận tin lúc 09:45: Đất đá vùi lấp đoạn qua khe. Đường vòng có đoạn bị chặn.',
+            'Observed at 09:40, received at 09:45: Debris blocks the gully crossing on the bypass.'
           ]
         : [
-            'Có tin báo đất đá tại chỗ vượt khe sau mưa lũ; chưa xác nhận xe bán tải gầm cao đi qua được.',
-            'Debris reported at the stream crossing; 4WD vehicle passage unconfirmed.'
+            'Có tin báo đất đá tại chỗ vượt khe sau mưa lũ. Chưa xác nhận xe bán tải gầm cao đi qua được.',
+            'Debris reported at the stream crossing. 4WD vehicle passage unconfirmed.'
           ],
-      meta: updated ? 'Hiện trường · quan sát 09:40 · nhận 09:45' : 'Tin hiện trường · 08:58'
+      meta: updated
+        ? ['Hiện trường: quan sát 09:40, nhận 09:45', 'Field report: observed 09:40, received 09:45']
+        : ['Tin hiện trường, 08:58', 'Field report, 08:58']
     },
     'B-2': {
-      title: ['Cầu B-2 cần xác minh khả năng lưu thông', 'Bridge B-2 needs passability verification'],
+      title: ['Cầu trên đường vào Khau Mang cần kiểm tra', 'Access bridge to Khau Mang needs inspection'],
       desc: [
-        'Có tin báo ngập mặt cầu 0.6m lúc rạng sáng. Hiện nước đang rút nhưng cần thợ cầu kiểm định kết cấu mố cầu.',
-        'Bridge submerged 0.6m at dawn. Water receding but abutment inspection is needed.'
+        'Có tin mặt cầu ngập khoảng 0,6 m lúc 03:55. Chưa có tin mới xác nhận mực nước hoặc khả năng đi qua.',
+        'A report at 03:55 put water about 0.6 m above the bridge deck. No newer report confirms water level or passability.'
       ],
-      meta: 'Hiện trường · 03:55'
+      meta: ['Hiện trường, 03:55', 'Field report, 03:55']
     },
     'LS-01': {
-      title: ['Sạt lở taluy âm tại LS-01', 'Embankment failure at LS-01'],
+      title: ['Dấu hiệu sạt lở gần Lao Mải', 'Possible landslide near Lao Mải'],
       desc: [
-        'Vết nứt và trượt lở mái dốc phát hiện qua phân tích chênh lệch pha ảnh radar.',
-        'Slope failure detected via radar interferometry differential analysis.'
+        'Phân tích ảnh radar cho thấy dấu hiệu trượt lở gần đường tiếp cận.',
+        'Radar image analysis indicates a possible slope failure near the access road.'
       ],
-      meta: 'Phân tích SAR · 07:05'
+      meta: ['Phân tích SAR, 07:05', 'SAR analysis, 07:05']
+    },
+    'LS-03': {
+      title: ['Điểm nghi sạt lở gần Khau Mang', 'Possible landslide near Khau Mang'],
+      desc: [
+        'Phân tích ảnh radar đánh dấu một vị trí nghi sạt lở gần đường vào bản. Chưa xác minh ảnh hưởng đến đường.',
+        'Radar analysis marks a possible landslide near the access road. Road impact is unverified.'
+      ],
+      meta: ['Phân tích SAR, 07:05', 'SAR analysis, 07:05']
     }
   };
 
   const f = findings[evidenceId] || {
-    title: [`Căn cứ dữ liệu: ${evidenceId}`, `Evidence details: ${evidenceId}`],
+    title: [`Thông tin: ${evidenceId}`, `Finding: ${evidenceId}`],
     desc: [
-      'Nhận định tự động từ chuỗi xử lý ảnh viễn thám và tin báo sơ bộ.',
-      'Automated finding from satellite pipeline and initial reports.'
+      'Bộ dữ liệu chưa có mô tả căn cứ riêng cho điểm này.',
+      'This dataset has no separate source description for this site.'
     ],
-    meta: 'Kịch bản SIC 2026'
+    meta: ['Chưa ghi nguồn cụ thể', 'Source not specified']
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="evidence-dialog-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h2>{t('Hồ sơ căn cứ: ', 'Evidence details: ')} {evidenceId}</h2>
-          <button className="icon-button" onClick={onClose}>
-            ×
+          <h2 id="evidence-dialog-title">{t('Căn cứ và nguồn', 'Finding and source')}</h2>
+          <button className="icon-button" onClick={onClose} aria-label={t('Đóng', 'Close')}>
+            <UiIcon name="close" />
           </button>
         </div>
 
         <div className="modal-body">
-          <span className="demo-badge">{t('Bằng chứng tác động', 'Impact evidence')}</span>
-
-          <h3 style={{ marginTop: '14px', fontSize: '15px' }}>{t(f.title[0], f.title[1])}</h3>
+          <h3 className="evidence-title">{t(f.title[0], f.title[1])}</h3>
+          <span className="small">{t('Mã tham chiếu', 'Reference ID')}: {evidenceId}</span>
           <p style={{ marginTop: '8px' }}>{t(f.desc[0], f.desc[1])}</p>
 
           <dl className="incident-facts" style={{ marginTop: '16px' }}>
             <div>
-              <dt>{t('Nguồn & Thời điểm', 'Source & Timestamp')}</dt>
-              <dd style={{ fontSize: '12.5px' }}>{f.meta}</dd>
+              <dt>{t('Nguồn, thời điểm', 'Source and time')}</dt>
+              <dd style={{ fontSize: '12.5px' }}>{t(f.meta[0], f.meta[1])}</dd>
             </div>
             <div>
-              <dt>{t('Mức độ xác minh', 'Verification Status')}</dt>
+              <dt>{t('Loại căn cứ', 'Evidence type')}</dt>
               <dd style={{ fontSize: '12.5px' }}>
-                {evidenceId === 'LS-02' || (evidenceId === 'U-1' && updated)
-                  ? t('Xác minh thực địa', 'Field verified')
-                  : t('Cần xác minh thêm', 'Unverified / Inferred')}
+                {['LS-02', 'U-1', 'B-2'].includes(evidenceId)
+                  ? t('Tin hiện trường', 'Field report')
+                  : ['LS-01', 'LS-03'].includes(evidenceId) ? t('Phân tích SAR, chưa kiểm chứng thực địa', 'SAR analysis, not field validated') : t('Chưa xác định', 'Unknown')}
               </dd>
             </div>
           </dl>
 
-          <button
-            className="button primary"
-            style={{ width: '100%', marginTop: '20px' }}
-            onClick={onClose}
-          >
-            {t('Đóng', 'Close')}
-          </button>
+          <p className="small evidence-document-status">{t('Tài liệu gốc: chưa có tệp đính kèm.', 'Source document: no attachment available.')}</p>
         </div>
       </div>
     </div>

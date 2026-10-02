@@ -1,5 +1,7 @@
 import React from 'react';
 import type { Locale, ScenarioRoute } from '../../types/dear';
+import { UiIcon } from './UiIcon';
+import { StatusText } from '../../shared/ui/StatusText';
 
 type Props = {
   route: ScenarioRoute;
@@ -18,11 +20,11 @@ export const SegmentAnalysisDialog: React.FC<Props> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="segment-analysis-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h2>{t('Phân tích chi tiết từng đoạn tuyến', 'Route Segment Breakdown')}</h2>
-          <button className="icon-button" onClick={onClose}>
-            ×
+          <h2 id="segment-analysis-title">{t('Phân tích từng đoạn tuyến', 'Route segment analysis')}</h2>
+          <button className="icon-button" onClick={onClose} aria-label={t('Đóng', 'Close')}>
+            <UiIcon name="close" />
           </button>
         </div>
 
@@ -47,27 +49,23 @@ export const SegmentAnalysisDialog: React.FC<Props> = ({
                 }}
               >
                 <div>
-                  <strong>{t(seg.ref[0], seg.ref[1])}</strong>
+                  <strong>{t(seg.name[0], seg.name[1])}</strong>
                   <div style={{ fontSize: '11px', color: 'var(--ws-muted)', marginTop: '2px' }}>
+                    {seg.scenarioRoadCode ? `${t('Mã kịch bản', 'Scenario code')} ${seg.scenarioRoadCode}, ` : ''}
                     {seg.fromKm !== undefined && seg.toKm !== undefined
-                      ? `Km ${seg.fromKm.toFixed(1)} – ${seg.toKm.toFixed(1)}`
+                      ? `${t('Từ km', 'From km')} ${seg.fromKm.toFixed(1)} ${t('đến', 'to')} ${seg.toKm.toFixed(1)}`
                       : `${seg.len} km`}
-                    {seg.hz ? ` · ${seg.hz}` : ''}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span
-                    className={`tag ${
-                      seg.status === 'blocked' ? 'danger' : seg.status === 'uncertain' ? 'warn' : ''
-                    }`}
-                  >
+                  <StatusText tone={seg.status === 'blocked' ? 'critical' : seg.status === 'uncertain' ? 'warning' : 'neutral'} icon={seg.status === 'blocked' ? 'blocked' : seg.status === 'uncertain' ? 'uncertain' : undefined}>
                     {seg.status === 'blocked'
                       ? t('Bị chặn', 'Blocked')
                       : seg.status === 'uncertain'
                       ? t('Chưa rõ', 'Uncertain')
-                      : t('Thông', 'Open')}
-                  </span>
+                      : t('Chưa ghi nhận chặn', 'No blockage reported')}
+                  </StatusText>
 
                   {seg.hz && (
                     <button
@@ -85,11 +83,6 @@ export const SegmentAnalysisDialog: React.FC<Props> = ({
             ))}
           </div>
 
-          <div style={{ marginTop: '20px' }}>
-            <button className="button primary" style={{ width: '100%' }} onClick={onClose}>
-              {t('Đóng', 'Close')}
-            </button>
-          </div>
         </div>
       </div>
     </div>

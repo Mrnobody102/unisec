@@ -3,8 +3,10 @@ import type {
   Hazard,
   IncidentModel,
   RoadSegment,
-  ScenarioRoute
+  ScenarioRoute,
+  ScenarioRoutePair
 } from '../types/dear';
+import { projectedPathLength } from '../terrain/pathGeometry';
 
 export const cheTaoIncident: IncidentModel = {
   id: 'INC-2026-0412',
@@ -13,7 +15,6 @@ export const cheTaoIncident: IncidentModel = {
   triggeredAt: '2026-09-29T03:40:00+07:00',
   asOf: '2026-09-29T09:31:00+07:00',
   asOfUpdated: '2026-09-29T09:45:00+07:00',
-  areaKm2: 214,
   timeline: [
     [
       '03:40',
@@ -38,10 +39,10 @@ export const cheTaoIncident: IncidentModel = {
     ],
     [
       '07:05',
-      'Phân tích vùng ảnh hưởng',
-      'Hazard analysis',
-      'Nhận diện các vết sạt lở LS-01, LS-02 và vùng nghi ngập ven suối',
-      'Detected landslides LS-01, LS-02 and riparian flood extent'
+      'Đánh dấu điểm ảnh hưởng',
+      'Affected sites mapped',
+      'Ghi nhận điểm sạt lở và vị trí cần kiểm tra. Chưa có phạm vi ngập',
+      'Landslide sites and locations to review recorded. Flood extent unavailable'
     ],
     [
       '08:10',
@@ -54,8 +55,8 @@ export const cheTaoIncident: IncidentModel = {
       '09:31',
       'Có phương án tiếp cận',
       'Access options available',
-      'Xác định 2 tuyến cho Nậm Khắt, chờ xác minh đoạn qua khe U-1',
-      'Identified 2 routes for Nậm Khắt; U-1 gully crossing requires verification'
+      'Đường chính vào Nậm Khắt bị chặn. Điểm vượt khe trên đường vòng cần xác minh',
+      'The main road to Nậm Khắt is blocked. The bypass gully crossing needs verification'
     ]
   ],
   sources: [
@@ -63,29 +64,26 @@ export const cheTaoIncident: IncidentModel = {
       id: 'radar',
       name: ['Ảnh radar SAR', 'SAR radar imagery'],
       observedAt: '2026-09-29T06:12:00+07:00',
-      time: '06:12',
       note: ['Thu nhận ảnh vệ tinh', 'Satellite acquisition']
     },
     {
       id: 'hazard',
       name: ['Phân tích sạt lở', 'Landslide analysis'],
       observedAt: '2026-09-29T07:05:00+07:00',
-      time: '07:05',
-      note: ['Hoàn tất phân tích tự động', 'Automated analysis completed']
+      note: ['Kết quả phân tích trong bộ dữ liệu', 'Analysis result in the dataset']
     },
     {
       id: 'field',
-      name: ['Tin hiện trường U-1', 'U-1 field report'],
+      name: ['Tin tại điểm vượt khe', 'Gully crossing report'],
       observedAt: '2026-09-29T08:58:00+07:00',
-      time: '08:58',
+      observedAtUpdated: '2026-09-29T09:40:00+07:00',
       note: ['Thời điểm quan sát hiện trường', 'Field observation timestamp']
     },
     {
       id: 'route',
       name: ['Phương án tiếp cận', 'Access options'],
       observedAt: '2026-09-29T09:31:00+07:00',
-      time: '09:31',
-      note: ['Mô hình tính toán mạng đường', 'Road network routing calculation']
+      note: ['Phương án trong bộ dữ liệu mô phỏng', 'Option in the simulated dataset']
     }
   ]
 };
@@ -106,21 +104,21 @@ export const initialCommunities: Community[] = [
     pop: 640,
     hh: 142,
     desc: [
-      'Đường chính bị chặn, mất liên lạc',
-      'Main road blocked, communication disrupted'
+      'Mất liên lạc từ 04:10. Chưa rõ nhu cầu hỗ trợ',
+      'No contact since 04:10. Relief needs unconfirmed'
     ],
     facts: [
       [
-        'Đường chính NR-18 bị chặn tại LS-02',
-        'Main road NR-18 blocked at LS-02',
-        'Hiện trường · 07:40',
-        'Field report · 07:40'
+        'Đường chính vào bản bị chặn do sạt lở',
+        'Main access road blocked by a landslide',
+        'Hiện trường, 07:40',
+        'Field report, 07:40'
       ],
       [
-        'Mất liên lạc từ 04:10; chưa rõ nhu cầu hỗ trợ cụ thể',
-        'No contact since 04:10; relief needs unconfirmed',
-        'Tin từ xã · 09:14',
-        'Commune focal point · 09:14'
+        'Mất liên lạc từ 04:10. Chưa rõ nhu cầu hỗ trợ cụ thể',
+        'No contact since 04:10. Relief needs unconfirmed',
+        'Tin từ xã, 09:14',
+        'Commune focal point, 09:14'
       ]
     ],
     projected: { x: 405500, y: 2404500 }
@@ -133,21 +131,21 @@ export const initialCommunities: Community[] = [
     pop: 410,
     hh: 88,
     desc: [
-      'Cầu ngập, đường vào cần xác minh',
-      'Flooded bridge, access road uncertain'
+      'Cầu được báo ngập lúc 03:55',
+      'Bridge reported flooded at 03:55'
     ],
     facts: [
       [
-        'Cầu B-2 có tin báo ngập; chưa có cập nhật mới',
-        'Bridge B-2 reported flooded; no newer observation',
-        'Hiện trường · 03:55',
-        'Field report · 03:55'
+        'Cầu trên đường vào bản có tin báo ngập. Chưa có cập nhật mới',
+        'Access bridge reported flooded. No newer observation',
+        'Hiện trường, 03:55',
+        'Field report, 03:55'
       ],
       [
-        'Phát hiện vết sạt lở nghi ngờ LS-03 trên đường vào bản',
-        'Possible landslide LS-03 on village access road',
-        'Phân tích SAR · 07:05',
-        'SAR analysis · 07:05'
+        'Có điểm nghi sạt lở gần đường vào bản',
+        'Possible landslide near the village access road',
+        'Phân tích SAR, 07:05',
+        'SAR analysis, 07:05'
       ]
     ],
     projected: { x: 393500, y: 2402500 }
@@ -156,25 +154,25 @@ export const initialCommunities: Community[] = [
     id: 'NL',
     name: 'Nậm Lắt',
     commune: 'Nậm Lắt',
-    prio: 1,
+    prio: 2,
     pop: 290,
     hh: 64,
     desc: [
-      'Có hộ trong vùng nghi ngập lũ quét',
-      'Households within mapped flood extent'
+      'Chưa có phạm vi ngập. Đường vào cần xác minh',
+      'Flood extent unavailable. Access needs verification'
     ],
     facts: [
       [
-        'Ước tính 64 hộ trong vùng nghi ngập, chưa xác minh hiện trường',
-        'Estimated 64 households in flood extent, not field verified',
-        'Phân tích SAR · 06:12',
-        'SAR analysis · 06:12'
+        'Chưa có vùng ngập được khoanh trên bản đồ. Số hộ bị ảnh hưởng chưa xác định',
+        'No mapped flood extent. Affected households are unknown',
+        'Bộ dữ liệu hiện tại',
+        'Current dataset'
       ],
       [
-        'Tình trạng cầu B-2 trên đường tiếp cận chưa rõ',
-        'Bridge B-2 accessibility is uncertain',
-        'Tin hiện trường · 03:55',
-        'Field report · 03:55'
+        'Tình trạng cầu trên đường tiếp cận chưa rõ',
+        'Condition of the access bridge is uncertain',
+        'Tin hiện trường, 03:55',
+        'Field report, 03:55'
       ]
     ],
     projected: { x: 404000, y: 2398500 }
@@ -187,19 +185,19 @@ export const initialCommunities: Community[] = [
     pop: 530,
     hh: 115,
     desc: [
-      'Đường chính bị chặn, có đường mòn thay thế',
-      'Main road blocked, alternative mountain track'
+      'Có điểm nghi sạt lở gần bản. Đường mòn cần kiểm tra',
+      'Possible landslide near the village. Mountain track needs checking'
     ],
     facts: [
       [
-        'NR-18 có điểm chặn sạt lở tại LS-01',
-        'NR-18 blocked by landslide at LS-01',
-        'Phân tích SAR · 07:05',
-        'SAR analysis · 07:05'
+        'Có điểm nghi sạt lở gần Lao Mải. Chưa xác nhận đường chính bị chặn',
+        'Possible landslide near Lao Mải. Blockage of the main road is unconfirmed',
+        'Phân tích SAR, 07:05',
+        'SAR analysis, 07:05'
       ],
       [
-        'Đường thay thế đi qua đường mòn T-5',
-        'Alternative path follows mountain track T-5',
+        'Đường tiếp cận khác là đường mòn qua sườn núi',
+        'Another access path follows a mountain track',
         'Mạng đường kịch bản',
         'Scenario road network'
       ]
@@ -214,15 +212,15 @@ export const initialCommunities: Community[] = [
     pop: 380,
     hh: 82,
     desc: [
-      'Tiếp cận gián đoạn, chưa có tin mới',
-      'Access disrupted, limited field updates'
+      'Chưa đủ dữ liệu đường vào và tin hiện trường',
+      'Access road and field information are insufficient'
     ],
     facts: [
       [
-        'Đường tiếp cận đi qua vùng có điểm sạt lở sườn dốc',
-        'Access road crosses hill slope landslide zone',
-        'Mạng đường + SAR · 07:05',
-        'Road network + SAR · 07:05'
+        'Chưa có hình tuyến đường vào bản để đánh giá khả năng tiếp cận',
+        'No mapped access route is available for assessment',
+        'Mạng đường kịch bản',
+        'Scenario road network'
       ],
       [
         'Chưa có tin mới về nhu cầu y tế và cứu trợ tại bản',
@@ -241,21 +239,21 @@ export const initialCommunities: Community[] = [
     pop: 490,
     hh: 104,
     desc: [
-      'Phụ thuộc vào tình trạng cầu B-2',
-      'Access entirely depends on bridge B-2'
+      'Chưa rõ đường vào và khả năng qua cầu',
+      'Access route and bridge passage are uncertain'
     ],
     facts: [
       [
-        'Phương án tiếp cận bắt buộc đi qua cầu B-2',
-        'Primary access option relies on bridge B-2',
+        'Chưa có hình tuyến xác nhận đường vào bản đi qua cầu',
+        'No mapped route confirms that access to the village crosses the bridge',
         'Mạng đường kịch bản',
         'Scenario road network'
       ],
       [
-        'Chưa rõ khả năng xe bán tải đi qua cầu sau lũ',
-        'Bridge vehicle clearance unknown post-flood',
-        'Tin hiện trường · 03:55',
-        'Field report · 03:55'
+        'Cần kiểm tra tình trạng cầu trong khu vực trước khi chọn đường vào',
+        'Check the nearby bridge before selecting an access route',
+        'Tin hiện trường, 03:55',
+        'Field report, 03:55'
       ]
     ],
     projected: { x: 392000, y: 2399000 }
@@ -268,21 +266,21 @@ export const initialCommunities: Community[] = [
     pop: 210,
     hh: 46,
     desc: [
-      'Chưa ghi nhận điểm chặn',
-      'No recorded blockage on road'
+      'Chưa có tuyến tiếp cận được đối chiếu',
+      'No access route has been checked against the road data'
     ],
     facts: [
       [
-        'Chưa ghi nhận điểm chặn trên tuyến đường liên thôn',
-        'No blockage recorded on inter-village road',
-        'Phân tích mạng đường · 09:31',
-        'Network analysis · 09:31'
+        'Bộ dữ liệu chưa có hình tuyến vào Háng Cơ. Không thể kết luận đường thông',
+        'The dataset has no mapped route to Háng Cơ. Passability cannot be inferred',
+        'Mạng đường kịch bản',
+        'Scenario road network'
       ],
       [
-        'Chưa có xác nhận toàn tuyến theo phương tiện cơ giới',
-        'No end-to-end motor vehicle verification',
-        'Cần kiểm tra trước khi điều động',
-        'Verification required prior to dispatch'
+        'Chưa có báo cáo xác minh khả năng phương tiện đi qua',
+        'No report verifies vehicle passage',
+        'Chưa có xác minh hiện trường',
+        'No field verification'
       ]
     ],
     projected: { x: 407500, y: 2396500 }
@@ -292,7 +290,9 @@ export const initialCommunities: Community[] = [
 export const initialHazards: Hazard[] = [
   {
     id: 'LS-01',
+    name: ['Điểm nghi sạt lở gần Lao Mải', 'Possible landslide near Lao Mải'],
     kind: 'landslide',
+    observation: 'suspected',
     area: 4.8,
     src: ['Ảnh radar Sentinel-1 SAR', 'Sentinel-1 SAR imagery'],
     detected: '07:05 29/09/2026',
@@ -300,47 +300,64 @@ export const initialHazards: Hazard[] = [
   },
   {
     id: 'LS-02',
+    name: ['Sạt lở trên đường chính vào Nậm Khắt', 'Landslide on the main road to Nậm Khắt'],
     kind: 'landslide',
+    observation: 'reported',
     area: 7.2,
-    src: ['Hiện trường 07:40 · SAR 06:12', 'Field 07:40 · SAR 06:12'],
+    src: ['Hiện trường 07:40, SAR 06:12', 'Field 07:40, SAR 06:12'],
     detected: '07:40 29/09/2026',
     projected: { x: 403000, y: 2401500 }
   },
   {
     id: 'LS-03',
+    name: ['Điểm nghi sạt lở gần Khau Mang', 'Possible landslide near Khau Mang'],
     kind: 'landslide',
+    observation: 'suspected',
     area: 3.1,
-    src: ['Phân tích SAR · 07:05', 'SAR analysis · 07:05'],
+    src: ['Phân tích SAR, 07:05', 'SAR analysis, 07:05'],
     detected: '07:05 29/09/2026',
     projected: { x: 394200, y: 2401800 }
   },
   {
     id: 'U-1',
-    kind: 'landslide',
-    area: 1.5,
-    src: ['Tin hiện trường · 08:58', 'Field report · 08:58'],
+    name: ['Điểm vượt khe trên đường vòng', 'Gully crossing on the bypass'],
+    kind: 'crossing',
+    observation: 'reported',
+    src: ['Tin hiện trường, 08:58', 'Field report, 08:58'],
     detected: '08:58 29/09/2026',
     projected: { x: 401500, y: 2403500 }
   },
   {
     id: 'B-2',
+    name: ['Cầu trên đường vào Khau Mang', 'Bridge on the road to Khau Mang'],
     kind: 'bridge',
-    area: 0.8,
-    src: ['Tin hiện trường · 03:55', 'Field report · 03:55'],
+    observation: 'reported',
+    src: ['Tin hiện trường, 03:55', 'Field report, 03:55'],
     detected: '03:55 29/09/2026',
     projected: { x: 395000, y: 2401000 }
   }
 ];
 
-export const initialRoadSegments: RoadSegment[] = [
+export function scenarioHazards(updated: boolean): Hazard[] {
+  if (!updated) return initialHazards;
+  return initialHazards.map(hazard => hazard.id === 'U-1'
+    ? {
+        ...hazard,
+        kind: 'landslide' as const,
+        name: ['Bùn đá tại điểm vượt khe', 'Debris at the gully crossing'],
+        src: ['Tin hiện trường, 09:40', 'Field report, 09:40'],
+        detected: '09:40 29/09/2026'
+      }
+    : hazard);
+}
+
+const roadSegments: Array<Omit<RoadSegment, 'len'>> = [
   {
     id: 'E1',
-    ref: ['Đường trục chính NR-18 (Đoạn 1)', 'Main Highway NR-18 (Seg 1)'],
+    name: ['Đường chính vào Nậm Khắt, đoạn đầu', 'Main road to Nậm Khắt, first section'],
+    scenarioRoadCode: 'NR-18',
     cls: 'primary',
-    len: 4.2,
     status: 'open',
-    fromKm: 0.0,
-    toKm: 4.2,
     points: [
       { x: 399500, y: 2397000 },
       { x: 400800, y: 2398500 },
@@ -349,17 +366,15 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E8',
-    ref: ['Đường trục chính NR-18 (Điểm sạt lở)', 'Main Highway NR-18 (Landslide Cut)'],
+    name: ['Đường chính vào Nậm Khắt, đoạn sạt lở', 'Main road to Nậm Khắt, landslide section'],
+    scenarioRoadCode: 'NR-18',
     cls: 'primary',
-    len: 3.6,
     status: 'blocked',
     hz: 'LS-02',
     note: [
       'Đất đá sạt lở taluy dương vùi lấp 80m mặt đường tại Km 6+200',
       'Landslide covered 80m of roadway at Km 6+200'
     ],
-    fromKm: 4.2,
-    toKm: 7.8,
     points: [
       { x: 402000, y: 2400000 },
       { x: 403000, y: 2401500 },
@@ -368,12 +383,10 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E9',
-    ref: ['Đường trục chính NR-18 vào Nậm Khắt', 'Main Highway NR-18 to Nậm Khắt'],
+    name: ['Đường chính vào Nậm Khắt, đoạn gần bản', 'Main road to Nậm Khắt, village section'],
+    scenarioRoadCode: 'NR-18',
     cls: 'primary',
-    len: 2.8,
     status: 'open',
-    fromKm: 7.8,
-    toKm: 10.6,
     points: [
       { x: 404200, y: 2403000 },
       { x: 405500, y: 2404500 }
@@ -381,12 +394,10 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E12',
-    ref: ['Đường sườn núi PR-7 (Đoạn sườn nam)', 'Ridge Road PR-7 (South Flank)'],
+    name: ['Đường vòng qua sườn núi, đoạn đầu', 'Mountain bypass, first section'],
+    scenarioRoadCode: 'PR-7',
     cls: 'secondary',
-    len: 5.5,
     status: 'open',
-    fromKm: 0.0,
-    toKm: 5.5,
     points: [
       { x: 399500, y: 2397000 },
       { x: 399800, y: 2399500 },
@@ -395,17 +406,15 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E13',
-    ref: ['Đường sườn núi PR-7 (Qua khe U-1)', 'Ridge Road PR-7 (Gully Crossing U-1)'],
+    name: ['Đường vòng qua sườn núi, đoạn vượt khe', 'Mountain bypass, gully crossing'],
+    scenarioRoadCode: 'PR-7',
     cls: 'secondary',
-    len: 2.7,
     status: 'uncertain',
     hz: 'U-1',
     note: [
-      'Có tin báo đất đá tại chỗ vượt khe; chưa xác nhận xe bán tải đi qua được',
-      'Debris reported at gully crossing; 4WD vehicle passage unconfirmed'
+      'Có tin báo đất đá tại chỗ vượt khe. Chưa xác nhận xe bán tải đi qua được',
+      'Debris reported at gully crossing. 4WD vehicle passage unconfirmed'
     ],
-    fromKm: 5.5,
-    toKm: 8.2,
     points: [
       { x: 400500, y: 2401800 },
       { x: 401500, y: 2403500 },
@@ -414,12 +423,9 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E14',
-    ref: ['Đường liên xã vào Nậm Khắt', 'Inter-commune Road to Nậm Khắt'],
+    name: ['Đường vòng qua sườn núi, đoạn vào bản', 'Mountain bypass, village section'],
     cls: 'secondary',
-    len: 2.9,
     status: 'open',
-    fromKm: 8.2,
-    toKm: 11.1,
     points: [
       { x: 403200, y: 2404000 },
       { x: 404500, y: 2404200 },
@@ -428,14 +434,13 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E3',
-    ref: ['Đường tỉnh lộ vào Khau Mang (Qua cầu B-2)', 'Road to Khau Mang (Bridge B-2)'],
+    name: ['Đường vào Khau Mang qua cầu', 'Road to Khau Mang via the bridge'],
     cls: 'secondary',
-    len: 6.8,
     status: 'uncertain',
     hz: 'B-2',
     note: [
-      'Cầu ngập sâu 0.6m lúc rạng sáng, dòng chảy xiết',
-      'Bridge submerged 0.6m at dawn, fast-moving flow'
+      'Tin 03:55: mặt cầu ngập khoảng 0,6 m. Chưa có cập nhật khả năng đi qua',
+      'Report at 03:55: bridge deck under about 0.6 m of water. Passability not updated'
     ],
     points: [
       { x: 399500, y: 2397000 },
@@ -446,13 +451,13 @@ export const initialRoadSegments: RoadSegment[] = [
   },
   {
     id: 'E5',
-    ref: ['Đường mòn T-5 qua Lao Mải', 'Mountain Track T-5 to Lao Mải'],
+    name: ['Đường mòn vào Lao Mải', 'Mountain track to Lao Mải'],
+    scenarioRoadCode: 'T-5',
     cls: 'track',
-    len: 5.2,
     status: 'uncertain',
     note: [
-      'Đường cấp phối sỏi đá dốc >18%, trơn trượt sau mưa lớn',
-      'Unpaved mountain track with grade >18%, slippery post-rain'
+      'Đường mòn. Chưa có kiểm tra độ dốc và khả năng phương tiện đi qua',
+      'Mountain track. Grade and vehicle passage have not been checked'
     ],
     points: [
       { x: 399500, y: 2397000 },
@@ -462,7 +467,18 @@ export const initialRoadSegments: RoadSegment[] = [
   }
 ];
 
-export function buildScenarioRoutes(segments: RoadSegment[]): Map<string, { candidate: ScenarioRoute; direct: ScenarioRoute | null }> {
+export const initialRoadSegments: RoadSegment[] = roadSegments.map(segment => ({
+  ...segment, len: Number((projectedPathLength(segment.points) / 1000).toFixed(2)),
+}));
+
+function assembleRoute(input: Omit<ScenarioRoute, 'points' | 'lengthKm' | 'status'>): ScenarioRoute {
+  const points = input.segs.flatMap((segment, index) => index ? segment.points.slice(1) : segment.points);
+  const status = input.segs.some(segment => segment.status === 'blocked') ? 'blocked'
+    : input.segs.some(segment => segment.status === 'uncertain') ? 'uncertain' : 'open';
+  return { ...input, status, points, lengthKm: Number((projectedPathLength(points) / 1000).toFixed(2)) };
+}
+
+export function buildScenarioRoutes(segments: RoadSegment[]): Map<string, ScenarioRoutePair> {
   const segMap = new Map(segments.map((s) => [s.id, s]));
 
   const segE1 = segMap.get('E1')!;
@@ -474,115 +490,50 @@ export function buildScenarioRoutes(segments: RoadSegment[]): Map<string, { cand
   const segE3 = segMap.get('E3')!;
   const segE5 = segMap.get('E5')!;
 
-  const directNK: ScenarioRoute = {
+  const directNK = assembleRoute({
     id: 'RT-NK-DIRECT',
     type: 'direct',
     communityId: 'NK',
-    name: ['Đường chính NR-18 trực tiếp', 'Direct Highway NR-18'],
-    lengthKm: 10.6,
-    status: 'blocked',
-    segs: [segE1, segE8, segE9],
-    points: [...segE1.points, ...segE8.points.slice(1), ...segE9.points.slice(1)]
-  };
+    name: ['Đường chính vào Nậm Khắt', 'Main road to Nậm Khắt'],
+    segs: [segE1, segE8, segE9]
+  });
 
-  const candidateNK: ScenarioRoute = {
+  const candidateNK = assembleRoute({
     id: 'RT-NK-CANDIDATE',
     type: 'candidate',
     communityId: 'NK',
-    name: ['Tuyến đề xuất sườn núi PR-7', 'Suggested Ridge Route PR-7'],
-    lengthKm: 11.1,
-    status: segE13.status === 'blocked' ? 'blocked' : 'uncertain',
-    segs: [segE12, segE13, segE14],
-    points: [...segE12.points, ...segE13.points.slice(1), ...segE14.points.slice(1)]
-  };
+    name: ['Đường vòng qua sườn núi', 'Mountain bypass'],
+    segs: [segE12, segE13, segE14]
+  });
 
-  const routes = new Map<string, { candidate: ScenarioRoute; direct: ScenarioRoute | null }>();
+  const routes = new Map<string, ScenarioRoutePair>();
   routes.set('NK', { candidate: candidateNK, direct: directNK });
 
-  // Other communities fallback routes
+  // Routes with road geometry matching the mapped access path.
   routes.set('KM', {
-    candidate: {
+    candidate: assembleRoute({
       id: 'RT-KM-CANDIDATE',
       type: 'candidate',
       communityId: 'KM',
-      name: ['Tuyến qua cầu B-2', 'Route via Bridge B-2'],
-      lengthKm: 6.8,
-      status: segE3.status,
-      segs: [segE3],
-      points: segE3.points
-    },
+      name: ['Đường vào Khau Mang qua cầu', 'Road to Khau Mang via the bridge'],
+      segs: [segE3]
+    }),
     direct: null
   });
 
   routes.set('LM', {
-    candidate: {
+    candidate: assembleRoute({
       id: 'RT-LM-CANDIDATE',
       type: 'candidate',
       communityId: 'LM',
-      name: ['Đường mòn T-5', 'Track T-5'],
-      lengthKm: 5.2,
-      status: segE5.status,
-      segs: [segE5],
-      points: segE5.points
-    },
+      name: ['Đường mòn vào Lao Mải', 'Mountain track to Lao Mải'],
+      segs: [segE5]
+    }),
     direct: null
   });
 
-  routes.set('NL', {
-    candidate: {
-      id: 'RT-NL-CANDIDATE',
-      type: 'candidate',
-      communityId: 'NL',
-      name: ['Tuyến tránh vùng trũng', 'Riparian Bypass Route'],
-      lengthKm: 5.8,
-      status: 'uncertain',
-      segs: [segE1],
-      points: [{ x: 399500, y: 2397000 }, { x: 402000, y: 2398000 }, { x: 404000, y: 2398500 }]
-    },
-    direct: null
-  });
-
-  routes.set('PH', {
-    candidate: {
-      id: 'RT-PH-CANDIDATE',
-      type: 'candidate',
-      communityId: 'PH',
-      name: ['Đường đèo Púng Hốc', 'Púng Hốc Pass Road'],
-      lengthKm: 8.5,
-      status: 'uncertain',
-      segs: [segE12],
-      points: [{ x: 399500, y: 2397000 }, { x: 399800, y: 2401000 }, { x: 398000, y: 2405000 }]
-    },
-    direct: null
-  });
-
-  routes.set('TP', {
-    candidate: {
-      id: 'RT-TP-CANDIDATE',
-      type: 'candidate',
-      communityId: 'TP',
-      name: ['Tuyến vòng phía tây', 'Western Perimeter Route'],
-      lengthKm: 7.9,
-      status: 'uncertain',
-      segs: [segE3],
-      points: [{ x: 399500, y: 2397000 }, { x: 395000, y: 2398000 }, { x: 392000, y: 2399000 }]
-    },
-    direct: null
-  });
-
-  routes.set('HC', {
-    candidate: {
-      id: 'RT-HC-CANDIDATE',
-      type: 'candidate',
-      communityId: 'HC',
-      name: ['Đường liên thôn Háng Cơ', 'Háng Cơ Village Road'],
-      lengthKm: 8.2,
-      status: 'open',
-      segs: [segE1],
-      points: [{ x: 399500, y: 2397000 }, { x: 403000, y: 2396800 }, { x: 407500, y: 2396500 }]
-    },
-    direct: null
-  });
+  // These communities have findings, but no route geometry backed by matching road segments.
+  for (const id of ['NL', 'PH', 'TP', 'HC']) routes.set(id, { candidate: null, direct: null });
 
   return routes;
 }

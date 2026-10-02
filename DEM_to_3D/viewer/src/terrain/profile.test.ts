@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createSurfaceProfile, fillNodataGaps, type ProfileSample } from './profile';
+import { createSurfaceProfile, createRouteProfile, fillNodataGaps, type ProfileSample } from './profile';
+import { profileGrade, profileMetrics } from './profileMetrics';
 import type { TerrainTile } from './analysisTerrain';
 import type { TerrainMetadata } from '../types/terrain';
 
@@ -32,7 +33,7 @@ describe('createSurfaceProfile', () => {
     expect(profile.segments).toEqual([[0, 1, 2, 3]]);
   });
 
-  it('marks a bilinear neighborhood containing NaN as nodata but bridges the gap with interpolated samples', () => {
+  it('preserves missing DEM instead of manufacturing a continuous profile', () => {
     const grid = new Float32Array([
       0, 10, 20,
       10, Number.NaN, 30,
@@ -41,15 +42,13 @@ describe('createSurfaceProfile', () => {
 
     const profile = createSurfaceProfile(grid, metadata, { x: 5, y: 25 }, { x: 25, y: 5 }, 10);
 
-    // Raw nodata runs are gap-filled so the line stays connected…
-    expect(profile.samples.every((sample) => sample.elevation !== undefined)).toBe(true);
-    expect(profile.segments).toEqual([[0, 1, 2, 3]]);
-    // …but the bridged samples are flagged for distinct rendering.
-    expect(profile.samples.map((sample) => Boolean(sample.gapFilled))).toEqual([false, true, true, false]);
+    expect(profile.samples.map((sample) => sample.elevation)).toEqual([0, undefined, undefined, 40]);
+    expect(profile.segments).toEqual([[0], [3]]);
     expect(profile.samples[0]!.elevation).toBe(0);
     expect(profile.samples[3]!.elevation).toBe(40);
-    expect(profile.samples[1]!.elevation).toBeGreaterThan(0);
-    expect(profile.samples[1]!.elevation).toBeLessThan(40);
+    expect(profileMetrics(profile).complete).toBe(false);
+    expect(profileMetrics(profile).ascent).toBe(0);
+    expect(profileGrade(profile, 0)).toBeUndefined();
   });
 
   it('keeps an edge pixel valid when only zero-weight neighbors are nodata', () => {
@@ -58,11 +57,38 @@ describe('createSurfaceProfile', () => {
     expect(profile.samples[0].elevation).toBe(0);
   });
 
-  it('marks samples outside the pixel-center grid domain as nodata instead of clamping them to the edge, then bridges from the nearest valid sample', () => {
+  it('keeps samples outside the pixel-center grid domain missing', () => {
     const grid = new Float32Array([0, 10, 20, 10, 20, 30, 20, 30, 40]);
     const profile = createSurfaceProfile(grid, metadata, { x: 26, y: 15 }, { x: 26, y: 15 }, 10);
     expect(profile.samples[0].elevation).toBeUndefined();
     expect(profile.samples[0].gapFilled).toBeUndefined();
+  });
+});
+
+describe('route geometry and terrain metrics', () => {
+  it('follows bends instead of the endpoint chord, retaining signed rise and fall', () => {
+    const grid = new Float32Array([0, 10, 20, 10, 20, 30, 20, 30, 40]);
+    const profile = createRouteProfile(grid, metadata, [{ x: 5, y: 25 }, { x: 25, y: 25 }, { x: 25, y: 5 }, { x: 5, y: 5 }], 10);
+    expect(profile.length).toBe(60);
+    expect(profile.samples[2].projected).toEqual({ x: 25, y: 25 });
+    expect(profile.samples[4].projected).toEqual({ x: 25, y: 5 });
+    expect(profileMetrics(profile)).toMatchObject({ min: 0, max: 40, ascent: 40, descent: 20, coverage: 1, complete: true });
+    expect(profileGrade(profile, 0)).toBe(100);
+    expect(profileGrade(profile, 6)).toBe(-100);
+  });
+
+  it('does not extrapolate missing terrain beyond the end of the DEM', () => {
+    const profile = createRouteProfile(new Float32Array(9).fill(30), metadata, [{ x: 5, y: 25 }, { x: 45, y: 25 }], 10);
+    expect(profile.samples.map(s => s.elevation)).toEqual([30, 30, 30, undefined, undefined]);
+    expect(profileMetrics(profile)).toMatchObject({ coverage: 0.5, complete: false, ascent: 0, descent: 0 });
+    expect(profileGrade(profile, 2)).toBeUndefined();
+  });
+
+  it('handles repeated vertices without a divide-by-zero or a false elevation jump', () => {
+    const profile = createRouteProfile(new Float32Array(9).fill(30), metadata, [{ x: 5, y: 25 }, { x: 5, y: 25 }, { x: 25, y: 25 }], 10);
+    expect(profile.length).toBe(20);
+    expect(profile.samples.map(s => s.distance)).toEqual([0, 10, 20]);
+    expect(profileGrade(profile, 1)).toBe(0);
   });
 });
 
