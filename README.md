@@ -1,5 +1,29 @@
 # UNISEC_Demo
 
+## Web DEAR
+
+Web ứng phó sạt lở/lũ quét tại `DEM_to_3D/viewer`. Hiện chạy bằng dữ liệu mô phỏng Chế Tạo, chưa có backend. Bắt đầu đọc [tài liệu dự án](docs/README.md); luồng trình diễn ở [demo.md](docs/operations/demo.md).
+
+Cần Node.js/npm và Python 3.11 trở lên:
+
+```powershell
+cd DEM_to_3D/viewer
+npm ci
+npm run dev
+```
+
+Các lệnh chạy, test và build tự kiểm tra rồi chép ba file địa hình chuẩn từ `DEM_to_3D/` vào `public/terrain/`. File nguồn đã có trong Git; không cần thêm các bản chép hoặc thư mục `dist` vào commit.
+
+```powershell
+npm run typecheck
+npm test
+npm run test:dataset
+npm run build
+python -m http.server 5211 --bind 127.0.0.1 --directory dist
+```
+
+Mở bản build tại `http://127.0.0.1:5211`. Nền EOX cần Internet; địa hình và dữ liệu tình huống dùng file local. Cả 2D và 3D hiện đều cần WebGL. Phạm vi đang chạy và phần còn thiếu nằm trong [công việc SIC](docs/tasks/sic-2026.md).
+
 ## DEM_to_3D — Chuyển DEM thành mô hình 3D
 
 Chạy trong `DEM_to_3D/`:
@@ -21,16 +45,16 @@ row-major, `NaN` là nodata.
 
 ```powershell
 # Kiểm tra metadata + byte length của grid
-python DEM_to_3D/terrain_contract.py DEM_to_3D/viewer/public/terrain.terrain.json
+python DEM_to_3D/terrain_contract.py DEM_to_3D/che_tao_v2_tex.terrain.json
 
 # Chạy viewer (sau khi npm install)
 cd DEM_to_3D/viewer
 npm run dev
 ```
 
-Viewer React/Vite tải song song GLB/JSON/BIN, kiểm tra schema/shape/byte
-length, dựng OrbitControls + BVH raycast, và hiển thị projected/WGS84, cao độ
-thực cùng pixel gần nhất khi hover. Xem chi tiết contract tại
+Viewer React/Vite kiểm tra metadata, tải GLB/BIN, kiểm tra schema/shape/byte
+length và dựng MapControls + BVH raycast. Web DEAR hiển thị địa hình, đường,
+địa bàn và tuyến trên bản đồ; thông tin chi tiết mở khi chọn đối tượng. Xem contract tại
 [`DEM_to_3D/docs/terrain-asset-contract-v1.md`](DEM_to_3D/docs/terrain-asset-contract-v1.md).
 
 #### Upload và ghép nhiều mảnh terrain
@@ -104,8 +128,8 @@ DEM_to_3D/che_tao_v2_tex.grid.bin       # lưới cao độ Float32 LE row-major
 DEM_to_3D/che_tao_v2_tex.terrain.json   # metadata: CRS, world_origin, shape grid
 ```
 
-Mở viewer (`cd DEM_to_3D/viewer && npm run dev`), chọn chế độ `Single model` rồi
-tải cả 3 file trên vào panel upload.
+Web tự mở bộ Chế Tạo khi khởi động. Để đổi mô hình, mở **Cài đặt hiển thị**, chọn
+**Mô hình địa hình**, chọn chế độ `Single model` rồi tải cả ba file của mô hình mới.
 
 ### Tái tạo asset cho xã khác
 
