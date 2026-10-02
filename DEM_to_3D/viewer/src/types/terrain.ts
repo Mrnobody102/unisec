@@ -65,10 +65,13 @@ export type TerrainMetadata = {
   mesh?: MeshMetadata;
 };
 
-export type LoadedTerrain = {
+export type TerrainData = {
   metadata: TerrainMetadata;
   grid: Float32Array;
   gridBuffer: ArrayBuffer;
+};
+
+export type LoadedTerrain = TerrainData & {
   gltf: import('three/examples/jsm/loaders/GLTFLoader.js').GLTF;
 };
 

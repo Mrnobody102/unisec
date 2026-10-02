@@ -4,6 +4,7 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type {
   Community,
+  AnalysisArea,
   Hazard,
   RoadSegment,
   ScenarioRoute
@@ -17,7 +18,8 @@ export type OverlayHit =
   | { type: 'community'; id: string }
   | { type: 'road'; id: string }
   | { type: 'hazard'; id: string }
-  | { type: 'poi'; id: string };
+  | { type: 'poi'; id: string }
+  | { type: 'aoi'; id: string };
 
 type ScenarioOverlayOptions = {
   metadata: TerrainMetadata;
@@ -25,6 +27,7 @@ type ScenarioOverlayOptions = {
   communities: Community[];
   hazards: Hazard[];
   roads: RoadSegment[];
+  aoi?: AnalysisArea;
   selectedRoute: ScenarioRoute | null;
   selectedCommunityId: string | null;
   selectedObjectId: string | null;
@@ -70,6 +73,25 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
 
   const rootGroup = new THREE.Group();
   rootGroup.name = 'dear-scenario-overlays';
+
+  if (options.aoi && layers.aoi) {
+    const positions: number[] = [];
+    for (let i = 1; i < options.aoi.points.length; i++) {
+      const dense = interpolateSegmentPoints(options.aoi.points[i - 1], options.aoi.points[i], 80);
+      if (i > 1) dense.shift();
+      for (const point of dense) {
+        const scene = projectedToScene(metadata, point, getSurfaceElevation(grid, metadata, point.x, point.y) + 5);
+        positions.push(scene.x, scene.y, scene.z);
+      }
+    }
+    const geometry = new LineGeometry(); geometry.setPositions(positions);
+    const selected = selectedObjectId === `aoi:${options.aoi.id}`;
+    const material = new LineMaterial({ color: selected ? 0x167b66 : 0x85aa9d, linewidth: selected ? 2 : 1.5,
+      dashed: true, dashSize: 120, gapSize: 100, depthTest: false, transparent: true, opacity: selected ? 0.9 : 0.6 });
+    material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
+    const outline = new Line2(geometry, material); outline.computeLineDistances();
+    outline.renderOrder = 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
+  }
 
   // 1. Roads Layer
   if (layers.roads || (layers.route && selectedRoute)) {
@@ -117,7 +139,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       };
       const hasWarning = layers.status && road.status !== 'open';
       // A blue casing under warning dashes looks like two overlapping routes.
-      addLine((routeVisible || isRoadSelected) && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + 2, true);
+      addLine(isRoadSelected ? roadColors.inspectedCasing : routeVisible && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + (isRoadSelected ? 4 : 2), true);
       addLine(lineColor, lineWidth, false);
     });
 

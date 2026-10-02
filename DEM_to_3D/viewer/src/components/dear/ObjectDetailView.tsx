@@ -1,39 +1,51 @@
 import React from 'react';
 import type {
   Community,
+  AnalysisArea,
   Hazard,
+  IncidentEvidence,
   Locale,
   RoadSegment,
-  ScenarioRoutePair
+  ScenarioRoutePair,
+  ResponseSite
 } from '../../types/dear';
 import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
+import { areaM2, withinArea } from '../../terrain/areaGeometry';
 
 type Props = {
   objectId: string;
+  aoi: AnalysisArea;
   parentName?: string;
   locale: Locale;
   roads: RoadSegment[];
   hazards: Hazard[];
+  evidence: IncidentEvidence[];
   communities: Community[];
+  responseSites: ResponseSite[];
   routes: Map<string, ScenarioRoutePair>;
   onBack: () => void;
   onSelectCommunity: (id: string) => void;
   onOpenEvidence: (id: string) => void;
+  onSelectObject: (id: string) => void;
   onOpenPriority: () => void;
 };
 
 export const ObjectDetailView: React.FC<Props> = ({
   objectId,
+  aoi,
   parentName,
   locale,
   roads,
   hazards,
+  evidence,
   communities,
+  responseSites,
   routes,
   onBack,
   onSelectCommunity,
   onOpenEvidence,
+  onSelectObject,
   onOpenPriority
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
@@ -43,11 +55,21 @@ export const ObjectDetailView: React.FC<Props> = ({
   const road = kind === 'road' ? roads.find((r) => r.id === id) : undefined;
   const hazard = kind === 'hazard' ? hazards.find((h) => h.id === id) : undefined;
   const relatedHazard = road?.hz ? hazards.find(item => item.id === road.hz) : undefined;
+  const hazardRecord = hazard ? evidence.find(item => item.hazardId === hazard.id) : undefined;
+  const affectedRoads = hazard ? roads.filter(item => item.hz === hazard.id) : [];
+  const site = kind === 'poi' ? responseSites.find(item => item.id === id) : undefined;
+  const affectedCommunities = road ? communities.filter(community => {
+    const pair = routes.get(community.id);
+    return [pair?.candidate, pair?.direct].some(route => route?.segs.some(segment => segment.id === road.id));
+  }) : [];
+  const observation = road?.note ? t(...road.note).replace(/^(Tin|Report at) \d{2}:\d{2}:\s*/i, '') : null;
+  const roadObservation = observation ? observation[0].toLocaleUpperCase() + observation.slice(1) : null;
 
   let title = id;
   if (kind === 'road' && road) title = t(road.name[0], road.name[1]);
   else if (kind === 'hazard' && hazard) title = t(hazard.name[0], hazard.name[1]);
-  else if (kind === 'poi') title = t('Điểm tập kết Nậm Kha', 'Nậm Kha staging point');
+  else if (site) title = t(site.name[0], site.name[1]);
+  else if (kind === 'aoi' && id === aoi.id) title = t(...aoi.name);
 
   return (
     <>
@@ -55,106 +77,63 @@ export const ObjectDetailView: React.FC<Props> = ({
         {parentName && <button className="text-button back panel-parent" onClick={onBack}>
           <UiIcon name="back" size={16} /> {parentName}
         </button>}
-        <div className="eyebrow">{kind === 'road' ? t('Đoạn đường', 'Road segment') : kind === 'hazard' ? t('Điểm ảnh hưởng', 'Affected site') : t('Khu vực', 'Location')}</div>
         <div className="detail-title"><h1 id="object-title">{title}</h1><button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
+        {road && <div className="detail-priority"><StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>{road.status === 'blocked' ? t('Bị chặn', 'Blocked') : road.status === 'uncertain' ? t('Chưa xác minh khả năng đi qua', 'Passability unverified') : t('Chưa ghi nhận chặn', 'No blockage reported')}</StatusText></div>}
+        {road && <p className="small object-length">{t('Chiều dài đoạn', 'Segment length')}: {road.len} km</p>}
       </div>
 
       <div className="sidebar-scroll">
+        {kind === 'aoi' && <>
+          <dl className="incident-facts"><div><dt>{t('Diện tích đánh giá', 'Assessment area')}</dt><dd>{(areaM2(aoi.points) / 1000000).toFixed(1)} km²</dd></div><div><dt>{t('Địa bàn trong vùng', 'Communities in area')}</dt><dd>{communities.filter(community => withinArea(community.projected, aoi.points)).length}</dd></div></dl>
+          <section className="workflow-section"><h3>{t('Phạm vi tổng hợp', 'Assessment scope')}</h3><p>{t('Tổng hợp địa bàn và mạng đường trong ranh giới này. Phạm vi dữ liệu độ cao có thể nhỏ hơn.', 'Summarizes communities and the road network within this boundary. Elevation coverage may be smaller.')}</p><button className="button primary" onClick={onOpenPriority}>{t('Xem các địa bàn', 'Review communities')}</button></section>
+          <section className="workflow-section"><h3>{t('Nguồn ranh giới', 'Boundary source')}</h3><p>{t(...aoi.source)}</p></section>
+        </>}
         {kind === 'road' && road && (
-          <section className="workflow-section" style={{ borderTop: 0 }}>
-            <StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>
-              {road.status === 'blocked'
-                ? t('Bị chặn', 'Blocked')
-                : road.status === 'uncertain'
-                ? t('Chưa rõ', 'Uncertain')
-                : t('Chưa ghi nhận chặn', 'No blockage reported')}
-            </StatusText>
-
-            <dl className="incident-facts" style={{ marginTop: '14px' }}>
-              <div>
-                <dt>{t('Chiều dài đoạn', 'Segment length')}</dt>
-                <dd>{road.len} km</dd>
-              </div>
-              {relatedHazard && <div>
-                <dt>{t('Ảnh hưởng liên quan', 'Related hazard')}</dt>
-                <dd>{relatedHazard
-                  ? t(relatedHazard.name[0], relatedHazard.name[1])
-                  : road.hz || t('Chưa ghi nhận', 'None')}</dd>
-              </div>}
-            </dl>
-
-            {relatedHazard && <p className="small">
-              {t('Căn cứ', 'Source')}: {t(relatedHazard.src[0], relatedHazard.src[1])}. {t('Ghi nhận', 'Observed')}: {relatedHazard.detected}.
-            </p>}
-
-            <p style={{ marginTop: '10px' }}>
-              {road.note
-                ? t(road.note[0], road.note[1])
-                : t(
-                    'Chưa có báo cáo xác minh khả năng phương tiện đi qua đoạn này.',
-                    'Vehicle access on this segment has not been verified.'
-                  )}
-            </p>
-
-            {road.hz && (
-              <button
-                className="button soft"
-                style={{ width: '100%', marginTop: '14px' }}
-                onClick={() => onOpenEvidence(road.hz!)}
-              >
-                {t('Xem nguồn thông tin', 'View evidence')}
-              </button>
-            )}
-
-            <details className="feature-reference"><summary>{t('Thông tin tham chiếu', 'Reference information')}</summary><dl className="incident-facts">
-              <div><dt>{t('Mã đoạn', 'Segment ID')}</dt><dd>{id}</dd></div>
-              {road.scenarioRoadCode && <div><dt>{t('Mã tuyến mô phỏng', 'Simulated route code')}</dt><dd>{road.scenarioRoadCode}</dd></div>}
-            </dl></details>
-            {communities.some(c => { const pair = routes.get(c.id); return pair?.candidate?.segs.some(s => s.id === road.id) || pair?.direct?.segs.some(s => s.id === road.id); }) && <section className="workflow-section" style={{ marginTop: '16px' }}>
-              <h3>{t('Địa bàn có tuyến đi qua', 'Communities using this segment')}</h3>
-              {communities
-                .filter((c) => {
-                  const pair = routes.get(c.id);
-                  if (!pair) return false;
-                  return (
-                    pair.candidate?.segs.some((s) => s.id === road.id) ||
-                    pair.direct?.segs.some((s) => s.id === road.id)
-                  );
-                })
-                .map((c) => (
-                  <button
-                    key={c.id}
-                    className="object-row"
-                    onClick={() => onSelectCommunity(c.id)}
-                  >
-                    <strong>{c.name}</strong>
-                  </button>
-                ))}
+          <>
+            <section className="object-observation">
+              <div className="section-line"><h3>{t('Ghi nhận', 'Observation')}</h3>{relatedHazard && <time>{relatedHazard.detected}</time>}</div>
+              <p>{roadObservation || t('Chưa có báo cáo về khả năng phương tiện đi qua.', 'Vehicle passage has not been reported.')}</p>
+            </section>
+            <section className="workflow-section">
+              <h3>{t('Việc cần xử lý', 'Next action')}</h3>
+              <p className="object-next-action">{road.status === 'blocked' ? t('Xem phương án tránh đoạn bị chặn.', 'Review an option avoiding the blocked section.')
+                : relatedHazard?.kind === 'bridge' ? t('Kiểm tra mực nước, mặt cầu và khả năng qua cầu.', 'Check water level, bridge deck and passage conditions.')
+                : t('Xác minh tình trạng đường trước khi sử dụng tuyến.', 'Verify road conditions before using this route.')}</p>
+              {affectedCommunities.map(community => <button key={community.id} className="object-row" onClick={() => onSelectCommunity(community.id)}>
+                <span><strong>{community.name}</strong><small>{t('Xem phương án tiếp cận', 'Review access options')}</small></span>
+              </button>)}
+            </section>
+            {relatedHazard && <section className="workflow-section object-source-section">
+              <h3>{t('Nguồn ghi nhận', 'Observation source')}</h3>
+              <p>{t(...relatedHazard.src)}</p>
+              {road.hz && <button className="text-button" onClick={() => onOpenEvidence(road.hz!)}>{t('Xem bản ghi', 'View source record')}</button>}
             </section>}
-          </section>
+          </>
         )}
 
         {kind === 'hazard' && hazard && (
           <section className="workflow-section" style={{ borderTop: 0 }}>
-            <StatusText tone="warning" icon="uncertain">
-              {hazard.kind === 'landslide'
+            <StatusText tone={affectedRoads.some(item => item.status === 'blocked') ? 'critical' : 'warning'} icon={affectedRoads.some(item => item.status === 'blocked') ? 'blocked' : 'uncertain'}>
+              {affectedRoads.some(item => item.status === 'blocked') ? t('Có đoạn đường bị chặn', 'Related road section blocked') : hazard.kind === 'landslide'
                 ? hazard.observation === 'reported' ? t('Sạt lở được báo từ hiện trường', 'Landslide reported from field') : t('Nghi sạt lở, cần xác minh', 'Suspected landslide, verification needed')
                 : hazard.kind === 'bridge' ? t('Cầu cần xác minh', 'Bridge to verify')
                 : hazard.kind === 'crossing' ? t('Điểm vượt khe cần xác minh', 'Gully crossing to verify')
                 : t('Nghi ngập', 'Flood indication')}
             </StatusText>
+            {hazardRecord && <p className="hazard-observation">{t(...hazardRecord.finding)}</p>}
 
             <dl className="incident-facts" style={{ marginTop: '14px' }}>
-              <div><dt>{t('Mã tham chiếu', 'Reference ID')}</dt><dd>{id}</dd></div>
-              {(hazard.kind === 'landslide' || hazard.kind === 'flood') && <div>
+              {hazard.area != null && (hazard.kind === 'landslide' || hazard.kind === 'flood') && <div>
                 <dt>{t('Diện tích ước tính', 'Estimated area')}</dt>
-                <dd>{hazard.area == null ? t('Chưa xác định', 'Unknown') : `${hazard.area} ha`}</dd>
+                <dd>{hazard.area} ha</dd>
               </div>}
               <div>
-                <dt>{t('Thời điểm phát hiện', 'Detected')}</dt>
+                <dt>{t('Ghi nhận ảnh hưởng', 'Impact recorded')}</dt>
                 <dd style={{ fontSize: '13px' }}>{hazard.detected}</dd>
               </div>
             </dl>
+
+            {affectedRoads.length > 0 && <section className="workflow-section"><h3>{t('Đoạn đường liên quan', 'Related road sections')}</h3>{affectedRoads.map(item => <button className="object-row impact-row" key={item.id} onClick={() => onSelectObject(`road:${item.id}`)}><span><strong>{t(...item.name)}</strong><small>{item.len} km</small></span><StatusText tone={item.status === 'blocked' ? 'critical' : item.status === 'uncertain' ? 'warning' : 'neutral'} icon={item.status === 'blocked' ? 'blocked' : item.status === 'uncertain' ? 'uncertain' : undefined}>{item.status === 'blocked' ? t('Bị chặn', 'Blocked') : item.status === 'uncertain' ? t('Chưa rõ', 'Uncertain') : t('Chưa ghi nhận chặn', 'No blockage reported')}</StatusText></button>)}</section>}
 
             <p style={{ marginTop: '8px' }}>
               {t('Nguồn căn cứ: ', 'Source basis: ')}
@@ -166,26 +145,28 @@ export const ObjectDetailView: React.FC<Props> = ({
               style={{ width: '100%', marginTop: '14px' }}
               onClick={() => onOpenEvidence(hazard.id)}
             >
-              {t('Chi tiết nguồn', 'Source details')}
+              {t('Xem bản ghi', 'View source record')}
             </button>
           </section>
         )}
 
-        {kind === 'poi' && (
+        {kind === 'poi' && site && (
           <section className="workflow-section" style={{ borderTop: 0 }}>
             <p>
-              {t(
+              {site.kind === 'hlz' ? t('Điểm hạ cánh trực thăng', 'Helicopter landing zone') : t(
                 'Điểm xuất phát của các phương án tiếp cận trong sự kiện thung lũng Nậm Kha.',
                 'Starting staging point for all access options in the Nậm Kha incident.'
               )}
             </p>
-            <button
+            {site.kind === 'hlz' && <dl className="incident-facts"><div><dt>{t('Trạng thái khảo sát', 'Survey status')}</dt><dd>{site.assessment === 'assessed' ? t('Đã khảo sát', 'Assessed') : site.assessment === 'unavailable' ? t('Không sử dụng', 'Unavailable') : t('Vị trí đề xuất', 'Proposed location')}</dd></div><div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(site.source[0], site.source[1])}</dd></div><div><dt>{t('Cập nhật', 'Updated')}</dt><dd>{new Date(site.observedAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</dd></div></dl>}
+            {site.kind === 'hlz' && site.assessment === 'candidate' && <section className="workflow-section"><h3>{t('Cần khảo sát', 'Survey required')}</h3><p>{t('Độ phẳng, vật cản và hướng tiếp cận trước khi xác nhận điểm hạ cánh.', 'Ground levelness, obstacles and approach direction before confirming a landing site.')}</p></section>}
+            {site.kind === 'staging' && <button
               className="button primary"
               style={{ width: '100%', marginTop: '16px' }}
               onClick={onOpenPriority}
             >
               {t('Chọn địa bàn cần tiếp cận', 'Choose destination community')}
-            </button>
+            </button>}
           </section>
         )}
 

@@ -9,9 +9,11 @@ import type {
 import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { RouteOption } from '../../features/routes/RouteOption';
+import type { ResponseAssessment } from '../../features/incident/responseAssessment';
 
 type Props = {
   community: Community;
+  assessment: ResponseAssessment;
   terrainCovered: boolean | null;
   hazards: Hazard[];
   locale: Locale;
@@ -30,6 +32,7 @@ type Props = {
 
 export const CommunityDetailView: React.FC<Props> = ({
   community,
+  assessment,
   terrainCovered,
   hazards,
   locale,
@@ -101,14 +104,14 @@ export const CommunityDetailView: React.FC<Props> = ({
           </StatusText>
         </div>
 
-        <p className="sidebar-intro">{t(community.desc[0], community.desc[1])}</p>
+        <p className="sidebar-intro">{t(...assessment.reason)}</p>
 
         <div className="decision-tabs" role="group">
           <button
             aria-pressed={detailTab === 'decision'}
             onClick={() => onChangeDetailTab('decision')}
           >
-            {t('Tổng hợp', 'Summary')}
+            {t('Tiếp cận', 'Access')}
           </button>
           <button
             aria-pressed={detailTab === 'route'}
@@ -120,7 +123,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             aria-pressed={detailTab === 'evidence'}
             onClick={() => onChangeDetailTab('evidence')}
           >
-            {t('Nguồn', 'Sources')}
+            {t('Căn cứ', 'Evidence')}
           </button>
         </div>
       </div>
@@ -147,17 +150,19 @@ export const CommunityDetailView: React.FC<Props> = ({
 
               <strong>{t(activeRoute.name[0], activeRoute.name[1])}</strong>
               <p className="route-summary-distance">{activeRoute.lengthKm} km {t('từ điểm tập kết Nậm Kha', 'from Nậm Kha staging point')}</p>
+              {activeRoute.eta && <p className="route-travel-estimate">{activeRoute.eta.minMinutes} {t('đến', 'to')} {activeRoute.eta.maxMinutes} {t('phút', 'min')}<small>{t('Giả định thông tuyến', 'Assuming passage')}</small></p>}
             </div> : <div className="decision-route">
               <h3>{t('Chưa có tuyến để đánh giá', 'No mapped access route')}</h3>
               <p>{t('Chưa đủ dữ liệu đường để gợi ý tuyến cho địa bàn này.', 'Road data is insufficient to suggest an access route for this community.')}</p>
             </div>}
 
+            <p className="assessment-action"><strong>{t('Việc cần xử lý', 'Next action')}</strong><span>{t(...assessment.nextAction)}</span></p>
             <button
               className="button primary"
               style={{ width: '100%', marginTop: '16px' }}
               onClick={() => onChangeDetailTab(activeRoute ? 'route' : 'evidence')}
             >
-              {activeRoute ? t('Kiểm tra tuyến', 'Review route') : t('Xem thông tin địa bàn', 'Review community findings')}
+              {activeRoute ? t('Xem các tuyến', 'Review routes') : t('Xem thông tin địa bàn', 'Review community findings')}
             </button>
 
             {accessIssues.length > 0 && <section className="access-issues" aria-label={t('Đoạn ảnh hưởng tiếp cận', 'Access constraints')}>
@@ -200,6 +205,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             <p className={`route-caution ${isBlocked ? 'is-blocked' : ''}`}>
               {warningText}
             </p>
+            {activeRoute.eta && <p className="route-estimate-basis">{activeRoute.eta.mode === 'foot' ? t('Ước tính đi bộ, 3 đến 5 km/h.', 'Walking estimate, 3 to 5 km/h.') : t('Ước tính xe bán tải 4x4 theo tốc độ giả định của bộ dữ liệu.', '4WD pickup estimate using dataset speed assumptions.')} {t('Chưa tính thời gian dừng kiểm tra.', 'Inspection stops are not included.')}</p>}
 
             <div className="route-tools">
               <button
@@ -245,6 +251,7 @@ export const CommunityDetailView: React.FC<Props> = ({
 
         {detailTab === 'evidence' && (
           <div>
+            <section className="assessment-basis"><h3>{t('Căn cứ đánh giá', 'Assessment basis')}</h3><p>{t('Tình trạng các đoạn đường được đối chiếu với báo cáo ảnh hưởng và tình trạng liên lạc.', 'Road-section conditions are checked against impact reports and community contact.')}</p></section>
             <dl className="community-reference">
               <div><dt>{t('Dân số tham chiếu', 'Baseline population')}</dt><dd>{community.pop} {t('người', 'residents')}, {community.hh} {t('hộ', 'households')}</dd></div>
               <div><dt>{t('Địa hình tại địa bàn', 'Local terrain')}</dt><dd>{terrainCovered === false ? t('Ngoài phạm vi DEM', 'Outside DEM coverage') : terrainCovered === true ? t('Có dữ liệu độ cao', 'Elevation data available') : t('Chưa đánh giá', 'Not assessed')}</dd></div>
@@ -264,9 +271,9 @@ export const CommunityDetailView: React.FC<Props> = ({
               ))}
             </section>
 
-            {activeRoute && <section className="workflow-section">
-              <h3>{t('Căn cứ tuyến tiếp cận', 'Route evidence')}</h3>
-              {activeRoute.segs
+            {accessIssues.length > 0 && <section className="workflow-section">
+              <h3>{t('Báo cáo ảnh hưởng tiếp cận', 'Access impact reports')}</h3>
+              {accessIssues
                 .filter((s) => s.hz)
                 .map((seg) => (
                   <button

@@ -69,6 +69,37 @@ export type Hazard = {
   projected: { x: number; y: number };
 };
 
+export type ResponseSite = {
+  id: string;
+  kind: 'staging' | 'hlz';
+  name: [vi: string, en: string];
+  projected: { x: number; y: number };
+  assessment: 'candidate' | 'assessed' | 'unavailable';
+  observedAt: string;
+  source: [vi: string, en: string];
+};
+
+export type IncidentEvidence = {
+  id: string;
+  hazardId: string;
+  type: 'field-report' | 'image-analysis';
+  observedAt: string;
+  receivedAt: string;
+  source: [vi: string, en: string];
+  finding: [vi: string, en: string];
+  limitation: [vi: string, en: string];
+};
+
+export type AnalysisArea = {
+  id: string;
+  name: [vi: string, en: string];
+  points: Array<{ x: number; y: number }>;
+  observedAt: string;
+  source: [vi: string, en: string];
+};
+
+export type RoutingAssumptions = Record<RoadSegment['cls'], [minKmh: number, maxKmh: number]>;
+
 export type ScenarioRoute = {
   id: string;
   type: 'candidate' | 'direct';
@@ -78,6 +109,7 @@ export type ScenarioRoute = {
   status: RoadStatus;
   segs: RoadSegment[];
   points: Array<{ x: number; y: number }>;
+  eta?: { minMinutes: number; maxMinutes: number; mode: 'pickup' | 'foot' };
 };
 
 export type ScenarioRoutePair = {

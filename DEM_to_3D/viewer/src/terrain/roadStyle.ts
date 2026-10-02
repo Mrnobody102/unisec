@@ -6,5 +6,6 @@ export const roadColors = {
   blocked: '#ef4444',
   uncertain: '#f59e0b',
   selectedCasing: '#0763ad',
+  inspectedCasing: '#ffffff',
   neutralCasing: '#243f45'
 } as const;

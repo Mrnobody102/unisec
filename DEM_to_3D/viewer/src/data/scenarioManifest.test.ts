@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import manifestJson from '../../public/scenarios/che-tao/v0.1/manifest.json';
+import manifestJson from '../../public/scenarios/che-tao/v0.2/manifest.json';
 import terrainMetadata from '../../public/terrain/che_tao_v2_tex.terrain.json';
 import {
   buildScenarioRoutes, cheTaoIncident, initialCommunities,

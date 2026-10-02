@@ -11,17 +11,19 @@ type Props = {
   locale: Locale; mapMode: '3d' | '2d';
   onToggleMapMode: () => void; onZoomIn: () => void; onZoomOut: () => void;
   onResetView: () => void; onOpenLayers: () => void;
-  layersOpen: boolean; layers: Record<string, boolean>; hasSelectedRoute: boolean; hasSelectedRoad: boolean; hazards: Hazard[];
+  layersOpen: boolean; layers: Record<string, boolean>; hasSelectedRoute: boolean; hazards: Hazard[];
+  hasHLZData?: boolean;
 };
 
-export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hasSelectedRoad, hazards }: Props): JSX.Element {
+export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const routeVisible = hasSelectedRoute && layers.route;
   const legend: Array<{ kind: string; label: string; symbol?: MapSymbolName }> = [];
   if (layers.roads) legend.push({ kind: 'network', label: t('Chưa ghi nhận chặn', 'No blockage reported') });
+  if (layers.aoi) legend.push({ kind: 'aoi', label: t('Vùng đánh giá', 'Assessment area') });
   if ((layers.roads || routeVisible) && layers.status) legend.push({ kind: 'blocked', label: t('Đường bị chặn', 'Blocked road') }, { kind: 'uncertain', label: t('Đường cần xác minh', 'Road to verify') });
-  if (routeVisible || (hasSelectedRoad && layers.roads)) legend.push({ kind: 'selected', label: routeVisible ? t('Tuyến đang xem', 'Selected route') : t('Đoạn đang chọn', 'Selected segment') });
+  if (routeVisible) legend.push({ kind: 'selected', label: t('Tuyến đang xem', 'Selected route') });
   if (layers.communities) legend.push({ kind: 'community', symbol: 'community', label: t('Cộng đồng', 'Community') }, { kind: 'priority', symbol: 'community', label: t('Ưu tiên cứu hộ', 'Rescue priority') });
   if (layers.landslide && hazards.some(h => h.kind === 'landslide' && h.observation === 'reported')) legend.push({ kind: 'landslide', symbol: 'landslide', label: t('Điểm sạt lở', 'Reported landslide') });
   if (layers.landslide && hazards.some(h => h.kind === 'landslide' && h.observation === 'suspected')) legend.push({ kind: 'suspected', symbol: 'landslide', label: t('Nghi sạt lở', 'Suspected landslide') });
@@ -29,7 +31,8 @@ export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoom
   if (layers.status && hazards.some(h => h.kind === 'crossing')) legend.push({ kind: 'crossing', symbol: 'crossing', label: t('Điểm vượt khe', 'Gully crossing') });
   if (layers.flood && hazards.some(h => h.kind === 'flood')) legend.push({ kind: 'flood', symbol: 'flood', label: t('Điểm nghi ngập', 'Possible flood site') });
   if (layers.staging) legend.push({ kind: 'staging', symbol: 'staging', label: t('Điểm tập kết', 'Staging point') });
-  const visibleLegend = legendExpanded ? legend : legend.filter(item => ['blocked', 'uncertain', 'selected', 'priority', 'landslide', 'suspected'].includes(item.kind));
+  if (layers.hlz && hasHLZData) legend.push({ kind: 'hlz', symbol: 'hlz', label: t('Vị trí hạ cánh đề xuất', 'Proposed landing site') });
+  const visibleLegend = legendExpanded ? legend : legend.filter(item => ['blocked', 'uncertain', 'selected', 'priority', 'landslide', 'suspected', 'hlz'].includes(item.kind));
 
   return <>
     <button className="button map-layer-trigger map-layer-launcher" data-map-layers-trigger aria-expanded={layersOpen} aria-controls="map-layers-panel" onClick={onOpenLayers}>

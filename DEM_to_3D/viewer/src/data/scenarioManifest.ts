@@ -13,7 +13,8 @@ export type ScenarioManifest = {
   snapshotAt: string;
   crs: string;
   counts: { communities: number; roads: number; hazards: number };
-  terrain: { glb: ScenarioAsset; grid: ScenarioAsset; metadata: ScenarioAsset };
+  terrain: { glb: ScenarioAsset; grid: ScenarioAsset; metadata: ScenarioAsset; image?: ScenarioAsset };
+  workspace?: ScenarioAsset;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -29,10 +30,11 @@ function requireCount(value: unknown, field: string): number {
   return value as number;
 }
 
-function requireAsset(value: unknown, field: string): ScenarioAsset {
+function requireAsset(value: unknown, field: string, business = false): ScenarioAsset {
   if (!isRecord(value)) throw new Error(`Invalid manifest: ${field}`);
   const url = requireString(value.url, `${field}.url`);
-  if (!/^\/terrain\/[a-zA-Z0-9._-]+$/.test(url) || url.includes('..')) {
+  const validUrl = business ? /^\/scenarios\/[a-zA-Z0-9._/-]+\/incident\.json$/.test(url) : /^\/terrain\/[a-zA-Z0-9._-]+$/.test(url);
+  if (!validUrl || url.includes('..')) {
     throw new Error(`Invalid manifest: ${field}.url`);
   }
   const byteLength = requireCount(value.byteLength, `${field}.byteLength`);
@@ -66,14 +68,16 @@ export function validateScenarioManifest(value: unknown): ScenarioManifest {
   const terrain = {
     glb: requireAsset(value.terrain.glb, 'terrain.glb'),
     grid: requireAsset(value.terrain.grid, 'terrain.grid'),
-    metadata: requireAsset(value.terrain.metadata, 'terrain.metadata')
+    metadata: requireAsset(value.terrain.metadata, 'terrain.metadata'),
+    ...(value.terrain.image ? { image: requireAsset(value.terrain.image, 'terrain.image') } : {})
   };
-  if (new Set(Object.values(terrain).map(asset => asset.url)).size !== 3) {
+  if (new Set(Object.values(terrain).map(asset => asset.url)).size !== Object.keys(terrain).length) {
     throw new Error('Invalid manifest: duplicate terrain URLs');
   }
   return {
     schemaVersion: 1, datasetVersion, dataKind: value.dataKind,
-    reviewStatus: value.reviewStatus, incidentId, snapshotAt, crs, counts, terrain
+    reviewStatus: value.reviewStatus, incidentId, snapshotAt, crs, counts, terrain,
+    ...(value.workspace ? { workspace: requireAsset(value.workspace, 'workspace', true) } : {})
   };
 }
 

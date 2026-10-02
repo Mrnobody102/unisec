@@ -39,6 +39,7 @@ DEM_to_3D/viewer/public/**/*.terrain.json
 DEM_to_3D/viewer/public/*.glb
 DEM_to_3D/viewer/public/*.grid.bin
 DEM_to_3D/viewer/public/*.terrain.json
+DEM_to_3D/viewer/public/terrain/*.image.png
 
 # Debug/temp artifacts
 .debug-canvas.png

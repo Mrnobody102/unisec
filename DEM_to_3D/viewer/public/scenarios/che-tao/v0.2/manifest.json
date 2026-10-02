@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "datasetVersion": "che-tao-2026-09-29-v0.2",
+  "dataKind": "synthetic",
+  "reviewStatus": "draft",
+  "incidentId": "INC-2026-0412",
+  "snapshotAt": "2026-09-29T09:31:00+07:00",
+  "crs": "EPSG:32648",
+  "counts": {
+    "communities": 7,
+    "roads": 8,
+    "hazards": 5
+  },
+  "terrain": {
+    "glb": {
+      "url": "/terrain/che_tao_v2_tex.glb",
+      "byteLength": 16356112,
+      "sha256": "0eba1fbceb6e0d0829e7ef696d482e1ac226d3585dfce5fbb1aca03b6e161278"
+    },
+    "grid": {
+      "url": "/terrain/che_tao_v2_tex.grid.bin",
+      "byteLength": 1686720,
+      "sha256": "6e677a28f3316a7ebee2fa1e644c400089270259933db41b56c1be71515a9312"
+    },
+    "image": {
+      "url": "/terrain/che_tao_v2_tex.image.png",
+      "byteLength": 497264,
+      "sha256": "80b2b91e14c642f7e4d68ca5b47cb7db210c48a1ed05c43d15fecd7b3bd8752d"
+    },
+    "metadata": {
+      "url": "/terrain/che_tao_v2_tex.terrain.json",
+      "byteLength": 2342,
+      "sha256": "f0d6832eec28625e22712ec079b4d98e5f824684ed83fd18a376ccbda0022241"
+    }
+  },
+  "workspace": {
+    "url": "/scenarios/che-tao/v0.2/incident.json",
+    "byteLength": 24611,
+    "sha256": "c3f0d55e227427b78b5ea62a20070284b023b069fdf43aa2b07de80be3f0eba1"
+  }
+}

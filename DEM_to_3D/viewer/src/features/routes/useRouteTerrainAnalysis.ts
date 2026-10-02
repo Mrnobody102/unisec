@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import type { LoadedModel } from '../../types/terrain';
+import type { LoadedModel, TerrainData } from '../../types/terrain';
 import type { ScenarioRoute } from '../../types/dear';
 import { selectAnalysisTerrain } from '../../terrain/analysisTerrain';
 import { createRouteProfile } from '../../terrain/profile';
 import { projectedToScene } from '../../terrain/coordinate';
 
 export function useRouteTerrainAnalysis(
-  models: LoadedModel[],
+  models: Array<LoadedModel | TerrainData>,
   activeRoute: ScenarioRoute | null,
   focusDistance: number | null
 ) {

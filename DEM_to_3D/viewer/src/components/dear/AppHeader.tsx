@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { FontChoice, Locale } from '../../types/dear';
+import type { FontChoice, IncidentModel, Locale } from '../../types/dear';
+import type { IncidentPacket } from '../../data/incidentPacket';
 import { NotificationPopover } from './NotificationPopover';
 import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 
 type Props = {
   locale: Locale;
+  incident: IncidentModel;
+  report: IncidentPacket['report'];
+  dataAvailable: boolean;
   theme: 'light' | 'dark';
   fontChoice: FontChoice;
   updated: boolean;
@@ -13,6 +17,7 @@ type Props = {
   onToggleLocale: () => void;
   onChangeFontChoice: (font: FontChoice) => void;
   onOpenAlerts: () => void;
+  onOpenIncident: () => void;
   onOpenData: () => void;
   onOpenUpload: () => void;
   activeModelName?: string;
@@ -20,6 +25,9 @@ type Props = {
 
 export const AppHeader: React.FC<Props> = ({
   locale,
+  incident,
+  report,
+  dataAvailable,
   theme,
   fontChoice,
   updated,
@@ -28,6 +36,7 @@ export const AppHeader: React.FC<Props> = ({
   onToggleLocale,
   onChangeFontChoice,
   onOpenAlerts,
+  onOpenIncident,
   onOpenData,
   onOpenUpload,
   activeModelName
@@ -51,6 +60,7 @@ export const AppHeader: React.FC<Props> = ({
   }, [prefOpen]);
 
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
+  const snapshot = updated ? incident.asOfUpdated : incident.asOf;
 
   return (
     <header className="app-header">
@@ -70,15 +80,16 @@ export const AppHeader: React.FC<Props> = ({
         <div className="header-data">
           <span className="update-label">
             {t('Dữ liệu đến', 'Data as of')}{' '}
-            <strong><time dateTime={updated ? '2026-09-29T09:45:00+07:00' : '2026-09-29T09:31:00+07:00'}>
-              {t('29/09/2026', '29 Sep 2026')}, {updated ? '09:45' : '09:31'}
-            </time></strong>
+            {dataAvailable && <strong><time dateTime={snapshot}>
+              {new Date(snapshot).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </time></strong>}
           </span>
         </div>
 
         <div className="notification-anchor" ref={notificationsRef}>
         <button
           className="icon-button notification-button"
+          disabled={!dataAvailable}
           onClick={() => { setPrefOpen(false); setNotificationsOpen(open => !open); }}
           aria-expanded={notificationsOpen}
           aria-controls="incident-notifications"
@@ -92,11 +103,12 @@ export const AppHeader: React.FC<Props> = ({
           </svg>
           {!alertRead && <span className="unread-indicator" />}
         </button>
-        {notificationsOpen && <NotificationPopover locale={locale} updated={updated} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
+        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} updated={updated} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
         </div>
 
         <button
           className="button header-data-button"
+          disabled={!dataAvailable}
           onClick={onOpenData}
           title={t('Thông tin dữ liệu', 'Data information')}
         >

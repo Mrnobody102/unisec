@@ -1,5 +1,5 @@
 import { LoadingManager } from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import type { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedModel, TerrainMetadata } from '../types/terrain';
 import { assetUrlMatchesFilename, validateGltfMeshCounts } from './loadTerrain';
 import { disposeObjectResources } from './raycast';
@@ -145,6 +145,7 @@ export function releaseUploadedModels(models: readonly LoadedModel[]): void {
 }
 
 export async function loadUploadedModels(files: readonly File[]): Promise<LoadedModel[]> {
+  const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
   const pairs = pairUploadedFiles(files);
   const loaded: LoadedModel[] = [];
   try {

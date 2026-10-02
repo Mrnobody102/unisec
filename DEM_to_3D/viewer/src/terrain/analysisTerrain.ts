@@ -13,12 +13,14 @@ export type AnalysisTerrain = {
   /** Grid of the reference tile (kept for single-tile compatibility). */
   grid: Float32Array;
   gridBuffer: ArrayBuffer;
-  gltf: import('three/examples/jsm/loaders/GLTFLoader.js').GLTF;
+  gltf?: import('three/examples/jsm/loaders/GLTFLoader.js').GLTF;
   /** All analyzable tiles sharing the reference CRS (single model = one entry). */
   tiles: TerrainTile[];
 };
 
-function isAnalyzable(model: LoadedModel): boolean {
+type AnalysisInput = Pick<LoadedModel, 'metadata' | 'grid' | 'gridBuffer'> & { gltf?: LoadedModel['gltf'] };
+
+function isAnalyzable(model: AnalysisInput): boolean {
   return Boolean(model.metadata?.analysis_supported && model.grid && model.gridBuffer);
 }
 
@@ -68,7 +70,7 @@ export function sampleTiles(tiles: readonly TerrainTile[], x: number, y: number)
  * profiles can cross tile boundaries; otherwise the first analyzable model wins
  * (previous behavior).
  */
-export function selectAnalysisTerrain(models: readonly LoadedModel[]): AnalysisTerrain | null {
+export function selectAnalysisTerrain(models: readonly AnalysisInput[]): AnalysisTerrain | null {
   const reference = models.find(isAnalyzable);
   if (!reference?.metadata || !reference.grid || !reference.gridBuffer) return null;
   const referenceMetadata: TerrainMetadata = reference.metadata;

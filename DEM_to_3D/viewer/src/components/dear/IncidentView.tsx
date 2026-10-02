@@ -11,9 +11,10 @@ type Props = {
   onSelectCommunity: (id: string) => void;
   onOpenTimeline: () => void; onOpenData: () => void;
   onOpenCommunities: () => void; onOpenRoads: () => void;
+  onOpenArea: () => void;
 };
 
-export function IncidentView({ incident, locale, updated, communities, routes, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads }: Props): JSX.Element {
+export function IncidentView({ incident, locale, updated, communities, routes, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads, onOpenArea }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const asOf = updated ? incident.asOfUpdated : incident.asOf;
   const priorityCommunities = communities.filter(community => community.prio === 1);
@@ -23,7 +24,7 @@ export function IncidentView({ incident, locale, updated, communities, routes, b
       <h1>{t('Sạt lở, nguy cơ lũ quét', 'Landslide and flash-flood risk')}</h1>
       <div className="incident-status">
         <StatusText tone="selected">{t('Đang đánh giá ứng phó', 'Response assessment')}</StatusText>
-        <span className="small">{t('Nậm Kha, 29/09/2026', 'Nậm Kha, 29 Sep 2026')}</span>
+        <button className="text-button incident-area-link" onClick={onOpenArea}>{t('Vùng đánh giá Nậm Kha', 'Nậm Kha assessment area')}</button>
       </div>
     </div>
     <div className="sidebar-scroll">
@@ -47,7 +48,8 @@ export function IncidentView({ incident, locale, updated, communities, routes, b
             </button>;
           })}
         </div>
-        <button className="button primary incident-community-action" onClick={onOpenCommunities}>{t('Xem tất cả địa bàn', 'View all communities')}</button>
+        {priorityCommunities[0] && <button className="button primary incident-community-action" onClick={() => onSelectCommunity(priorityCommunities[0].id)}>{t('Đánh giá tiếp cận', 'Assess access')}: {priorityCommunities[0].name}</button>}
+        <button className="text-button incident-all-communities" onClick={onOpenCommunities}>{t('Danh sách địa bàn', 'Community list')} ({communities.length})</button>
       </section>
       <section className="workflow-section incident-data-summary">
         <dl>

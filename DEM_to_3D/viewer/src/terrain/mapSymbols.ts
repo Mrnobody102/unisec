@@ -5,6 +5,7 @@ export const mapSymbolPaths = {
   bridge: 'M3 18h18M5 18V8m14 10V8M3 10h18M5 14c4 0 4-5 7-5s3 5 7 5M9 14v4m6-4v4',
   crossing: 'M3 7h7l4 10h7M3 17h7l4-10h7M12 3v3m0 12v3',
   staging: 'M5 21V3h14l-3 5 3 5H5M2 21h7',
+  hlz: 'M7 6v12M17 6v12M7 12h10',
   flood: 'M3 8c3-4 3 4 6 0s3 4 6 0 3 4 6 0M3 14c3-4 3 4 6 0s3 4 6 0 3 4 6 0M3 20c3-4 3 4 6 0s3 4 6 0 3 4 6 0'
 } as const;
 

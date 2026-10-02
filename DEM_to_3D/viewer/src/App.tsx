@@ -24,19 +24,17 @@ import { SegmentAnalysisDialog } from './components/dear/SegmentAnalysisDialog';
 import { UiIcon } from './components/dear/UiIcon';
 
 import { ModelUploadPanel, type UploadMode } from './components/ModelUploadPanel';
-import { TerrainViewer, type ViewControls } from './components/TerrainViewer';
+import type { ViewControls } from './components/TerrainViewer';
+import { Map2D } from './features/map/Map2D';
+import { Map3DBoundary } from './features/map/Map3DBoundary';
 import { useRouteTerrainAnalysis } from './features/routes/useRouteTerrainAnalysis';
 import { usePanelScroll } from './shared/hooks/usePanelScroll';
 import { useModalFocus } from './shared/hooks/useModalFocus';
+import { PanelResizeHandle } from './shared/ui/PanelResizeHandle';
+import { useIncidentWorkspace } from './features/incident/useIncidentWorkspace';
 
-import {
-  cheTaoIncident,
-  initialCommunities,
-  initialHazards,
-  scenarioHazards,
-  initialRoadSegments,
-  buildScenarioRoutes
-} from './data/cheTaoScenario';
+import { preparedPacket } from './data/cheTaoScenario';
+import { preparedRepository, apiRepository, workspaceDataSource } from './data/ScenarioRepository';
 import type {
   ActiveDialog,
   CommunityFilter,
@@ -45,18 +43,19 @@ import type {
   ImpactTab,
   Locale,
   RoadFilter,
-  RoadSegment,
   WorkspaceView
 } from './types/dear';
-import type { LoadedModel, TerrainPoint } from './types/terrain';
+import type { LoadedModel, TerrainData, TerrainPoint } from './types/terrain';
 
 import { createGeographicPlacements } from './terrain/geographic';
 import { loadUploadedModels, releaseUploadedModels, selectUploadedFiles } from './terrain/upload';
 import { initialMeasurementState, measurementReducer } from './state/measurementStore';
-import { loadTerrain } from './terrain/loadTerrain';
+import { loadTerrain, loadTerrainData } from './terrain/loadTerrain';
 import { loadScenarioManifest, type ScenarioManifest } from './data/scenarioManifest';
 import type { OverlayHit } from './terrain/scenarioOverlays';
 import { sampleTiles } from './terrain/analysisTerrain';
+
+const TerrainViewer = React.lazy(() => import('./components/TerrainViewer').then(module => ({ default: module.TerrainViewer })));
 
 export default function App(): JSX.Element {
   // Scenario & DEAR Workspace State
@@ -82,7 +81,8 @@ export default function App(): JSX.Element {
   const [impactTab, setImpactTab] = useState<ImpactTab>('roads');
   const [communityQuery, setCommunityQuery] = useState('');
   const [updated, setUpdated] = useState<boolean>(false);
-  const hazards = useMemo(() => scenarioHazards(updated), [updated]);
+  const [packet, setPacket] = useState(preparedPacket);
+  const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
   const [alertRead, setAlertRead] = useState<boolean>(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
   const [mapMode, setMapMode] = useState<'3d' | '2d'>('2d');
@@ -94,6 +94,7 @@ export default function App(): JSX.Element {
   const [showCustomUploadModal, setShowCustomUploadModal] = useState<boolean>(false);
 
   const [layers, setLayers] = useState<Record<string, boolean>>({
+    aoi: true,
     imagery: true,
     context: true,
     hillshade: true,
@@ -103,12 +104,9 @@ export default function App(): JSX.Element {
     status: true,
     communities: true,
     staging: true,
+    hlz: true,
     route: true
   });
-
-  // Dynamic Road Segments & Routes
-  const [roads, setRoads] = useState<RoadSegment[]>(initialRoadSegments);
-  const routes = useMemo(() => buildScenarioRoutes(roads), [roads]);
 
   // Models & Terrain State
   const [models, setModels] = useState<LoadedModel[]>([]);
@@ -118,8 +116,12 @@ export default function App(): JSX.Element {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [startupError, setStartupError] = useState(false);
+  const [snapshotReady, setSnapshotReady] = useState(false);
   const [startupAttempt, setStartupAttempt] = useState(0);
   const [scenarioManifest, setScenarioManifest] = useState<ScenarioManifest | null>(null);
+  const [defaultTerrainData, setDefaultTerrainData] = useState<TerrainData | null>(null);
+  const [terrain3DBusy, setTerrain3DBusy] = useState(false);
+  const map2DViewport = useRef<{ center: [number, number]; zoom: number } | null>(null);
   const modelsRef = useRef<LoadedModel[]>([]);
   const [measurement, dispatchMeasurement] = useReducer(measurementReducer, initialMeasurementState);
   const [focusDistance, setFocusDistance] = useState<number | null>(null);
@@ -184,34 +186,35 @@ export default function App(): JSX.Element {
       try {
         setUploadBusy(true);
         setStartupError(false);
-        const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.1/manifest.json');
-        if (manifest.incidentId !== cheTaoIncident.id ||
-            manifest.snapshotAt !== cheTaoIncident.asOf ||
-            manifest.counts.communities !== initialCommunities.length ||
-            manifest.counts.roads !== initialRoadSegments.length ||
-            manifest.counts.hazards !== initialHazards.length) {
+        setSnapshotReady(false);
+        const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.2/manifest.json');
+        if (!manifest.workspace) throw new Error('Incident packet is missing from the manifest');
+        const dataSource = await workspaceDataSource();
+        const repository = import.meta.env.VITE_DEAR_API_BASE || dataSource === 'api'
+          ? apiRepository(import.meta.env.VITE_DEAR_API_BASE || '', preparedPacket.incident.id)
+          : preparedRepository(manifest.workspace);
+        const nextPacket = await repository.load();
+        if (manifest.incidentId !== nextPacket.incident.id ||
+            manifest.snapshotAt !== nextPacket.incident.asOf ||
+            manifest.crs !== nextPacket.crs ||
+            manifest.datasetVersion !== nextPacket.datasetVersion ||
+            manifest.dataKind !== nextPacket.dataKind || manifest.reviewStatus !== nextPacket.reviewStatus ||
+            manifest.counts.communities !== nextPacket.communities.length ||
+            manifest.counts.roads !== nextPacket.roads.length ||
+            manifest.counts.hazards !== nextPacket.hazards.length) {
           throw new Error('Scenario data does not match its manifest');
         }
-        const defaultTerrain = await loadTerrain({
-          glb: manifest.terrain.glb.url,
+        const defaultTerrain = await loadTerrainData({
           metadata: manifest.terrain.metadata.url,
           grid: manifest.terrain.grid.url
         });
-        const loadedModel: LoadedModel = {
-          id: 'che-tao-default',
-          name: 'che_tao_v2_tex.glb',
-          metadata: defaultTerrain.metadata,
-          grid: defaultTerrain.grid,
-          gridBuffer: defaultTerrain.gridBuffer,
-          gltf: defaultTerrain.gltf,
-          objectUrls: []
-        };
         if (cancelled || `${defaultTerrain.metadata.crs.authority}:${defaultTerrain.metadata.crs.code}` !== manifest.crs) {
-          releaseUploadedModels([loadedModel]);
           if (cancelled) return;
           throw new Error('Terrain CRS does not match its manifest');
         }
-        replaceModels([loadedModel]);
+        setPacket(nextPacket);
+        setDefaultTerrainData(defaultTerrain);
+        setSnapshotReady(true);
         setScenarioManifest(manifest);
         setUploadedNames(['che_tao_v2_tex.glb']);
       } catch (err: unknown) {
@@ -227,8 +230,28 @@ export default function App(): JSX.Element {
     };
   }, [replaceModels, startupAttempt]);
 
+  const handle3DUnavailable = useCallback(() => {
+    setMapMode('2d');
+    showToast(['Không mở được 3D. Đã chuyển sang bản đồ 2D.', '3D unavailable. Switched to the 2D map.']);
+  }, [showToast]);
+
+  useEffect(() => {
+    if (mapMode !== '3d' || models.length || !defaultTerrainData || !scenarioManifest) return;
+    let cancelled = false;
+    setTerrain3DBusy(true);
+    void loadTerrain({
+      glb: scenarioManifest.terrain.glb.url, metadata: scenarioManifest.terrain.metadata.url, grid: scenarioManifest.terrain.grid.url
+    }, defaultTerrainData).then(terrain => {
+      const model: LoadedModel = { id: 'che-tao-default', name: 'che_tao_v2_tex.glb', ...terrain, objectUrls: [] };
+      if (cancelled) { releaseUploadedModels([model]); return; }
+      replaceModels([model]);
+    }).catch(() => { if (!cancelled) handle3DUnavailable(); }).finally(() => { if (!cancelled) setTerrain3DBusy(false); });
+    return () => { cancelled = true; setTerrain3DBusy(false); };
+  }, [mapMode, models.length, defaultTerrainData, scenarioManifest, replaceModels, handle3DUnavailable]);
+
   const clearUploadedModels = useCallback((): void => {
     replaceModels([]);
+    setDefaultTerrainData(null);
     setUploadedNames([]);
     setUploadError(null);
     setShowProfile(false);
@@ -250,6 +273,7 @@ export default function App(): JSX.Element {
           throw reason;
         }
         replaceModels(next);
+        setDefaultTerrainData(null);
         setUploadedNames(selectUploadedFiles(files, uploadMode).map((file) => file.name));
         dispatchMeasurement({ type: 'clear' });
         setFocusDistance(null);
@@ -315,8 +339,8 @@ export default function App(): JSX.Element {
 
   // Selected Community & Route objects
   const selectedCommunity = useMemo(
-    () => (selectedCommunityId ? initialCommunities.find((c) => c.id === selectedCommunityId) || null : null),
-    [selectedCommunityId]
+    () => (selectedCommunityId ? communities.find((c) => c.id === selectedCommunityId) || null : null),
+    [selectedCommunityId, communities]
   );
 
   const selectedRoutePair = useMemo(
@@ -331,17 +355,20 @@ export default function App(): JSX.Element {
       : selectedRoutePair.candidate;
   }, [selectedRoutePair, selectedRouteType]);
 
-  const scenarioTerrainCompatible = Boolean(models[0]?.grid &&
-    models[0]?.metadata?.crs.authority.toUpperCase() === 'EPSG' &&
-    models[0]?.metadata?.crs.code === 32648 && models[0]?.metadata?.crs.linear_unit === 'metre');
+  const mapTerrain = useMemo(() => models[0]?.metadata && models[0]?.grid && models[0]?.gridBuffer
+    ? { metadata: models[0].metadata, grid: models[0].grid, gridBuffer: models[0].gridBuffer } : defaultTerrainData, [models, defaultTerrainData]);
+  const scenarioTerrainCompatible = Boolean(mapTerrain?.grid &&
+    mapTerrain.metadata.crs.authority.toUpperCase() === 'EPSG' &&
+    mapTerrain.metadata.crs.code === 32648 && mapTerrain.metadata.crs.linear_unit === 'metre');
+  const analysisModels = useMemo(() => models.length ? models : defaultTerrainData ? [defaultTerrainData] : [], [models, defaultTerrainData]);
   const { analysisTerrain, routeProfile, focusPoint } =
-    useRouteTerrainAnalysis(models, scenarioTerrainCompatible ? activeRoute : null, focusDistance);
+    useRouteTerrainAnalysis(analysisModels, scenarioTerrainCompatible ? activeRoute : null, focusDistance);
   const communityTerrainCoverage = useMemo(() => {
     if (!analysisTerrain || analysisTerrain.metadata.crs.authority.toUpperCase() !== 'EPSG' || analysisTerrain.metadata.crs.code !== 32648) return null;
-    return new Map(initialCommunities.map(community => [community.id,
+    return new Map(communities.map(community => [community.id,
       sampleTiles(analysisTerrain.tiles, community.projected.x, community.projected.y).elevation !== undefined
     ]));
-  }, [analysisTerrain]);
+  }, [analysisTerrain, communities]);
 
   const selectCommunity = useCallback((id: string) => {
     if (!selectedCommunityId) setCommunityOrigin({ view, objectId: selectedObjectId });
@@ -379,21 +406,6 @@ export default function App(): JSX.Element {
   const handleSimulateUpdate = useCallback(() => {
     if (updated) return;
     setUpdated(true);
-    setRoads((prevRoads) =>
-      prevRoads.map((r) => {
-        if (r.id === 'E13') {
-          return {
-            ...r,
-            status: 'blocked',
-            note: [
-              'Quan sát 09:40, nhận 09:45: Đất đá tràn khe vùi lấp đường, xe không thể qua',
-              'Observed 09:40, received 09:45: Gully crossing blocked by debris, impassable'
-            ]
-          };
-        }
-        return r;
-      })
-    );
     setActiveDialog(null);
     showToast(['Đã cập nhật bản đồ', 'Map updated']);
   }, [showToast, updated]);
@@ -410,6 +422,9 @@ export default function App(): JSX.Element {
     <div ref={workspaceRef} className="workspace" data-mobile={mobileView}>
       <AppHeader
         locale={locale}
+        incident={incident}
+        report={packet.report}
+        dataAvailable={snapshotReady}
         theme={theme}
         fontChoice={fontChoice}
         updated={updated}
@@ -422,6 +437,7 @@ export default function App(): JSX.Element {
           setActiveDialog('alerts');
         }}
         onOpenData={() => setActiveDialog('data')}
+        onOpenIncident={() => { setAlertRead(true); setActiveDialog(null); changeView('incident'); }}
         onOpenUpload={() => setShowCustomUploadModal(true)}
         activeModelName={models[0]?.name}
       />
@@ -429,17 +445,21 @@ export default function App(): JSX.Element {
       <main className="work-area">
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
         <aside ref={sidebarRef} className="sidebar" aria-label={locale === 'vi' ? 'Thông tin ứng phó' : 'Response information'}>
-          {selectedObjectId ? (
+          {!snapshotReady ? <div className="sidebar-top"><h1>{startupError ? (locale === 'vi' ? 'Chưa tải được dữ liệu' : 'Dataset unavailable') : (locale === 'vi' ? 'Đang tải dữ liệu' : 'Loading dataset')}</h1>{startupError && <button className="button soft" onClick={() => setStartupAttempt(attempt => attempt + 1)}>{locale === 'vi' ? 'Thử lại' : 'Retry'}</button>}</div> : selectedObjectId ? (
             <ObjectDetailView
               objectId={selectedObjectId}
+              aoi={packet.aoi}
               parentName={selectedCommunity?.name}
               locale={locale}
               roads={roads}
               hazards={hazards}
-              communities={initialCommunities}
+              evidence={evidence}
+              communities={communities}
+              responseSites={responseSites}
               routes={routes}
               onBack={() => setSelectedObjectId(null)}
               onSelectCommunity={selectCommunity}
+              onSelectObject={inspectObject}
               onOpenEvidence={(hzId) => {
                 setEvidenceModalId(hzId);
                 setActiveDialog('evidence');
@@ -450,6 +470,7 @@ export default function App(): JSX.Element {
             <CommunityDetailView
               community={selectedCommunity}
               terrainCovered={communityTerrainCoverage?.get(selectedCommunity.id) ?? null}
+              assessment={assessments.get(selectedCommunity.id)!}
               hazards={hazards}
               locale={locale}
               detailTab={detailTab}
@@ -477,10 +498,11 @@ export default function App(): JSX.Element {
             />
           ) : view === 'incident' ? (
             <IncidentView
-              incident={cheTaoIncident}
+              incident={incident}
+              onOpenArea={() => inspectObject(`aoi:${packet.aoi.id}`)}
               locale={locale}
               updated={updated}
-              communities={initialCommunities}
+              communities={communities}
               routes={routes}
               blockedRoadCount={roads.filter(road => road.status === 'blocked').length}
               uncertainRoadCount={roads.filter(road => road.status === 'uncertain').length}
@@ -506,7 +528,7 @@ export default function App(): JSX.Element {
             />
           ) : (
             <CommunityListView
-              communities={initialCommunities}
+              communities={communities}
               locale={locale}
               filter={communityFilter}
               query={communityQuery}
@@ -518,8 +540,22 @@ export default function App(): JSX.Element {
           )}
         </aside>
 
+        <PanelResizeHandle locale={locale}/>
+
         <section className="map-area" aria-label={locale === 'vi' ? 'Bản đồ ứng phó' : 'Response map'} data-profile={showProfile}>
-          <TerrainViewer
+          {mapMode === '2d' ? <Map2D
+            terrain={mapTerrain}
+            profileOpen={showProfile}
+            imageUrl={defaultTerrainData ? scenarioManifest?.terrain.image?.url : undefined}
+            viewportRef={map2DViewport}
+            locale={locale}
+            focusPoint={showProfile ? focusPoint : null}
+            profileMetadata={analysisTerrain?.metadata}
+            onBasemapState={setBasemapState}
+            scenarioProps={snapshotReady && scenarioTerrainCompatible ? { aoi: packet.aoi, communities: communities, responseSites: responseSites, hazards, roads, selectedRoute: activeRoute, selectedCommunityId, selectedObjectId, layers } : undefined}
+            onSelectOverlayHit={handleOverlayHit}
+            viewControlRef={viewControlRef}
+          /> : <Map3DBoundary onUnavailable={handle3DUnavailable}><React.Suspense fallback={<div className="map-load-state" role="status">{locale === 'vi' ? 'Đang mở địa hình 3D' : 'Opening 3D terrain'}</div>}><TerrainViewer
             models={models}
             geographicPlacements={geographicPlacements}
             measureMode={false}
@@ -531,8 +567,10 @@ export default function App(): JSX.Element {
             theme={theme}
             locale={locale}
             onBasemapState={setBasemapState}
-            scenarioProps={scenarioTerrainCompatible ? {
-              communities: initialCommunities,
+            scenarioProps={snapshotReady && scenarioTerrainCompatible ? {
+              aoi: packet.aoi,
+              communities: communities,
+              responseSites: responseSites,
               hazards,
               roads: roads,
               selectedRoute: activeRoute,
@@ -542,12 +580,13 @@ export default function App(): JSX.Element {
             } : undefined}
             onSelectOverlayHit={handleOverlayHit}
             viewControlRef={viewControlRef}
-          />
+            onUnavailable={handle3DUnavailable}
+          /></React.Suspense></Map3DBoundary>}
 
-          {models.length === 0 && uploadBusy && (
+          {((!mapTerrain && uploadBusy) || (mapMode === '3d' && terrain3DBusy)) && (
             <div className="map-load-state" role="status">{locale === 'vi' ? 'Đang mở bản đồ địa hình' : 'Opening terrain map'}</div>
           )}
-          {models.length === 0 && startupError && (
+          {!mapTerrain && startupError && (
             <div className="map-load-state" role="alert">
               <strong>{locale === 'vi' ? 'Không mở được bản đồ địa hình' : 'Terrain map could not be opened'}</strong>
               <button className="button soft" onClick={() => setStartupAttempt(attempt => attempt + 1)}>
@@ -574,15 +613,16 @@ export default function App(): JSX.Element {
             layers={scenarioTerrainCompatible ? layers : {}}
             hazards={scenarioTerrainCompatible ? hazards : []}
             hasSelectedRoute={scenarioTerrainCompatible && Boolean(activeRoute)}
-            hasSelectedRoad={scenarioTerrainCompatible && Boolean(selectedObjectId?.startsWith('road:'))}
+            hasHLZData={scenarioTerrainCompatible && responseSites.some(site => site.kind === 'hlz')}
           />
-          <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} />
+          <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh Sentinel-2 và địa hình Chế Tạo', 'Sentinel-2 imagery and Chế Tạo terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
 
           {activeDialog === 'layers' && (
             <LayersDialog
               locale={locale}
               layers={layers}
-              hasFloodData={initialHazards.some(hazard => hazard.kind === 'flood')}
+              hasFloodData={hazards.some(hazard => hazard.kind === 'flood')}
+              hasHLZData={responseSites.some(site => site.kind === 'hlz')}
               hasSelectedRoute={Boolean(activeRoute)}
               hasIncidentLayers={scenarioTerrainCompatible}
               onToggleLayer={(layerId) => setLayers((prev) => ({ ...prev, [layerId]: !prev[layerId] }))}
@@ -612,32 +652,35 @@ export default function App(): JSX.Element {
       {activeDialog === 'alerts' && (
         <NotificationDialog
           locale={locale}
+          report={packet.report}
           updated={updated}
           onApplyReport={handleSimulateUpdate}
-          onSelectCommunity={selectCommunity}
           onClose={() => setActiveDialog(null)}
           onSelectRoad={inspectObject}
         />
       )}
 
-      {activeDialog === 'timeline' && <TimelineDialog locale={locale} incident={cheTaoIncident} updated={updated} onClose={() => setActiveDialog(null)} />}
+      {activeDialog === 'timeline' && <TimelineDialog locale={locale} incident={incident} updated={updated} onClose={() => setActiveDialog(null)} />}
 
       {activeDialog === 'data' && (
         <DataDialog
+          incident={incident}
           locale={locale}
           updated={updated}
-          manifest={models[0]?.id === 'che-tao-default' ? scenarioManifest : null}
-          terrainMetadata={models[0]?.metadata}
+          manifest={defaultTerrainData ? scenarioManifest : null}
+          terrainMetadata={mapTerrain?.metadata}
           onClose={() => setActiveDialog(null)}
         />
       )}
 
       {activeDialog === 'evidence' && evidenceModalId && (
         <EvidenceDialog
-          evidenceId={evidenceModalId}
+          evidence={evidence.find(item => item.hazardId === evidenceModalId)}
+          hazard={hazards.find(item => item.id === evidenceModalId)}
+          roads={roads}
           locale={locale}
-          updated={updated}
           onClose={() => setActiveDialog(null)}
+          onSelectRoad={inspectObject}
         />
       )}
 

@@ -12,7 +12,7 @@ import { buildScenarioOverlays, type OverlayHit } from '../terrain/scenarioOverl
 import { createScenarioMarkers } from '../terrain/scenarioMarkers';
 import { createMapReference } from '../terrain/mapReference';
 import { createRegionalBasemap, type BasemapState } from '../terrain/regionalBasemap';
-import type { Community, Hazard, RoadSegment, ScenarioRoute, Locale } from '../types/dear';
+import type { AnalysisArea, Community, Hazard, RoadSegment, ScenarioRoute, Locale, ResponseSite } from '../types/dear';
 
 export type ViewControls = {
   zoomIn: () => void;
@@ -21,7 +21,7 @@ export type ViewControls = {
   retryBasemap: () => void;
 };
 
-type Props = {
+export type TerrainViewerProps = {
   models: LoadedModel[];
   geographicPlacements?: GeographicPlacement[];
   measureMode?: boolean;
@@ -33,8 +33,11 @@ type Props = {
   theme?: 'light' | 'dark';
   locale?: Locale;
   onBasemapState?: (state: BasemapState) => void;
+  onUnavailable?: () => void;
   scenarioProps?: {
+    aoi?: AnalysisArea;
     communities: Community[];
+    responseSites?: ResponseSite[];
     hazards: Hazard[];
     roads: RoadSegment[];
     selectedRoute: ScenarioRoute | null;
@@ -45,6 +48,8 @@ type Props = {
   onSelectOverlayHit?: (hit: OverlayHit) => void;
   viewControlRef?: React.MutableRefObject<ViewControls | null>;
 };
+
+type Props = TerrainViewerProps;
 
 type ModelEntry = { model: LoadedModel; root: THREE.Object3D; group: THREE.Group; meshes: THREE.Mesh[] };
 
@@ -87,6 +92,7 @@ export function TerrainViewer({
   theme = 'light',
   locale = 'vi',
   onBasemapState,
+  onUnavailable,
   scenarioProps,
   onSelectOverlayHit,
   viewControlRef
@@ -103,6 +109,7 @@ export function TerrainViewer({
   const localeRef = useRef(locale);
   const profileMetadataRef = useRef(profileMetadata);
   const onBasemapStateRef = useRef(onBasemapState);
+  const propsUnavailableRef = useRef(onUnavailable);
   const runtimeRef = useRef<{ updateScenario: () => void; setMode: (mode: '2d' | '3d') => void; updateSurface: () => void } | null>(null);
 
   measureModeRef.current = measureMode;
@@ -116,6 +123,7 @@ export function TerrainViewer({
   localeRef.current = locale;
   profileMetadataRef.current = profileMetadata;
   onBasemapStateRef.current = onBasemapState;
+  propsUnavailableRef.current = onUnavailable;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -126,6 +134,8 @@ export function TerrainViewer({
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1_000_000);
     camera.aspect = Math.max(host.clientWidth, 1) / Math.max(host.clientHeight, 1);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    const onContextLost = (event: Event): void => { event.preventDefault(); propsUnavailableRef.current?.(); };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setSize(host.clientWidth, host.clientHeight, false);
@@ -235,6 +245,7 @@ export function TerrainViewer({
           communities: sp.communities,
           hazards: sp.hazards,
           roads: sp.roads,
+          aoi: sp.aoi,
           selectedRoute: sp.selectedRoute,
           selectedCommunityId: sp.selectedCommunityId,
           selectedObjectId: sp.selectedObjectId,
@@ -571,11 +582,12 @@ export function TerrainViewer({
       });
       controls.dispose();
       renderer.dispose();
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.remove();
     };
   }, [geographicPlacements, models]);
 
-  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.layers, scenarioProps?.communities, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale]);
+  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale]);
   useLayoutEffect(() => { runtimeRef.current?.setMode(mapMode); }, [mapMode]);
   useEffect(() => { runtimeRef.current?.updateSurface(); }, [theme]);
 

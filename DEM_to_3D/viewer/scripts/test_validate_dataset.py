@@ -2,6 +2,7 @@ import contextlib
 import hashlib
 import io
 import json
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -71,6 +72,12 @@ class PreparedDatasetTests(unittest.TestCase):
             self.run_validator(prepare=True)
         self.assertFalse((self.public / 'terrain').exists())
 
+    def test_metadata_mismatch_fails_before_any_copy(self):
+        self.manifest['crs'] = 'EPSG:4326'
+        with self.assertRaisesRegex(SystemExit, 'terrain CRS mismatch'):
+            self.run_validator(prepare=True)
+        self.assertFalse((self.public / 'terrain').exists())
+
     def test_invalid_date_and_parent_paths_are_rejected(self):
         self.manifest['snapshotAt'] = '2026-02-30T09:31:00+07:00'
         with self.assertRaisesRegex(SystemExit, 'snapshotAt'):
@@ -79,6 +86,38 @@ class PreparedDatasetTests(unittest.TestCase):
         self.manifest['terrain']['glb']['url'] = '/terrain/../outside.glb'
         with self.assertRaisesRegex(SystemExit, 'asset path'):
             self.run_validator(prepare=True)
+
+    def add_embedded_image(self):
+        png = b'\x89PNG\r\n\x1a\nimage fixture'
+        document = json.dumps({'images': [{'bufferView': 0, 'mimeType': 'image/png'}],
+                               'bufferViews': [{'byteOffset': 0, 'byteLength': len(png)}]}).encode()
+        document += b' ' * (-len(document) % 4)
+        binary = png + b'\0' * (-len(png) % 4)
+        body = struct.pack('<II', len(document), 0x4e4f534a) + document + struct.pack('<II', len(binary), 0x004e4942) + binary
+        glb = b'glTF' + struct.pack('<II', 2, len(body) + 12) + body
+        (self.canonical / 'terrain.glb').write_bytes(glb)
+        self.manifest['terrain']['glb'].update(byteLength=len(glb), sha256=hashlib.sha256(glb).hexdigest())
+        self.manifest['terrain']['image'] = {'url': '/terrain/terrain.image.png', 'byteLength': len(png), 'sha256': hashlib.sha256(png).hexdigest()}
+        return png
+
+    def test_prepares_independent_png_from_verified_glb(self):
+        png = self.add_embedded_image()
+        self.run_validator(prepare=True)
+        self.assertEqual((self.public / 'terrain/terrain.image.png').read_bytes(), png)
+        self.run_validator()
+
+    def test_wrong_image_checksum_fails_before_any_copy(self):
+        self.add_embedded_image()
+        self.manifest['terrain']['image']['sha256'] = '0' * 64
+        with self.assertRaisesRegex(SystemExit, 'embedded image checksum'):
+            self.run_validator(prepare=True)
+        self.assertFalse((self.public / 'terrain').exists())
+
+    def test_corrupt_glb_header_is_rejected(self):
+        glb = self.canonical / 'corrupt.glb'
+        glb.write_bytes(b'glTF' + b'\0' * 36)
+        with self.assertRaisesRegex(SystemExit, 'invalid GLB'):
+            validator.embedded_image(glb)
 
 
 if __name__ == '__main__':

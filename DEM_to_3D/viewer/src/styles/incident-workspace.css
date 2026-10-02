@@ -7,10 +7,10 @@
   display: flex;
   gap: 20px;
   padding: 0 24px;
-  border-right: 0;
+  border-right: 1px solid var(--ws-line);
   border-bottom: 1px solid var(--ws-line);
   background: var(--glass-solid);
-  border-radius: 10px 10px 0 0;
+  border-radius: 0;
 }
 
 .workspace-nav button {
@@ -38,6 +38,35 @@
   font-weight: 600;
 }
 .workspace-nav button[aria-current="page"]::after { content: ''; position: absolute; left: 4px; right: 4px; bottom: 0; height: 2px; background: var(--select); }
+.object-observation { display: grid; gap: 12px; padding-bottom: 20px; }
+.object-length { margin-top: 10px; }
+.object-observation time { flex: none; color: var(--ws-muted); font-size: 12px; }
+.object-observation .section-line { flex-wrap: wrap; }
+.object-observation .section-line, .object-observation h3, .object-observation p { margin: 0; }
+.object-next-action { margin: 12px 0; line-height: 1.65; }
+.hazard-observation { margin: 16px 0; line-height: 1.65; }
+.object-source-section p { margin: 10px 0; color: var(--ws-muted); font-size: 12px; line-height: 1.65; }
+.assessment-action { display: grid; gap: 6px; margin: 20px 0 0; font-size: 13px; }
+.assessment-action span { color: var(--ws-muted); }
+.assessment-basis { display: grid; gap: 10px; margin-bottom: 20px; }
+.incident-all-communities { margin-top: 12px; }
+.assessment-method { display: grid; gap: 12px; margin: 12px 0; }
+.assessment-method dt { font-weight: 600; margin-bottom: 4px; }
+.assessment-method dd { margin: 0; color: var(--ws-muted); font-size: 13px; }
+.evidence-finding { margin: 12px 0 24px; line-height: 1.65; }
+.evidence-metadata { display: grid; gap: 14px; margin: 20px 0 24px; font-size: 13px; }
+.evidence-metadata > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; }
+.evidence-metadata dt { color: var(--ws-muted); }
+.evidence-metadata dd { margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
+.evidence-road.object-row { display: grid; gap: 5px; padding: 12px 0; font-size: 13px; }
+.evidence-road span { color: var(--ws-muted); }
+.incident-area-link { font-size: 12px; }
+.route-travel-estimate { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 14px; font-weight: 600; }
+.route-travel-estimate small { font-weight: 400; color: var(--ws-muted); font-size: 12px; }
+.route-estimate-basis { margin: 12px 0 16px; color: var(--ws-muted); font-size: 12px; line-height: 1.6; }
+.map-legend .line.aoi { border-color: #85aa9d; border-top-style: dashed; }
+.notification-incident { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--ws-line); }
+.notification-finding { margin: 20px 0 0; font-size: 14px; line-height: 1.65; }
 
 .notification-button {
   position: relative;
@@ -386,6 +415,7 @@
 }
 
 .decision-route > p { margin-top: 4px; font-size: 12px; color: var(--ws-muted); }
+.decision-route > .route-travel-estimate { margin-top: 10px; font-size: 14px; color: var(--ws-text); }
 
 .access-issues { margin-top: 18px; }
 .access-issues h3 { margin-bottom: 4px; font-size: 13px; }

@@ -1,5 +1,5 @@
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import type { LoadedTerrain, MeshMetadata } from '../types/terrain';
+import type { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import type { LoadedTerrain, MeshMetadata, TerrainData } from '../types/terrain';
 import { disposeObjectResources } from './raycast';
 import { TerrainAssetError, validateGridBuffer, validateMetadata } from './validation';
 
@@ -56,7 +56,7 @@ function parseGltf(loader: GLTFLoader, buffer: ArrayBuffer, url: string): Promis
   return new Promise((resolve, reject) => loader.parse(buffer, new URL(url, window.location.href).href, resolve, reject));
 }
 
-export async function loadTerrain(urls: TerrainAssetUrls): Promise<LoadedTerrain> {
+export async function loadTerrainData(urls: Pick<TerrainAssetUrls, 'metadata' | 'grid'>): Promise<TerrainData> {
   // Read and validate metadata first.  This lets us reject a mismatched sidecar
   // URL before opening either binary request and avoids partially initialized
   // asset work when a caller accidentally mixes export versions.
@@ -65,12 +65,7 @@ export async function loadTerrain(urls: TerrainAssetUrls): Promise<LoadedTerrain
   if (!assetUrlMatchesFilename(urls.grid, metadata.grid.file)) {
     throw new TerrainAssetError(`Grid URL does not match metadata grid.file (${metadata.grid.file})`);
   }
-  if (metadata.mesh?.file && !assetUrlMatchesFilename(urls.glb, metadata.mesh.file)) {
-    throw new TerrainAssetError(`GLB URL does not match metadata mesh.file (${metadata.mesh.file})`);
-  }
-  const [gridBuffer, glbBuffer] = await Promise.all([
-    fetchBuffer(urls.grid), fetchBuffer(urls.glb),
-  ]);
+  const gridBuffer = await fetchBuffer(urls.grid);
   validateGridBuffer(metadata, gridBuffer);
   // The contract is little-endian. Browser platforms are overwhelmingly
   // little-endian, but decode explicitly so a future big-endian target cannot
@@ -78,6 +73,16 @@ export async function loadTerrain(urls: TerrainAssetUrls): Promise<LoadedTerrain
   const view = new DataView(gridBuffer);
   const grid = new Float32Array(metadata.grid.shape[0] * metadata.grid.shape[1]);
   for (let i = 0; i < grid.length; i += 1) grid[i] = view.getFloat32(i * 4, true);
+  return { metadata, grid, gridBuffer };
+}
+
+export async function loadTerrain(urls: TerrainAssetUrls, data?: TerrainData): Promise<LoadedTerrain> {
+  const { metadata, grid, gridBuffer } = data ?? await loadTerrainData(urls);
+  if (metadata.mesh?.file && !assetUrlMatchesFilename(urls.glb, metadata.mesh.file)) {
+    throw new TerrainAssetError(`GLB URL does not match metadata mesh.file (${metadata.mesh.file})`);
+  }
+  const glbBuffer = await fetchBuffer(urls.glb);
+  const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
   const gltf = await parseGltf(new GLTFLoader(), glbBuffer, urls.glb);
   try {
     if (metadata.mesh) validateGltfMeshCounts(gltf.scene, metadata.mesh);

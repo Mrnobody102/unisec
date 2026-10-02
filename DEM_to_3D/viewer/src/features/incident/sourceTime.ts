@@ -5,5 +5,7 @@ export function sourceObservedAt(source: IncidentSource, updated: boolean): stri
 }
 
 export function localClock(iso: string): string {
-  return iso.slice(11, 16);
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).format(new Date(iso));
 }
