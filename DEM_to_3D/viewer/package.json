@@ -4,9 +4,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "prepare:dataset": "python scripts/validate_dataset.py --prepare",
+    "predev": "npm run prepare:dataset",
     "dev": "vite",
+    "prebuild": "npm run prepare:dataset",
     "build": "tsc -b && vite build",
+    "validate:dataset": "python scripts/validate_dataset.py",
+    "test:dataset": "python -m unittest discover -s scripts -p test_validate_dataset.py",
+    "pretypecheck": "npm run prepare:dataset",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm run prepare:dataset",
     "test": "vitest run"
   },
   "dependencies": {
