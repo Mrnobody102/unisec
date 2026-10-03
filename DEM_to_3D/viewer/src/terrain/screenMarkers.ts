@@ -138,7 +138,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   void document.fonts.ready.then(onFontsLoaded);
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
-    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-bottom-bar,.map-layer-launcher,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover') ?? [])
+    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-search,.map-bottom-bar,.map-layer-launcher,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {

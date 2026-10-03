@@ -19,6 +19,7 @@ export type ViewControls = {
   zoomOut: () => void;
   resetView: () => void;
   retryBasemap: () => void;
+  focusProjected: (point: { x: number; y: number }) => void;
 };
 
 export type TerrainViewerProps = {
@@ -365,7 +366,16 @@ export function TerrainViewer({
         resetView: () => {
           setInitialCamera(mapModeRef.current, true);
         },
-        retryBasemap: () => basemap?.retry()
+        retryBasemap: () => basemap?.retry(),
+        focusProjected: point => {
+          if (!primary?.model.metadata) return;
+          interruptCameraTransition();
+          const elevation = primary.model.grid ? bilinearElevation(primary.model.grid, primary.model.metadata, point.x, point.y).elevation : undefined;
+          const p = projectedToScene(primary.model.metadata, point, elevation ?? primary.model.metadata.elevation.base_elevation);
+          const target = primary.group.localToWorld(new THREE.Vector3(p.x, p.y, p.z));
+          const shift = target.clone().sub(controls.target);
+          camera.position.add(shift); controls.target.copy(target); controls.update(); markerLayoutDirty = true;
+        }
       };
     }
 

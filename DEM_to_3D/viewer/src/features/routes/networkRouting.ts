@@ -4,6 +4,7 @@ import { projectedPathLength } from '../../terrain/pathGeometry';
 type Point = { x: number; y: number };
 type Step = { road: RoadSegment; reversed: boolean };
 const key = (point: Point) => `${point.x},${point.y}`;
+export const routingPolicy = { algorithm: 'dijkstra', version: 'network-v1', uncertainCostMultiplier: 3 } as const;
 
 /** Prepared graph: endpoints are explicitly connected. Do not snap unknown roads
  * or connect line crossings without a surveyed network junction. */
@@ -16,7 +17,7 @@ function findPath(roads: RoadSegment[], start: Point, destination: Point,
     const length = projectedPathLength(road.points);
     if (!Number.isFinite(length) || length <= 0) continue;
     // Versioned demo policy: uncertainty adds cost, not proof of passage.
-    const cost = length * (!ignoreStatus && road.status === 'uncertain' ? 3 : 1);
+    const cost = length * (!ignoreStatus && road.status === 'uncertain' ? routingPolicy.uncertainCostMultiplier : 1);
     const forward = adjacency.get(a) ?? []; forward.push({ road, reversed: false, to: b, cost }); adjacency.set(a, forward);
     const reverse = adjacency.get(b) ?? []; reverse.push({ road, reversed: true, to: a, cost }); adjacency.set(b, reverse);
   }

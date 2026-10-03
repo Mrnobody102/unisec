@@ -1,0 +1,9 @@
+.decision-export-dialog { width: min(1140px, calc(100vw - 32px)); }
+.decision-export-dialog .modal-body { padding: 16px; background: var(--ws-bg); }
+.decision-export-preview { display: block; width: 100%; height: auto; }
+.decision-export-loading { display: grid; place-items: center; gap: 16px; min-height: 240px; color: var(--ws-muted); }
+.decision-export-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-top: 1px solid var(--ws-line); }
+.decision-actions { display: grid; gap: 8px; margin-top: 20px; }
+.decision-save { background: transparent; color: var(--ws-brand); border: 1px solid var(--ws-line); }
+.decision-save:hover { background: var(--ws-tint); }
+@media(max-width:600px) { .decision-export-actions .button { width: 100%; } }

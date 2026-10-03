@@ -3,6 +3,7 @@
 Requires Playwright for Python and a Chromium browser. Run against a built app.
 """
 import argparse
+import json
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
@@ -15,7 +16,7 @@ def check_symbols(page):
       const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
       const visible = el => el.offsetHeight && getComputedStyle(el).visibility !== 'hidden';
       const pins = [...document.querySelectorAll('.map-pin')].filter(visible);
-      const controls = [...document.querySelectorAll('.map-tools,.map-bottom-bar,.map-layer-launcher,.map-reference,.layers-panel,.map-attribution,.map-source-popover')].filter(visible);
+      const controls = [...document.querySelectorAll('.map-tools,.map-search,.map-bottom-bar,.map-layer-launcher,.map-reference,.layers-panel,.map-attribution,.map-source-popover')].filter(visible);
       const errors = [];
       pins.forEach((pin, i) => {
         pins.slice(i + 1).forEach(other => { if (overlap(box(pin), box(other))) errors.push('pins: ' + pin.title + ' / ' + other.title); });
@@ -75,6 +76,30 @@ def run(url, chrome, captures):
         if captures:
             page.screenshot(path=str(captures / 'workspace-summary.png'))
         page.locator('.decision-tabs button').nth(1).click()
+        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Tải bản đồ PNG', exact=True).click()
+        assert Path(download.value.path()).read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
+        if captures:
+            download.value.save_as(str(captures / 'decision-map.png'))
+            page.screenshot(path=str(captures / 'workspace-export.png'))
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
+        snapshot = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+        assert snapshot['community']['id'] == 'NK' and snapshot['route']['status'] == 'uncertain'
+        assert snapshot['dataKind'] == 'synthetic' and snapshot['appliedReportIds'] == []
+        assert snapshot['terrainAssets']['image']['sha256']
+        page.keyboard.press('Escape')
+        page.locator('.route-card').nth(1).click()
+        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
+        direct = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+        assert direct['route']['id'] != snapshot['route']['id'] and direct['route']['status'] == 'blocked'
+        assert 'eta' not in direct['route']
+        page.keyboard.press('Escape'); page.locator('.route-card').first.click()
         if captures:
             page.screenshot(path=str(captures / 'workspace-routes.png'))
         page.get_by_role('button', name='Mặt cắt địa hình', exact=True).click()
@@ -98,6 +123,15 @@ def run(url, chrome, captures):
         expect(source).to_be_focused()
 
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
+        search = page.get_by_role('combobox', name='Tìm trên bản đồ', exact=True)
+        search.fill('nam khat'); page.keyboard.press('Enter')
+        expect(page.locator('.sidebar h1')).to_have_text('Nậm Khắt')
+        expect(page.locator('.map-search-results')).to_have_count(0)
+        page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
+        search.fill('E3'); page.keyboard.press('Enter')
+        expect(page.locator('.sidebar h1')).to_have_text('Đường vào Khau Mang qua cầu')
+        page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
+        page.get_by_role('button', name='Xóa tìm kiếm', exact=True).click()
         page.locator('.workspace-nav button').nth(1).click()
         page.get_by_role('searchbox', name='Tìm đường hoặc điểm ảnh hưởng').fill('E3')
         page.locator('.impact-row').click()
@@ -146,16 +180,16 @@ def run(url, chrome, captures):
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         page = context.new_page(); page.goto(url)
-        expect(page.locator('.incident-community-action')).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         page.get_by_role('button', name='Vùng đánh giá Nậm Kha', exact=True).click()
         expect(page.locator('.sidebar')).to_contain_text('201.3 km')
         page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
-        page.locator('.incident-community-action').click()
+        page.locator('.incident-priority-row').first.click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         expect(page.locator('.notification-popover')).to_be_visible()
         page.get_by_role('button', name='Mở sự kiện', exact=True).click()
-        expect(page.locator('.incident-community-action')).to_be_visible()
-        page.locator('.incident-community-action').click()
+        expect(page.locator('.incident-priority-row').first).to_be_visible()
+        page.locator('.incident-priority-row').first.click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Xem chi tiết', exact=True).click()
         expect(page.locator('.header-data')).to_contain_text('09:31')
@@ -164,6 +198,18 @@ def run(url, chrome, captures):
         expect(page.locator('.header-data')).to_contain_text('09:45')
         expect(page.locator('.decision-overview')).to_contain_text('Cả hai tuyến bị chặn')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
+        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
+        snapshot = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
+        assert '09:45' in snapshot['asOf'] and snapshot['route']['status'] == 'blocked'
+        assert 'eta' not in snapshot['route'] and snapshot['appliedReportIds']
+        expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
+        if captures:
+            with page.expect_download() as download:
+                page.get_by_role('button', name='Tải bản đồ PNG', exact=True).click()
+            download.value.save_as(str(captures / 'decision-map-updated.png'))
+        page.keyboard.press('Escape')
         page.get_by_role('button', name='Dữ liệu', exact=True).click()
         expect(page.locator('.data-source-row').filter(has_text='Phương án tiếp cận').locator('time')).to_have_text('09:45')
         page.keyboard.press('Escape')
@@ -214,7 +260,7 @@ def run(url, chrome, captures):
         expect(page.locator('.map-2d-surface')).to_be_visible(timeout=25000)
         expect(page.locator('.sidebar h1')).to_have_text('Nậm Khắt')
         context.close(); browser.close()
-        print('Workspace passed: incident/AOI/access/route/evidence/report flow, conditional ETA, independent offline 2D, GPU/file recovery, API error boundary, panel resize, symbols and responsive layout')
+        print('Workspace passed: incident/AOI/access/route/evidence/report, search, PNG/JSON export, conditional ETA, independent offline 2D, GPU/file recovery, API error boundary, panel resize, symbols and responsive layout')
 
 
 if __name__ == '__main__':

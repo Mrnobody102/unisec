@@ -1,12 +1,11 @@
-import type { Community, IncidentModel, Locale, ScenarioRoutePair } from '../../types/dear';
+import type { Community, IncidentModel, Locale } from '../../types/dear';
 import { localClock } from '../../features/incident/sourceTime';
-import { communityAccessText } from '../../features/routes/accessAssessment';
 import { MapSymbol } from '../../shared/ui/MapSymbol';
 import { StatusText } from '../../shared/ui/StatusText';
 
 type Props = {
   incident: IncidentModel; locale: Locale; updated: boolean;
-  communities: Community[]; routes: Map<string, ScenarioRoutePair>;
+  communities: Community[];
   blockedRoadCount: number; uncertainRoadCount: number;
   onSelectCommunity: (id: string) => void;
   onOpenTimeline: () => void; onOpenData: () => void;
@@ -14,13 +13,12 @@ type Props = {
   onOpenArea: () => void;
 };
 
-export function IncidentView({ incident, locale, updated, communities, routes, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads, onOpenArea }: Props): JSX.Element {
+export function IncidentView({ incident, locale, updated, communities, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads, onOpenArea }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const asOf = updated ? incident.asOfUpdated : incident.asOf;
   const priorityCommunities = communities.filter(community => community.prio === 1);
   return <>
     <div className="sidebar-top">
-      <div className="eyebrow">{incident.id}</div>
       <h1>{t('Sạt lở, nguy cơ lũ quét', 'Landslide and flash-flood risk')}</h1>
       <div className="incident-status">
         <StatusText tone="selected">{t('Đang đánh giá ứng phó', 'Response assessment')}</StatusText>
@@ -31,7 +29,6 @@ export function IncidentView({ incident, locale, updated, communities, routes, b
       <section className="workflow-section">
         <dl className="incident-facts">
           <div><dt>{t('Địa bàn ưu tiên', 'Priority communities')}</dt><dd>{priorityCommunities.length} <small>{t('thôn, bản', 'villages')}</small></dd></div>
-          <div><dt>{t('Tổng địa bàn', 'Total communities')}</dt><dd>{communities.length} <small>{t('thôn, bản', 'villages')}</small></dd></div>
           <div><dt>{t('Đường bị chặn', 'Blocked roads')}</dt><dd>{blockedRoadCount} <small>{t('đoạn', 'segments')}</small></dd></div>
           <div><dt>{t('Đường cần xác minh', 'Roads to verify')}</dt><dd>{uncertainRoadCount} <small>{t('đoạn', 'segments')}</small></dd></div>
         </dl>
@@ -41,14 +38,12 @@ export function IncidentView({ incident, locale, updated, communities, routes, b
         <div className="section-line"><h3>{t('Địa bàn cần ưu tiên', 'Communities needing attention')}</h3></div>
         <div className="incident-priority-list">
           {priorityCommunities.map(community => {
-            const access = communityAccessText(routes.get(community.id));
             return <button className="incident-priority-row" key={community.id} onClick={() => onSelectCommunity(community.id)}>
               <span className="priority-community-symbol"><MapSymbol name="community" /></span>
-              <span><strong>{community.name}</strong><span className="priority-access">{t(...access)}</span><small>{t(...community.desc)}</small></span>
+              <span><strong>{community.name}</strong><small>{t(...community.desc)}</small></span>
             </button>;
           })}
         </div>
-        {priorityCommunities[0] && <button className="button primary incident-community-action" onClick={() => onSelectCommunity(priorityCommunities[0].id)}>{t('Đánh giá tiếp cận', 'Assess access')}: {priorityCommunities[0].name}</button>}
         <button className="text-button incident-all-communities" onClick={onOpenCommunities}>{t('Danh sách địa bàn', 'Community list')} ({communities.length})</button>
       </section>
       <section className="workflow-section incident-data-summary">

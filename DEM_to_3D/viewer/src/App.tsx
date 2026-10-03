@@ -3,6 +3,8 @@ import './styles.css';
 import './styles/tokens.css';
 import './styles/workspace.css';
 import './styles/incident-workspace.css';
+import './features/search/search.css';
+import './features/briefing/briefing.css';
 
 import { AppHeader } from './components/dear/AppHeader';
 import { WorkspaceNav } from './components/dear/WorkspaceNav';
@@ -32,6 +34,10 @@ import { usePanelScroll } from './shared/hooks/usePanelScroll';
 import { useModalFocus } from './shared/hooks/useModalFocus';
 import { PanelResizeHandle } from './shared/ui/PanelResizeHandle';
 import { useIncidentWorkspace } from './features/incident/useIncidentWorkspace';
+import { MapSearch } from './features/search/MapSearch';
+import { searchWorkspace } from './features/search/searchIndex';
+import { createDecisionSnapshot, type DecisionSnapshot } from './features/briefing/decisionSnapshot';
+import { DecisionExportDialog } from './features/briefing/DecisionExportDialog';
 
 import { preparedPacket } from './data/cheTaoScenario';
 import { preparedRepository, apiRepository, workspaceDataSource } from './data/ScenarioRepository';
@@ -80,6 +86,8 @@ export default function App(): JSX.Element {
   const [roadQuery, setRoadQuery] = useState('');
   const [impactTab, setImpactTab] = useState<ImpactTab>('roads');
   const [communityQuery, setCommunityQuery] = useState('');
+  const [mapQuery, setMapQuery] = useState('');
+  const [decisionSnapshot, setDecisionSnapshot] = useState<DecisionSnapshot | null>(null);
   const [updated, setUpdated] = useState<boolean>(false);
   const [packet, setPacket] = useState(preparedPacket);
   const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
@@ -418,6 +426,17 @@ export default function App(): JSX.Element {
     setMobileView('info');
   };
 
+  const mapResults = useMemo(() => searchWorkspace(mapQuery, { communities, roads, hazards, responseSites, aoi: packet.aoi }, locale),
+    [mapQuery, communities, roads, hazards, responseSites, packet.aoi, locale]);
+
+  const openDecisionExport = () => {
+    if (!selectedCommunity) return;
+    setDecisionSnapshot(createDecisionSnapshot({ packet, updated, community: selectedCommunity,
+      assessment: assessments.get(selectedCommunity.id)!, route: activeRoute, roads, hazards, evidence, communities,
+      terrainAssets: defaultTerrainData ? scenarioManifest?.terrain : undefined }));
+    setActiveDialog('exportDecision');
+  };
+
   return (
     <div ref={workspaceRef} className="workspace" data-mobile={mobileView}>
       <AppHeader
@@ -495,6 +514,7 @@ export default function App(): JSX.Element {
                 setActiveDialog('data');
               }}
               onSelectObject={inspectObject}
+              onExport={openDecisionExport}
             />
           ) : view === 'incident' ? (
             <IncidentView
@@ -503,7 +523,6 @@ export default function App(): JSX.Element {
               locale={locale}
               updated={updated}
               communities={communities}
-              routes={routes}
               blockedRoadCount={roads.filter(road => road.status === 'blocked').length}
               uncertainRoadCount={roads.filter(road => road.status === 'uncertain').length}
               onSelectCommunity={selectCommunity}
@@ -615,6 +634,19 @@ export default function App(): JSX.Element {
             hasSelectedRoute={scenarioTerrainCompatible && Boolean(activeRoute)}
             hasHLZData={scenarioTerrainCompatible && responseSites.some(site => site.kind === 'hlz')}
           />
+          <MapSearch locale={locale} query={mapQuery} onQuery={setMapQuery} results={mapResults} disabled={!snapshotReady}
+            onSelect={result => {
+              const [kind, id] = result.key.split(':');
+              const hazard = kind === 'hazard' ? hazards.find(h => h.id === id) : undefined;
+              const site = kind === 'poi' ? responseSites.find(s => s.id === id) : undefined;
+              const layer = kind === 'community' ? 'communities' : kind === 'road' ? 'roads' : kind === 'aoi' ? 'aoi'
+                : site?.kind ?? (hazard?.kind === 'landslide' ? 'landslide' : hazard?.kind === 'flood' ? 'flood' : 'status');
+              setLayers(previous => ({ ...previous, [layer]: true }));
+              if (kind === 'community' && id === selectedCommunityId) { setSelectedObjectId(null); setMobileView('info'); }
+              else if (kind === 'community') selectCommunity(id);
+              else inspectObject(result.key);
+              viewControlRef.current?.focusProjected(result.projected);
+            }}/>
           <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh Sentinel-2 và địa hình Chế Tạo', 'Sentinel-2 imagery and Chế Tạo terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
 
           {activeDialog === 'layers' && (
@@ -649,6 +681,8 @@ export default function App(): JSX.Element {
       </nav>
 
       {/* Dialogs */}
+      {activeDialog === 'exportDecision' && decisionSnapshot && <DecisionExportDialog snapshot={decisionSnapshot}
+        terrain={defaultTerrainData} imageUrl={scenarioManifest?.terrain.image?.url} locale={locale} onClose={() => setActiveDialog(null)}/>}
       {activeDialog === 'alerts' && (
         <NotificationDialog
           locale={locale}

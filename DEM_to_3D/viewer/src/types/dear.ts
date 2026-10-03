@@ -133,4 +133,5 @@ export type ActiveDialog =
   | 'sources'
   | 'evidence'
   | 'segmentAnalysis'
+  | 'exportDecision'
   | 'uploadModel';

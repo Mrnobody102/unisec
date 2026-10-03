@@ -11,8 +11,11 @@ export function RouteOption({ route, selected, locale, onSelect }: {
       <span className="route-option-selector" aria-hidden="true">{selected && <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m3 8 3 3 7-7"/></svg>}</span>
       <strong>{t(route.name[0], route.name[1])}</strong>
     </span>
+    <span className="route-option-meta">
+      <span>{route.lengthKm} km</span>
+      {route.eta && <span>{route.eta.minMinutes} {t('đến', 'to')} {route.eta.maxMinutes} {t('phút nếu thông tuyến', 'min assuming passage')}</span>}
+    </span>
     <span className="route-bottom">
-      <span className="route-distance">{route.lengthKm} km</span>
       <StatusText tone={blocked ? 'critical' : 'warning'} icon={blocked ? 'blocked' : 'uncertain'}>
         {blocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}
       </StatusText>

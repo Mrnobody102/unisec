@@ -129,6 +129,7 @@ export function Map2D(props: Props): JSX.Element {
     runtime.current = { refresh }; refresh();
     if (props.viewControlRef) props.viewControlRef.current = {
       zoomIn: () => map.zoomIn(0.5), zoomOut: () => map.zoomOut(0.5), resetView: fit,
+      focusProjected: point => { const p = ll(point); if (p) map.panTo(p, { animate: true, duration: 0.3 }); },
       retryBasemap: () => { tileKey = ''; refresh(); }
     };
     const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); schedule(); }); resize.observe(host);

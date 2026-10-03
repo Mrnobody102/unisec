@@ -28,6 +28,7 @@ type Props = {
   onToggleProfile: () => void;
   onOpenSources: () => void;
   onSelectObject: (obj: string) => void;
+  onExport: () => void;
 };
 
 export const CommunityDetailView: React.FC<Props> = ({
@@ -46,7 +47,8 @@ export const CommunityDetailView: React.FC<Props> = ({
   hasTerrainProfile,
   onToggleProfile,
   onOpenSources,
-  onSelectObject
+  onSelectObject,
+  onExport
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
   const hazardName = (id: string) => {
@@ -143,9 +145,6 @@ export const CommunityDetailView: React.FC<Props> = ({
                 <h3>
                   {isBlocked ? t('Tình trạng tuyến', 'Route condition') : t('Phương án tiếp cận', 'Access option')}
                 </h3>
-                <StatusText tone={isBlocked ? 'critical' : 'warning'} icon={isBlocked ? 'blocked' : 'uncertain'}>
-                  {isBlocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}
-                </StatusText>
               </div>
 
               <strong>{t(activeRoute.name[0], activeRoute.name[1])}</strong>
@@ -157,13 +156,13 @@ export const CommunityDetailView: React.FC<Props> = ({
             </div>}
 
             <p className="assessment-action"><strong>{t('Việc cần xử lý', 'Next action')}</strong><span>{t(...assessment.nextAction)}</span></p>
-            <button
+            <div className="decision-actions"><button
               className="button primary"
-              style={{ width: '100%', marginTop: '16px' }}
               onClick={() => onChangeDetailTab(activeRoute ? 'route' : 'evidence')}
             >
               {activeRoute ? t('Xem các tuyến', 'Review routes') : t('Xem thông tin địa bàn', 'Review community findings')}
             </button>
+            <button className="button decision-save" onClick={onExport}><UiIcon name="download"/>{t('Lưu đánh giá', 'Save assessment')}</button></div>
 
             {accessIssues.length > 0 && <section className="access-issues" aria-label={t('Đoạn ảnh hưởng tiếp cận', 'Access constraints')}>
               <h3>{t('Đoạn đường cần lưu ý', 'Road sections to review')}</h3>
@@ -193,11 +192,11 @@ export const CommunityDetailView: React.FC<Props> = ({
 
         {detailTab === 'route' && candidateRoute && activeRoute && (
           <div>
-            <div style={{ fontSize: '12px', color: 'var(--ws-muted)', marginBottom: '8px' }}>
+            <div className="route-origin">
               {t('Xuất phát từ điểm tập kết Nậm Kha', 'Starting from Nậm Kha staging point')}
             </div>
 
-            <div className="route-options">
+            <div className="route-options" role="group" aria-label={t('Chọn tuyến tiếp cận', 'Select access route')}>
               <RouteOption route={candidateRoute} selected={effectiveRouteType === 'candidate'} locale={locale} onSelect={() => onChangeRouteType('candidate')} />
               {directRoute && <RouteOption route={directRoute} selected={effectiveRouteType === 'direct'} locale={locale} onSelect={() => onChangeRouteType('direct')} />}
             </div>
@@ -220,6 +219,7 @@ export const CommunityDetailView: React.FC<Props> = ({
                 </svg>
                 <span>{t('Mặt cắt địa hình', 'Terrain section')}</span>
               </button>
+              <button className="button decision-save" onClick={onExport} aria-label={t('Lưu đánh giá', 'Save assessment')} title={t('Lưu đánh giá', 'Save assessment')}><UiIcon name="download"/></button>
             </div>
 
             <section className="workflow-section" style={{ marginTop: '16px' }}>

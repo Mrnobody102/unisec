@@ -1,8 +1,10 @@
-type Name = 'plus' | 'minus' | 'close' | 'back' | 'help' | 'info' | 'expand' | 'collapse' | 'fit';
+type Name = 'plus' | 'minus' | 'close' | 'back' | 'help' | 'info' | 'expand' | 'collapse' | 'fit' | 'search' | 'download';
 
 /** Shared 18 px control icons with a consistent optical center. */
 export function UiIcon({ name, size = 18 }: { name: Name; size?: number }): JSX.Element {
   const paths: Record<Name, JSX.Element> = {
+    search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></>,
+    download: <><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></>,
     plus: <path d="M12 5v14M5 12h14" />,
     minus: <path d="M5 12h14" />,
     close: <path d="M6 6l12 12M18 6 6 18" />,
