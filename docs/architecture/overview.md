@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-Cập nhật: 2026-10-02. Bản hiện hành dùng một sự kiện Chế Tạo với dữ liệu mô phỏng.
+Cập nhật: 2026-10-03. Bản hiện hành dùng một sự kiện Chế Tạo với dữ liệu mô phỏng.
 
 ## Thành phần đang chạy
 
@@ -11,6 +11,7 @@ Cập nhật: 2026-10-02. Bản hiện hành dùng một sự kiện Chế Tạo
 | Bản đồ 3D | Three.js, DEM và GLB tải khi mở 3D | GPU hoặc GLB lỗi thì chuyển về 2D, giữ lựa chọn |
 | Dữ liệu | JSON Schema, Ajv, manifest và SHA-256 | Gói Chế Tạo v0.2 là dữ liệu mô phỏng, chưa được duyệt vận hành |
 | Đánh giá | Dijkstra trên mạng đường, quy tắc ưu tiên, ước tính di chuyển | Quy tắc thử nghiệm, chưa phải Community Isolation Score |
+| Bản xuất | Canvas 2D tạo PNG, JSON lưu snapshot đánh giá | Dùng ảnh cục bộ. Chưa có PDF/GIS export hoặc dữ liệu được duyệt |
 | API snapshot | Python standard library, HTTP chỉ đọc | Phục vụ thử tích hợp. Chưa tiếp nhận tin, lưu lịch sử hoặc xử lý ảnh |
 
 Cách chạy tại [README](../../README.md). Quy tắc tính tại [phân tích ứng phó](response-analysis.md), định dạng tại [hợp đồng dữ liệu](data-contract.md).
@@ -42,6 +43,8 @@ Gói tĩnh và API dùng cùng hợp đồng. API lỗi không được thay b�
 | `features/incident/` | Snapshot, quy tắc ưu tiên và thời điểm nguồn |
 | `features/routes/` | Tính tuyến, ước tính di chuyển, mặt cắt |
 | `features/map/` | Bản đồ Leaflet, ảnh 2D, fallback 3D |
+| `features/search/` | Chỉ mục tên/mã, chuẩn hóa tiếng Việt và hộp tìm trên bản đồ |
+| `features/briefing/` | Snapshot đánh giá, xem trước, dựng PNG và tải PNG/JSON |
 | `terrain/` | Tọa độ, lấy mẫu DEM, lớp Three.js, ký hiệu và bố trí nhãn |
 | `components/dear/` | Panel, hộp thoại và điều khiển nhận dữ liệu qua props |
 | `shared/` | Thành phần và hành vi dùng ở nhiều màn |
@@ -56,6 +59,6 @@ Renderer không quyết định ưu tiên. Component không giữ một bản b�
 | Thu nhận, tiền xử lý ảnh | Có dữ liệu nền địa hình và ảnh | SAR trước/sau, căn chỉnh, vùng quan sát hợp lệ |
 | Nhận diện sạt lở | Các điểm đã chuẩn bị | Mô hình AI, chất lượng và kiểm chứng |
 | Đánh giá tiếp cận | Tính trên mạng đường mẫu và báo cáo | Mạng đường đủ vùng, điều kiện phương tiện, chính sách nghiệp vụ |
-| Bản đồ ưu tiên | Có luồng địa bàn, tuyến và căn cứ | Dữ liệu được RS/PO duyệt, bản xuất theo kế hoạch |
+| Bản đồ ưu tiên | Có luồng địa bàn, tuyến, căn cứ và xuất PNG/JSON | Dữ liệu được RS/PO duyệt, thử bản xuất trên máy trình chiếu |
 
 Sau SIC, triển khai FastAPI, PostgreSQL/PostGIS, kho ảnh/tile và worker Python khi cần nhận dữ liệu, xử lý ảnh, duyệt công bố hoặc nhiều người dùng. Worker tạo kết quả phân tích, API công bố snapshot, web trình bày và kiểm tra phương án. LLM không nằm trong đường tính ưu tiên hiện tại.

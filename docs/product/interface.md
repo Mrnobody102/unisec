@@ -1,6 +1,6 @@
 # Thiết kế giao diện
 
-Cập nhật: 2026-10-02. Áp dụng cho web React tại `DEM_to_3D/viewer`.
+Cập nhật: 2026-10-03. Áp dụng cho web React tại `DEM_to_3D/viewer`.
 
 ## Luồng ứng phó
 
@@ -10,6 +10,7 @@ flowchart LR
     B --> C[Tình trạng tiếp cận]
     C --> D[So tuyến và kiểm tra đoạn cản trở]
     D -. Khi cần .-> E[Nguồn và địa hình dọc tuyến]
+    D --> I[Lưu đánh giá và bản đồ]
     F[Xem nhanh tin mới] --> G[Đọc chi tiết]
     G --> H[Cập nhật bản đồ]
     H --> C
@@ -23,9 +24,10 @@ Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết 
 |---|---|---|
 | Sự kiện | Sự kiện, giờ kích hoạt, dữ liệu đến, địa bàn ưu tiên, số đoạn bị chặn/chưa rõ | Diễn biến phân tích, nguồn dữ liệu |
 | Chi tiết địa bàn | Lý do ưu tiên, tiếp cận, phương án và việc cần xử lý | Tuyến, căn cứ, dân số tham chiếu |
-| Tuyến | Phương án, khoảng cách, tình trạng từng đoạn | Địa hình dọc tuyến, nguồn của đoạn đường |
+| Tuyến | Danh sách so sánh phương án, khoảng cách, ETA có điều kiện, tình trạng từng đoạn | Địa hình dọc tuyến, nguồn của đoạn đường |
 | Đường sá | Tên, trạng thái, chiều dài. Đoạn bị chặn xếp trước | Ghi nhận, việc cần xử lý, bản ghi nguồn |
-| Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Lớp trên trái, chú giải dưới trái, nguồn sau nút thông tin |
+| Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Tìm kiếm và lớp trên trái, chú giải dưới trái, nguồn sau nút thông tin |
+| Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | Tải PNG hoặc JSON có căn cứ, phiên bản và trạng thái dữ liệu |
 | Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ |
 | Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình |
 
@@ -36,6 +38,7 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 | Thao tác | Kết quả |
 |---|---|
 | Chọn địa bàn mới | Mở chi tiết và tuyến mặc định của địa bàn |
+| Tìm trên bản đồ | Tìm bằng tên/mã hoặc tiếng Việt không dấu. Enter mở kết quả, bật lớp của đối tượng nếu đang tắt và đưa bản đồ đến vị trí đó |
 | Bấm lại địa bàn đang xem | Giữ tab và tuyến đã chọn |
 | Chọn đoạn đường hoặc điểm ảnh hưởng | Thay nội dung trong cùng panel. Đưa điểm vào vùng nhìn nếu đang ngoài màn hình hoặc sau điều khiển |
 | Đóng chi tiết | Trở về nơi mở chi tiết, giữ tìm kiếm, bộ lọc và vị trí cuộn |
@@ -45,6 +48,7 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 | Đổi tuyến khi mở mặt cắt | Lấy mẫu tuyến mới, đặt vị trí đọc về đầu tuyến |
 | Nhiều điểm quá gần nhau | Gộp thành ký hiệu số. Bấm để chọn đối tượng, không bỏ mất điểm |
 | GLB hoặc GPU lỗi | Chuyển về 2D, giữ lựa chọn. 2D không tải mô hình GLB |
+| Lưu đánh giá | Chụp một snapshot dữ liệu khi mở xem trước. PNG và JSON dùng cùng snapshot. Đóng và mở lại sau khi đổi tuyến hoặc cập nhật tin để lấy đánh giá mới |
 
 Không có nút điều động, giao nhiệm vụ hay xác nhận cứu hộ khi chưa có quy trình và dữ liệu tương ứng. Dữ liệu mô phỏng được ghi trong **Nguồn dữ liệu**, không gắn nhãn cuộc thi lên màn thao tác.
 
