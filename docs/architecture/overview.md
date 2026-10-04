@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-Cập nhật: 2026-10-03. Bản hiện hành dùng một sự kiện Chế Tạo với dữ liệu mô phỏng.
+Cập nhật: 2026-10-04. Bản hiện hành dùng một sự kiện Chế Tạo với dữ liệu mô phỏng.
 
 ## Thành phần đang chạy
 
@@ -44,6 +44,7 @@ Gói tĩnh và API dùng cùng hợp đồng. API lỗi không được thay b�
 | `features/routes/` | Tính tuyến, ước tính di chuyển, mặt cắt |
 | `features/map/` | Bản đồ Leaflet, ảnh 2D, fallback 3D |
 | `features/search/` | Chỉ mục tên/mã, chuẩn hóa tiếng Việt và hộp tìm trên bản đồ |
+| `features/measurement/` | Đo khoảng cách/diện tích UTM, hình đo tạm và thao tác operator trên Leaflet |
 | `features/briefing/` | Snapshot đánh giá, xem trước, dựng PNG và tải PNG/JSON |
 | `terrain/` | Tọa độ, lấy mẫu DEM, lớp Three.js, ký hiệu và bố trí nhãn |
 | `components/dear/` | Panel, hộp thoại và điều khiển nhận dữ liệu qua props |

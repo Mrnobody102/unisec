@@ -2,12 +2,15 @@ import type { Community, Hazard, Locale, ResponseSite } from '../types/dear';
 import type { OverlayHit } from './scenarioOverlays';
 import { mapSymbolSvg, type MapSymbolName } from './mapSymbols';
 import { layoutMarkerGroups, overlaps, type ScreenRect } from './markerLayout';
+import { markerPresentation } from './markerPresentation';
 
 export type ScreenMarkerOptions = {
   communities: Community[]; hazards: Hazard[]; layers: Record<string, boolean>;
   responseSites?: ResponseSite[];
   selectedCommunityId: string | null; selectedObjectId: string | null; locale: Locale;
   onSelect: (hit: OverlayHit) => void;
+  allowCounts?: () => boolean;
+  onExpandGroup?: (points: Array<{ x: number; y: number }>) => void;
 };
 type Marker = {
   id: string; hit: OverlayHit; name: string; symbol: MapSymbolName;
@@ -20,6 +23,12 @@ type Projection = (point: { x: number; y: number }) => { x: number; y: number } 
 
 export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOptions): { update: (project: Projection) => void; dispose: () => void } {
   const { communities, hazards, layers, locale } = options;
+  const categoryNames: Record<MapSymbolName, [string, string]> = {
+    community: ['thôn, bản', 'communities'], landslide: ['điểm sạt lở', 'landslide sites'],
+    bridge: ['cầu', 'bridges'], crossing: ['điểm vượt khe', 'gully crossings'],
+    flood: ['điểm ngập', 'flood sites'], staging: ['điểm tập kết', 'staging points'],
+    hlz: ['vị trí hạ cánh', 'landing sites']
+  };
   const layer = document.createElement('div');
   layer.className = 'map-marker-layer';
   layer.dataset.basemap = layers.imagery === false ? 'terrain' : 'imagery';
@@ -45,8 +54,15 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     chooser.className = 'map-object-chooser'; chooser.setAttribute('role', 'group');
     chooser.setAttribute('aria-label', locale === 'vi' ? 'Chọn đối tượng' : 'Choose an object');
     const heading = document.createElement('div'); heading.className = 'map-object-chooser-heading';
-    heading.textContent = locale === 'vi' ? `${members.length} đối tượng` : `${members.length} objects`;
+    heading.textContent = locale === 'vi' ? 'Đối tượng tại vị trí này' : 'Objects at this location';
     chooser.appendChild(heading);
+    if (options.onExpandGroup && members.some(member => Math.hypot(member.point.x - members[0].point.x, member.point.y - members[0].point.y) > 1)) {
+      const expand = document.createElement('button'); expand.type = 'button';
+      expand.className = 'map-chooser-expand';
+      expand.textContent = locale === 'vi' ? 'Phóng tới các điểm' : 'Zoom to these points';
+      expand.onclick = () => { closeChooser(); options.onExpandGroup?.(members.map(member => member.point)); };
+      chooser.appendChild(expand);
+    }
     members.forEach(member => {
       const choice = document.createElement('button'); choice.type = 'button';
       const icon = document.createElement('span'); icon.innerHTML = mapSymbolSvg(member.symbol);
@@ -138,7 +154,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   void document.fonts.ready.then(onFontsLoaded);
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
-    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-search,.map-bottom-bar,.map-layer-launcher,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover') ?? [])
+    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {
@@ -164,17 +180,32 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       const marker = markers.find(m => m.id === group.anchor.id)!;
       const { x, y } = group.anchor, half = group.rect.width / 2;
       const clustered = group.members.length > 1;
+      const members = groups.get(marker.id)!;
+      const presentation = markerPresentation(members, options.allowCounts?.() ?? false);
+      const display = marker;
       marker.button.hidden = false;
       marker.button.style.transform = `translate(${x - half}px,${y - half}px)`;
-      marker.button.classList.toggle('is-cluster', clustered);
-      marker.button.classList.toggle('is-selected', group.members.some(p => markers.find(m => m.id === p.id)!.selected));
-      marker.button.setAttribute('aria-label', clustered ? (locale === 'vi' ? `${group.members.length} đối tượng gần ${marker.name}` : `${group.members.length} objects near ${marker.name}`) : marker.name);
+      marker.button.classList.toggle('is-cluster', presentation === 'cluster');
+      marker.button.classList.toggle('is-overlap', presentation === 'overlap');
+      marker.button.classList.toggle('has-overlap', presentation === 'selected-overlap');
+      marker.button.classList.toggle('is-selected', marker.selected);
+      marker.button.classList.toggle('has-critical', (presentation === 'overlap' || presentation === 'cluster') && members.some(member => member.priority >= 50 || (member.symbol === 'landslide' && !member.button.classList.contains('is-suspected'))));
+      marker.button.setAttribute('aria-label', clustered ? (presentation === 'cluster'
+        ? `${group.members.length} ${categoryNames[marker.symbol][locale === 'vi' ? 0 : 1]}`
+        : `${display.name}. ${locale === 'vi' ? 'Chọn đối tượng tại vị trí này' : 'Choose objects at this location'}`) : marker.name);
       marker.button.title = clustered ? group.members.map(p => markers.find(m => m.id === p.id)!.name).join(', ') : marker.name;
       if (clustered) { marker.button.setAttribute('aria-haspopup', 'true'); marker.button.setAttribute('aria-expanded', String(chooserTrigger === marker.button)); }
       else { marker.button.removeAttribute('aria-haspopup'); marker.button.removeAttribute('aria-expanded'); }
-      marker.icon.hidden = clustered; marker.count.hidden = !clustered;
+      const iconKey = presentation === 'overlap' ? 'overlap' : display.symbol;
+      if (marker.icon.dataset.symbol !== iconKey) {
+        marker.icon.dataset.symbol = iconKey;
+        marker.icon.innerHTML = presentation === 'overlap'
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>'
+          : mapSymbolSvg(display.symbol);
+      }
+      marker.icon.hidden = false; marker.count.hidden = presentation !== 'cluster';
       if (marker.count.textContent !== String(group.members.length)) marker.count.textContent = String(group.members.length);
-      if (!marker.label || clustered) { marker.button.classList.add('is-label-hidden'); return; }
+      if (!marker.label || (clustered && presentation !== 'selected-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
       const choices = [{ x: x + 22, y: y - 10 }, { x: x - marker.width - 22, y: y - 10 }, { x: x - marker.width / 2, y: y - 43 }, { x: x - marker.width / 2, y: y + 22 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);

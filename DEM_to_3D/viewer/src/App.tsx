@@ -93,6 +93,8 @@ export default function App(): JSX.Element {
   const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
   const [alertRead, setAlertRead] = useState<boolean>(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
+  const [measurementOpen, setMeasurementOpen] = useState(false);
+  useEffect(() => { if (showProfile) setMeasurementOpen(false); }, [showProfile]);
   const [mapMode, setMapMode] = useState<'3d' | '2d'>('2d');
   const [mobileView, setMobileView] = useState<'map' | 'info'>('map');
   const [basemapState, setBasemapState] = useState<BasemapState>({ status: 'off', style: 'satellite', loaded: 0, total: 0 });
@@ -379,6 +381,7 @@ export default function App(): JSX.Element {
   }, [analysisTerrain, communities]);
 
   const selectCommunity = useCallback((id: string) => {
+    setMeasurementOpen(false);
     if (!selectedCommunityId) setCommunityOrigin({ view, objectId: selectedObjectId });
     if (id !== selectedCommunityId) setSelectedRouteType('candidate');
     setSelectedCommunityId(id);
@@ -391,6 +394,7 @@ export default function App(): JSX.Element {
   }, [selectedCommunityId, selectedObjectId, view]);
 
   const inspectObject = useCallback((id: string) => {
+    setMeasurementOpen(false);
     setSelectedObjectId(id);
     setShowProfile(false);
     setFocusDistance(null);
@@ -413,12 +417,14 @@ export default function App(): JSX.Element {
   // Simulate U-1 Incoming Field Update
   const handleSimulateUpdate = useCallback(() => {
     if (updated) return;
+    setMeasurementOpen(false);
     setUpdated(true);
     setActiveDialog(null);
     showToast(['Đã cập nhật bản đồ', 'Map updated']);
   }, [showToast, updated]);
 
   const changeView = (next: WorkspaceView): void => {
+    setMeasurementOpen(false);
     setView(next);
     setSelectedCommunityId(null);
     setSelectedObjectId(null);
@@ -565,6 +571,8 @@ export default function App(): JSX.Element {
           {mapMode === '2d' ? <Map2D
             terrain={mapTerrain}
             profileOpen={showProfile}
+            measurementOpen={measurementOpen}
+            onCloseMeasurement={() => { setMeasurementOpen(false); document.querySelector<HTMLButtonElement>('.map-measure-trigger')?.focus(); }}
             imageUrl={defaultTerrainData ? scenarioManifest?.terrain.image?.url : undefined}
             viewportRef={map2DViewport}
             locale={locale}
@@ -625,6 +633,7 @@ export default function App(): JSX.Element {
             onZoomOut={() => viewControlRef.current?.zoomOut()}
             onResetView={() => viewControlRef.current?.resetView()}
             onOpenLayers={() => {
+              setMeasurementOpen(false);
               if (activeDialog !== 'layers') { setShowProfile(false); setFocusDistance(null); }
               setActiveDialog(activeDialog === 'layers' ? null : 'layers');
             }}
@@ -633,7 +642,9 @@ export default function App(): JSX.Element {
             hazards={scenarioTerrainCompatible ? hazards : []}
             hasSelectedRoute={scenarioTerrainCompatible && Boolean(activeRoute)}
             hasHLZData={scenarioTerrainCompatible && responseSites.some(site => site.kind === 'hlz')}
-          />
+            measuring={measurementOpen}
+            onMeasure={() => { setShowProfile(false); setFocusDistance(null); setActiveDialog(null); setMapMode('2d'); setMeasurementOpen(open => !open); }}
+          >
           <MapSearch locale={locale} query={mapQuery} onQuery={setMapQuery} results={mapResults} disabled={!snapshotReady}
             onSelect={result => {
               const [kind, id] = result.key.split(':');
@@ -647,6 +658,7 @@ export default function App(): JSX.Element {
               else inspectObject(result.key);
               viewControlRef.current?.focusProjected(result.projected);
             }}/>
+          </MapControls>
           <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh Sentinel-2 và địa hình Chế Tạo', 'Sentinel-2 imagery and Chế Tạo terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
 
           {activeDialog === 'layers' && (

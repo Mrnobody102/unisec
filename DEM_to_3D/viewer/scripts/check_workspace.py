@@ -16,7 +16,7 @@ def check_symbols(page):
       const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
       const visible = el => el.offsetHeight && getComputedStyle(el).visibility !== 'hidden';
       const pins = [...document.querySelectorAll('.map-pin')].filter(visible);
-      const controls = [...document.querySelectorAll('.map-tools,.map-search,.map-bottom-bar,.map-layer-launcher,.map-reference,.layers-panel,.map-attribution,.map-source-popover')].filter(visible);
+      const controls = [...document.querySelectorAll('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.layers-panel,.map-attribution,.map-source-popover,.map-measure-panel')].filter(visible);
       const errors = [];
       pins.forEach((pin, i) => {
         pins.slice(i + 1).forEach(other => { if (overlap(box(pin), box(other))) errors.push('pins: ' + pin.title + ' / ' + other.title); });
@@ -155,11 +155,43 @@ def run(url, chrome, captures):
         for _ in range(7):
             page.get_by_role('button', name='Thu nhỏ', exact=True).click()
             page.wait_for_timeout(150)
-        expect(page.locator('.map-pin.is-cluster:visible').first).to_be_visible()
+        group = page.locator('.map-pin.is-cluster:visible,.map-pin.is-overlap:visible,.map-pin.has-overlap:visible').first
+        expect(group).to_be_visible()
         check_symbols(page)
-        page.locator('.map-pin.is-cluster:visible').first.click()
+        assert page.locator('.map-pin.is-overlap:visible .map-pin-count:visible').count() == 0
+        group.click()
         expect(page.locator('.map-object-chooser')).to_be_visible()
         page.keyboard.press('Escape'); expect(page.locator('.map-object-chooser')).to_have_count(0)
+
+        # Measurement must consume map clicks, never select response objects.
+        page.get_by_role('button', name='Xem toàn khu vực', exact=True).click()
+        page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
+        panel = page.locator('.map-measure-panel')
+        expect(panel).to_be_visible()
+        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_disabled()
+        area = page.locator('.map-2d-surface').bounding_box()
+        def pick(x, y):
+            page.mouse.click(area['x'] + area['width'] * x, area['y'] + area['height'] * y)
+        pick(.55, .4)
+        expect(panel.get_by_role('button', name='Kết thúc')).to_be_disabled()
+        pick(.7, .4)
+        expect(panel.locator('.map-measure-result')).to_contain_text('km')
+        panel.get_by_role('button', name='Kết thúc').click()
+        expect(panel.get_by_role('button', name='Kết thúc')).to_be_disabled()
+        panel.get_by_role('button', name='Bỏ điểm cuối').click()
+        expect(panel.get_by_role('button', name='Kết thúc')).to_be_disabled()
+        panel.get_by_role('button', name='Diện tích', exact=True).click()
+        pick(.55, .4); pick(.7, .4); pick(.7, .6)
+        expect(panel.locator('.map-measure-result')).to_contain_text('Chu vi')
+        expect(panel.get_by_role('button', name='Kết thúc')).to_be_enabled()
+        if captures:
+            page.screenshot(path=str(captures / 'workspace-measurement.png'))
+        panel.get_by_role('button', name='Kết thúc').click()
+        page.keyboard.press('Escape')
+        expect(panel).to_have_count(0)
+        expect(page.get_by_role('button', name='Đo trên bản đồ 2D')).to_be_focused()
+        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_enabled()
+        check_symbols(page)
 
         for width, height in [(1366, 768), (1024, 768), (390, 740), (320, 740)]:
             page.set_viewport_size({'width': width, 'height': height})
@@ -172,6 +204,8 @@ def run(url, chrome, captures):
             area = page.locator('.map-area').bounding_box()
             assert panel['x'] >= area['x'] and panel['x'] + panel['width'] <= area['x'] + area['width']
             page.get_by_role('button', name='Đóng lớp bản đồ', exact=True).click()
+            toolbar = page.locator('.map-toolbar').bounding_box()
+            assert toolbar['x'] >= area['x'] and toolbar['x'] + toolbar['width'] <= area['x'] + area['width']
             check_symbols(page)
         assert not errors, errors
         context.close()

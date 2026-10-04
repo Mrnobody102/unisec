@@ -1,6 +1,6 @@
 # Hiển thị bản đồ
 
-Cập nhật: 2026-10-02. Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
+Cập nhật: 2026-10-04. Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 
 ## Ký hiệu và tỷ lệ
 
@@ -20,9 +20,10 @@ Cập nhật: 2026-10-02. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 
 - Điểm dùng biểu tượng 28 px, không mô tả kích thước thật. Zoom làm thay đổi vị trí và mật độ nhãn, không phóng icon theo địa hình.
 - Nhãn ưu tiên đối tượng đang chọn, cộng đồng ưu tiên, điểm tập kết, rồi địa danh khác. Đo độ rộng theo font thực, thử nhiều vị trí, ẩn nhãn khi không còn chỗ. Tránh đè marker, nhãn và điều khiển.
-- Điểm quá gần được gộp thành số đếm 34 px theo tỷ lệ màn hình. Bấm để chọn từng đối tượng. Nhóm giữ tọa độ điểm ưu tiên, không dời từng điểm sang vị trí giả.
+- Điểm chồng nhau dùng ký hiệu nhóm 34 px tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc phóng tới các điểm.
+- Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Khác loại hoặc trong 3D dùng ký hiệu chồng lớp, không hiện tổng số. Đối tượng được chọn giữ ký hiệu và tên khi có chỗ hiển thị. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
 - Polygon phải bám hình học thật. Chỉ có tọa độ điểm thì không vẽ vòng tròn/ellipse giả làm phạm vi sạt lở hoặc ngập.
-- Lớp bản đồ ở góc trên trái. Chú giải ở góc dưới trái, chỉ liệt kê lớp đang hiện. Bản gọn giữ tình trạng đường, lựa chọn, ưu tiên và sạt lở. Hai chức năng có nút riêng.
+- Lớp, tìm kiếm và đo nằm cùng thanh trên trái. Chú giải dưới trái chỉ liệt kê lớp đang hiện. Bản gọn giải thích mạng đường, tình trạng đường và tuyến đang xem. Mở rộng để xem ký hiệu điểm và AOI. Mở lớp tạm ẩn chú giải để hai khối không che nhau.
 - 2D dùng Bắc địa lý và thước khoảng cách ngang tại tâm bản đồ theo zoom. 3D dùng Bắc lưới, xoay theo camera. Không dùng thước phẳng cho góc nhìn nghiêng.
 - Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Màu xanh đánh dấu phần tuyến đang xem, không che đoạn đỏ hoặc vàng.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
@@ -40,6 +41,17 @@ Cập nhật: 2026-10-02. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 
 Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đường và vạch vị trí. Mở mặt cắt không vẽ thêm đường xanh che tình trạng đường. Độ dốc DEM không phải độ dốc mặt đường đã khảo sát. Nguồn gốc DEM hiện chưa được xác nhận trong metadata.
 
+## Đo trên bản đồ
+
+| Nội dung | Quy tắc |
+|---|---|
+| Khoảng cách | Cộng đoạn thẳng trên mặt phẳng EPSG:32648, đơn vị m/km. Không dùng pixel hoặc khoảng cách trên mặt phẳng Web Mercator |
+| Diện tích | Đa giác từ ít nhất 3 điểm, đơn vị m²/ha/km². Hiển thị chu vi. Không nhận vùng tự cắt hoặc suy biến |
+| Phạm vi | Múi UTM 48N, 102° đến 108° Đông. Phép đo ngang, không cộng chiều dài theo sườn dốc |
+| Thao tác | Bấm thêm điểm, Bỏ điểm cuối/Backspace để sửa, Kết thúc giữ hình, Đo lại bắt đầu mới, X/Escape đóng. Kéo/cuộn vẫn di chuyển và zoom |
+
+Đo không tạo vùng ảnh hưởng, thay tình trạng đường hoặc tính lại mức ưu tiên.
+
 ## Đối chiếu Hình 2 của proposal
 
 | Yếu tố | Hiện tại | Dữ liệu cần bổ sung |
@@ -56,6 +68,8 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 
 | Nguồn | Phạm vi áp dụng |
 |---|---|
+| [ArcGIS: cấu hình clustering](https://doc.arcgis.com/en/arcgis-online/create-maps/configure-clustering-mv.htm) | Nhóm điểm thay đổi theo tỷ lệ, có ngưỡng zoom, số đếm và truy cập thành viên. Là mẫu tương tác GIS phổ biến, không phải quy định bắt buộc |
+| [PROJ: UTM](https://proj.org/en/stable/operations/projections/utm.html) | Chuyển tọa độ địa lý sang mặt phẳng trong múi phù hợp trước khi đo |
 | [QCVN 70:2022/BTNMT, bản hợp nhất có sửa đổi 2025](https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/01/96-vbhn-bnnmt.pdf) | Quy chuẩn cho bản đồ địa hình quốc gia 1:50.000 và 1:100.000. Phân biệt ký hiệu theo tỷ lệ, nửa theo tỷ lệ và không theo tỷ lệ. Không coi đây là chứng nhận cho web ứng phó |
 | [Mapbox: bố trí nhãn](https://docs.mapbox.com/help/dive-deeper/optimize-map-label-placement/) | Thứ tự ưu tiên, nhiều vị trí nhãn, tránh chồng lấn. Áp dụng chung cho 2D và 3D |
 | [ArcGIS: clustering](https://doc.arcgis.com/en/arcgis-online/create-maps/configure-clustering-mv.htm) | Gộp điểm theo mật độ, số đếm và thay đổi nhóm theo zoom |

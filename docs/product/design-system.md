@@ -1,6 +1,6 @@
 # Design system DEAR
 
-Hiện hành, cập nhật 2026-10-03. Web React là bản triển khai chuẩn. Catalog HTML trong `references/` là bản tham khảo, chưa đồng bộ hoàn toàn.
+Hiện hành, cập nhật 2026-10-04. Web React là bản triển khai chuẩn. Catalog HTML trong `references/` là bản tham khảo, chưa đồng bộ hoàn toàn.
 
 ## Nền tảng
 
@@ -10,7 +10,7 @@ Hiện hành, cập nhật 2026-10-03. Web React là bản triển khai chuẩn.
 | Chữ | Inter mặc định. Cài đặt có IBM Plex Sans và Space Grotesk/Be Vietnam Pro. Nội dung 13–14 px, tiêu đề panel 23 px. Dùng font mono cho tọa độ hoặc mã cần đối chiếu |
 | Khoảng cách | Thang 4, 8, 12, 16, 20, 24, 32 px. Căn theo khối nội dung, không chèn khoảng trắng để căn nút |
 | Màu | Mặc định sáng, header tối. Bề mặt trung tính. Màu chọn giao diện tách khỏi màu tình trạng đường |
-| Icon và nút | SVG từ `UiIcon`, thường 18 px. Nút bản đồ 40 × 40 px, nút đóng 36 × 36 px. Có tên truy cập và focus rõ |
+| Icon và nút | [Lucide](https://lucide.dev/guide/react), qua `shared/ui/UiIcon`: lưới 24 px, hiển thị 18 px, nét 1,75 px. Nút bản đồ 40 × 40 px. Nút đóng 28–36 px theo bề mặt. Có tên truy cập và focus rõ |
 
 Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/styles/tokens.css). Bố cục nằm trong [workspace.css](../../DEM_to_3D/viewer/src/styles/workspace.css).
 
@@ -25,6 +25,8 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |
+| Thanh bản đồ | Tìm kiếm, lớp và đo cùng một thanh trên trái. Điều hướng thành một nhóm trên phải. Không tạo card riêng cho mỗi nút |
+| Đo bản đồ | Mở trên 2D, chọn khoảng cách hoặc diện tích. Đổi kiểu đo xóa hình cũ. Kết thúc giữ kết quả, X/Escape đóng. Không sửa dữ liệu sự kiện |
 | Lưu đánh giá | Hành động phụ trong chi tiết địa bàn. Mở xem trước trước khi tải, không thêm trang báo cáo vào menu chính |
 | Hộp xem nhanh | Nội dung ngắn và hành động xem chi tiết. Không khóa bản đồ |
 | Hộp thoại | Focus vào khi mở. Tab giữ bên trong, Escape đóng và trả focus về nút mở |
@@ -35,6 +37,8 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Nguồn bản đồ | Nút thông tin nhỏ mở nguồn, trạng thái tải và license. Giữ credit tối thiểu trên map khi nhà cung cấp yêu cầu |
 
 Bản đồ dùng chung [ký hiệu SVG](../../DEM_to_3D/viewer/src/terrain/mapSymbols.ts) và [màu đường](../../DEM_to_3D/viewer/src/terrain/roadStyle.ts). Quy tắc chuyên môn nằm tại [hiển thị bản đồ](cartography.md), luồng tại [thiết kế giao diện](interface.md).
+
+Icon giao diện dùng Lucide. Ký hiệu chuyên môn dùng `MapSymbol`, có chú giải và điều kiện dữ liệu. Không thay sạt lở, cầu hoặc bãi đáp bằng icon trang trí. Subset Lucide và [giấy phép](../../DEM_to_3D/viewer/vendor/lucide/LICENSE) nằm trong repo, chạy offline.
 
 ## Kiểm soát thay đổi
 

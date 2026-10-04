@@ -1,6 +1,6 @@
 import type { Community, IncidentModel, Locale } from '../../types/dear';
 import { localClock } from '../../features/incident/sourceTime';
-import { MapSymbol } from '../../shared/ui/MapSymbol';
+import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 
 type Props = {
@@ -39,7 +39,7 @@ export function IncidentView({ incident, locale, updated, communities, blockedRo
         <div className="incident-priority-list">
           {priorityCommunities.map(community => {
             return <button className="incident-priority-row" key={community.id} onClick={() => onSelectCommunity(community.id)}>
-              <span className="priority-community-symbol"><MapSymbol name="community" /></span>
+              <span className="priority-community-symbol"><UiIcon name="people"/></span>
               <span><strong>{community.name}</strong><small>{t(...community.desc)}</small></span>
             </button>;
           })}

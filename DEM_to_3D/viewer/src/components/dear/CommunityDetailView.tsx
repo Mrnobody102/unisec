@@ -214,9 +214,7 @@ export const CommunityDetailView: React.FC<Props> = ({
                 disabled={!hasTerrainProfile}
                 title={!hasTerrainProfile ? t('Chưa có dữ liệu độ cao cho mặt cắt này', 'Elevation data is unavailable for this section') : undefined}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 20h18M5 16l4-8 5 6 5-10" />
-                </svg>
+                <UiIcon name="profile" size={18}/>
                 <span>{t('Mặt cắt địa hình', 'Terrain section')}</span>
               </button>
               <button className="button decision-save" onClick={onExport} aria-label={t('Lưu đánh giá', 'Save assessment')} title={t('Lưu đánh giá', 'Save assessment')}><UiIcon name="download"/></button>

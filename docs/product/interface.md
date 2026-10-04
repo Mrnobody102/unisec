@@ -1,6 +1,6 @@
 # Thiết kế giao diện
 
-Cập nhật: 2026-10-03. Áp dụng cho web React tại `DEM_to_3D/viewer`.
+Cập nhật: 2026-10-04. Áp dụng cho web React tại `DEM_to_3D/viewer`.
 
 ## Luồng ứng phó
 
@@ -26,7 +26,7 @@ Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết 
 | Chi tiết địa bàn | Lý do ưu tiên, tiếp cận, phương án và việc cần xử lý | Tuyến, căn cứ, dân số tham chiếu |
 | Tuyến | Danh sách so sánh phương án, khoảng cách, ETA có điều kiện, tình trạng từng đoạn | Địa hình dọc tuyến, nguồn của đoạn đường |
 | Đường sá | Tên, trạng thái, chiều dài. Đoạn bị chặn xếp trước | Ghi nhận, việc cần xử lý, bản ghi nguồn |
-| Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Tìm kiếm và lớp trên trái, chú giải dưới trái, nguồn sau nút thông tin |
+| Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Thanh tìm/lớp/đo trên trái, chú giải dưới trái, nguồn sau nút thông tin |
 | Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | Tải PNG hoặc JSON có căn cứ, phiên bản và trạng thái dữ liệu |
 | Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ |
 | Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình |
@@ -37,6 +37,7 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 
 | Thao tác | Kết quả |
 |---|---|
+| Đo trên bản đồ | Chuyển sang 2D, đóng lớp/mặt cắt. Chọn điểm để đo ngang. Không đổi tuyến hoặc căn cứ. Chọn địa bàn/đường từ panel kết thúc chế độ đo |
 | Chọn địa bàn mới | Mở chi tiết và tuyến mặc định của địa bàn |
 | Tìm trên bản đồ | Tìm bằng tên/mã hoặc tiếng Việt không dấu. Enter mở kết quả, bật lớp của đối tượng nếu đang tắt và đưa bản đồ đến vị trí đó |
 | Bấm lại địa bàn đang xem | Giữ tab và tuyến đã chọn |

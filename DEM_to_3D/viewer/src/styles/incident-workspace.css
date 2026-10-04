@@ -152,7 +152,7 @@
 .incident-priority-row:last-child { border-bottom: 0; }
 .incident-priority-row:hover strong { color: var(--select-ink); }
 .incident-priority-row strong { display: block; font-size: 15px; }
-.priority-community-symbol { display: grid; place-items: center; width: 28px; height: 28px; background: #a6630b; color: white; border-radius: 50%; }
+.priority-community-symbol { display: grid; place-items: center; width: 24px; height: 24px; color: var(--ws-brand); }
 .priority-access { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-text); }
 .incident-priority-row small { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-muted); }
 .incident-community-action { width: 100%; margin-top: 12px; }

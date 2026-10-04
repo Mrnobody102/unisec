@@ -1,6 +1,6 @@
 # Rà soát giao diện và luồng ứng phó
 
-Cập nhật: 2026-10-03. Phạm vi: web React, gói Chế Tạo v0.2 và API snapshot cục bộ. Chưa thử với người trực thực tế.
+Cập nhật: 2026-10-04. Phạm vi: web React, gói Chế Tạo v0.2 và API snapshot cục bộ. Chưa thử với người trực thực tế.
 
 ## Kết quả nghiệp vụ
 
@@ -25,7 +25,8 @@ Cập nhật: 2026-10-03. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Địa bàn | Tiếp cận, Tuyến, Căn cứ. Màn chính giữ trạng thái, phương án, thời gian có điều kiện và việc cần xử lý |
 | Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
 | Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
-| Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm điểm gần nhau, nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
+| Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm cùng loại mới có số đếm trên 2D. Nhóm khác loại/3D mở chọn đối tượng. Nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
+| Công cụ đo | Khoảng cách/diện tích/chu vi UTM trên 2D. Sửa điểm, giữ kết quả khi kết thúc, đóng hoặc đo lại. Không tạo dữ liệu nghiệp vụ |
 | Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
 | Tìm kiếm | Tên/mã hoặc tiếng Việt không dấu, chọn kết quả bằng bàn phím, mở chi tiết và đưa vào vùng nhìn |
 | Bản xuất | Snapshot được sao chép khi mở xem trước. PNG không phụ thuộc GPU hoặc Internet |
@@ -36,6 +37,8 @@ Cập nhật: 2026-10-03. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 [Xem bản xuất PNG](assets/decision-map.png). Ảnh có cùng tuyến, thời điểm và nhận định với bản xem trước trong ứng dụng.
 
+[Công cụ đo bản đồ](assets/workspace-measurement.png). Hình đo tạm giữ lớp tình huống để người trực đối chiếu.
+
 Ảnh từ bản build khi chặn Internet. Khoảng trống ngoài ảnh địa hình là vùng thiếu nền cục bộ, không phải vùng đã xác nhận không có thiên tai.
 
 ## Kiểm tra kỹ thuật
@@ -43,13 +46,14 @@ Cập nhật: 2026-10-03. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Kiểm tra | Kết quả |
 |---|---|
 | TypeScript và build | Đạt. Gói JavaScript đầu vào còn khoảng 1,3 MB trước gzip |
-| TypeScript unit tests | 99 kiểm thử đạt, gồm tìm kiếm, snapshot không giữ tham chiếu mutable, đổi tuyến và áp dụng tin |
+| TypeScript unit tests | 104 kiểm thử đạt, gồm nhóm điểm theo loại, phép đo UTM, tìm kiếm, snapshot, đổi tuyến và áp dụng tin |
 | Python | 8 kiểm thử gói dữ liệu và 2 kiểm thử HTTP API đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
 | Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
 | Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
+| Chrome: công cụ và biến thể | Đo đường/diện tích, sửa điểm, đóng/mở lại, chuyển từ 3D sang 2D. Đổi tối/Anh/font giữ phép đo, Escape đóng hộp đang tương tác |
 
-Kiểm tra trình duyệt có thể chạy lại bằng `scripts/check_workspace.py` sau khi mở bản build qua HTTP. Cần Python Playwright và Chromium hoặc tham số `--chrome` trỏ đến Chrome đã cài.
+Kiểm tra trình duyệt: `scripts/check_workspace.py` và `scripts/check_map_tools.py`, chạy sau khi mở bản build qua HTTP. Cần Python Playwright và Chromium hoặc tham số `--chrome` trỏ đến Chrome đã cài.
 
 Chưa tích hợp xử lý ảnh vệ tinh, ảnh trước/sau, xuất PDF/GIS, backend vận hành hoặc nghiệm thu dữ liệu. Chưa đo mục tiêu 3–6 giờ hay độ ổn định phiên dài. Tiến độ ở [công việc SIC](../tasks/sic-2026.md), thao tác trình diễn ở [demo](../operations/demo.md).

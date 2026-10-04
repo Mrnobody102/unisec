@@ -1,3 +1,4 @@
+import { UiIcon } from '../../shared/ui/UiIcon';
 import type { Locale, ScenarioRoute } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
 
@@ -8,7 +9,7 @@ export function RouteOption({ route, selected, locale, onSelect }: {
   const blocked = route.status === 'blocked';
   return <button className="route-card" aria-pressed={selected} onClick={onSelect}>
     <span className="route-option-heading">
-      <span className="route-option-selector" aria-hidden="true">{selected && <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m3 8 3 3 7-7"/></svg>}</span>
+      <span className="route-option-selector" aria-hidden="true">{selected && <UiIcon name="check" size={14}/>}</span>
       <strong>{t(route.name[0], route.name[1])}</strong>
     </span>
     <span className="route-option-meta">

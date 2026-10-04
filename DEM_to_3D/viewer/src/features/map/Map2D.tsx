@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { projectedToWgs84, sceneToProjected } from '../../terrain/coordinate';
@@ -7,13 +7,16 @@ import { roadColors } from '../../terrain/roadStyle';
 import type { TerrainData } from '../../types/terrain';
 import type { TerrainViewerProps } from '../../components/TerrainViewer';
 import { createRaster2d } from './raster2d';
+import { MapMeasurement } from '../measurement/MapMeasurement';
 
 type Props = Pick<TerrainViewerProps, 'locale' | 'scenarioProps' | 'onSelectOverlayHit' | 'viewControlRef' | 'onBasemapState' | 'focusPoint' | 'profileMetadata'> & {
   terrain: TerrainData | null; imageUrl?: string; viewportRef: React.MutableRefObject<{ center: [number, number]; zoom: number } | null>;
   profileOpen: boolean;
+  measurementOpen: boolean; onCloseMeasurement: () => void;
 };
 
 export function Map2D(props: Props): JSX.Element {
+  const [mapReady, setMapReady] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null), mapRef = useRef<L.Map | null>(null);
   const propsRef = useRef(props); propsRef.current = props;
   const runtime = useRef<{ refresh: () => void } | null>(null);
@@ -24,6 +27,7 @@ export function Map2D(props: Props): JSX.Element {
     const surface = document.createElement('div'); surface.className = 'map-2d-surface terrain-canvas'; host.appendChild(surface);
     const map = L.map(surface, { zoomControl: false, attributionControl: false, preferCanvas: false, minZoom: 8, maxZoom: 19, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90 });
     mapRef.current = map;
+    setMapReady(true);
     const saved = propsRef.current.viewportRef.current;
     map.setView(saved?.center ?? [21.72, 104.03], saved?.zoom ?? 12, { animate: false });
     const scale = L.control.scale({ imperial: false, position: 'bottomleft', maxWidth: 100 }).addTo(map);
@@ -46,6 +50,8 @@ export function Map2D(props: Props): JSX.Element {
     };
     const updateLayout = () => {
       frame = 0; markers?.update(project);
+      const markerLayer = host.querySelector<HTMLElement>('.map-marker-layer');
+      if (markerLayer) markerLayer.inert = propsRef.current.measurementOpen;
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
     };
     const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(updateLayout); };
@@ -90,7 +96,13 @@ export function Map2D(props: Props): JSX.Element {
       }
       markers?.dispose(); overlay?.remove(); markers = null; overlay = L.layerGroup().addTo(map);
       if (scenario && terrain) {
-        markers = createScreenMarkers(host, { ...scenario, locale, onSelect: hit => propsRef.current.onSelectOverlayHit?.(hit) });
+        markers = createScreenMarkers(host, { ...scenario, locale,
+          allowCounts: () => map.getZoom() < 14,
+          onExpandGroup: points => {
+            const positions = points.map(ll).filter((point): point is L.LatLng => point !== null);
+            if (positions.length) map.fitBounds(L.latLngBounds(positions), { paddingTopLeft: [55, 80], paddingBottomRight: [75, 100], maxZoom: 17 });
+          },
+          onSelect: hit => propsRef.current.onSelectOverlayHit?.(hit) });
         if (scenario.aoi && layers.aoi) {
           const points = scenario.aoi.points.map(ll).filter((p): p is L.LatLng => p !== null);
           const selected = scenario.selectedObjectId === `aoi:${scenario.aoi.id}`;
@@ -144,6 +156,7 @@ export function Map2D(props: Props): JSX.Element {
     };
   }, []);
   useEffect(() => { runtime.current?.refresh(); }, [props.terrain, props.imageUrl, props.locale,
+    props.measurementOpen,
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,
     props.scenarioProps?.selectedRoute, props.scenarioProps?.selectedCommunityId,
     props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers]);
@@ -168,5 +181,7 @@ export function Map2D(props: Props): JSX.Element {
     const point = L.circleMarker([latitude, longitude], { radius: 4, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map);
     point.getElement()?.classList.add('map-profile-point-2d'); focusLayer.current = point;
   }, [props.focusPoint, props.profileMetadata]);
-  return <div className="terrain-viewer map-2d" ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}/>;
+  return <div className={`terrain-viewer map-2d${props.measurementOpen ? ' is-measuring' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+    <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen && mapReady} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}/>
+  </div>;
 }

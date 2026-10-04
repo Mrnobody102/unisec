@@ -1,3 +1,4 @@
+import { UiIcon } from './UiIcon';
 import React from 'react';
 import type { Community, CommunityFilter, Locale } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
@@ -44,10 +45,7 @@ export const CommunityListView: React.FC<Props> = ({
         <h1>{t('Địa bàn cần chú ý', 'Communities to review')}</h1>
 
         <div className="search-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
+          <UiIcon name="search" size={18}/>
           <input
             type="search"
             aria-label={t('Tìm địa bàn', 'Find community')}
