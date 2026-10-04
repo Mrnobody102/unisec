@@ -14,10 +14,11 @@ type Props = {
   onResetView: () => void; onOpenLayers: () => void;
   layersOpen: boolean; layers: Record<string, boolean>; hasSelectedRoute: boolean; hazards: Hazard[];
   hasHLZData?: boolean;
+  affectedOnly?: boolean;
   children?: ReactNode; onMeasure: () => void; measuring: boolean;
 };
 
-export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, children, onMeasure, measuring }: Props): JSX.Element {
+export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const helpRef = useRef<HTMLDivElement>(null);
@@ -25,7 +26,7 @@ export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoom
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const routeVisible = hasSelectedRoute && layers.route;
   const legend: Array<{ kind: string; label: string; symbol?: MapSymbolName; uiSymbol?: 'layers' }> = [];
-  if (layers.roads) legend.push({ kind: 'network', label: t('Chưa ghi nhận chặn', 'No blockage reported') });
+  if (layers.roads && !affectedOnly) legend.push({ kind: 'network', label: t('Chưa ghi nhận chặn', 'No blockage reported') });
   if (layers.aoi) legend.push({ kind: 'aoi', label: t('Vùng đánh giá', 'Assessment area') });
   if ((layers.roads || routeVisible) && layers.status) legend.push({ kind: 'blocked', label: t('Đường bị chặn', 'Blocked road') }, { kind: 'uncertain', label: t('Đường cần xác minh', 'Road to verify') });
   if (routeVisible) legend.push({ kind: 'selected', label: t('Tuyến đang xem', 'Selected route') });

@@ -4,12 +4,15 @@ import type { TerrainData } from '../../types/terrain';
 import { UiIcon } from '../../components/dear/UiIcon';
 import { downloadBlob, snapshotFilename, type DecisionSnapshot } from './decisionSnapshot';
 import { renderDecisionMap } from './renderDecisionMap';
+import { decisionGeoJSON } from './decisionGeoJSON';
+import { printDecision } from './printDecision';
 
 export function DecisionExportDialog({ snapshot, terrain, imageUrl, locale, onClose }: {
   snapshot: DecisionSnapshot; terrain: TerrainData | null; imageUrl?: string; locale: Locale; onClose: () => void;
 }): JSX.Element {
   const [preview, setPreview] = useState<{ url: string; blob: Blob } | null>(null);
   const [error, setError] = useState(false), [attempt, setAttempt] = useState(0);
+  const [printError, setPrintError] = useState(false);
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   useEffect(() => {
     const controller = new AbortController(); let url: string | undefined;
@@ -30,7 +33,12 @@ export function DecisionExportDialog({ snapshot, terrain, imageUrl, locale, onCl
           </div>}
       </div>
       <footer className="decision-export-actions">
-        <button className="button soft" onClick={() => downloadBlob(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }), snapshotFilename(snapshot) + '.json')}>{t('Tải dữ liệu JSON', 'Download JSON')}</button>
+        {printError && <p role="alert">{t('Không mở được bản in. Hãy thử lại.', 'Could not open print. Please retry.')}</p>}
+        <details className="export-formats"><summary>{t('Định dạng khác', 'Other formats')}</summary><div>
+          <button className="text-button" disabled={!preview} onClick={() => { setPrintError(false); if (preview) void printDecision(preview.url, snapshotFilename(snapshot)).catch(() => setPrintError(true)); }}>{t('In / lưu PDF', 'Print / save PDF')}</button>
+          <button className="text-button" onClick={() => downloadBlob(new Blob([JSON.stringify(decisionGeoJSON(snapshot), null, 2)], { type: 'application/geo+json' }), snapshotFilename(snapshot) + '.geojson')}>{t('Tải GeoJSON', 'Download GeoJSON')}</button>
+          <button className="text-button" onClick={() => downloadBlob(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }), snapshotFilename(snapshot) + '.json')}>{t('Tải dữ liệu JSON', 'Download JSON')}</button>
+        </div></details>
         <button className="button primary" disabled={!preview} onClick={() => preview && downloadBlob(preview.blob, snapshotFilename(snapshot) + '.png')}><UiIcon name="download"/>{t('Tải bản đồ PNG', 'Download PNG')}</button>
       </footer>
     </section>

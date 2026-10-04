@@ -45,6 +45,7 @@ export type TerrainViewerProps = {
     selectedCommunityId: string | null;
     selectedObjectId: string | null;
     layers: Record<string, boolean>;
+    appearance?: import('../features/map/layerAppearance').LayerAppearance;
   };
   onSelectOverlayHit?: (hit: OverlayHit) => void;
   viewControlRef?: React.MutableRefObject<ViewControls | null>;
@@ -251,6 +252,7 @@ export function TerrainViewer({
           selectedCommunityId: sp.selectedCommunityId,
           selectedObjectId: sp.selectedObjectId,
           layers: sp.layers,
+          appearance: sp.appearance,
           screenMarkers: true,
           resolution: { width: host.clientWidth, height: host.clientHeight }
         });
@@ -597,7 +599,7 @@ export function TerrainViewer({
     };
   }, [geographicPlacements, models]);
 
-  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale]);
+  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.appearance, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale]);
   useLayoutEffect(() => { runtimeRef.current?.setMode(mapMode); }, [mapMode]);
   useEffect(() => { runtimeRef.current?.updateSurface(); }, [theme]);
 

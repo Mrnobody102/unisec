@@ -130,6 +130,8 @@ export type ActiveDialog =
   | 'data'
   | 'layers'
   | 'alerts'
+  | 'notificationCenter'
+  | 'comparison'
   | 'sources'
   | 'evidence'
   | 'segmentAnalysis'

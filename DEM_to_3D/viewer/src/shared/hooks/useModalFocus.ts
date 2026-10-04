@@ -10,7 +10,7 @@ export function useModalFocus(root: RefObject<HTMLElement>, modalKey: string | n
     if (!dialog) return;
     const previous = document.activeElement as HTMLElement | null;
     const focusable = () => [...dialog.querySelectorAll<HTMLElement>(
-      'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]'
+      'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], summary, [tabindex="0"]'
     )].filter(element => element.getClientRects().length > 0);
     (focusable()[0] ?? dialog).focus();
 

@@ -48,4 +48,5 @@ run_log.txt
 # Frontend dependencies/build output
 DEM_to_3D/viewer/node_modules/
 DEM_to_3D/viewer/dist/
+DEM_to_3D/viewer/dist-release/
 DEM_to_3D/viewer/tsconfig.tsbuildinfo

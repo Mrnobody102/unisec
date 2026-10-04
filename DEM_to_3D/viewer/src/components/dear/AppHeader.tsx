@@ -13,6 +13,7 @@ type Props = {
   theme: 'light' | 'dark';
   fontChoice: FontChoice;
   updated: boolean;
+  reportApplied: boolean;
   alertRead: boolean;
   onToggleTheme: () => void;
   onToggleLocale: () => void;
@@ -21,6 +22,7 @@ type Props = {
   onOpenIncident: () => void;
   onOpenData: () => void;
   onOpenUpload: () => void;
+  onOpenTimeline: () => void; onOpenNotifications: () => void; onReset: () => void;
   activeModelName?: string;
 };
 
@@ -32,6 +34,7 @@ export const AppHeader: React.FC<Props> = ({
   theme,
   fontChoice,
   updated,
+  reportApplied,
   alertRead,
   onToggleTheme,
   onToggleLocale,
@@ -40,6 +43,7 @@ export const AppHeader: React.FC<Props> = ({
   onOpenIncident,
   onOpenData,
   onOpenUpload,
+  onOpenTimeline, onOpenNotifications, onReset,
   activeModelName
 }) => {
   const [prefOpen, setPrefOpen] = useState(false);
@@ -79,12 +83,12 @@ export const AppHeader: React.FC<Props> = ({
 
       <div className="header-actions">
         <div className="header-data">
-          <span className="update-label">
+          <button className="update-label header-revision" disabled={!dataAvailable} onClick={onOpenTimeline} title={t('Xem bản đồ theo thời điểm dữ liệu', 'View map revisions')}>
             {t('Dữ liệu đến', 'Data as of')}{' '}
             {dataAvailable && <strong><time dateTime={snapshot}>
               {new Date(snapshot).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </time></strong>}
-          </span>
+          </button>
         </div>
 
         <div className="notification-anchor" ref={notificationsRef}>
@@ -101,7 +105,7 @@ export const AppHeader: React.FC<Props> = ({
           <UiIcon name="bell"/>
           {!alertRead && <span className="unread-indicator" />}
         </button>
-        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} updated={updated} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
+        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} updated={reportApplied} onOpenAll={() => { setNotificationsOpen(false); onOpenNotifications(); }} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
         </div>
 
         <button
@@ -199,6 +203,7 @@ export const AppHeader: React.FC<Props> = ({
               </div>
               <div className="model-settings">
                 <button className="settings-link" onClick={() => { setPrefOpen(false); onOpenUpload(); }}>{t('Mô hình địa hình', 'Terrain model')}</button>
+                <button className="settings-link" onClick={() => { setPrefOpen(false); onReset(); }}>{t('Đặt lại phiên làm việc', 'Reset workspace')}</button>
                 {activeModelName && <small>{activeModelName}</small>}
               </div>
             </div>

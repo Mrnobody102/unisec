@@ -13,6 +13,7 @@ import type { TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
 import { roadColors } from './roadStyle';
+import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../features/map/layerAppearance';
 
 export type OverlayHit =
   | { type: 'community'; id: string }
@@ -32,6 +33,7 @@ type ScenarioOverlayOptions = {
   selectedCommunityId: string | null;
   selectedObjectId: string | null;
   layers: Record<string, boolean>;
+  appearance?: LayerAppearance;
   screenMarkers?: boolean;
   resolution?: { width: number; height: number };
 };
@@ -112,6 +114,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       const isPartOfSelectedRoute = selectedRoute?.segs.some((s) => s.id === road.id);
       const routeVisible = Boolean(isPartOfSelectedRoute && layers.route);
       if (!layers.roads && !routeVisible) return;
+      const appearance = options.appearance ?? defaultLayerAppearance;
+      if (!showRoad(road.status, Boolean(routeVisible || isRoadSelected), appearance.roads)) return;
 
       const positions: number[] = [];
       densePoints.forEach((pt) => {
@@ -128,7 +132,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       const addLine = (color: THREE.ColorRepresentation, width: number, casing: boolean): void => {
         const geometry = new LineGeometry();
         geometry.setPositions(positions);
-        const material = new LineMaterial({ color, linewidth: width, depthTest: false,
+        const opacity = routeVisible || isRoadSelected || (layers.status && road.status !== 'open') ? 1 : appearance.networkOpacity;
+        const material = new LineMaterial({ color, linewidth: width, depthTest: false, transparent: true, opacity,
           dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 });
         material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
         const line = new Line2(geometry, material);

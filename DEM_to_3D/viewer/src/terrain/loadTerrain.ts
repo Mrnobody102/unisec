@@ -1,6 +1,5 @@
 import type { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedTerrain, MeshMetadata, TerrainData } from '../types/terrain';
-import { disposeObjectResources } from './raycast';
 import { TerrainAssetError, validateGridBuffer, validateMetadata } from './validation';
 
 export type TerrainAssetUrls = { glb: string; metadata: string; grid: string };
@@ -87,7 +86,7 @@ export async function loadTerrain(urls: TerrainAssetUrls, data?: TerrainData): P
   try {
     if (metadata.mesh) validateGltfMeshCounts(gltf.scene, metadata.mesh);
   } catch (error) {
-    disposeObjectResources(gltf.scene);
+    (await import('./raycast')).disposeObjectResources(gltf.scene);
     throw error;
   }
   return { metadata, grid, gridBuffer, gltf };

@@ -4,7 +4,8 @@
 
 | Cần biết | Đọc tài liệu | Người dùng chính |
 |---|---|---|
-| Bản chạy ngày 03/10 làm gì? | [Kịch bản demo](operations/demo.md) | Cả nhóm |
+| Trình diễn bản hiện hành thế nào? | [Luồng trình diễn](operations/walkthrough.md) | Cả nhóm |
+| Chạy gói offline thế nào? | [Gói offline](operations/offline.md) | SW, PO |
 | Đích bàn giao SIC là gì? | [Yêu cầu sản phẩm](product/requirements.md) | Cả nhóm |
 | Màn hình và thao tác thế nào? | [Thiết kế giao diện](product/interface.md) | Cả nhóm |
 | Quy tắc màu, thành phần và bản đồ lấy từ đâu? | [Design system](product/design-system.md) | PO, SW |

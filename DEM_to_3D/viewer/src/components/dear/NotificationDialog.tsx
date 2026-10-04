@@ -8,6 +8,7 @@ type Props = {
   locale: Locale;
   report: IncidentPacket['report'];
   updated: boolean;
+  historical?: boolean;
   onApplyReport: () => void;
   onClose: () => void;
   onSelectRoad: (roadId: string) => void;
@@ -17,6 +18,7 @@ export const NotificationDialog: React.FC<Props> = ({
   locale,
   report,
   updated,
+  historical,
   onApplyReport,
   onClose,
   onSelectRoad
@@ -49,6 +51,7 @@ export const NotificationDialog: React.FC<Props> = ({
                 {!updated && <small className="notification-pending">{t('Chưa áp dụng vào bản đồ', 'Not yet applied to the map')}</small>}
                 <div className="notification-actions">
                   {!updated && <button className="button primary" onClick={() => { onApplyReport(); onClose(); }}>{t('Cập nhật bản đồ', 'Update map')}</button>}
+                  {updated && historical && <button className="button primary" onClick={onApplyReport}>{t('Mở bản đồ cập nhật', 'Open updated map')}</button>}
                   <button className="text-button" onClick={() => { onSelectRoad(`road:${report.roadId}`); onClose(); }}>{t('Xem đoạn đường', 'View road segment')}</button>
                 </div>
               </div>

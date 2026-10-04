@@ -46,6 +46,16 @@ class SnapshotApiTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'checksum'):
             create_server(self.root, port=0)
 
+    def test_offline_configuration_explicitly_uses_prepared_packet(self):
+        server = create_server(self.root, port=0, offline=True)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with urlopen(f'http://127.0.0.1:{server.server_port}/workspace-config.json') as response:
+                self.assertEqual(json.load(response), {'dataSource': 'prepared', 'offline': True})
+        finally:
+            server.shutdown(); server.server_close(); thread.join()
+
 
 if __name__ == '__main__':
     unittest.main()

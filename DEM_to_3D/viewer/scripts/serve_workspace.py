@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 DEFAULT_DIST = Path(__file__).resolve().parents[1] / 'dist'
 
 
-def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212):
+def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=False):
     directory = Path(directory).resolve()
     manifest = json.loads((directory / 'scenarios/che-tao/v0.2/manifest.json').read_text(encoding='utf-8'))
     asset = manifest['workspace']
@@ -36,7 +36,7 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212):
             path = urlsplit(self.path).path
             payload = packet if path == endpoint else schema if path == '/api/v1/schema/incident-v1' else None
             if path == '/workspace-config.json':
-                payload = b'{"dataSource":"api"}'
+                payload = b'{"dataSource":"prepared","offline":true}' if offline else b'{"dataSource":"api"}'
             if path == '/api/health':
                 payload = json.dumps({'status': 'ready', 'datasetVersion': manifest['datasetVersion']}).encode()
             if payload is not None:
@@ -62,7 +62,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, default=DEFAULT_DIST)
     parser.add_argument('--port', type=int, default=5212)
+    parser.add_argument('--offline', action='store_true', help='Use the prepared packet and disable remote basemap at startup')
     args = parser.parse_args()
-    with create_server(args.directory, port=args.port) as server:
+    with create_server(args.directory, port=args.port, offline=args.offline) as server:
         print(f'Workspace and snapshot API: http://127.0.0.1:{args.port}', flush=True)
         server.serve_forever()

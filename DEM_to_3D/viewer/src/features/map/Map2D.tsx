@@ -8,6 +8,7 @@ import type { TerrainData } from '../../types/terrain';
 import type { TerrainViewerProps } from '../../components/TerrainViewer';
 import { createRaster2d } from './raster2d';
 import { MapMeasurement } from '../measurement/MapMeasurement';
+import { showRoad, defaultLayerAppearance } from './layerAppearance';
 
 type Props = Pick<TerrainViewerProps, 'locale' | 'scenarioProps' | 'onSelectOverlayHit' | 'viewControlRef' | 'onBasemapState' | 'focusPoint' | 'profileMetadata'> & {
   terrain: TerrainData | null; imageUrl?: string; viewportRef: React.MutableRefObject<{ center: [number, number]; zoom: number } | null>;
@@ -80,7 +81,8 @@ export function Map2D(props: Props): JSX.Element {
     };
     const refresh = () => {
       const { terrain, scenarioProps: scenario, locale = 'vi', onSelectOverlayHit } = propsRef.current;
-      const layers = scenario?.layers ?? { imagery: true, context: true, hillshade: true };
+      const layers = scenario?.layers ?? { imagery: true, context: false, hillshade: true };
+      const appearance = scenario?.appearance ?? defaultLayerAppearance;
       north.title = locale === 'vi' ? 'Bắc địa lý' : 'True north'; north.setAttribute('aria-label', north.title);
       setTiles(layers.imagery !== false, layers.context !== false);
       if (terrain && !hasFit && scenario) { fit(); hasFit = true; }
@@ -90,10 +92,11 @@ export function Map2D(props: Props): JSX.Element {
         const signal = rasterAbort.signal;
         void createRaster2d(terrain, propsRef.current.imageUrl, layers.imagery !== false, Boolean(layers.hillshade), signal).then(result => {
           if (disposed || signal.aborted) return;
-          raster?.remove(); raster = L.imageOverlay(result.url, result.bounds, { interactive: false, pane: 'overlayPane', alt: locale === 'vi' ? 'Ảnh nền khu vực Chế Tạo' : 'Chế Tạo area imagery' }).addTo(map);
+          raster?.remove(); raster = L.imageOverlay(result.url, result.bounds, { opacity: propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1, interactive: false, pane: 'overlayPane', alt: locale === 'vi' ? 'Ảnh nền khu vực Chế Tạo' : 'Chế Tạo area imagery' }).addTo(map);
           schedule();
         }).catch(error => { if (!signal.aborted) console.warn('Local 2D raster unavailable', error); });
       }
+      raster?.setOpacity(appearance.imageryOpacity);
       markers?.dispose(); overlay?.remove(); markers = null; overlay = L.layerGroup().addTo(map);
       if (scenario && terrain) {
         markers = createScreenMarkers(host, { ...scenario, locale,
@@ -115,12 +118,14 @@ export function Map2D(props: Props): JSX.Element {
           const inspected = scenario.selectedObjectId === `road:${road.id}`;
           const selected = routeSelected || inspected;
           if (!layers.roads && !routeSelected) return;
+          if (!showRoad(road.status, Boolean(selected), appearance.roads)) return;
           const points = road.points.map(ll).filter((p): p is L.LatLng => p !== null);
           const warning = layers.status && road.status !== 'open';
           const color = warning ? roadColors[road.status as 'blocked' | 'uncertain'] : selected ? roadColors.selected : layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain;
           const weight = selected ? 4 : 2.5;
-          L.polyline(points, { color: inspected ? roadColors.inspectedCasing : selected && !warning ? roadColors.selectedCasing : roadColors.neutralCasing, weight: weight + (inspected ? 4 : 2), opacity: 0.8, interactive: false }).addTo(overlay!);
-          L.polyline(points, { color, weight, dashArray: layers.status && road.status === 'uncertain' ? '7 5' : undefined, bubblingMouseEvents: false })
+          const opacity = selected || warning ? 1 : appearance.networkOpacity;
+          L.polyline(points, { color: inspected ? roadColors.inspectedCasing : selected && !warning ? roadColors.selectedCasing : roadColors.neutralCasing, weight: weight + (inspected ? 4 : 2), opacity: opacity * 0.8, interactive: false }).addTo(overlay!);
+          L.polyline(points, { color, weight, opacity, dashArray: layers.status && road.status === 'uncertain' ? '7 5' : undefined, bubblingMouseEvents: false })
             .on('click', () => onSelectOverlayHit?.({ type: 'road', id: road.id })).addTo(overlay!);
         });
         const selection = scenario.selectedObjectId ?? (scenario.selectedCommunityId ? `community:${scenario.selectedCommunityId}` : '');
@@ -159,7 +164,7 @@ export function Map2D(props: Props): JSX.Element {
     props.measurementOpen,
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,
     props.scenarioProps?.selectedRoute, props.scenarioProps?.selectedCommunityId,
-    props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers]);
+    props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers, props.scenarioProps?.appearance]);
   useLayoutEffect(() => {
     const map = mapRef.current, metadata = props.terrain?.metadata, route = props.scenarioProps?.selectedRoute;
     if (!map || !metadata || !route || !props.profileOpen) return;

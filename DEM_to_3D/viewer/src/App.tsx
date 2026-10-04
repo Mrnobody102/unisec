@@ -3,6 +3,7 @@ import './styles.css';
 import './styles/tokens.css';
 import './styles/workspace.css';
 import './styles/incident-workspace.css';
+import './features/incident/incident-tools.css';
 import './features/search/search.css';
 import './features/briefing/briefing.css';
 
@@ -34,13 +35,19 @@ import { usePanelScroll } from './shared/hooks/usePanelScroll';
 import { useModalFocus } from './shared/hooks/useModalFocus';
 import { PanelResizeHandle } from './shared/ui/PanelResizeHandle';
 import { useIncidentWorkspace } from './features/incident/useIncidentWorkspace';
+import { effectiveRevision } from './features/incident/workspaceRevision';
+import { RevisionNotice } from './features/incident/RevisionNotice';
+import { NotificationCenter } from './features/incident/NotificationCenter';
+import { ImageCompareDialog } from './features/comparison/ImageCompareDialog';
+import type { ComparisonPair } from './features/comparison/comparison';
+import { defaultLayerAppearance } from './features/map/layerAppearance';
 import { MapSearch } from './features/search/MapSearch';
 import { searchWorkspace } from './features/search/searchIndex';
 import { createDecisionSnapshot, type DecisionSnapshot } from './features/briefing/decisionSnapshot';
 import { DecisionExportDialog } from './features/briefing/DecisionExportDialog';
 
 import { preparedPacket } from './data/cheTaoScenario';
-import { preparedRepository, apiRepository, workspaceDataSource } from './data/ScenarioRepository';
+import { preparedRepository, apiRepository, workspaceConfiguration } from './data/ScenarioRepository';
 import type {
   ActiveDialog,
   CommunityFilter,
@@ -54,14 +61,15 @@ import type {
 import type { LoadedModel, TerrainData, TerrainPoint } from './types/terrain';
 
 import { createGeographicPlacements } from './terrain/geographic';
-import { loadUploadedModels, releaseUploadedModels, selectUploadedFiles } from './terrain/upload';
+import { loadModelFiles, releaseModels, loadTerrain3D } from './terrain/modelRuntime';
 import { initialMeasurementState, measurementReducer } from './state/measurementStore';
-import { loadTerrain, loadTerrainData } from './terrain/loadTerrain';
+import { loadTerrainData } from './terrain/loadTerrain';
 import { loadScenarioManifest, type ScenarioManifest } from './data/scenarioManifest';
 import type { OverlayHit } from './terrain/scenarioOverlays';
 import { sampleTiles } from './terrain/analysisTerrain';
 
 const TerrainViewer = React.lazy(() => import('./components/TerrainViewer').then(module => ({ default: module.TerrainViewer })));
+const defaultLayers = { aoi: true, imagery: true, context: true, hillshade: true, landslide: true, flood: true, roads: true, status: true, communities: true, staging: true, hlz: true, route: true };
 
 export default function App(): JSX.Element {
   // Scenario & DEAR Workspace State
@@ -88,7 +96,11 @@ export default function App(): JSX.Element {
   const [communityQuery, setCommunityQuery] = useState('');
   const [mapQuery, setMapQuery] = useState('');
   const [decisionSnapshot, setDecisionSnapshot] = useState<DecisionSnapshot | null>(null);
-  const [updated, setUpdated] = useState<boolean>(false);
+  const [comparisonPair, setComparisonPair] = useState<ComparisonPair | null>(null);
+  const [layerAppearance, setLayerAppearance] = useState(defaultLayerAppearance);
+  const [reportApplied, setReportApplied] = useState(false);
+  const [historical, setHistorical] = useState(false);
+  const updated = effectiveRevision({ applied: reportApplied, historical });
   const [packet, setPacket] = useState(preparedPacket);
   const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
   const [alertRead, setAlertRead] = useState<boolean>(false);
@@ -103,20 +115,8 @@ export default function App(): JSX.Element {
   const [toastMessage, setToastMessage] = useState<[string, string] | null>(null);
   const [showCustomUploadModal, setShowCustomUploadModal] = useState<boolean>(false);
 
-  const [layers, setLayers] = useState<Record<string, boolean>>({
-    aoi: true,
-    imagery: true,
-    context: true,
-    hillshade: true,
-    landslide: true,
-    flood: true,
-    roads: true,
-    status: true,
-    communities: true,
-    staging: true,
-    hlz: true,
-    route: true
-  });
+  const [layers, setLayers] = useState<Record<string, boolean>>(defaultLayers);
+  const offlineMode = useRef(false);
 
   // Models & Terrain State
   const [models, setModels] = useState<LoadedModel[]>([]);
@@ -186,7 +186,7 @@ export default function App(): JSX.Element {
     const previous = modelsRef.current;
     modelsRef.current = next;
     setModels(next);
-    if (previous.length > 0) releaseUploadedModels(previous);
+    if (previous.length > 0) releaseModels(previous);
   }, []);
 
   // Auto-load default Che Tao model on startup
@@ -199,7 +199,9 @@ export default function App(): JSX.Element {
         setSnapshotReady(false);
         const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.2/manifest.json');
         if (!manifest.workspace) throw new Error('Incident packet is missing from the manifest');
-        const dataSource = await workspaceDataSource();
+        const { dataSource, offline } = await workspaceConfiguration();
+        offlineMode.current = offline;
+        if (!cancelled && offline) setLayers(previous => ({ ...previous, context: false }));
         const repository = import.meta.env.VITE_DEAR_API_BASE || dataSource === 'api'
           ? apiRepository(import.meta.env.VITE_DEAR_API_BASE || '', preparedPacket.incident.id)
           : preparedRepository(manifest.workspace);
@@ -249,11 +251,11 @@ export default function App(): JSX.Element {
     if (mapMode !== '3d' || models.length || !defaultTerrainData || !scenarioManifest) return;
     let cancelled = false;
     setTerrain3DBusy(true);
-    void loadTerrain({
+    void loadTerrain3D({
       glb: scenarioManifest.terrain.glb.url, metadata: scenarioManifest.terrain.metadata.url, grid: scenarioManifest.terrain.grid.url
     }, defaultTerrainData).then(terrain => {
       const model: LoadedModel = { id: 'che-tao-default', name: 'che_tao_v2_tex.glb', ...terrain, objectUrls: [] };
-      if (cancelled) { releaseUploadedModels([model]); return; }
+      if (cancelled) { releaseModels([model]); return; }
       replaceModels([model]);
     }).catch(() => { if (!cancelled) handle3DUnavailable(); }).finally(() => { if (!cancelled) setTerrain3DBusy(false); });
     return () => { cancelled = true; setTerrain3DBusy(false); };
@@ -275,16 +277,16 @@ export default function App(): JSX.Element {
       setUploadBusy(true);
       setUploadError(null);
       try {
-        const next = await loadUploadedModels(selectUploadedFiles(files, uploadMode));
+        const { models: next, names } = await loadModelFiles(files, uploadMode);
         try {
           if (uploadMode === 'merge' && geographicMerge) createGeographicPlacements(next);
         } catch (reason) {
-          releaseUploadedModels(next);
+          releaseModels(next);
           throw reason;
         }
         replaceModels(next);
         setDefaultTerrainData(null);
-        setUploadedNames(selectUploadedFiles(files, uploadMode).map((file) => file.name));
+        setUploadedNames(names);
         dispatchMeasurement({ type: 'clear' });
         setFocusDistance(null);
         setShowProfile(false);
@@ -331,7 +333,7 @@ export default function App(): JSX.Element {
 
   useEffect(
     () => () => {
-      if (modelsRef.current.length > 0) releaseUploadedModels(modelsRef.current);
+      if (modelsRef.current.length > 0) releaseModels(modelsRef.current);
     },
     []
   );
@@ -416,12 +418,12 @@ export default function App(): JSX.Element {
 
   // Simulate U-1 Incoming Field Update
   const handleSimulateUpdate = useCallback(() => {
-    if (updated) return;
+    if (reportApplied && !historical) return;
     setMeasurementOpen(false);
-    setUpdated(true);
+    setReportApplied(true); setHistorical(false);
     setActiveDialog(null);
     showToast(['Đã cập nhật bản đồ', 'Map updated']);
-  }, [showToast, updated]);
+  }, [showToast, reportApplied, historical]);
 
   const changeView = (next: WorkspaceView): void => {
     setMeasurementOpen(false);
@@ -453,6 +455,7 @@ export default function App(): JSX.Element {
         theme={theme}
         fontChoice={fontChoice}
         updated={updated}
+        reportApplied={reportApplied}
         alertRead={alertRead}
         onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         onToggleLocale={() => setLocale(locale === 'vi' ? 'en' : 'vi')}
@@ -464,6 +467,21 @@ export default function App(): JSX.Element {
         onOpenData={() => setActiveDialog('data')}
         onOpenIncident={() => { setAlertRead(true); setActiveDialog(null); changeView('incident'); }}
         onOpenUpload={() => setShowCustomUploadModal(true)}
+        onOpenTimeline={() => setActiveDialog('timeline')}
+        onOpenNotifications={() => { setAlertRead(true); setActiveDialog('notificationCenter'); }}
+        onReset={() => {
+          setReportApplied(false); setHistorical(false); setAlertRead(false); setActiveDialog(null);
+          setSelectedCommunityId(null); setSelectedObjectId(null); setSelectedRouteType('candidate');
+          setView('incident'); setDetailTab('decision'); setRoadFilter('all'); setImpactTab('roads');
+          setCommunityFilter('all'); setRoadQuery(''); setCommunityQuery(''); setMapQuery('');
+          setShowProfile(false); setFocusDistance(null); setMeasurementOpen(false); setMapMode('2d');
+          setDecisionSnapshot(null); setMobileView('map'); viewControlRef.current?.resetView();
+          setLayerAppearance(defaultLayerAppearance);
+          setLayers({ ...defaultLayers, context: !offlineMode.current });
+          setComparisonPair(null); map2DViewport.current = null;
+          if (!defaultTerrainData) { replaceModels([]); setStartupAttempt(value => value + 1); }
+          showToast(['Đã đặt lại phiên làm việc', 'Workspace reset']);
+        }}
         activeModelName={models[0]?.name}
       />
 
@@ -568,6 +586,7 @@ export default function App(): JSX.Element {
         <PanelResizeHandle locale={locale}/>
 
         <section className="map-area" aria-label={locale === 'vi' ? 'Bản đồ ứng phó' : 'Response map'} data-profile={showProfile}>
+          {historical && reportApplied && <RevisionNotice locale={locale} timestamp={incident.asOf} onLatest={() => setHistorical(false)}/>}
           {mapMode === '2d' ? <Map2D
             terrain={mapTerrain}
             profileOpen={showProfile}
@@ -579,7 +598,7 @@ export default function App(): JSX.Element {
             focusPoint={showProfile ? focusPoint : null}
             profileMetadata={analysisTerrain?.metadata}
             onBasemapState={setBasemapState}
-            scenarioProps={snapshotReady && scenarioTerrainCompatible ? { aoi: packet.aoi, communities: communities, responseSites: responseSites, hazards, roads, selectedRoute: activeRoute, selectedCommunityId, selectedObjectId, layers } : undefined}
+            scenarioProps={snapshotReady && scenarioTerrainCompatible ? { aoi: packet.aoi, communities: communities, responseSites: responseSites, hazards, roads, selectedRoute: activeRoute, selectedCommunityId, selectedObjectId, layers, appearance: layerAppearance } : undefined}
             onSelectOverlayHit={handleOverlayHit}
             viewControlRef={viewControlRef}
           /> : <Map3DBoundary onUnavailable={handle3DUnavailable}><React.Suspense fallback={<div className="map-load-state" role="status">{locale === 'vi' ? 'Đang mở địa hình 3D' : 'Opening 3D terrain'}</div>}><TerrainViewer
@@ -603,7 +622,8 @@ export default function App(): JSX.Element {
               selectedRoute: activeRoute,
               selectedCommunityId: selectedCommunityId,
               selectedObjectId: selectedObjectId,
-              layers: layers
+              layers: layers,
+              appearance: layerAppearance
             } : undefined}
             onSelectOverlayHit={handleOverlayHit}
             viewControlRef={viewControlRef}
@@ -643,6 +663,7 @@ export default function App(): JSX.Element {
             hasSelectedRoute={scenarioTerrainCompatible && Boolean(activeRoute)}
             hasHLZData={scenarioTerrainCompatible && responseSites.some(site => site.kind === 'hlz')}
             measuring={measurementOpen}
+            affectedOnly={layerAppearance.roads === 'affected'}
             onMeasure={() => { setShowProfile(false); setFocusDistance(null); setActiveDialog(null); setMapMode('2d'); setMeasurementOpen(open => !open); }}
           >
           <MapSearch locale={locale} query={mapQuery} onQuery={setMapQuery} results={mapResults} disabled={!snapshotReady}
@@ -665,6 +686,10 @@ export default function App(): JSX.Element {
             <LayersDialog
               locale={locale}
               layers={layers}
+              appearance={layerAppearance}
+              mapMode={mapMode}
+              onAppearance={setLayerAppearance}
+              onCompare={() => { setMeasurementOpen(false); setActiveDialog('comparison'); }}
               hasFloodData={hazards.some(hazard => hazard.kind === 'flood')}
               hasHLZData={responseSites.some(site => site.kind === 'hlz')}
               hasSelectedRoute={Boolean(activeRoute)}
@@ -693,20 +718,23 @@ export default function App(): JSX.Element {
       </nav>
 
       {/* Dialogs */}
+      {activeDialog === 'comparison' && <ImageCompareDialog pair={comparisonPair} onPair={setComparisonPair} triggeredAt={incident.triggeredAt} locale={locale} onClose={() => setActiveDialog(null)}/>}
       {activeDialog === 'exportDecision' && decisionSnapshot && <DecisionExportDialog snapshot={decisionSnapshot}
         terrain={defaultTerrainData} imageUrl={scenarioManifest?.terrain.image?.url} locale={locale} onClose={() => setActiveDialog(null)}/>}
       {activeDialog === 'alerts' && (
         <NotificationDialog
           locale={locale}
           report={packet.report}
-          updated={updated}
+          updated={reportApplied}
+          historical={historical}
           onApplyReport={handleSimulateUpdate}
           onClose={() => setActiveDialog(null)}
           onSelectRoad={inspectObject}
         />
       )}
 
-      {activeDialog === 'timeline' && <TimelineDialog locale={locale} incident={incident} updated={updated} onClose={() => setActiveDialog(null)} />}
+      {activeDialog === 'notificationCenter' && <NotificationCenter packet={packet} applied={reportApplied} locale={locale} onClose={() => setActiveDialog(null)} onOpenReport={() => setActiveDialog('alerts')} onInspect={inspectObject}/>}
+      {activeDialog === 'timeline' && <TimelineDialog locale={locale} incident={incident} report={packet.report} updated={reportApplied} historical={historical} onRevision={value => { setHistorical(value); setActiveDialog(null); setShowProfile(false); setMeasurementOpen(false); }} onClose={() => setActiveDialog(null)} />}
 
       {activeDialog === 'data' && (
         <DataDialog

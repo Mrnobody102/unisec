@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from './UiIcon';
+import { clampOpacity, type LayerAppearance } from '../../features/map/layerAppearance';
 
-type Props = { locale: Locale; layers: Record<string, boolean>; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
+type Props = { locale: Locale; layers: Record<string, boolean>; appearance: LayerAppearance; mapMode: '2d' | '3d'; onAppearance: (appearance: LayerAppearance) => void; onCompare: () => void; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
 
-export function LayersDialog({ locale, layers, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose }: Props): JSX.Element {
+export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
@@ -39,6 +40,13 @@ export function LayersDialog({ locale, layers, hasFloodData, hasHLZData, hasSele
       {hasIncidentLayers && groups.map(group => <fieldset className="map-layer-group" key={group.name}><legend>{group.name}</legend>{group.items.filter(([id]) => (id !== 'flood' || hasFloodData) && (id !== 'hlz' || hasHLZData) && (id !== 'route' || hasSelectedRoute)).map(([id, label]) => (
         <label key={id}><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span></label>
       ))}</fieldset>)}
+      <details className="layer-appearance"><summary>{t('Hiển thị', 'Display options')}</summary>
+        <label>{t('Độ rõ ảnh nền (2D)', 'Imagery opacity (2D)')}<output>{Math.round(appearance.imageryOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ ảnh nền', 'Imagery opacity')} disabled={mapMode !== '2d'} min="30" max="100" value={appearance.imageryOpacity * 100} onChange={event => onAppearance({ ...appearance, imageryOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
+        <label>{t('Độ rõ mạng đường nền', 'Background road opacity')}<output>{Math.round(appearance.networkOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ mạng đường nền', 'Background road opacity')} min="30" max="100" value={appearance.networkOpacity * 100} onChange={event => onAppearance({ ...appearance, networkOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
+        <label>{t('Đường hiển thị', 'Road filter')}<select aria-label={t('Đường hiển thị', 'Road filter')} value={appearance.roads} onChange={event => onAppearance({ ...appearance, roads: event.target.value as LayerAppearance['roads'] })}><option value="all">{t('Toàn bộ mạng đường', 'All roads')}</option><option value="affected">{t('Đoạn bị ảnh hưởng và tuyến đang xem', 'Affected roads and selected route')}</option></select></label>
+        <label>{t('Nhãn địa danh', 'Place labels')}<select aria-label={t('Nhãn địa danh', 'Place labels')} value={appearance.labels} onChange={event => onAppearance({ ...appearance, labels: event.target.value as LayerAppearance['labels'] })}><option value="auto">{t('Tự động theo vùng nhìn', 'Automatic')}</option><option value="selected">{t('Chỉ đối tượng đang xem', 'Selected object only')}</option></select></label>
+      </details>
+      <button className="text-button layer-compare-action" onClick={onCompare}>{t('So ảnh trước và sau sự kiện', 'Compare pre/post imagery')}</button>
     </div>
     <div className="layers-footer"><label className="terrain-shading"><input type="checkbox" checked={layers.hillshade} onChange={() => onToggleLayer('hillshade')}/>{t('Bóng địa hình', 'Terrain shading')}</label></div>
   </section>;

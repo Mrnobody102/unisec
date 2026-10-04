@@ -1,6 +1,6 @@
 # Thiết kế giao diện
 
-Cập nhật: 2026-10-04. Áp dụng cho web React tại `DEM_to_3D/viewer`.
+Cập nhật: 2026-10-05. Áp dụng cho web React tại `DEM_to_3D/viewer`.
 
 ## Luồng ứng phó
 
@@ -27,9 +27,11 @@ Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết 
 | Tuyến | Danh sách so sánh phương án, khoảng cách, ETA có điều kiện, tình trạng từng đoạn | Địa hình dọc tuyến, nguồn của đoạn đường |
 | Đường sá | Tên, trạng thái, chiều dài. Đoạn bị chặn xếp trước | Ghi nhận, việc cần xử lý, bản ghi nguồn |
 | Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Thanh tìm/lớp/đo trên trái, chú giải dưới trái, nguồn sau nút thông tin |
-| Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | Tải PNG hoặc JSON có căn cứ, phiên bản và trạng thái dữ liệu |
-| Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ |
-| Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình |
+| Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | PNG; PDF, GeoJSON và JSON trong Định dạng khác |
+| Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ, lịch sử thông báo |
+| Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình, đặt lại phiên |
+| Thời điểm dữ liệu trên header | Mốc bản đồ đang xem | Diễn biến và chọn bản dữ liệu trước/sau tin đã áp dụng |
+| Lớp bản đồ | Nền và nhóm lớp nghiệp vụ | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
 
 Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. Bản đồ dùng hết phần còn lại. Ba tab **Sự kiện / Đường sá / Địa bàn** nằm trên panel. Mobile chuyển giữa **Thông tin** và **Bản đồ**.
 
@@ -46,10 +48,14 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 | Đọc tin hoặc xem đoạn đường từ tin | Không đổi dữ liệu bản đồ |
 | Cập nhật bản đồ | Áp dụng tin và cập nhật đánh giá tiếp cận |
 | Mở Lớp bản đồ | Đóng mặt cắt, tạm ẩn chú giải. Click ngoài hoặc Escape đóng lớp |
+| Điều chỉnh hiển thị | Không thay kết quả đánh giá. Lọc đường vẫn giữ đoạn bị ảnh hưởng và tuyến đang chọn. Độ rõ không làm mờ cảnh báo |
+| Xem lại thời điểm | Đường, căn cứ, tuyến và ưu tiên cùng một bản dữ liệu. Không hủy tin đã áp dụng. Có nút về dữ liệu mới nhất |
+| So ảnh | Chọn hai GeoTIFF có ngày, nguồn và vùng chung. Pan/zoom cùng bản đồ, kéo thanh để so. Vùng thiếu ảnh để trống. Không tự xác nhận sạt lở |
+| Đặt lại phiên | Về dữ liệu ban đầu, bỏ lựa chọn/bộ lọc/hình đo và cặp ảnh tạm. Giữ font, theme và chiều rộng panel |
 | Đổi tuyến khi mở mặt cắt | Lấy mẫu tuyến mới, đặt vị trí đọc về đầu tuyến |
-| Nhiều điểm quá gần nhau | Gộp thành ký hiệu số. Bấm để chọn đối tượng, không bỏ mất điểm |
+| Nhiều điểm quá gần nhau | Số đếm cho nhóm cùng loại trên 2D. Nhóm khác loại hoặc 3D có danh sách chọn. Giữ ký hiệu đối tượng đang xem |
 | GLB hoặc GPU lỗi | Chuyển về 2D, giữ lựa chọn. 2D không tải mô hình GLB |
-| Lưu đánh giá | Chụp một snapshot dữ liệu khi mở xem trước. PNG và JSON dùng cùng snapshot. Đóng và mở lại sau khi đổi tuyến hoặc cập nhật tin để lấy đánh giá mới |
+| Lưu đánh giá | Chụp snapshot khi mở xem trước. Mọi định dạng dùng cùng snapshot. Đóng và mở lại sau khi đổi tuyến hoặc cập nhật tin để lấy đánh giá mới |
 
 Không có nút điều động, giao nhiệm vụ hay xác nhận cứu hộ khi chưa có quy trình và dữ liệu tương ứng. Dữ liệu mô phỏng được ghi trong **Nguồn dữ liệu**, không gắn nhãn cuộc thi lên màn thao tác.
 

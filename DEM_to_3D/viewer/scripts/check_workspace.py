@@ -85,6 +85,7 @@ def run(url, chrome, captures):
             download.value.save_as(str(captures / 'decision-map.png'))
             page.screenshot(path=str(captures / 'workspace-export.png'))
         with page.expect_download() as download:
+            page.locator('.export-formats summary').click()
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
         snapshot = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert snapshot['community']['id'] == 'NK' and snapshot['route']['status'] == 'uncertain'
@@ -95,6 +96,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         with page.expect_download() as download:
+            page.locator('.export-formats summary').click()
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
         direct = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert direct['route']['id'] != snapshot['route']['id'] and direct['route']['status'] == 'blocked'
@@ -234,6 +236,7 @@ def run(url, chrome, captures):
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
         page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
         with page.expect_download() as download:
+            page.locator('.export-formats summary').click()
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
         snapshot = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert '09:45' in snapshot['asOf'] and snapshot['route']['status'] == 'blocked'
