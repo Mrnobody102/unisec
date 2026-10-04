@@ -1,6 +1,6 @@
 # Kế hoạch thử nghiệm sau SIC
 
-> Trạng thái: Đề xuất · Phụ trách: PO · Cập nhật: 2026-09-24
+Trạng thái: Đề xuất. Phụ trách: PO. Cập nhật: 2026-10-05.
 
 ## Mục tiêu và đối tác
 
@@ -43,8 +43,17 @@ Lịch phụ thuộc việc có đối tác và dữ liệu. Đo: thời gian t�
 |---|---|
 | Nhận dữ liệu mưa GPM và yêu cầu ảnh qua DMC | Xác định sản phẩm, đầu mối, quyền truy cập và quy tắc kích hoạt |
 | Phát hiện tác động bằng SAR, tính điểm cô lập cộng đồng | Có dữ liệu kiểm chứng, phương pháp/version và người kiểm tra kết quả |
-| Tự tìm tuyến, xuất GeoPackage/PDF | Có ràng buộc nghiệp vụ và nhu cầu đầu ra đã xác nhận |
+| Tính tuyến trên mạng thực, xuất GeoPackage | Tính tuyến và PDF đã có trong bản mẫu. Cần mạng đủ vùng, điều kiện phương tiện và yêu cầu GeoPackage đã xác nhận |
 | Đề xuất vùng đáp trực thăng | Có tiêu chí và chuyên gia thẩm định |
 | Chứng minh mục tiêu 3–6 giờ | Chốt điểm đầu/cuối phép đo; đo riêng chờ ảnh, xử lý và duyệt |
 
 Backend bổ sung theo [kiến trúc](../architecture/overview.md), dùng tiếp [định dạng dữ liệu](../architecture/data-contract.md) của SIC.
+
+| Thứ tự backend | Đầu ra |
+|---|---|
+| 1. Nhập và duyệt | FastAPI, PostGIS và kho file. Nhập bộ dữ liệu, kiểm nguồn/CRS, lưu người duyệt, công bố snapshot có phiên bản |
+| 2. Đồng bộ và quyền truy cập | Web đọc snapshot qua API, đăng nhập, quyền xem/duyệt, lịch sử cập nhật và khôi phục bản trước |
+| 3. Xử lý ảnh | Worker Python nhận job, tạo lớp tác động, ghi phương pháp/version và thời gian. Công bố sau kiểm tra chất lượng |
+| 4. Vận hành | Sao lưu, giám sát job/API, diễn tập trên dữ liệu thực và đo thời gian toàn luồng |
+
+Giữ pipeline và API tách khỏi giao diện. Đợt đầu ưu tiên công bố dữ liệu đã kiểm tra; chỉ tự động hóa bước phân tích khi phương pháp và đầu vào đủ điều kiện.

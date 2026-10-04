@@ -17,6 +17,7 @@ Mở đầu: “This walkthrough uses a prepared, synthetic incident to demonstr
 | Khi được hỏi thêm | Cách trình diễn |
 |---|---|
 | Địa hình | Chọn tuyến, mở mặt cắt, đổi 3D/2D. Độ dốc DEM không thay độ dốc mặt đường khảo sát |
+| Nguồn lớp | Mở Lớp bản đồ, nút thông tin cạnh lớp cần kiểm tra. Ngày thu nhận ảnh tách khỏi thời điểm tổng hợp sự kiện |
 | So ảnh | Chỉ mở khi có cặp GeoTIFF trước/sau với nguồn và thời gian phù hợp. Không trình bày ảnh kiểm thử như bằng chứng thiên tai |
 | Hạ cánh | H là vị trí đề xuất, chưa khảo sát hoặc chấp thuận sử dụng |
 | Mất mạng/lỗi 3D | Dữ liệu cục bộ tiếp tục chạy. 2D không cần WebGL. Nguồn ngoài phạm vi ảnh cục bộ không được suy diễn |

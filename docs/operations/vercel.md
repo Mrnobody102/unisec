@@ -21,12 +21,14 @@ Ba file nguồn `che_tao_v2_tex.glb`, `.grid.bin` và `.terrain.json` nằm ở 
 
 ## Các bước deploy
 
-1. Commit và push bản cần trình diễn lên Git remote. Nhánh hiện tại: `feat/dear-3d-workspace`.
+1. Commit và push bản cần trình diễn lên Git remote. Nhánh hiện tại: `feat/dear-3d-workspace`. Kiểm tra workflow **DEAR web** trong GitHub Actions đạt.
 2. Vercel: **Add New → Project**, import repo và đặt cấu hình theo bảng trên. Nếu tùy chọn đọc ngoài Root Directory chưa xuất hiện khi import, vào **Settings → Build and Deployment** bật rồi redeploy.
 3. Nếu cần URL chính lấy từ nhánh này, chọn `feat/dear-3d-workspace` trong **Settings → Environments → Production → Branch Tracking**. Nếu giữ nhánh production mặc định, dùng deployment preview của nhánh này.
 4. Deploy và kiểm tra URL theo bảng dưới. Những lần push sau sẽ tạo deployment mới.
 
 Không đưa `references/`, `node_modules/`, `dist/` hay ZIP offline vào Git để deploy. Vercel tự tạo `dist` từ source và lockfile. Không thêm rewrite mọi URL về `index.html`: app hiện chưa dùng đường dẫn cho từng màn hình, còn file dữ liệu thiếu phải trả 404.
+
+Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu, unit test, dependency runtime, build, gói offline và luồng trình duyệt. Đã cấu hình Node 22/Python 3.12 trên Linux; chưa có kết quả chạy GitHub Actions hoặc Vercel. Kết quả tại máy local ở [rà soát](../quality/workspace-review.md).
 
 ## Kiểm tra URL sau deploy
 

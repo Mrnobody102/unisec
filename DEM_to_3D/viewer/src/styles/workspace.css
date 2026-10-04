@@ -825,6 +825,17 @@ dialog.timeline-dialog::backdrop { background: rgba(12, 23, 35, .45); }
 .basemap-choice.is-active { border-color: var(--select); background: var(--select-soft); }
 .layers-content input { accent-color: var(--select); width: 15px; height: 15px; margin: 0; flex: none; }
 .map-layer-group label, .terrain-shading { display: flex; align-items: center; gap: 10px; min-height: 34px; font-size: 13px; cursor: pointer; }
+.layer-source-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; font-size: 13px; }
+.layer-source-row label { flex: 1; min-width: 0; }
+.layer-info-button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; flex: none; border: 0; border-radius: 4px; background: transparent; color: var(--ws-muted); cursor: pointer; }
+.layer-info-button svg { width: 16px; height: 16px; }
+.layer-info-button:hover, .layer-info-button[aria-expanded="true"] { color: var(--ws-brand); background: var(--hover); }
+.layer-details { margin: 4px 0 12px; padding: 10px 0 10px 12px; border-left: 2px solid var(--ws-line); font-size: 12px; line-height: 1.5; }
+.layer-details dl { margin: 0; }
+.layer-details dl > div { margin-bottom: 8px; }
+.layer-details dt { color: var(--ws-muted); }
+.layer-details dd { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
+.layer-details p { margin: 10px 0 0; color: var(--ws-muted); }
 .terrain-shading { border-top: 1px solid var(--ws-line); padding-top: 12px; }
 .map-marker-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
 .map-pin { position: absolute; top: 0; left: 0; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border: 1.5px solid white; border-radius: 50%; color: white; background: #237ba9; box-shadow: 0 0 0 2px #0b253540,0 1px 4px #0b25354d; pointer-events: auto; cursor: pointer; }

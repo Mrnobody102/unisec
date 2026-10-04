@@ -42,9 +42,9 @@ Gói tĩnh và API dùng cùng hợp đồng. API lỗi không được thay b�
 |---|---|
 | `App.tsx` | Ghép màn hình, lựa chọn, modal, mô hình địa hình |
 | `data/` | Kiểm tra gói, repository prepared/API, adapter cho công cụ địa hình |
-| `features/incident/` | Snapshot, quy tắc ưu tiên, thời điểm nguồn, thông báo và bản dữ liệu đang xem |
+| `features/incident/` | Nạp bộ dữ liệu, kiểm tra manifest/packet/CRS, snapshot, ưu tiên, thông báo và bản dữ liệu đang xem |
 | `features/routes/` | Tính tuyến, ước tính di chuyển, mặt cắt |
-| `features/map/` | Bản đồ Leaflet, ảnh 2D, fallback 3D |
+| `features/map/` | Bản đồ Leaflet, ảnh 2D, fallback 3D, nguồn và giới hạn từng lớp |
 | `features/search/` | Chỉ mục tên/mã, chuẩn hóa tiếng Việt và hộp tìm trên bản đồ |
 | `features/measurement/` | Đo khoảng cách/diện tích UTM, hình đo tạm và thao tác operator trên Leaflet |
 | `features/briefing/` | Snapshot đánh giá, xem trước, PNG, bản in PDF và xuất JSON/GeoJSON |
@@ -54,6 +54,8 @@ Gói tĩnh và API dùng cùng hợp đồng. API lỗi không được thay b�
 | `shared/` | Thành phần và hành vi dùng ở nhiều màn |
 
 Renderer không quyết định ưu tiên. Component không giữ một bản báo cáo riêng. `cheTaoScenario.ts` là adapter đọc JSON cho công cụ và kiểm thử cũ. `modelRuntime.ts` chỉ tải Three.js và bộ upload khi cần. Điều chỉnh lớp, đo và so ảnh không thay dữ liệu tính tuyến/ưu tiên.
+
+`loadWorkspaceDataset.ts` chỉ trả về khi packet và địa hình khớp manifest. App nhận một bộ hoàn chỉnh hoặc lỗi, không ghép một phần của hai phiên bản. React, Leaflet và bộ kiểm tra schema có chunk riêng để tái sử dụng cache. Tổng JavaScript tải ban đầu khoảng 760 KB, 240 KB gzip; 3D và so ảnh vẫn tải khi mở.
 
 ## Pipeline theo proposal
 

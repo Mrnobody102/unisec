@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from './UiIcon';
 import { clampOpacity, type LayerAppearance } from '../../features/map/layerAppearance';
 
-type Props = { locale: Locale; layers: Record<string, boolean>; appearance: LayerAppearance; mapMode: '2d' | '3d'; onAppearance: (appearance: LayerAppearance) => void; onCompare: () => void; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
+type Props = { locale: Locale; layers: Record<string, boolean>; appearance: LayerAppearance; mapMode: '2d' | '3d'; onAppearance: (appearance: LayerAppearance) => void; onCompare: () => void; renderInfo: (id: string) => ReactNode; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
 
-export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose }: Props): JSX.Element {
+export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, renderInfo, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
+  const [infoId, setInfoId] = useState<string | null>(null);
+  const info = (id: string, label: string) => <button type="button" className="layer-info-button" aria-label={t('Nguồn lớp ', 'Layer source: ') + label} aria-expanded={infoId === id} aria-controls={infoId === id ? `layer-info-${id}` : undefined} onClick={() => setInfoId(current => current === id ? null : id)}><UiIcon name="info"/></button>;
+  const details = (id: string) => infoId === id ? <div id={`layer-info-${id}`}>{renderInfo(id)}</div> : null;
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -36,10 +39,14 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
           <input type="radio" name="basemap" checked={layers.imagery === imagery} onChange={() => { if (layers.imagery !== imagery) onToggleLayer('imagery'); }}/><span>{label}</span>
         </label>)}
       </fieldset>
-      <label className="regional-basemap-toggle"><input type="checkbox" checked={Boolean(layers.context)} onChange={() => onToggleLayer('context')}/><span>{t('Nền bản đồ khu vực', 'Regional basemap')}</span></label>
+      <div className="layer-source-row"><span>{t('Nguồn bản đồ nền', 'Basemap source')}</span>{info(layers.imagery ? 'imagery' : 'terrain', t('Bản đồ nền', 'Base map'))}</div>
+      {details(layers.imagery ? 'imagery' : 'terrain')}
+      <div className="layer-source-row"><label className="regional-basemap-toggle"><input type="checkbox" checked={Boolean(layers.context)} onChange={() => onToggleLayer('context')}/><span>{t('Nền bản đồ khu vực', 'Regional basemap')}</span></label>{info('context', t('Nền bản đồ khu vực', 'Regional basemap'))}</div>
+      {details('context')}
       {hasIncidentLayers && groups.map(group => <fieldset className="map-layer-group" key={group.name}><legend>{group.name}</legend>{group.items.filter(([id]) => (id !== 'flood' || hasFloodData) && (id !== 'hlz' || hasHLZData) && (id !== 'route' || hasSelectedRoute)).map(([id, label]) => (
-        <label key={id}><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span></label>
+        <div key={id}><div className="layer-source-row"><label><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span></label>{info(id, label)}</div>{details(id)}</div>
       ))}</fieldset>)}
+      <div className="layer-source-row"><label className="terrain-shading"><input type="checkbox" checked={layers.hillshade} onChange={() => onToggleLayer('hillshade')}/>{t('Bóng địa hình', 'Terrain shading')}</label>{info('hillshade', t('Bóng địa hình', 'Terrain shading'))}</div>{details('hillshade')}
       <details className="layer-appearance"><summary>{t('Hiển thị', 'Display options')}</summary>
         <label>{t('Độ rõ ảnh nền (2D)', 'Imagery opacity (2D)')}<output>{Math.round(appearance.imageryOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ ảnh nền', 'Imagery opacity')} disabled={mapMode !== '2d'} min="30" max="100" value={appearance.imageryOpacity * 100} onChange={event => onAppearance({ ...appearance, imageryOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
         <label>{t('Độ rõ mạng đường nền', 'Background road opacity')}<output>{Math.round(appearance.networkOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ mạng đường nền', 'Background road opacity')} min="30" max="100" value={appearance.networkOpacity * 100} onChange={event => onAppearance({ ...appearance, networkOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
@@ -48,6 +55,5 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
       </details>
       <button className="text-button layer-compare-action" onClick={onCompare}>{t('So ảnh trước và sau sự kiện', 'Compare pre/post imagery')}</button>
     </div>
-    <div className="layers-footer"><label className="terrain-shading"><input type="checkbox" checked={layers.hillshade} onChange={() => onToggleLayer('hillshade')}/>{t('Bóng địa hình', 'Terrain shading')}</label></div>
   </section>;
 }

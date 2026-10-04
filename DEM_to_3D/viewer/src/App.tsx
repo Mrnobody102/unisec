@@ -41,13 +41,14 @@ import { NotificationCenter } from './features/incident/NotificationCenter';
 import { ImageCompareDialog } from './features/comparison/ImageCompareDialog';
 import type { ComparisonPair } from './features/comparison/comparison';
 import { defaultLayerAppearance } from './features/map/layerAppearance';
+import { LayerDetails } from './features/map/LayerDetails';
 import { MapSearch } from './features/search/MapSearch';
 import { searchWorkspace } from './features/search/searchIndex';
 import { createDecisionSnapshot, type DecisionSnapshot } from './features/briefing/decisionSnapshot';
 import { DecisionExportDialog } from './features/briefing/DecisionExportDialog';
 
 import { preparedPacket } from './data/cheTaoScenario';
-import { preparedRepository, apiRepository, workspaceConfiguration } from './data/ScenarioRepository';
+import { loadWorkspaceDataset } from './features/incident/loadWorkspaceDataset';
 import type {
   ActiveDialog,
   CommunityFilter,
@@ -63,8 +64,7 @@ import type { LoadedModel, TerrainData, TerrainPoint } from './types/terrain';
 import { createGeographicPlacements } from './terrain/geographic';
 import { loadModelFiles, releaseModels, loadTerrain3D } from './terrain/modelRuntime';
 import { initialMeasurementState, measurementReducer } from './state/measurementStore';
-import { loadTerrainData } from './terrain/loadTerrain';
-import { loadScenarioManifest, type ScenarioManifest } from './data/scenarioManifest';
+import type { ScenarioManifest } from './data/scenarioManifest';
 import type { OverlayHit } from './terrain/scenarioOverlays';
 import { sampleTiles } from './terrain/analysisTerrain';
 
@@ -201,34 +201,10 @@ export default function App(): JSX.Element {
         setUploadBusy(true);
         setStartupError(false);
         setSnapshotReady(false);
-        const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.2/manifest.json', controller.signal);
-        if (!manifest.workspace) throw new Error('Incident packet is missing from the manifest');
-        const { dataSource, offline } = await workspaceConfiguration(controller.signal);
+        const { manifest, packet: nextPacket, terrain: defaultTerrain, offline } = await loadWorkspaceDataset(controller.signal, import.meta.env.VITE_DEAR_API_BASE);
         if (cancelled) return;
         offlineMode.current = offline;
         if (!cancelled && offline) setLayers(previous => ({ ...previous, context: false }));
-        const repository = import.meta.env.VITE_DEAR_API_BASE || dataSource === 'api'
-          ? apiRepository(import.meta.env.VITE_DEAR_API_BASE || '', preparedPacket.incident.id)
-          : preparedRepository(manifest.workspace);
-        const nextPacket = await repository.load(controller.signal);
-        if (manifest.incidentId !== nextPacket.incident.id ||
-            manifest.snapshotAt !== nextPacket.incident.asOf ||
-            manifest.crs !== nextPacket.crs ||
-            manifest.datasetVersion !== nextPacket.datasetVersion ||
-            manifest.dataKind !== nextPacket.dataKind || manifest.reviewStatus !== nextPacket.reviewStatus ||
-            manifest.counts.communities !== nextPacket.communities.length ||
-            manifest.counts.roads !== nextPacket.roads.length ||
-            manifest.counts.hazards !== nextPacket.hazards.length) {
-          throw new Error('Scenario data does not match its manifest');
-        }
-        const defaultTerrain = await loadTerrainData({
-          metadata: manifest.terrain.metadata.url,
-          grid: manifest.terrain.grid.url
-        }, controller.signal);
-        if (cancelled || `${defaultTerrain.metadata.crs.authority}:${defaultTerrain.metadata.crs.code}` !== manifest.crs) {
-          if (cancelled) return;
-          throw new Error('Terrain CRS does not match its manifest');
-        }
         setPacket(nextPacket);
         setDefaultTerrainData(defaultTerrain);
         setSnapshotReady(true);
@@ -697,6 +673,7 @@ export default function App(): JSX.Element {
               mapMode={mapMode}
               onAppearance={setLayerAppearance}
               onCompare={() => { setMeasurementOpen(false); setActiveDialog('comparison'); }}
+              renderInfo={id => <LayerDetails id={id} locale={locale} packet={packet} updated={updated} evidence={evidence} terrain={mapTerrain?.metadata} route={activeRoute} imagery={layers.imagery}/>}
               hasFloodData={hazards.some(hazard => hazard.kind === 'flood')}
               hasHLZData={responseSites.some(site => site.kind === 'hlz')}
               hasSelectedRoute={Boolean(activeRoute)}

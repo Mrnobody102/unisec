@@ -4,7 +4,7 @@ import { MapControls as ThreeMapControls } from 'three/examples/jsm/controls/Map
 import type { LoadedModel, TerrainPoint } from '../types/terrain';
 import { bilinearElevation } from '../terrain/elevationGrid';
 import { projectedToScene, projectedToPixel, sceneToProjected } from '../terrain/coordinate';
-import { buildBvh, disposeBvh } from '../terrain/raycast';
+import { buildBvh, disposeBvh, disposeObjectResources } from '../terrain/raycast';
 import type { SurfaceProfile } from '../terrain/profile';
 import type { GeographicPlacement } from '../terrain/geographic';
 import { applyElevationColorRamp } from '../terrain/colorRamp';
@@ -127,7 +127,9 @@ export function TerrainViewer({
   onBasemapStateRef.current = onBasemapState;
   propsUnavailableRef.current = onUnavailable;
 
-  useEffect(() => {
+  // Controls remove document listeners through canvas.getRootNode(). Tear them
+  // down before React detaches the host, while that root is still the document.
+  useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
     const scene = new THREE.Scene();
@@ -586,6 +588,9 @@ export function TerrainViewer({
       originalMaterials.forEach((original, material) => { material.map = original.map; material.color.copy(original.color); material.vertexColors = original.vertexColors; material.needsUpdate = true; });
       focusMarker.remove();
       entries.forEach((entry) => {
+        // A reused model must release this renderer's GPU allocations and dispose
+        // listeners too. Three.js can re-upload its retained geometry/texture data.
+        disposeObjectResources(entry.root, false);
         if (entry.model.preserveResources) return;
         if (!entry.model.released && !entry.model.bvhDisposed) {
           disposeBvh(entry.root);
@@ -595,6 +600,7 @@ export function TerrainViewer({
       controls.dispose();
       renderer.dispose();
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      renderer.forceContextLoss();
       renderer.domElement.remove();
     };
   }, [geographicPlacements, models]);

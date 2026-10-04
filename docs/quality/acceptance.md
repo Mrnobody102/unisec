@@ -1,8 +1,18 @@
 # Tiêu chí nghiệm thu
 
-> Trạng thái: Tiêu chí cho đích bàn giao SIC, chưa nghiệm thu · Phụ trách: PO / SW / RS · Cập nhật: 2026-10-02
+Trạng thái: Chưa nghiệm thu. Phụ trách: PO / SW / RS. Cập nhật: 2026-10-05.
 
 Chưa có kết quả nghiệm thu. SW kiểm tra phần mềm, RS kiểm tra dữ liệu, PO xác nhận bàn giao. Phần rút gọn phải có quyết định và lý do.
+
+| Phần đã kiểm tra bằng dữ liệu mô phỏng | Còn để nghiệm thu |
+|---|---|
+| Sự kiện, đặt lại, chọn đối tượng, đổi 2D/3D | Dữ liệu đúng sự kiện/khu vực, thử trên máy trình chiếu |
+| Bật lớp, chú giải, xem nguồn và ngày hoặc lý do thiếu | RS duyệt nguồn, phạm vi và giấy phép thực |
+| Hai tuyến, mặt cắt, căn cứ, ưu tiên và ETA có điều kiện | RS/PO duyệt bằng chứng, DEM, tuyến, phương tiện và chính sách |
+| PNG/JSON theo snapshot, đổi tuyến và áp dụng tin | Đối chiếu bản xuất với dữ liệu đã duyệt |
+| Gói offline, bố cục và bàn phím | Người trình bày tự chạy sáu phút, kiểm tra màn chiếu và phương án dự phòng |
+
+Kết quả phần mềm tại [rà soát](workspace-review.md). Các kiểm tra này không thay xác nhận nghiệp vụ và bàn giao.
 
 ## Kiểm tra chức năng
 
@@ -48,4 +58,14 @@ Các ngưỡng dưới đây là **đề xuất**, cần đo và chốt trên m�
 
 Theo [đặc tả dữ liệu](../architecture/data-contract.md) và [thiết kế giao diện](../product/interface.md). Nếu so ảnh chụp màn hình tự động, cố định môi trường vì cách render phụ thuộc máy/browser. [Playwright](https://playwright.dev/docs/test-snapshots).
 
-Biên bản ghi: **ID Axx · phiên bản app/dữ liệu · máy/OS/browser/GPU · độ phân giải/mạng/cache · người/ngày kiểm tra · đạt/chưa đạt · link log/ảnh/video**. Lỗi chưa đạt cần có công việc xử lý trước khi xác nhận bàn giao.
+Kiểm tra phiên dài từ `DEM_to_3D/viewer`, sau build và khi bản tĩnh đã chạy tại `http://127.0.0.1:5213`:
+
+```powershell
+python -m pip install -r scripts/requirements-browser.txt
+python -m playwright install chromium
+python scripts/check_session.py --duration-seconds 1800
+```
+
+Kết quả trong `dist-release/session-review.json`: browser, hash bản build, thời gian mở 2D/3D/xuất ảnh, lỗi và bộ nhớ/DOM giữ lại. Script không đo GPU hoặc khả năng đọc màn chiếu. Giữ nguyên bản build trong suốt phiên kiểm tra.
+
+Biên bản ghi phiên bản app/dữ liệu, máy/OS/browser/GPU, độ phân giải/mạng/cache, người/ngày kiểm tra và kết quả từng tiêu chí. Kèm log/ảnh/video. Lỗi chưa đạt cần có công việc xử lý trước khi xác nhận bàn giao.

@@ -1,0 +1,51 @@
+name: DEAR web
+
+on:
+  push:
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.github/workflows/dear-web.yml']
+  pull_request:
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.github/workflows/dear-web.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dear-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: DEM_to_3D/viewer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: DEM_to_3D/viewer/.nvmrc
+          cache: npm
+          cache-dependency-path: DEM_to_3D/viewer/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm test
+      - run: python -m unittest discover -s scripts -p 'test_*.py'
+      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm run build
+      - run: python scripts/package_workspace.py --output dist-release/dear-offline.zip
+      - name: Install browser checks
+        run: |
+          python -m pip install -r scripts/requirements-browser.txt
+          python -m playwright install --with-deps chromium
+      - name: Verify static browser flow
+        run: |
+          python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
+          python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
+          python scripts/check_layer_sources.py
+          python scripts/check_session.py --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json

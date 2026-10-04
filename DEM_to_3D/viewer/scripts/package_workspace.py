@@ -67,7 +67,8 @@ Version and file checksums: release.json.
             if license_path.is_file() and license_path.name.lower().startswith(('license', 'copying', 'notice')):
                 files['licenses/' + package + '/' + license_path.name] = license_path.read_bytes()
     revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
-    dirty = subprocess.run(['git', 'status', '--porcelain', '--', 'src', 'scripts', 'public', 'vendor', 'package.json', 'package-lock.json'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+    dirty = subprocess.run(['git', 'status', '--porcelain', '--', '.'], cwd=ROOT,
+                           capture_output=True, text=True, check=True).stdout.strip()
     release = {'createdAt': datetime.now(timezone.utc).isoformat(), 'sourceCommit': revision, 'sourceTreeDirty': bool(dirty),
                'datasetVersion': manifest['datasetVersion'], 'dataKind': manifest['dataKind'], 'reviewStatus': manifest['reviewStatus'],
                'files': {name: hashlib.sha256(content).hexdigest() for name, content in files.items()}}

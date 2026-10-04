@@ -1,0 +1,524 @@
+{
+  "durationRequestedSeconds": 1800,
+  "cycleIntervalSeconds": 30,
+  "os": "Windows-11-10.0.26100-SP0",
+  "viewport": [
+    1366,
+    768
+  ],
+  "network": "local static delivery, external requests blocked",
+  "samples": [
+    {
+      "cycle": 0,
+      "elapsedSeconds": 2.8,
+      "jsHeapMB": 8.74,
+      "documents": 1,
+      "nodes": 662,
+      "jsEventListeners": 364
+    },
+    {
+      "cycle": 1,
+      "elapsedSeconds": 4.5,
+      "jsHeapMB": 9.51,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 2,
+      "elapsedSeconds": 35.6,
+      "jsHeapMB": 9.77,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 3,
+      "elapsedSeconds": 66.6,
+      "jsHeapMB": 9.93,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 4,
+      "elapsedSeconds": 98.5,
+      "jsHeapMB": 10.06,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 5,
+      "elapsedSeconds": 129.5,
+      "jsHeapMB": 10.14,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 6,
+      "elapsedSeconds": 160.5,
+      "jsHeapMB": 10.21,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 7,
+      "elapsedSeconds": 192.1,
+      "jsHeapMB": 10.41,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 8,
+      "elapsedSeconds": 223.1,
+      "jsHeapMB": 10.56,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 9,
+      "elapsedSeconds": 254.1,
+      "jsHeapMB": 10.67,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 10,
+      "elapsedSeconds": 285.8,
+      "jsHeapMB": 10.67,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 11,
+      "elapsedSeconds": 316.8,
+      "jsHeapMB": 10.75,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 12,
+      "elapsedSeconds": 347.8,
+      "jsHeapMB": 10.79,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 13,
+      "elapsedSeconds": 379.5,
+      "jsHeapMB": 10.79,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 14,
+      "elapsedSeconds": 410.7,
+      "jsHeapMB": 10.82,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 15,
+      "elapsedSeconds": 441.7,
+      "jsHeapMB": 10.87,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 16,
+      "elapsedSeconds": 473.4,
+      "jsHeapMB": 10.84,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 17,
+      "elapsedSeconds": 504.3,
+      "jsHeapMB": 10.86,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 18,
+      "elapsedSeconds": 535.3,
+      "jsHeapMB": 10.89,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 19,
+      "elapsedSeconds": 566.9,
+      "jsHeapMB": 10.87,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 20,
+      "elapsedSeconds": 597.9,
+      "jsHeapMB": 10.88,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 21,
+      "elapsedSeconds": 628.8,
+      "jsHeapMB": 10.94,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 22,
+      "elapsedSeconds": 660.4,
+      "jsHeapMB": 10.9,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 23,
+      "elapsedSeconds": 691.3,
+      "jsHeapMB": 10.92,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 24,
+      "elapsedSeconds": 722.3,
+      "jsHeapMB": 10.95,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 25,
+      "elapsedSeconds": 754.0,
+      "jsHeapMB": 10.94,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 26,
+      "elapsedSeconds": 784.9,
+      "jsHeapMB": 10.95,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 27,
+      "elapsedSeconds": 815.9,
+      "jsHeapMB": 11.05,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 28,
+      "elapsedSeconds": 847.4,
+      "jsHeapMB": 11.02,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 29,
+      "elapsedSeconds": 878.4,
+      "jsHeapMB": 11.05,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 30,
+      "elapsedSeconds": 909.4,
+      "jsHeapMB": 11.08,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 31,
+      "elapsedSeconds": 940.8,
+      "jsHeapMB": 11.09,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 32,
+      "elapsedSeconds": 971.9,
+      "jsHeapMB": 11.1,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 33,
+      "elapsedSeconds": 1002.9,
+      "jsHeapMB": 11.14,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 34,
+      "elapsedSeconds": 1034.6,
+      "jsHeapMB": 11.11,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 35,
+      "elapsedSeconds": 1065.6,
+      "jsHeapMB": 11.14,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 36,
+      "elapsedSeconds": 1096.6,
+      "jsHeapMB": 11.19,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 37,
+      "elapsedSeconds": 1128.7,
+      "jsHeapMB": 11.21,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 38,
+      "elapsedSeconds": 1159.7,
+      "jsHeapMB": 11.28,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 39,
+      "elapsedSeconds": 1190.7,
+      "jsHeapMB": 11.31,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 40,
+      "elapsedSeconds": 1222.2,
+      "jsHeapMB": 11.27,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 41,
+      "elapsedSeconds": 1253.2,
+      "jsHeapMB": 11.29,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 42,
+      "elapsedSeconds": 1284.2,
+      "jsHeapMB": 11.31,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 43,
+      "elapsedSeconds": 1315.8,
+      "jsHeapMB": 11.31,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 44,
+      "elapsedSeconds": 1346.9,
+      "jsHeapMB": 11.3,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 45,
+      "elapsedSeconds": 1378.0,
+      "jsHeapMB": 11.33,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 46,
+      "elapsedSeconds": 1409.6,
+      "jsHeapMB": 11.3,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 47,
+      "elapsedSeconds": 1440.6,
+      "jsHeapMB": 11.31,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 48,
+      "elapsedSeconds": 1471.6,
+      "jsHeapMB": 11.34,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 49,
+      "elapsedSeconds": 1503.2,
+      "jsHeapMB": 11.3,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 50,
+      "elapsedSeconds": 1534.2,
+      "jsHeapMB": 11.32,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 51,
+      "elapsedSeconds": 1565.2,
+      "jsHeapMB": 11.42,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 52,
+      "elapsedSeconds": 1597.4,
+      "jsHeapMB": 11.34,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 53,
+      "elapsedSeconds": 1628.5,
+      "jsHeapMB": 11.36,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 54,
+      "elapsedSeconds": 1659.5,
+      "jsHeapMB": 11.38,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 55,
+      "elapsedSeconds": 1691.0,
+      "jsHeapMB": 11.36,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 56,
+      "elapsedSeconds": 1722.8,
+      "jsHeapMB": 11.45,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 57,
+      "elapsedSeconds": 1753.8,
+      "jsHeapMB": 11.4,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    },
+    {
+      "cycle": 58,
+      "elapsedSeconds": 1785.3,
+      "jsHeapMB": 11.37,
+      "documents": 1,
+      "nodes": 605,
+      "jsEventListeners": 360
+    }
+  ],
+  "errors": [],
+  "timings": {
+    "cold2DSeconds": 0.672,
+    "first3DSeconds": 0.437,
+    "exportSeconds": [
+      0.734,
+      0.625,
+      0.609,
+      0.594,
+      0.625,
+      0.656,
+      0.578,
+      0.578,
+      0.656,
+      0.562,
+      0.485,
+      0.688,
+      0.61,
+      0.5,
+      0.578,
+      0.61,
+      0.593,
+      1.406,
+      0.5,
+      0.516
+    ]
+  },
+  "buildIndexSha256": "9d8ea7aae9aa53f4418c7cfa8ded5806175805dc47e2928217ba114208a30565",
+  "browser": "154.0.8037.93",
+  "retainedGrowth": {
+    "jsHeapMB": 2.63,
+    "nodes": -57
+  },
+  "growthAfterWarmup": {
+    "jsHeapMB": 0.7,
+    "nodes": 0,
+    "jsEventListeners": 0
+  },
+  "passed": true,
+  "elapsedSeconds": 1802.8
+}
