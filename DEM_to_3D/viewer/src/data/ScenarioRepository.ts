@@ -1,5 +1,6 @@
 import { validateIncidentPacket, type IncidentPacket } from './incidentPacket';
 import type { ScenarioAsset } from './scenarioManifest';
+import { readResponse as request } from '../shared/http/readResponse';
 
 export interface ScenarioRepository { load(signal?: AbortSignal): Promise<IncidentPacket> }
 
@@ -7,25 +8,12 @@ export async function workspaceDataSource(): Promise<'prepared' | 'api'> {
   return (await workspaceConfiguration()).dataSource;
 }
 
-export async function workspaceConfiguration(): Promise<{ dataSource: 'prepared' | 'api'; offline: boolean }> {
-  const value: unknown = await (await request('/workspace-config.json')).json();
+export async function workspaceConfiguration(signal?: AbortSignal): Promise<{ dataSource: 'prepared' | 'api'; offline: boolean }> {
+  const value: unknown = await (await request('/workspace-config.json', signal)).json();
   if (!value || typeof value !== 'object' || !('dataSource' in value) || (value.dataSource !== 'prepared' && value.dataSource !== 'api')) {
     throw new Error('Invalid workspace configuration');
   }
   return { dataSource: value.dataSource, offline: 'offline' in value && value.offline === true };
-}
-
-async function request(url: string, signal?: AbortSignal): Promise<Response> {
-  const controller = new AbortController(), abort = () => controller.abort(signal?.reason);
-  signal?.addEventListener('abort', abort, { once: true });
-  if (signal?.aborted) abort();
-  const timeout = setTimeout(() => controller.abort(new Error('Dataset request timed out')), 10000);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`Dataset request failed (${response.status})`);
-    // Read within the timeout; returning an unread response could hang on its body.
-    return new Response(await response.arrayBuffer(), { status: response.status, headers: response.headers });
-  } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
 
 export function preparedRepository(asset: ScenarioAsset): ScenarioRepository {

@@ -31,7 +31,7 @@ def check_symbols(page):
     assert not problems, problems
 
 
-def run(url, chrome, captures):
+def run(url, chrome, captures, prepared=False):
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
@@ -48,6 +48,8 @@ def run(url, chrome, captures):
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         assert not any('.glb' in request for request in requests), '2D requested a 3D model'
+        if prepared:
+            assert not any('/api/' in request for request in requests), 'Static deployment depends on an API'
         assert page.locator('canvas.terrain-canvas').count() == 0
         page.wait_for_timeout(200)
         check_symbols(page)
@@ -305,7 +307,8 @@ if __name__ == '__main__':
     parser.add_argument('--url', default='http://127.0.0.1:5211')
     parser.add_argument('--chrome', help='Optional installed Chromium/Chrome executable')
     parser.add_argument('--captures', type=Path)
+    parser.add_argument('--prepared', action='store_true', help='Verify static delivery without an API')
     args = parser.parse_args()
     if args.captures:
         args.captures.mkdir(parents=True, exist_ok=True)
-    run(args.url.rstrip('/'), args.chrome, args.captures)
+    run(args.url.rstrip('/'), args.chrome, args.captures, args.prepared)

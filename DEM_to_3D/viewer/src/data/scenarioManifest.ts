@@ -1,3 +1,5 @@
+import { readResponse } from '../shared/http/readResponse';
+
 export type ScenarioAsset = {
   url: string;
   byteLength: number;
@@ -81,8 +83,7 @@ export function validateScenarioManifest(value: unknown): ScenarioManifest {
   };
 }
 
-export async function loadScenarioManifest(url: string): Promise<ScenarioManifest> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Manifest request failed (${response.status})`);
+export async function loadScenarioManifest(url: string, signal?: AbortSignal): Promise<ScenarioManifest> {
+  const response = await readResponse(url, signal);
   return validateScenarioManifest(await response.json());
 }

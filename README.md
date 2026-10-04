@@ -4,7 +4,7 @@
 
 Web ứng phó sạt lở/lũ quét tại `DEM_to_3D/viewer`. Hiện dùng gói dữ liệu mô phỏng Chế Tạo và có API snapshot cục bộ để thử tích hợp. Bắt đầu đọc [tài liệu dự án](docs/README.md); [luồng trình diễn](docs/operations/walkthrough.md) có thao tác và lời dẫn tiếng Anh.
 
-Cần Node.js/npm và Python 3.11 trở lên:
+Cần Node.js 22.12+ thuộc dòng 22 LTS, npm và Python 3.11 trở lên:
 
 ```powershell
 cd DEM_to_3D/viewer
@@ -26,6 +26,8 @@ npm run serve:workspace
 Mở bản build tại `http://127.0.0.1:5212`. Lệnh cuối chạy web và API snapshot chỉ đọc. `npm run dev` dùng gói prepared, không cần API riêng. Nền EOX cần Internet, dữ liệu khu vực dùng file local. 2D không cần WebGL; GLB/GPU lỗi chuyển về 2D. Quy tắc tính tại [phân tích ứng phó](docs/architecture/response-analysis.md), tiến độ tại [công việc SIC](docs/tasks/sic-2026.md).
 
 Gói offline có web, dữ liệu, địa hình và font, chạy bằng Python không cần Node.js. Cách tạo và chạy tại [gói offline](docs/operations/offline.md). Bản xuất hỗ trợ PNG, in/lưu PDF, JSON và GeoJSON.
+
+Deploy bản web dùng dữ liệu prepared theo [hướng dẫn Vercel](docs/operations/vercel.md). Cấu hình build đã có trong `DEM_to_3D/viewer/vercel.json`.
 
 ## DEM_to_3D — Chuyển DEM thành mô hình 3D
 

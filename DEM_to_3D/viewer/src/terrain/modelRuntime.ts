@@ -14,9 +14,9 @@ export async function loadModelFiles(files: File[], mode: 'single' | 'merge') {
   return { models: await tools.loadUploadedModels(selected), names: selected.map(file => file.name) };
 }
 
-export async function loadTerrain3D(urls: TerrainAssetUrls, data: TerrainData) {
+export async function loadTerrain3D(urls: TerrainAssetUrls, data: TerrainData, signal?: AbortSignal) {
   await modelRuntime();
-  return loadTerrain(urls, data);
+  return loadTerrain(urls, data, signal);
 }
 
 export function releaseModels(models: readonly LoadedModel[]): void {

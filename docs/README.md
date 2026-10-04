@@ -6,6 +6,7 @@
 |---|---|---|
 | Trình diễn bản hiện hành thế nào? | [Luồng trình diễn](operations/walkthrough.md) | Cả nhóm |
 | Chạy gói offline thế nào? | [Gói offline](operations/offline.md) | SW, PO |
+| Đưa web lên Vercel thế nào? | [Deploy Vercel](operations/vercel.md) | SW |
 | Đích bàn giao SIC là gì? | [Yêu cầu sản phẩm](product/requirements.md) | Cả nhóm |
 | Màn hình và thao tác thế nào? | [Thiết kế giao diện](product/interface.md) | Cả nhóm |
 | Quy tắc màu, thành phần và bản đồ lấy từ đâu? | [Design system](product/design-system.md) | PO, SW |

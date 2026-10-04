@@ -130,7 +130,7 @@ describe('Phase 7 asset and lifecycle hardening', () => {
     const metadataValue = { ...metadata, mesh: { file: 'phase7.glb', vertex_count: 3, triangle_count: 1 } };
     const fetchMock = vi.fn(async (url: string) => {
       if (url.endsWith('phase7.terrain.json')) {
-        return { ok: true, json: async () => metadataValue };
+        return Response.json(metadataValue);
       }
       throw new Error(`unexpected sidecar fetch: ${url}`);
     });

@@ -68,7 +68,12 @@ export function ImageCompareDialog({ pair, onPair, triggeredAt, locale, onClose 
       const result = { before, after }; validateComparisonPair(result, triggeredAt);
       if (!abort.signal.aborted) onPair(result);
     } catch (reason) {
-      if (!abort.signal.aborted) setError(t(...(errors[reason instanceof Error ? reason.message : ''] ?? ['Không đọc được cặp ảnh GeoTIFF.', 'The GeoTIFF pair could not be read.'])));
+      if (!abort.signal.aborted) {
+        // Stop the other image's decode/reprojection if one member fails.
+        setError(t(...(errors[reason instanceof Error ? reason.message : ''] ?? ['Không đọc được cặp ảnh GeoTIFF.', 'The GeoTIFF pair could not be read.'])));
+        setBusy(false);
+        abort.abort();
+      }
     } finally { if (!abort.signal.aborted) setBusy(false); }
   };
   return <div className="modal-overlay" onClick={onClose}><section className="modal-dialog comparison-dialog" role="dialog" aria-modal="true" aria-labelledby="comparison-title" onClick={event => event.stopPropagation()}>

@@ -174,10 +174,13 @@ export default function App(): JSX.Element {
     document.title = locale === 'vi' ? 'DEAR | Bản đồ ứng phó' : 'DEAR | Response map';
   }, [locale]);
 
-  // Show Toast Helper
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+
   const showToast = useCallback((msg: [string, string]) => {
+    clearTimeout(toastTimer.current);
     setToastMessage(msg);
-    setTimeout(() => {
+    toastTimer.current = setTimeout(() => {
       setToastMessage(null);
     }, 4500);
   }, []);
@@ -192,20 +195,22 @@ export default function App(): JSX.Element {
   // Auto-load default Che Tao model on startup
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function loadDefault() {
       try {
         setUploadBusy(true);
         setStartupError(false);
         setSnapshotReady(false);
-        const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.2/manifest.json');
+        const manifest = await loadScenarioManifest('/scenarios/che-tao/v0.2/manifest.json', controller.signal);
         if (!manifest.workspace) throw new Error('Incident packet is missing from the manifest');
-        const { dataSource, offline } = await workspaceConfiguration();
+        const { dataSource, offline } = await workspaceConfiguration(controller.signal);
+        if (cancelled) return;
         offlineMode.current = offline;
         if (!cancelled && offline) setLayers(previous => ({ ...previous, context: false }));
         const repository = import.meta.env.VITE_DEAR_API_BASE || dataSource === 'api'
           ? apiRepository(import.meta.env.VITE_DEAR_API_BASE || '', preparedPacket.incident.id)
           : preparedRepository(manifest.workspace);
-        const nextPacket = await repository.load();
+        const nextPacket = await repository.load(controller.signal);
         if (manifest.incidentId !== nextPacket.incident.id ||
             manifest.snapshotAt !== nextPacket.incident.asOf ||
             manifest.crs !== nextPacket.crs ||
@@ -219,7 +224,7 @@ export default function App(): JSX.Element {
         const defaultTerrain = await loadTerrainData({
           metadata: manifest.terrain.metadata.url,
           grid: manifest.terrain.grid.url
-        });
+        }, controller.signal);
         if (cancelled || `${defaultTerrain.metadata.crs.authority}:${defaultTerrain.metadata.crs.code}` !== manifest.crs) {
           if (cancelled) return;
           throw new Error('Terrain CRS does not match its manifest');
@@ -239,6 +244,7 @@ export default function App(): JSX.Element {
     loadDefault();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [replaceModels, startupAttempt]);
 
@@ -250,15 +256,16 @@ export default function App(): JSX.Element {
   useEffect(() => {
     if (mapMode !== '3d' || models.length || !defaultTerrainData || !scenarioManifest) return;
     let cancelled = false;
+    const controller = new AbortController();
     setTerrain3DBusy(true);
     void loadTerrain3D({
       glb: scenarioManifest.terrain.glb.url, metadata: scenarioManifest.terrain.metadata.url, grid: scenarioManifest.terrain.grid.url
-    }, defaultTerrainData).then(terrain => {
+    }, defaultTerrainData, controller.signal).then(terrain => {
       const model: LoadedModel = { id: 'che-tao-default', name: 'che_tao_v2_tex.glb', ...terrain, objectUrls: [] };
       if (cancelled) { releaseModels([model]); return; }
       replaceModels([model]);
     }).catch(() => { if (!cancelled) handle3DUnavailable(); }).finally(() => { if (!cancelled) setTerrain3DBusy(false); });
-    return () => { cancelled = true; setTerrain3DBusy(false); };
+    return () => { cancelled = true; controller.abort(); setTerrain3DBusy(false); };
   }, [mapMode, models.length, defaultTerrainData, scenarioManifest, replaceModels, handle3DUnavailable]);
 
   const clearUploadedModels = useCallback((): void => {

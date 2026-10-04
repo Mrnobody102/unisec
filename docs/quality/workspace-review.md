@@ -48,8 +48,8 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 | Kiểm tra | Kết quả |
 |---|---|
-| TypeScript và build | Đạt. JavaScript đầu vào khoảng 750 KB, 237 KB gzip; giảm từ 1,32 MB. 2D không tải Three.js/GLB |
-| TypeScript unit tests | 112 kiểm thử đạt, gồm phép đo, nhóm điểm, snapshot, quy tắc tuyến/ưu tiên, bản dữ liệu, thời gian so ảnh và GeoJSON |
+| TypeScript và build | Đạt. JavaScript đầu vào khoảng 756 KB, 239 KB gzip; giảm từ 1,32 MB. 2D không tải Three.js/GLB. Vẫn có cảnh báo chunk lớn hơn 500 KB |
+| TypeScript unit tests | 118 kiểm thử đạt, gồm phép đo, nhóm điểm, snapshot, quy tắc tuyến/ưu tiên, bản dữ liệu, so ảnh, GeoJSON và timeout/hủy tải cả connection/body |
 | Python | 8 kiểm thử dữ liệu, 3 API và 2 đóng gói đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
@@ -57,8 +57,15 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
 | Chrome: công cụ và biến thể | Đo đường/diện tích, sửa điểm, đóng/mở lại, chuyển từ 3D sang 2D. Đổi tối/Anh/font giữ phép đo, Escape đóng hộp đang tương tác |
 | Chrome: công cụ phụ | Thông báo, xem dữ liệu cũ/về bản mới, độ rõ/lọc/nhãn, so GeoTIFF có tọa độ, mở lại cặp ảnh, GeoJSON, bản in và đặt lại phiên |
+| Chrome: static delivery | Luồng chính và công cụ phụ đạt qua server tĩnh, không cần API. Lỗi CRS khi so ảnh cho phép chọn lại và thử tiếp |
+| Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |
+| Dependency audit | Đã vá `fast-uri` lên 3.1.8. `npm audit --omit=dev`: 0 cảnh báo. Audit toàn bộ còn 4 cảnh báo ở Vite/esbuild/Vitest/vite-node |
 | Chrome: gói offline | Kiểm checksum, giải nén vào thư mục mới, khởi động prepared, không gọi Internet, áp dụng tin, xuất PNG, 3D/2D và đặt lại |
 
 Kiểm tra trình duyệt: `scripts/check_workspace.py`, `check_map_tools.py`, `check_secondary_tools.py` và `check_offline_package.py`. Cần Python Playwright và Chromium hoặc `--chrome` trỏ đến Chrome đã cài. So ảnh được thử bằng GeoTIFF RGB có tọa độ do script tạo, không phải ảnh thiên tai thực.
+
+Review ngày 2026-10-05 sửa timeout/hủy tải manifest, cấu hình, metadata, grid và GLB; dừng ảnh còn lại khi cặp so ảnh lỗi; giữ đủ thời gian hiển thị thông báo mới. Cấu hình và [hướng dẫn Vercel](../operations/vercel.md) đã có. Kiểm tra tại máy Windows dùng Node 25.8.1/Python 3.12.4; Vercel được cấu hình Node 22.x, chưa chạy build trên Vercel.
+
+Nâng Vite/Vitest lên bản đã vá chưa hoàn tất: proxy trả `403 MediaTypeBlocked` cho binary esbuild 0.28.2 và 0.27.7. Repo giữ bộ build/test cũ đã kiểm tra, không bỏ xác minh TLS. Các advisory còn lại liên quan máy chủ dev/test, không phải máy chủ file tĩnh của Vercel. Cần hoàn tất nâng công cụ ở môi trường tải được binary và chạy lại các kiểm tra trước khi dùng máy chủ dev/test chung.
 
 Chưa tích hợp pipeline vệ tinh, cặp ảnh trước/sau đã duyệt hoặc backend vận hành. Chưa nghiệm thu dữ liệu, đo mục tiêu 3–6 giờ hay độ ổn định phiên dài. PDF dùng bản in của trình duyệt, chưa kiểm tra máy in thật. Tiến độ ở [công việc SIC](../tasks/sic-2026.md), cách chạy tại [gói offline](../operations/offline.md).
