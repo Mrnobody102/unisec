@@ -14,7 +14,7 @@ export type MeasureAction =
   | { type: 'mode'; mode: MeasureMode }
   | { type: 'import'; mode: 'distance' | 'area'; points: MeasurePoint[]; source: string }
   | { type: 'visible' | 'delete'; id: number }
-  | { type: 'undo' | 'redo' | 'finish' | 'edit' | 'new' | 'cancel' | 'reset' };
+  | { type: 'undo' | 'redo' | 'finish' | 'edit' | 'new' | 'cancel' | 'pause' | 'reset' };
 
 function fresh(state: MeasurementSession): MeasurementSession {
   return { ...state, points: [], finished: false, editing: false, editStart: undefined, source: undefined, undo: [], redo: [] };
@@ -34,6 +34,7 @@ export function measurementSessionReducer(state: MeasurementSession, action: Mea
     case 'edit': return state.finished && !state.editing ? { ...state, editing: true, editStart: { points: state.points, source: state.source }, undo: [], redo: [] } : state;
     case 'finish': return canFinish(state.mode, state.points) ? { ...state, finished: true, editing: false, editStart: undefined } : state;
     case 'cancel': return state.editing && state.editStart ? { ...state, ...state.editStart, editing: false, editStart: undefined, undo: [], redo: [] } : state.finished ? state : fresh(state);
+    case 'pause': return state.editing ? measurementSessionReducer(state, { type: 'cancel' }) : state;
     case 'new': return state.editing ? state : archive(state);
     case 'mode': {
       if (action.mode === state.mode) return state;

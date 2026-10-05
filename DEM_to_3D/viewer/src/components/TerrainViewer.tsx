@@ -192,12 +192,18 @@ export function TerrainViewer({
 
     type SurfaceMaterial = THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
     const originalMaterials = new Map<SurfaceMaterial, { map: THREE.Texture | null; color: THREE.Color; vertexColors: boolean }>();
+    const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     entries.forEach(entry => entry.root.traverse(object => {
       const mesh = object as THREE.Mesh;
       if (!mesh.isMesh) return;
       (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(material => {
         const surface = material as SurfaceMaterial;
-        if (surface.color && 'map' in surface && !originalMaterials.has(surface)) originalMaterials.set(surface, { map: surface.map, color: surface.color.clone(), vertexColors: surface.vertexColors });
+        if (surface.color && 'map' in surface && !originalMaterials.has(surface)) {
+          if (surface.map && surface.map.anisotropy !== textureAnisotropy) {
+            surface.map.anisotropy = textureAnisotropy; surface.map.needsUpdate = true;
+          }
+          originalMaterials.set(surface, { map: surface.map, color: surface.color.clone(), vertexColors: surface.vertexColors });
+        }
       });
     }));
     const updateSurface = (): void => {
@@ -387,6 +393,8 @@ export function TerrainViewer({
     entries.forEach((entry) => entry.meshes.forEach((mesh) => meshEntries.set(mesh, entry)));
 
     const raycaster = new THREE.Raycaster();
+    // Line2 uses screen pixels for this extra selection width.
+    raycaster.params.Line2 = { threshold: window.matchMedia('(pointer: coarse)').matches ? 20 : 12 };
     raycaster.firstHitOnly = true;
     const terrainMeshes = entries.flatMap(entry => entry.meshes);
     const pointer = new THREE.Vector2();

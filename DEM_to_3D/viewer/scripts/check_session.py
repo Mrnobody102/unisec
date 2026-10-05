@@ -54,7 +54,6 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
             while time.monotonic() < deadline or cycle == 0:
                 cycle += 1
                 page.locator('.incident-priority-row').first.click()
-                page.locator('.decision-tabs button').nth(1).click()
                 page.get_by_role('button', name='Mặt cắt địa hình', exact=True).click()
                 expect(page.locator('.profile-svg')).to_be_visible()
                 slider = page.locator('#profile-dist-slider'); slider.focus(); slider.press('End')

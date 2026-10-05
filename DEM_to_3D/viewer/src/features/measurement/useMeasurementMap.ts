@@ -17,6 +17,9 @@ export function useMeasurementMap(props: Props) {
   const resultLabels = useRef<L.Tooltip[]>([]);
   const drawing = props.enabled && !props.session.finished;
   useEffect(() => {
+    if (props.enabled) props.mapRef.current?.getContainer().focus({ preventScroll: true });
+  }, [props.enabled, props.mapRef]);
+  useEffect(() => {
     const node = props.mapRef.current?.getContainer();
     if (!node) return;
     node.dataset.measureDrawing = String(drawing);
@@ -44,7 +47,6 @@ export function useMeasurementMap(props: Props) {
   useEffect(() => {
     const map = props.mapRef.current;
     if (!map || !props.enabled) { setHover(null); return; }
-    map.getContainer().focus({ preventScroll: true });
     const zoom = map.doubleClickZoom.enabled(); if (drawing) map.doubleClickZoom.disable();
     let frame = 0, nextHover: { point: MeasurePoint; name?: string } | null = null;
     const pick = (position: L.LatLng) => {

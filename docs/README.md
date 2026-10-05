@@ -17,6 +17,7 @@
 | Luồng ứng phó hiện tại đã ổn chưa? | [Rà soát giao diện](quality/workspace-review.md) | PO, SW, RS |
 | Cần cải thiện gì về GIS, viễn thám và skill hỗ trợ? | [Đánh giá GIS và viễn thám](quality/gis-review.md) | PO, SW, RS, AI |
 | Dùng công nghệ gì, chia phần mềm thế nào? | [Kiến trúc hệ thống](architecture/overview.md) | SW, AI |
+| Công cụ GIS/viễn thám dài hạn dùng gì, quản lý CRS và nguồn ảnh thế nào? | [Nền tảng GIS và viễn thám](architecture/geospatial-platform.md) | SW, RS, AI, PO |
 | Backend cần xây gì, chọn công nghệ và triển khai thế nào? | [Kế hoạch backend](plans/backend.md), chỉ nghiên cứu | SW, AI, RS, PO |
 | Luồng nhập trên bản đồ/admin cần dữ liệu và API gì? | [Tiếp nhận và công bố dữ liệu](architecture/data-ingestion.md), thiết kế dự kiến | SW, AI, RS, PO |
 | Mức ưu tiên và tuyến được tính từ đâu? | [Phân tích ứng phó](architecture/response-analysis.md) | Cả nhóm |
@@ -50,3 +51,4 @@
 - Giữ nguyên ID P/D/A khi sửa tên. Công việc hoàn thành phải có link đầu ra hoặc kết quả kiểm tra.
 - Dùng ngày `YYYY-MM-DD`. Cập nhật ngày khi sửa nội dung; Git lưu lịch sử. Giữ nguyên tài liệu gốc trong [`references`](../references/).
 - Ảnh/sơ đồ đặt trong `assets/` cạnh file sử dụng, có chú thích; phân biệt ảnh minh họa với dữ liệu thực.
+- Chỉ commit ảnh tham chiếu được dẫn trong docs. Ảnh kiểm thử phát sinh đặt ở `references/SIC2026/DEAR-review-captures/` đã ignore, không cập nhật hàng loạt ảnh sau mỗi lần chỉnh CSS.

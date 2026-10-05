@@ -5,6 +5,22 @@ import { projectedMeasurementPoint } from './measurement';
 const a = projectedMeasurementPoint(400000, 2400000)!;
 const b = projectedMeasurementPoint(400100, 2400000)!;
 describe('measurement session', () => {
+  it('pauses a sketch without deleting points or undo history', () => {
+    const draft = reduce(initialMeasurementSession, { type: 'points', points: [a, b] });
+    expect(reduce(draft, { type: 'pause' })).toBe(draft);
+    const finished = reduce(draft, { type: 'finish' });
+    expect(reduce(finished, { type: 'pause' })).toBe(finished);
+  });
+  it('restores the original geometry and source when an edit is closed by another tool', () => {
+    const result = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
+    const edited = reduce(reduce(result, { type: 'edit' }), { type: 'points', points: [a] });
+    const paused = reduce(edited, { type: 'pause' });
+    expect(paused.points).toEqual(result.points);
+    expect(paused.source).toBe('Road');
+    expect(paused.editing).toBe(false);
+    expect(paused.finished).toBe(true);
+    expect(paused.undo).toEqual([]);
+  });
   it('preserves completed results on close, archives on new and resets explicitly', () => {
     const draft = reduce(initialMeasurementSession, { type: 'points', points: [a, b] });
     expect(reduce(draft, { type: 'cancel' }).points).toEqual([]);

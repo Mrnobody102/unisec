@@ -1,6 +1,9 @@
 import proj4 from 'proj4';
 import type { TerrainData } from '../../types/terrain';
 import { pixelToProjected, projectedToPixel } from '../../terrain/coordinate';
+import { sampleDisplayPixel } from './rasterSampling';
+
+export type Raster2D = { url: string; bounds: [[number, number], [number, number]] };
 
 type Point = { x: number; y: number };
 export function rasterPosition(data: TerrainData, column: number, row: number): Point {
@@ -11,7 +14,7 @@ export function rasterPosition(data: TerrainData, column: number, row: number): 
 }
 
 /** Reproject the prepared raster on the CPU. Nodata remains transparent. */
-export async function createRaster2d(data: TerrainData, imageUrl: string | undefined, imagery: boolean, hillshade: boolean, signal: AbortSignal) {
+export async function createRaster2d(data: TerrainData, imageUrl: string | undefined, imagery: boolean, hillshade: boolean, signal: AbortSignal): Promise<Raster2D> {
   const [rows, columns] = data.metadata.grid.shape;
   const source = document.createElement('canvas'); source.width = columns; source.height = rows;
   const context = source.getContext('2d');
@@ -36,7 +39,11 @@ export async function createRaster2d(data: TerrainData, imageUrl: string | undef
       const rowGrade = (data.grid[index + columns] - data.grid[index - columns]) / 2;
       const dx = (e * columnGrade - d * rowGrade) / determinant;
       const dy = (-b * columnGrade + a * rowGrade) / determinant;
-      if (Number.isFinite(dx) && Number.isFinite(dy)) light = 0.65 + Math.max(0, (dx * 0.5 - dy * 0.5 + 0.707) / Math.hypot(dx, dy, 1)) * 0.35;
+      if (Number.isFinite(dx) && Number.isFinite(dy)) {
+        const relief = Math.max(0, (dx * 0.5 - dy * 0.5 + 0.707) / Math.hypot(dx, dy, 1));
+        // Satellite imagery already contains shadows; keep additional relief subtle.
+        light = imagery && imageUrl ? .88 + relief * .12 : .65 + relief * .35;
+      }
     }
     if (!imagery || !imageUrl) {
       pixels.data[offset] = 201 * light; pixels.data[offset + 1] = 217 * light; pixels.data[offset + 2] = 202 * light;
@@ -46,7 +53,7 @@ export async function createRaster2d(data: TerrainData, imageUrl: string | undef
     pixels.data[offset + 3] = 255;
   }
   context.putImageData(pixels, 0, 0);
-  const positions = [[0, 0], [columns - 1, 0], [0, rows - 1], [columns - 1, rows - 1]].map(([x, y]) => rasterPosition(data, x, y));
+  const positions = [[-.5, -.5], [columns - .5, -.5], [-.5, rows - .5], [columns - .5, rows - .5]].map(([x, y]) => rasterPosition(data, x, y));
   const minX = Math.min(...positions.map(p => p.x)), maxX = Math.max(...positions.map(p => p.x));
   const minY = Math.min(...positions.map(p => p.y)), maxY = Math.max(...positions.map(p => p.y));
   const output = document.createElement('canvas'); output.width = columns; output.height = Math.round(columns * (maxY - minY) / (maxX - minX));
@@ -63,11 +70,7 @@ export async function createRaster2d(data: TerrainData, imageUrl: string | undef
       const mercator = [minX + (col + 0.5) / output.width * (maxX - minX), maxY - (row + 0.5) / output.height * (maxY - minY)];
       const [x, y] = inverse.forward(mercator);
       const pixel = projectedToPixel(data.metadata, x, y);
-      const sx = Math.round(pixel.column), sy = Math.round(pixel.row);
-      if (sx < 0 || sy < 0 || sx >= columns || sy >= rows) continue;
-      const from = (sy * columns + sx) * 4, to = (row * output.width + col) * 4;
-      warped.data[to] = pixels.data[from]; warped.data[to + 1] = pixels.data[from + 1];
-      warped.data[to + 2] = pixels.data[from + 2]; warped.data[to + 3] = pixels.data[from + 3];
+      sampleDisplayPixel(pixels.data, columns, rows, pixel.column, pixel.row, warped.data, (row * output.width + col) * 4);
     }
   }
   target.putImageData(warped, 0, 0);

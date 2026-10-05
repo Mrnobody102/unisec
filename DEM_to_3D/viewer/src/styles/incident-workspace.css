@@ -67,6 +67,9 @@
 .map-legend .line.aoi { border-color: #85aa9d; border-top-style: dashed; }
 .notification-incident { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--ws-line); }
 .notification-finding { margin: 20px 0 0; font-size: 14px; line-height: 1.65; }
+.notification-critical-title { color: var(--critical-ink); }
+.notification-road-name { display: block; margin-top: 6px; font-size: 12px; line-height: 1.55; color: var(--ws-muted); }
+.object-source-section .finding-source + .text-button { margin-top: 12px; }
 
 .notification-button {
   position: relative;
@@ -167,14 +170,15 @@
 .assessment-action span { color: var(--ws-text); }
 .decision-route > strong, .decision-overview strong { font-size: 14px; }
 .community-heading strong { font-weight: 600; }
-.incident-priority-row { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 12px; width: 100%; padding: 14px 0; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 0; background: transparent; text-align: left; }
-.incident-priority-row:first-child { padding-top: 2px; }
+.incident-priority-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 12px; width: calc(100% + 24px); margin-inline: -12px; padding: 16px 12px; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 4px; background: transparent; text-align: left; }
+.incident-priority-row:hover { background: var(--hover); }
 .incident-priority-row:last-child { border-bottom: 0; }
 .incident-priority-row:hover strong { color: var(--select-ink); }
 .incident-priority-row strong { display: block; font-size: 15px; }
 .priority-community-symbol { display: grid; place-items: center; width: 24px; height: 24px; color: var(--ws-brand); }
 .priority-access { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-text); }
 .incident-priority-row small { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-muted); }
+.incident-priority-row .priority-next-action { color: var(--ws-text); }
 .incident-community-action { width: 100%; margin-top: 12px; }
 .incident-data-summary dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
 .incident-data-summary dt { font-size: 11px; color: var(--ws-muted); }
@@ -450,6 +454,37 @@
 .access-issues { margin-top: 18px; }
 .access-issues h3 { margin-bottom: 4px; font-size: 13px; }
 .access-issues .object-row:last-child { border-bottom: 0; }
+.priority-reason { margin-top: 8px; color: var(--ws-muted); font-size: 12px; line-height: 1.55; }
+.access-primary { width: 100%; justify-content: center; margin-top: 16px; }
+.access-supplementary { margin-top: 20px; border-block: 1px solid var(--ws-line); }
+.access-disclosure { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; padding: 10px 0; border: 0; background: transparent; color: var(--ws-muted); text-align: left; font-size: 12px; }
+.access-disclosure svg { flex: none; }
+.access-disclosure:hover { color: var(--select-ink); }
+.access-supplementary .route-options { margin: 0 0 8px; }
+.access-tools { flex-wrap: wrap; }
+.access-tools .button { flex: 1; min-width: 0; gap: 6px; justify-content: center; font-size: 12px; }
+.route-action { padding: 12px 0 12px 12px; border-top: 0; border-left: 2px solid var(--ws-line); }
+.route-action.is-blocked { border-left-color: var(--critical); }
+.route-action.is-blocked strong { color: var(--critical-ink); }
+.route-action.is-uncertain { border-left-color: var(--warning); }
+.route-action.is-uncertain strong { color: var(--warning-ink); }
+.road-constraint { display: grid; gap: 8px; width: 100%; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--ws-line); background: transparent; color: var(--ws-text); text-align: left; }
+.road-constraint:last-child { border-bottom: 0; }
+.road-constraint:hover { background: var(--hover); }
+.constraint-title { display: flex; flex-wrap: wrap; align-items: start; gap: 6px 12px; }
+.constraint-title strong { flex: 1 1 190px; min-width: 0; font-size: 13px; line-height: 1.5; }
+.constraint-title .status-text { font-size: 12px; }
+.constraint-observation { font-size: 13px; line-height: 1.6; }
+.constraint-source { color: var(--ws-muted); font-size: 11px; line-height: 1.5; }
+.community-finding { padding: 16px 0; border-bottom: 1px solid var(--ws-line); }
+.community-finding:first-of-type { padding-top: 4px; }
+.community-finding:last-child { padding-bottom: 0; border-bottom: 0; }
+.community-finding h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; }
+.community-finding p { font-size: 13px; line-height: 1.6; }
+.community-finding > .text-button { margin-top: 12px; }
+.finding-source { display: grid; gap: 6px; margin: 12px 0 0; font-size: 11px; line-height: 1.55; color: var(--ws-muted); }
+.finding-source > div { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 12px; }
+.finding-source dt, .finding-source dd { margin: 0; }
 .terrain-coverage-note { display: block; margin-top: 6px; color: var(--ws-muted); font-size: 11px; line-height: 1.45; }
 
 .scenario-code { display: block; margin: 2px 0 6px; color: var(--ws-muted); font-size: 11px; }

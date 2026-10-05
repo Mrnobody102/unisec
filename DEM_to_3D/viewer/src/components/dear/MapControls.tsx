@@ -53,7 +53,7 @@ export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoom
       <button className="icon-button map-measure-trigger" aria-label={t('Đo trên bản đồ 2D', 'Measure on 2D map')} title={t('Đo trên bản đồ 2D', 'Measure on 2D map')} aria-pressed={measuring} onClick={onMeasure}><UiIcon name="ruler"/></button>
     </div>
     <div className="map-tools" aria-label={t('Điều khiển bản đồ', 'Map controls')}>
-      <button className="icon-button map-mode" disabled={measuring} onClick={onToggleMapMode} aria-label={t('Chuyển sang ' + (mapMode === '2d' ? '3D' : '2D'), 'Switch to ' + (mapMode === '2d' ? '3D' : '2D'))} title={mapMode === '3d' ? t('Ctrl + kéo để nghiêng và xoay', 'Ctrl + drag to tilt and rotate') : t('Chuyển sang góc nhìn 3D', 'Switch to 3D view')}>{mapMode === '2d' ? '3D' : '2D'}</button>
+      <button className="icon-button map-mode" onClick={onToggleMapMode} aria-label={t('Chuyển sang ' + (mapMode === '2d' ? '3D' : '2D'), 'Switch to ' + (mapMode === '2d' ? '3D' : '2D'))} title={mapMode === '3d' ? t('Ctrl + kéo để nghiêng và xoay', 'Ctrl + drag to tilt and rotate') : t('Chuyển sang góc nhìn 3D', 'Switch to 3D view')}>{mapMode === '2d' ? '3D' : '2D'}</button>
       <div className="map-zoom">
         <button className="icon-button" onClick={onZoomIn} aria-label={t('Phóng to', 'Zoom in')} title={t('Phóng to', 'Zoom in')}><UiIcon name="plus" /></button>
         <button className="icon-button" onClick={onZoomOut} aria-label={t('Thu nhỏ', 'Zoom out')} title={t('Thu nhỏ', 'Zoom out')}><UiIcon name="minus" /></button>

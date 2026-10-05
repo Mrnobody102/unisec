@@ -314,12 +314,19 @@
         "facts": {
           "type": "array",
           "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/text"
-            },
-            "minItems": 4,
-            "maxItems": 4
+            "anyOf": [
+              {
+                "$ref": "#/definitions/communityFinding"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/text"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            ]
           },
           "minItems": 0
         },
@@ -570,6 +577,51 @@
         "type": "number",
         "exclusiveMinimum": 0,
         "maximum": 100
+      }
+    },
+    "communityFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "label",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "report",
+            "gap",
+            "context"
+          ]
+        },
+        "label": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "value": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "hazardId": {
+          "$ref": "#/definitions/identifier"
+        },
+        "source": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "observedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "receivedAt": {
+          "$ref": "#/definitions/timestamp"
+        }
+      },
+      "dependencies": {
+        "observedAt": [
+          "source"
+        ],
+        "receivedAt": [
+          "observedAt"
+        ]
       }
     }
   }

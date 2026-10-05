@@ -69,3 +69,5 @@ Renderer không quyết định ưu tiên. Component không giữ một bản b�
 Ưu tiên hiện tại là demo SIC, deploy Vite trên Vercel bằng dữ liệu prepared và không cần backend. Định hướng phần mở rộng là NestJS/TypeScript, PostgreSQL/PostGIS và worker Python khi tích hợp xử lý ảnh, chưa triển khai. Kiến trúc và phương án deploy ở [kế hoạch backend](../plans/backend.md). LLM không nằm trong đường tính ưu tiên hiện tại.
 
 [Tiếp nhận và công bố dữ liệu](data-ingestion.md) mô tả nghiệp vụ và contract dự kiến cho luồng ghi. Các luồng này không thuộc bản demo hiện tại.
+
+[Nền tảng GIS và viễn thám](geospatial-platform.md) chốt hướng OpenLayers/Cesium, NestJS/PostGIS/Python, tích hợp QGIS/Copernicus/GEE và quản lý CRS/nguồn ảnh. Demo chưa chuyển engine.

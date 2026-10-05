@@ -158,14 +158,15 @@
   --shadow-panel: 0 12px 32px -4px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.30);
   --shadow-pop: 0 8px 24px rgba(0,0,0,0.50);
 
-  --ws-bg: #101c20;
-  --ws-surface: #19282d;
-  --ws-text: #e7eeeb;
-  --ws-muted: #a4b6b6;
-  --ws-line: #314347;
+  --ws-bg: #141c26;
+  --ws-surface: #1b2531;
+  --ws-text: #e8edf3;
+  --ws-muted: #a5b4c4;
+  --ws-line: #334252;
   --ws-brand: #a3d5c4;
   --ws-tint: #223b36;
   --ws-map: #0b1220;
+  --shadow-map-control: 0 2px 8px rgba(0,0,0,0.24);
 }
 
 [data-theme="light"] {
@@ -206,16 +207,17 @@
   --map-halo: #ffffff;
   --map-building: #475569;
   --shadow-panel: 0 12px 32px -8px rgba(15,23,42,0.20), 0 2px 6px rgba(15,23,42,0.08);
-  --shadow-pop: 0 8px 24px rgba(15,23,42,0.16);
+  --shadow-pop: 0 4px 16px rgba(15,23,42,0.12);
 
-  --ws-bg: #edf1ef;
+  --ws-bg: #f3f5f7;
   --ws-surface: #ffffff;
-  --ws-text: #223238;
-  --ws-muted: #617177;
-  --ws-line: #e1e7e5;
+  --ws-text: #243446;
+  --ws-muted: #606f80;
+  --ws-line: #dfe5eb;
   --ws-brand: #166553;
   --ws-tint: #edf5f1;
   --ws-map: #e7eeef;
+  --shadow-map-control: 0 2px 8px rgba(15,23,42,0.10);
 }
 
 :root {

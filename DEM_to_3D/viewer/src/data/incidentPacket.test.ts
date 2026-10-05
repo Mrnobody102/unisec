@@ -42,6 +42,27 @@ describe('incident data boundary', () => {
     const link = packet(); link.report.roadId = 'E1';
     expect(() => validateIncidentPacket(link)).toThrow('report road/hazard link');
   });
+  it('checks the source relationship and dates of community observations', () => {
+    const data = validateIncidentPacket(packet());
+    const finding = data.communities[0].facts[0];
+    if (Array.isArray(finding)) throw new Error('Expected a structured finding');
+    finding.hazardId = 'unknown';
+    expect(() => validateIncidentPacket(data)).toThrow('unknown hazard in community finding');
+    finding.hazardId = 'LS-02';
+    finding.source = ['Nguồn', 'Source'];
+    finding.observedAt = '2026-09-29T10:00:00+07:00';
+    expect(() => validateIncidentPacket(data)).toThrow('community finding timestamp');
+    finding.observedAt = '2026-09-29T07:40:00+07:00';
+    finding.receivedAt = '2026-09-29T07:00:00+07:00';
+    expect(() => validateIncidentPacket(data)).toThrow('community finding receipt');
+  });
+  it('accepts previous tuple snapshots while refusing untraceable field reports', () => {
+    const data = validateIncidentPacket(packet());
+    data.communities[0].facts = [['Ghi nhận', 'Observation', 'Nguồn', 'Source']];
+    expect(validateIncidentPacket(data)).toBe(data);
+    data.communities[0].facts = [{ kind: 'report', label: ['Cầu', 'Bridge'], value: ['Ngập', 'Flooded'] }];
+    expect(() => validateIncidentPacket(data)).toThrow('community finding source');
+  });
   it('verifies the prepared packet checksum before it enters the workspace', async () => {
     const bytes = new TextEncoder().encode(JSON.stringify(packet()));
     const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(byte => byte.toString(16).padStart(2, '0')).join('');

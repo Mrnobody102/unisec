@@ -21,6 +21,7 @@ Luồng, dữ liệu và API dự kiến ở [tiếp nhận và công bố dữ 
 | Thành phần | Công nghệ | Trách nhiệm |
 |---|---|---|
 | Frontend | Giữ React/TypeScript, Leaflet và Three.js | Bản đồ, nhập dữ liệu, xem kết quả và trạng thái |
+| Nền tảng GIS sau SIC | OpenLayers 2D, CesiumJS 3D | Chuyển qua adapter sau kiểm thử, CRS/raster/vector và terrain địa lý |
 | API nghiệp vụ | NestJS/TypeScript | Sự kiện, lớp dữ liệu, báo cáo, phân tích, công bố và quyền truy cập |
 | Cơ sở dữ liệu | PostgreSQL/PostGIS | Dữ liệu dùng chung, hình học, lịch sử duyệt và phiên bản |
 | Kho file | Kho object tương thích S3, chọn nhà cung cấp khi triển khai | Ảnh/DEM, file gốc và sản phẩm. DB giữ metadata/checksum |
@@ -29,6 +30,8 @@ Luồng, dữ liệu và API dự kiến ở [tiếp nhận và công bố dữ 
 NestJS phù hợp với code TypeScript hiện có. Tách hàm thuần và kiểm thử tuyến/ưu tiên khỏi React để tái sử dụng. Trong chế độ API, server tính kết quả công bố và web đọc cùng phiên bản. Hợp đồng vẫn cần kiểm tra dữ liệu lúc chạy.
 
 Căn cứ: [Nest modules](https://docs.nestjs.com/modules), [Nest validation](https://docs.nestjs.com/techniques/validation), [PostGIS](https://postgis.net/docs/ST_Intersects.html).
+
+Định hướng công cụ kết hợp QGIS, Copernicus, GEE và EOSDA, quy tắc CRS/ảnh và phần sơ tán ở [nền tảng GIS và viễn thám](../architecture/geospatial-platform.md). Không chuyển engine hoặc xây backend trong đợt demo.
 
 Không cần tách microservice cho từng module. Worker chỉ tách khi có tác vụ dài. Chưa đưa Kafka, Kubernetes hoặc hệ thống đồng bộ offline vào đợt đầu.
 

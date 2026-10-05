@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import './styles.css';
 import './styles/tokens.css';
 import './styles/workspace.css';
@@ -23,17 +23,18 @@ import { DataDialog } from './components/dear/DataDialog';
 import { TimelineDialog } from './components/dear/TimelineDialog';
 import { LayersDialog } from './components/dear/LayersDialog';
 import { EvidenceDialog } from './components/dear/EvidenceDialog';
-import { SegmentAnalysisDialog } from './components/dear/SegmentAnalysisDialog';
 import { UiIcon } from './components/dear/UiIcon';
 
-import { ModelUploadPanel, type UploadMode } from './components/ModelUploadPanel';
+import { ModelUploadPanel } from './components/ModelUploadPanel';
 import type { ViewControls } from './components/TerrainViewer';
 import { Map2D } from './features/map/Map2D';
 import { MapLocationPanel } from './features/map/MapLocationPanel';
 import { readTerrainLocation, type MapLocation } from './features/map/mapLocation';
-import { initialMeasurementSession, measurementSessionReducer } from './features/measurement/measurementSession';
+import { useMeasurementSession } from './features/measurement/useMeasurementSession';
+import { useTerrainWorkspace } from './features/terrain/useTerrainWorkspace';
 import { Map3DBoundary } from './features/map/Map3DBoundary';
 import { useRouteTerrainAnalysis } from './features/routes/useRouteTerrainAnalysis';
+import { selectAccessRoute } from './features/routes/routeReview';
 import { usePanelScroll } from './shared/hooks/usePanelScroll';
 import { useModalFocus } from './shared/hooks/useModalFocus';
 import { PanelResizeHandle } from './shared/ui/PanelResizeHandle';
@@ -50,8 +51,6 @@ import { searchWorkspace } from './features/search/searchIndex';
 import { createDecisionSnapshot, type DecisionSnapshot } from './features/briefing/decisionSnapshot';
 import { DecisionExportDialog } from './features/briefing/DecisionExportDialog';
 
-import { preparedPacket } from './data/cheTaoScenario';
-import { loadWorkspaceDataset } from './features/incident/loadWorkspaceDataset';
 import type {
   ActiveDialog,
   CommunityFilter,
@@ -62,11 +61,8 @@ import type {
   RoadFilter,
   WorkspaceView
 } from './types/dear';
-import type { LoadedModel, TerrainData, TerrainPoint, TerrainMetadata } from './types/terrain';
+import type { TerrainPoint, TerrainMetadata } from './types/terrain';
 
-import { createGeographicPlacements } from './terrain/geographic';
-import { loadModelFiles, releaseModels, loadTerrain3D } from './terrain/modelRuntime';
-import type { ScenarioManifest } from './data/scenarioManifest';
 import type { OverlayHit } from './terrain/scenarioOverlays';
 import { sampleTiles } from './terrain/analysisTerrain';
 
@@ -103,15 +99,11 @@ export default function App(): JSX.Element {
   const [reportApplied, setReportApplied] = useState(false);
   const [historical, setHistorical] = useState(false);
   const updated = effectiveRevision({ applied: reportApplied, historical });
-  const [packet, setPacket] = useState(preparedPacket);
-  const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
   const [alertRead, setAlertRead] = useState<boolean>(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
-  const [measurementOpen, setMeasurementOpen] = useState(false);
-  const [measureSession, dispatchMeasureSession] = useReducer(measurementSessionReducer, initialMeasurementSession);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
-  useEffect(() => { if (showProfile) setMeasurementOpen(false); }, [showProfile]);
   const [mapMode, setMapMode] = useState<'3d' | '2d'>('2d');
+  const { open: measurementOpen, setOpen: setMeasurementOpen, session: measureSession, dispatch: dispatchMeasureSession } = useMeasurementSession(mapMode);
   const [mobileView, setMobileView] = useState<'map' | 'info'>('map');
   const [basemapState, setBasemapState] = useState<BasemapState>({ status: 'off', style: 'satellite', loaded: 0, total: 0 });
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
@@ -124,23 +116,8 @@ export default function App(): JSX.Element {
   const [showCustomUploadModal, setShowCustomUploadModal] = useState<boolean>(false);
 
   const [layers, setLayers] = useState<Record<string, boolean>>(defaultLayers);
-  const offlineMode = useRef(false);
 
-  // Models & Terrain State
-  const [models, setModels] = useState<LoadedModel[]>([]);
-  const [uploadMode, setUploadMode] = useState<UploadMode>('single');
-  const [geographicMerge, setGeographicMerge] = useState(true);
-  const [uploadedNames, setUploadedNames] = useState<string[]>([]);
-  const [uploadBusy, setUploadBusy] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [startupError, setStartupError] = useState(false);
-  const [snapshotReady, setSnapshotReady] = useState(false);
-  const [startupAttempt, setStartupAttempt] = useState(0);
-  const [scenarioManifest, setScenarioManifest] = useState<ScenarioManifest | null>(null);
-  const [defaultTerrainData, setDefaultTerrainData] = useState<TerrainData | null>(null);
-  const [terrain3DBusy, setTerrain3DBusy] = useState(false);
   const map2DViewport = useRef<{ center: [number, number]; zoom: number } | null>(null);
-  const modelsRef = useRef<LoadedModel[]>([]);
   const [focusDistance, setFocusDistance] = useState<number | null>(null);
   const viewControlRef = useRef<ViewControls | null>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -192,152 +169,30 @@ export default function App(): JSX.Element {
     }, 4500);
   }, []);
 
-  const replaceModels = useCallback((next: LoadedModel[]): void => {
-    const previous = modelsRef.current;
-    modelsRef.current = next;
-    setModels(next);
-    if (previous.length > 0) releaseModels(previous);
-  }, []);
-
-  // Auto-load default Che Tao model on startup
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-    async function loadDefault() {
-      try {
-        setUploadBusy(true);
-        setStartupError(false);
-        setSnapshotReady(false);
-        const { manifest, packet: nextPacket, terrain: defaultTerrain, offline } = await loadWorkspaceDataset(controller.signal, import.meta.env.VITE_DEAR_API_BASE);
-        if (cancelled) return;
-        offlineMode.current = offline;
-        if (!cancelled && offline) setLayers(previous => ({ ...previous, context: false }));
-        setPacket(nextPacket);
-        setDefaultTerrainData(defaultTerrain);
-        setSnapshotReady(true);
-        setScenarioManifest(manifest);
-        setUploadedNames(['che_tao_v2_tex.glb']);
-      } catch (err: unknown) {
-        console.warn('Could not auto-load default terrain from public:', err);
-        if (!cancelled) setStartupError(true);
-      } finally {
-        if (!cancelled) setUploadBusy(false);
-      }
-    }
-    loadDefault();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [replaceModels, startupAttempt]);
-
   const handle3DUnavailable = useCallback(() => {
     setMapMode('2d');
     showToast(['Không mở được 3D. Đã chuyển sang bản đồ 2D.', '3D unavailable. Switched to the 2D map.']);
   }, [showToast]);
+  const { packet, manifest: scenarioManifest, defaultTerrain: defaultTerrainData, snapshotReady, startupError,
+    offline: offlineMode, models, mode: uploadMode, geographicMerge, fileNames: uploadedNames,
+    busy: uploadBusy, error: uploadError, loading3D: terrain3DBusy, placements: geographicPlacements,
+    retry: retryTerrain, reload: reloadTerrain, clear: clearTerrain, upload: uploadTerrain,
+    changeMode: handleUploadModeChange, changeGeographicMerge: handleGeographicMergeChange
+  } = useTerrainWorkspace({ mapMode, on3DUnavailable: handle3DUnavailable });
+  const { roads, hazards, evidence, routes, assessments, communities, incident, responseSites } = useIncidentWorkspace(packet, updated);
+  useEffect(() => { if (showProfile) setMeasurementOpen(false); }, [showProfile, setMeasurementOpen]);
+  useEffect(() => { if (offlineMode) setLayers(previous => ({ ...previous, context: false })); }, [offlineMode]);
 
-  useEffect(() => {
-    if (mapMode !== '3d' || models.length || !defaultTerrainData || !scenarioManifest) return;
-    let cancelled = false;
-    const controller = new AbortController();
-    setTerrain3DBusy(true);
-    void loadTerrain3D({
-      glb: scenarioManifest.terrain.glb.url, metadata: scenarioManifest.terrain.metadata.url, grid: scenarioManifest.terrain.grid.url
-    }, defaultTerrainData, controller.signal).then(terrain => {
-      const model: LoadedModel = { id: 'che-tao-default', name: 'che_tao_v2_tex.glb', ...terrain, objectUrls: [] };
-      if (cancelled) { releaseModels([model]); return; }
-      replaceModels([model]);
-    }).catch(() => { if (!cancelled) handle3DUnavailable(); }).finally(() => { if (!cancelled) setTerrain3DBusy(false); });
-    return () => { cancelled = true; controller.abort(); setTerrain3DBusy(false); };
-  }, [mapMode, models.length, defaultTerrainData, scenarioManifest, replaceModels, handle3DUnavailable]);
-
-  const clearUploadedModels = useCallback((): void => {
-    replaceModels([]);
-    setDefaultTerrainData(null);
-    setUploadedNames([]);
-    setUploadError(null);
-    setShowProfile(false);
-    setFocusDistance(null);
+  const resetTerrainTools = useCallback(() => {
+    setShowProfile(false); setFocusDistance(null); setMeasurementOpen(false);
     setLocationPoint(null); setLocationOpen(false);
-  }, [replaceModels]);
-
-  const handleUpload = useCallback(
-    async (files: File[]): Promise<void> => {
-      if (files.length === 0) return;
-      setUploadBusy(true);
-      setUploadError(null);
-      try {
-        const { models: next, names } = await loadModelFiles(files, uploadMode);
-        try {
-          if (uploadMode === 'merge' && geographicMerge) createGeographicPlacements(next);
-        } catch (reason) {
-          releaseModels(next);
-          throw reason;
-        }
-        replaceModels(next);
-        setDefaultTerrainData(null);
-        setUploadedNames(names);
-        setLocationPoint(null); setLocationOpen(false);
-        setFocusDistance(null);
-        setShowProfile(false);
-        setShowCustomUploadModal(false);
-      } catch (reason: unknown) {
-        setUploadError(reason instanceof Error ? reason.message : String(reason));
-      } finally {
-        setUploadBusy(false);
-      }
-    },
-    [geographicMerge, replaceModels, uploadMode]
-  );
-
-  const handleGeographicMergeChange = useCallback(
-    (enabled: boolean): void => {
-      if (enabled && models.length > 0) {
-        try {
-          createGeographicPlacements(models);
-        } catch (reason: unknown) {
-          setUploadError(reason instanceof Error ? reason.message : String(reason));
-          return;
-        }
-      }
-      setUploadError(null);
-      setGeographicMerge(enabled);
-    },
-    [models]
-  );
-
-  const handleUploadModeChange = useCallback(
-    (mode: UploadMode): void => {
-      if (mode === 'merge' && geographicMerge && models.length > 0) {
-        try {
-          createGeographicPlacements(models);
-        } catch (reason: unknown) {
-          setGeographicMerge(false);
-          setUploadError(`Geographic placement disabled: ${reason instanceof Error ? reason.message : String(reason)}`);
-        }
-      } else setUploadError(null);
-      setUploadMode(mode);
-    },
-    [geographicMerge, models]
-  );
-
-  useEffect(
-    () => () => {
-      if (modelsRef.current.length > 0) releaseModels(modelsRef.current);
-    },
-    []
-  );
+  }, [setMeasurementOpen]);
+  const clearUploadedModels = useCallback(() => { clearTerrain(); resetTerrainTools(); }, [clearTerrain, resetTerrainTools]);
+  const handleUpload = useCallback(async (files: File[]) => {
+    if (await uploadTerrain(files)) { resetTerrainTools(); setShowCustomUploadModal(false); }
+  }, [uploadTerrain, resetTerrainTools]);
 
   const handlePick = useCallback((point: TerrainPoint, metadata: TerrainMetadata) => setLocationPoint(readTerrainLocation(point, metadata)), []);
-
-  const geographicPlacements = useMemo(() => {
-    if (uploadMode !== 'merge' || !geographicMerge || models.length === 0) return undefined;
-    try {
-      return createGeographicPlacements(models);
-    } catch {
-      return undefined;
-    }
-  }, [geographicMerge, models, uploadMode]);
 
   // Selected Community & Route objects
   const selectedCommunity = useMemo(
@@ -351,10 +206,7 @@ export default function App(): JSX.Element {
   );
 
   const activeRoute = useMemo(() => {
-    if (!selectedRoutePair) return null;
-    return selectedRouteType === 'direct' && selectedRoutePair.direct
-      ? selectedRoutePair.direct
-      : selectedRoutePair.candidate;
+    return selectAccessRoute(selectedRoutePair, selectedRouteType);
   }, [selectedRoutePair, selectedRouteType]);
 
   const mapTerrain = useMemo(() => models[0]?.metadata && models[0]?.grid && models[0]?.gridBuffer
@@ -363,8 +215,11 @@ export default function App(): JSX.Element {
     mapTerrain.metadata.crs.authority.toUpperCase() === 'EPSG' &&
     mapTerrain.metadata.crs.code === 32648 && mapTerrain.metadata.crs.linear_unit === 'metre');
   const analysisModels = useMemo(() => models.length ? models : defaultTerrainData ? [defaultTerrainData] : [], [models, defaultTerrainData]);
+  const profileTarget = useMemo(() => selectedObjectId?.startsWith('road:')
+    ? roads.find(road => `road:${road.id}` === selectedObjectId) ?? null
+    : activeRoute, [selectedObjectId, roads, activeRoute]);
   const { analysisTerrain, routeProfile, focusPoint } =
-    useRouteTerrainAnalysis(analysisModels, scenarioTerrainCompatible ? activeRoute : null, focusDistance);
+    useRouteTerrainAnalysis(analysisModels, scenarioTerrainCompatible ? profileTarget : null, focusDistance);
   const communityTerrainCoverage = useMemo(() => {
     if (!analysisTerrain || analysisTerrain.metadata.crs.authority.toUpperCase() !== 'EPSG' || analysisTerrain.metadata.crs.code !== 32648) return null;
     return new Map(communities.map(community => [community.id,
@@ -450,6 +305,7 @@ export default function App(): JSX.Element {
         locale={locale}
         incident={incident}
         report={packet.report}
+        reportRoad={roads.find(road => road.id === packet.report.roadId)}
         dataAvailable={snapshotReady}
         theme={theme}
         fontChoice={fontChoice}
@@ -478,9 +334,9 @@ export default function App(): JSX.Element {
           setShowProfile(false); setFocusDistance(null); setMeasurementOpen(false); setMapMode('2d');
           setDecisionSnapshot(null); setMobileView('map'); viewControlRef.current?.resetView();
           setLayerAppearance(defaultLayerAppearance);
-          setLayers({ ...defaultLayers, context: !offlineMode.current });
+          setLayers({ ...defaultLayers, context: !offlineMode });
           setComparisonPair(null); map2DViewport.current = null;
-          if (!defaultTerrainData) { replaceModels([]); setStartupAttempt(value => value + 1); }
+          if (!defaultTerrainData) reloadTerrain();
           showToast(['Đã đặt lại phiên làm việc', 'Workspace reset']);
         }}
         activeModelName={models[0]?.name}
@@ -489,7 +345,7 @@ export default function App(): JSX.Element {
       <main className="work-area">
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
         <aside id="response-panel" ref={sidebarRef} className="sidebar" aria-label={locale === 'vi' ? 'Thông tin ứng phó' : 'Response information'}>
-          {!snapshotReady ? <div className="sidebar-top"><h1>{startupError ? (locale === 'vi' ? 'Chưa tải được dữ liệu' : 'Dataset unavailable') : (locale === 'vi' ? 'Đang tải dữ liệu' : 'Loading dataset')}</h1>{startupError && <button className="button soft" onClick={() => setStartupAttempt(attempt => attempt + 1)}>{locale === 'vi' ? 'Thử lại' : 'Retry'}</button>}</div> : selectedObjectId ? (
+          {!snapshotReady ? <div className="sidebar-top"><h1>{startupError ? (locale === 'vi' ? 'Chưa tải được dữ liệu' : 'Dataset unavailable') : (locale === 'vi' ? 'Đang tải dữ liệu' : 'Loading dataset')}</h1>{startupError && <button className="button soft" onClick={retryTerrain}>{locale === 'vi' ? 'Thử lại' : 'Retry'}</button>}</div> : selectedObjectId ? (
             <ObjectDetailView
               objectId={selectedObjectId}
               aoi={packet.aoi}
@@ -501,7 +357,10 @@ export default function App(): JSX.Element {
               communities={communities}
               responseSites={responseSites}
               routes={routes}
-              onBack={() => setSelectedObjectId(null)}
+              hasTerrainProfile={Boolean(routeProfile?.samples.some(sample => sample.elevation !== undefined))}
+              profileOpen={showProfile}
+              onToggleProfile={() => { setFocusDistance(null); setShowProfile(open => !open); setMeasurementOpen(false); setMobileView('map'); setActiveDialog(null); }}
+              onBack={() => { setSelectedObjectId(null); setShowProfile(false); setFocusDistance(null); }}
               onSelectCommunity={selectCommunity}
               onSelectObject={inspectObject}
               onOpenEvidence={(hzId) => {
@@ -516,6 +375,7 @@ export default function App(): JSX.Element {
               terrainCovered={communityTerrainCoverage?.get(selectedCommunity.id) ?? null}
               assessment={assessments.get(selectedCommunity.id)!}
               hazards={hazards}
+              evidence={evidence}
               locale={locale}
               detailTab={detailTab}
               onChangeDetailTab={setDetailTab}
@@ -539,6 +399,7 @@ export default function App(): JSX.Element {
                 setActiveDialog('data');
               }}
               onSelectObject={inspectObject}
+              onOpenEvidence={(hazardId) => { setEvidenceModalId(hazardId); setActiveDialog('evidence'); }}
               onExport={openDecisionExport}
             />
           ) : view === 'incident' ? (
@@ -549,6 +410,7 @@ export default function App(): JSX.Element {
               updated={updated}
               communities={communities}
               routes={routes}
+              assessments={assessments}
               blockedRoadCount={roads.filter(road => road.status === 'blocked').length}
               uncertainRoadCount={roads.filter(road => road.status === 'uncertain').length}
               onSelectCommunity={selectCommunity}
@@ -593,6 +455,7 @@ export default function App(): JSX.Element {
           {mapMode === '2d' ? <Map2D
             terrain={mapTerrain}
             profileOpen={showProfile}
+            profilePoints={showProfile ? profileTarget?.points : undefined}
             locationOpen={locationOpen}
             locationPoint={locationPoint}
             onLocation={setLocationPoint}
@@ -644,7 +507,7 @@ export default function App(): JSX.Element {
           {!mapTerrain && startupError && (
             <div className="map-load-state" role="alert">
               <strong>{locale === 'vi' ? 'Không mở được bản đồ địa hình' : 'Terrain map could not be opened'}</strong>
-              <button className="button soft" onClick={() => setStartupAttempt(attempt => attempt + 1)}>
+              <button className="button soft" onClick={retryTerrain}>
                 {locale === 'vi' ? 'Thử lại' : 'Retry'}
               </button>
             </div>
@@ -693,12 +556,13 @@ export default function App(): JSX.Element {
               viewControlRef.current?.focusProjected(result.projected);
             }}/>
           </MapControls>
-          <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh Sentinel-2 và địa hình Chế Tạo', 'Sentinel-2 imagery and Chế Tạo terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
+          <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh và địa hình Chế Tạo', 'Chế Tạo imagery and terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
           {locationOpen && <MapLocationPanel locale={locale} point={locationPoint} onClose={closeLocation}/>}
 
           {activeDialog === 'layers' && (
             <LayersDialog
               locale={locale}
+              imageryPreview={defaultTerrainData ? scenarioManifest?.terrain.image?.url : undefined}
               layers={layers}
               appearance={layerAppearance}
               mapMode={mapMode}
@@ -714,9 +578,10 @@ export default function App(): JSX.Element {
             />
           )}
 
-          {showProfile && activeRoute && (
+          {showProfile && profileTarget && (
             <ProfileDrawer
-              key={activeRoute.id}
+              key={profileTarget.id}
+              name={profileTarget.name[locale === 'vi' ? 0 : 1]}
               locale={locale}
               profile={routeProfile}
               onHoverDistance={setFocusDistance}
@@ -740,6 +605,7 @@ export default function App(): JSX.Element {
         <NotificationDialog
           locale={locale}
           report={packet.report}
+          road={roads.find(road => road.id === packet.report.roadId)}
           updated={reportApplied}
           historical={historical}
           onApplyReport={handleSimulateUpdate}
@@ -770,18 +636,6 @@ export default function App(): JSX.Element {
           locale={locale}
           onClose={() => setActiveDialog(null)}
           onSelectRoad={inspectObject}
-        />
-      )}
-
-      {activeDialog === 'segmentAnalysis' && activeRoute && (
-        <SegmentAnalysisDialog
-          route={activeRoute}
-          locale={locale}
-          onClose={() => setActiveDialog(null)}
-          onSelectEvidence={(hzId) => {
-            setEvidenceModalId(hzId);
-            setActiveDialog('evidence');
-          }}
         />
       )}
 

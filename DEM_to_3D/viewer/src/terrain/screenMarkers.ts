@@ -9,6 +9,7 @@ export type ScreenMarkerOptions = {
   responseSites?: ResponseSite[];
   selectedCommunityId: string | null; selectedObjectId: string | null; locale: Locale;
   onSelect: (hit: OverlayHit) => void;
+  interactive?: boolean;
   allowCounts?: () => boolean;
   appearance?: import('../features/map/layerAppearance').LayerAppearance;
   onExpandGroup?: (points: Array<{ x: number; y: number }>) => void;
@@ -32,6 +33,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   };
   const layer = document.createElement('div');
   layer.className = 'map-marker-layer';
+  layer.inert = options.interactive === false;
   layer.dataset.basemap = layers.imagery === false ? 'terrain' : 'imagery';
   host.appendChild(layer);
   const markers: Marker[] = [];
@@ -155,7 +157,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   void document.fonts.ready.then(onFontsLoaded);
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
-    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice') ?? [])
+    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {

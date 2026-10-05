@@ -29,6 +29,24 @@ Cập nhật: 2026-10-05. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 - Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Màu xanh đánh dấu phần tuyến đang xem, không che đoạn đỏ hoặc vàng.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
 
+## Ảnh nền và bản đồ tổng quan
+
+Thứ tự hiện hành từ dưới lên: nền khu vực → ảnh/DEM cục bộ → ranh AOI → mạng đường → tuyến chọn → tình trạng đường → điểm đọc/chọn → hình đo và ký hiệu → nhãn/điều khiển. Nét cảnh báo không bị tuyến xanh che. Bật/tắt lớp không thay thứ tự này. Hằng số dùng chung ở `features/map/mapLayerOrder.ts`, 2D dùng panes, 3D dùng render order.
+
+Chọn đường tách khỏi độ dày nét vẽ: vùng bấm 2D rộng 16 px bằng chuột, 24 px khi cảm ứng. 3D có dung sai bắt nét theo pixel. Rê chuột làm rõ đoạn, bấm mở chi tiết và nút mặt cắt. Đây là lựa chọn UX của DEAR, không phải kích thước bắt buộc của một tiêu chuẩn.
+
+| Thành phần | Hiện hành |
+|---|---|
+| Ảnh nền cục bộ | PNG 840 × 502, ô lưới khoảng 28,8 m. Lấy mẫu màu song tuyến tính để hiển thị, giữ nodata trong suốt. Ranh giới ảnh bao gồm nửa pixel ngoài tâm ô biên |
+| Bóng địa hình | Nhẹ trên ảnh vệ tinh để giữ màu và chi tiết ảnh. Lớp địa hình vẫn có bóng riêng |
+| Texture 3D | Anisotropic filtering tối đa 8× trong khả năng GPU, giảm mờ ở góc nhìn nghiêng |
+| Giới hạn độ nét | Cải thiện render không bổ sung chi tiết mới. Muốn đọc vật thể nhỏ cần ảnh nguồn độ phân giải cao hơn, có nguồn và quyền sử dụng phù hợp |
+| Tổng quan 2D | Khung 184 × 150 px ở dưới phải, thu gọn mặc định. Dùng lại raster cục bộ, không tải thêm tile. Ranh AOI nét đứt, khung nhìn chính nét liền |
+| Điều hướng | Khung nhìn đổi theo pan/zoom. Click tổng quan chuyển tâm bản đồ chính, giữ mức zoom. Phím mũi tên dịch tâm, Enter về tâm vùng tổng quan |
+| Không gian | Nhãn/marker tránh khung tổng quan. Ẩn trên mobile, cửa sổ thấp hoặc khi mở công cụ. Chưa hiển thị footprint camera 3D |
+
+[ArcGIS: Overview map](https://developers.arcgis.com/javascript/latest/sample-code/overview-map/) dùng bản đồ phụ và vùng nhìn thật để giữ bối cảnh. DEAR triển khai trước trên 2D. [EOxCloudless](https://cloudless.eox.at/products/viewing) cung cấp nền Web Mercator tới zoom 14; tăng mức zoom không tạo thêm chi tiết ảnh.
+
 ## Địa hình dọc tuyến
 
 | Đại lượng | Phương pháp |
@@ -39,6 +57,7 @@ Cập nhật: 2026-10-05. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 | Tổng lên/xuống | Cộng chênh cao dương/âm. Chỉ trình bày tổng toàn tuyến khi có đủ DEM |
 | Thiếu dữ liệu | Để trống đoạn biểu đồ, không nối qua nodata hoặc ngoại suy ngoài DEM. Không tính độ dốc qua khoảng thiếu |
 | Tương tác | Rê chuột lên biểu đồ hoặc dùng thanh vị trí. Biểu đồ, dữ kiện tại vị trí và điểm trên bản đồ cùng đọc một mẫu |
+| Chọn đoạn đường | Mở mặt cắt ngay từ chi tiết. Tên và chiều dài thuộc đoạn được chọn, không thay bằng toàn tuyến tiếp cận |
 
 Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đường và vạch vị trí. Mở mặt cắt không vẽ thêm đường xanh che tình trạng đường. Độ dốc DEM không phải độ dốc mặt đường đã khảo sát. Nguồn gốc DEM hiện chưa được xác nhận trong metadata.
 
@@ -81,6 +100,8 @@ Mở rộng tiếp theo: mặt cắt theo đường tự vẽ và lưu/xuất h�
 | AOI và phạm vi phân tích | Có AOI của bộ mô phỏng | Ranh giới phân tích cho dữ liệu thực, footprint ảnh và vùng hợp lệ. AOI hiện không phải địa giới hành chính |
 
 ## Căn cứ
+
+CRS, datum, dữ liệu ảnh và định hướng engine: [nền tảng GIS và viễn thám](../architecture/geospatial-platform.md). Demo chưa có nhập VN2000 hoặc pipeline phân tích ảnh được kiểm chứng, không ghi là đã đạt chuẩn vận hành.
 
 | Nguồn | Phạm vi áp dụng |
 |---|---|

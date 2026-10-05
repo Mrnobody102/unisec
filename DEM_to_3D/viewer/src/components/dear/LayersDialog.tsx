@@ -5,8 +5,9 @@ import { clampOpacity, type LayerAppearance } from '../../features/map/layerAppe
 import { useFloatingPanel } from '../../shared/hooks/useFloatingPanel';
 
 type Props = { locale: Locale; layers: Record<string, boolean>; appearance: LayerAppearance; mapMode: '2d' | '3d'; onAppearance: (appearance: LayerAppearance) => void; onCompare: () => void; renderInfo: (id: string) => ReactNode; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
+type PreviewProps = { imageryPreview?: string };
 
-export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, renderInfo, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose }: Props): JSX.Element {
+export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, renderInfo, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, onToggleLayer, onClose, imageryPreview }: Props & PreviewProps): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const [infoId, setInfoId] = useState<string | null>(null);
   const info = (id: string, label: string) => <button type="button" className="layer-info-button" aria-label={t('Nguồn lớp ', 'Layer source: ') + label} aria-expanded={infoId === id} aria-controls={infoId === id ? `layer-info-${id}` : undefined} onClick={() => setInfoId(current => current === id ? null : id)}><UiIcon name="info"/></button>;
@@ -38,6 +39,9 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
     <div className="layers-content">
       <fieldset className="basemap-choices"><legend>{t('Bản đồ nền', 'Base map')}</legend>
         {bases.map(([imagery, label]) => <label className={'basemap-choice ' + (layers.imagery === imagery ? 'is-active' : '')} key={String(imagery)}>
+          <span className={'basemap-preview ' + (imagery ? 'is-imagery' : 'is-terrain')} aria-hidden="true">
+            {imagery && imageryPreview ? <img src={imageryPreview} alt=""/> : <svg viewBox="0 0 150 48" preserveAspectRatio="xMidYMid slice"><path d="M-20 48C10-25 75-15 88 18s65 43 88-2M-12 50C10-15 65-15 78 18s60 35 88-3M-3 52C15-7 55-9 67 19s55 30 86-4M8 55C24 0 46-3 55 20s49 27 88-3M21 52C29 8 38 4 43 23s39 21 87-4"/></svg>}
+          </span>
           <input type="radio" name="basemap" checked={layers.imagery === imagery} onChange={() => { if (layers.imagery !== imagery) onToggleLayer('imagery'); }}/><span>{label}</span>
         </label>)}
       </fieldset>

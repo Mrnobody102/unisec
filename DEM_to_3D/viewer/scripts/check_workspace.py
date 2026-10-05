@@ -77,7 +77,7 @@ def run(url, chrome, captures, prepared=False):
         expect(page.locator('.route-travel-estimate')).to_contain_text('40')
         if captures:
             page.screenshot(path=str(captures / 'workspace-summary.png'))
-        page.locator('.decision-tabs button').nth(1).click()
+        page.get_by_role('button', name='So sánh tuyến', exact=True).click()
         page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         with page.expect_download() as download:
@@ -172,7 +172,7 @@ def run(url, chrome, captures, prepared=False):
         page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
         panel = page.locator('.map-measure-panel')
         expect(panel).to_be_visible()
-        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_disabled()
+        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_enabled()
         area = page.locator('.map-2d-surface').bounding_box()
         def pick(x, y):
             page.mouse.click(area['x'] + area['width'] * x, area['y'] + area['height'] * y)

@@ -7,12 +7,13 @@ import { UiIcon } from './UiIcon';
 
 type Props = {
   locale: Locale;
+  name: string;
   profile: SurfaceProfile | null;
   onHoverDistance: (distance: number | null) => void;
   onClose: () => void;
 };
 
-export function ProfileDrawer({ locale, profile, onHoverDistance, onClose }: Props): JSX.Element | null {
+export function ProfileDrawer({ locale, name, profile, onHoverDistance, onClose }: Props): JSX.Element | null {
   const [distance, setDistance] = useState(0);
   const metrics = useMemo(() => profile ? profileMetrics(profile) : null, [profile]);
   useEffect(() => { setDistance(0); onHoverDistance(profile ? 0 : null); }, [profile, onHoverDistance]);
@@ -29,7 +30,7 @@ export function ProfileDrawer({ locale, profile, onHoverDistance, onClose }: Pro
   };
   return <section className="profile-panel" aria-label={t('Địa hình dọc tuyến', 'Terrain along route')}>
     <div className="profile-heading">
-      <div><strong>{t('Địa hình dọc tuyến', 'Terrain along route')}</strong><span className="small">{(profile.length / 1000).toFixed(2)} km</span></div>
+      <div><strong>{t('Mặt cắt địa hình', 'Elevation profile')}</strong><span className="small profile-target-name" title={name}>{name}</span><span className="small">{(profile.length / 1000).toFixed(2)} km</span></div>
       <button className="icon-button" onClick={onClose} aria-label={t('Đóng mặt cắt', 'Close profile')}><UiIcon name="close" /></button>
     </div>
     <dl className="profile-stats">
@@ -41,14 +42,14 @@ export function ProfileDrawer({ locale, profile, onHoverDistance, onClose }: Pro
     <div className="profile-body">
       <div className="profile-chart-container"><ProfileChart compact locale={locale} profile={profile} selectedDistance={current.distance} onHoverDistance={selectDistance} /></div>
       <div className="profile-controls">
-        <label htmlFor="profile-dist-slider">{t('Vị trí trên tuyến', 'Position on route')}</label>
+        <label htmlFor="profile-dist-slider">{t('Vị trí trên mặt cắt', 'Position along profile')}</label>
         <input id="profile-dist-slider" type="range" min={0} max={profile.length} step={profile.sampleInterval} value={distance} onChange={e => selectDistance(Number(e.target.value))} />
         <dl className="profile-readout">
           <div><dt>{t('Khoảng cách', 'Distance')}</dt><dd>{(current.distance / 1000).toFixed(2)} km</dd></div>
           <div><dt>{t('Độ cao', 'Elevation')}</dt><dd>{value(current.elevation, 'm')}</dd></div>
           <div><dt>{t('Độ dốc dọc DEM', 'DEM path slope')}</dt><dd>{grade === undefined ? t('Không có dữ liệu', 'No data') : `${grade > 0 ? '+' : ''}${grade.toFixed(1)}%`}</dd></div>
         </dl>
-        <p className="profile-method-note">{t('Tính từ DEM dọc hình tuyến. Bước lấy mẫu', 'From DEM along route geometry. Sample interval')} {Math.round(profile.sampleInterval)} m.</p>
+        <p className="profile-method-note" title={t('Khoảng cách giữa các mẫu độ cao theo lưới DEM', 'Elevation sample spacing from the DEM grid')}>DEM · {Math.round(profile.sampleInterval)} m</p>
       </div>
     </div>
   </section>;

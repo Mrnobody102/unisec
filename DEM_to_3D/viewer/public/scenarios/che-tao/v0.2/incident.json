@@ -120,18 +120,46 @@
         "No contact since 04:10. Relief needs unconfirmed"
       ],
       "facts": [
-        [
-          "Đường chính vào bản bị chặn do sạt lở",
-          "Main access road blocked by a landslide",
-          "Hiện trường, 07:40",
-          "Field report, 07:40"
-        ],
-        [
-          "Mất liên lạc từ 04:10. Chưa rõ nhu cầu hỗ trợ cụ thể",
-          "No contact since 04:10. Relief needs unconfirmed",
-          "Tin từ xã, 09:14",
-          "Commune focal point, 09:14"
-        ]
+        {
+          "kind": "report",
+          "label": [
+            "Đường chính vào Nậm Khắt",
+            "Main road to Nậm Khắt"
+          ],
+          "value": [
+            "Đường bị chặn do sạt lở.",
+            "Road blocked by a landslide."
+          ],
+          "hazardId": "LS-02"
+        },
+        {
+          "kind": "report",
+          "label": [
+            "Liên lạc",
+            "Communications"
+          ],
+          "value": [
+            "Mất liên lạc với bản từ 04:10.",
+            "Contact with the village lost since 04:10."
+          ],
+          "source": [
+            "Tin từ xã",
+            "Commune focal point"
+          ],
+          "observedAt": "2026-09-29T04:10:00+07:00",
+          "receivedAt": "2026-09-29T09:14:00+07:00"
+        },
+        {
+          "kind": "gap",
+          "label": [
+            "Nhu cầu hỗ trợ",
+            "Assistance needs"
+          ],
+          "value": [
+            "Chưa xác định nhu cầu y tế và cứu trợ.",
+            "Medical and relief needs are unconfirmed."
+          ]
+        }
       ],
       "projected": {
         "x": 405500,
@@ -149,18 +177,30 @@
         "Bridge reported flooded at 03:55"
       ],
       "facts": [
-        [
-          "Cầu trên đường vào bản có tin báo ngập. Chưa có cập nhật mới",
-          "Access bridge reported flooded. No newer observation",
-          "Hiện trường, 03:55",
-          "Field report, 03:55"
-        ],
-        [
-          "Có điểm nghi sạt lở gần đường vào bản",
-          "Possible landslide near the village access road",
-          "Phân tích SAR, 07:05",
-          "SAR analysis, 07:05"
-        ]
+        {
+          "kind": "report",
+          "label": [
+            "Cầu trên đường vào Khau Mang",
+            "Khau Mang access bridge"
+          ],
+          "value": [
+            "Cầu được báo ngập, chưa xác minh khả năng đi qua.",
+            "Bridge reported flooded; passage unverified."
+          ],
+          "hazardId": "B-2"
+        },
+        {
+          "kind": "report",
+          "label": [
+            "Sạt lở gần đường vào bản",
+            "Landslide near village access"
+          ],
+          "value": [
+            "Có điểm nghi sạt lở.",
+            "Suspected landslide site."
+          ],
+          "hazardId": "LS-03"
+        }
       ],
       "projected": {
         "x": 393500,
@@ -178,18 +218,39 @@
         "Flood extent unavailable. Access needs verification"
       ],
       "facts": [
-        [
-          "Chưa có vùng ngập được khoanh trên bản đồ. Số hộ bị ảnh hưởng chưa xác định",
-          "No mapped flood extent. Affected households are unknown",
-          "Bộ dữ liệu hiện tại",
-          "Current dataset"
-        ],
-        [
-          "Tình trạng cầu trên đường tiếp cận chưa rõ",
-          "Condition of the access bridge is uncertain",
-          "Tin hiện trường, 03:55",
-          "Field report, 03:55"
-        ]
+        {
+          "kind": "gap",
+          "label": [
+            "Phạm vi ngập",
+            "Flood extent"
+          ],
+          "value": [
+            "Chưa có vùng ngập được khoanh.",
+            "No mapped flood extent."
+          ]
+        },
+        {
+          "kind": "gap",
+          "label": [
+            "Hộ bị ảnh hưởng",
+            "Affected households"
+          ],
+          "value": [
+            "Chưa có thống kê.",
+            "No count available."
+          ]
+        },
+        {
+          "kind": "gap",
+          "label": [
+            "Đường vào Nậm Lắt",
+            "Road to Nậm Lắt"
+          ],
+          "value": [
+            "Chưa có tuyến được xác định trên mạng đường.",
+            "No access route identified in the road network."
+          ]
+        }
       ],
       "projected": {
         "x": 404000,
@@ -207,18 +268,33 @@
         "Possible landslide near the village. Mountain track needs checking"
       ],
       "facts": [
-        [
-          "Có điểm nghi sạt lở gần Lao Mải. Chưa xác nhận đường chính bị chặn",
-          "Possible landslide near Lao Mải. Blockage of the main road is unconfirmed",
-          "Phân tích SAR, 07:05",
-          "SAR analysis, 07:05"
-        ],
-        [
-          "Đường tiếp cận khác là đường mòn qua sườn núi",
-          "Another access path follows a mountain track",
-          "Mạng đường kịch bản",
-          "Scenario road network"
-        ]
+        {
+          "kind": "report",
+          "label": [
+            "Sạt lở gần Lao Mải",
+            "Landslide near Lao Mải"
+          ],
+          "value": [
+            "Có điểm nghi sạt lở, chưa rõ ảnh hưởng đến đường.",
+            "Suspected landslide; road impact unconfirmed."
+          ],
+          "hazardId": "LS-01"
+        },
+        {
+          "kind": "context",
+          "label": [
+            "Đường tiếp cận",
+            "Access road"
+          ],
+          "value": [
+            "Có đường mòn qua sườn núi. Chưa xác minh khả năng đi qua.",
+            "A mountain track is mapped. Passage is unverified."
+          ],
+          "source": [
+            "Mạng đường",
+            "Road network"
+          ]
+        }
       ],
       "projected": {
         "x": 395000,
@@ -236,18 +312,28 @@
         "Access road and field information are insufficient"
       ],
       "facts": [
-        [
-          "Chưa có hình tuyến đường vào bản để đánh giá khả năng tiếp cận",
-          "No mapped access route is available for assessment",
-          "Mạng đường kịch bản",
-          "Scenario road network"
-        ],
-        [
-          "Chưa có tin mới về nhu cầu y tế và cứu trợ tại bản",
-          "No recent update on medical and relief needs",
-          "Chưa có xác minh hiện trường",
-          "No field verification"
-        ]
+        {
+          "kind": "gap",
+          "label": [
+            "Đường vào Púng Hốc",
+            "Road to Púng Hốc"
+          ],
+          "value": [
+            "Chưa có tuyến được xác định trên mạng đường.",
+            "No access route identified in the road network."
+          ]
+        },
+        {
+          "kind": "gap",
+          "label": [
+            "Nhu cầu hỗ trợ",
+            "Assistance needs"
+          ],
+          "value": [
+            "Chưa có tin xác minh nhu cầu y tế và cứu trợ.",
+            "Medical and relief needs have not been verified."
+          ]
+        }
       ],
       "projected": {
         "x": 398000,
@@ -265,18 +351,17 @@
         "Access route and bridge passage are uncertain"
       ],
       "facts": [
-        [
-          "Chưa có hình tuyến xác nhận đường vào bản đi qua cầu",
-          "No mapped route confirms that access to the village crosses the bridge",
-          "Mạng đường kịch bản",
-          "Scenario road network"
-        ],
-        [
-          "Cần kiểm tra tình trạng cầu trong khu vực trước khi chọn đường vào",
-          "Check the nearby bridge before selecting an access route",
-          "Tin hiện trường, 03:55",
-          "Field report, 03:55"
-        ]
+        {
+          "kind": "gap",
+          "label": [
+            "Đường vào Tà Phình",
+            "Road to Tà Phình"
+          ],
+          "value": [
+            "Chưa xác định tuyến vào bản và các cầu trên tuyến.",
+            "The access route and its bridge crossings are not identified."
+          ]
+        }
       ],
       "projected": {
         "x": 392000,
@@ -294,18 +379,17 @@
         "No access route has been checked against the road data"
       ],
       "facts": [
-        [
-          "Bộ dữ liệu chưa có hình tuyến vào Háng Cơ. Không thể kết luận đường thông",
-          "The dataset has no mapped route to Háng Cơ. Passability cannot be inferred",
-          "Mạng đường kịch bản",
-          "Scenario road network"
-        ],
-        [
-          "Chưa có báo cáo xác minh khả năng phương tiện đi qua",
-          "No report verifies vehicle passage",
-          "Chưa có xác minh hiện trường",
-          "No field verification"
-        ]
+        {
+          "kind": "gap",
+          "label": [
+            "Đường vào Háng Cơ",
+            "Road to Háng Cơ"
+          ],
+          "value": [
+            "Chưa có tuyến được xác định trên mạng đường.",
+            "No access route identified in the road network."
+          ]
+        }
       ],
       "projected": {
         "x": 407500,

@@ -13,6 +13,7 @@ import type { TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
 import { roadColors } from './roadStyle';
+import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../features/map/layerAppearance';
 
 export type OverlayHit =
@@ -92,7 +93,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       dashed: true, dashSize: 120, gapSize: 100, depthTest: false, transparent: true, opacity: selected ? 0.9 : 0.6 });
     material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
     const outline = new Line2(geometry, material); outline.computeLineDistances();
-    outline.renderOrder = 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
+    outline.renderOrder = mapLayerOrder.boundary * 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
   }
 
   // 1. Roads Layer
@@ -124,7 +125,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         positions.push(scenePt.x, scenePt.y, scenePt.z);
       });
 
-      let lineColor: THREE.ColorRepresentation = routeVisible || isRoadSelected ? roadColors.selected : (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain);
+      let lineColor: THREE.ColorRepresentation = routeVisible ? roadColors.selected : (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain);
       // Route selection must preserve the warning on blocked or uncertain segments.
       if (layers.status && road.status === 'blocked') lineColor = roadColors.blocked;
       if (layers.status && road.status === 'uncertain') lineColor = roadColors.uncertain;
@@ -138,7 +139,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
         const line = new Line2(geometry, material);
         line.computeLineDistances();
-        line.renderOrder = casing ? 3 : 4;
+        const order = layers.status && road.status !== 'open' ? mapLayerOrder.roadStatus : routeVisible || isRoadSelected ? mapLayerOrder.route : mapLayerOrder.roads;
+        line.renderOrder = order * 2 + (casing ? 0 : 1);
         line.userData = { type: 'road', id: road.id, casing };
         roadGroup.add(line);
       };

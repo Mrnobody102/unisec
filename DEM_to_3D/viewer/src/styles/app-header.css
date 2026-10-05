@@ -1,0 +1,126 @@
+.app-header {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  flex-direction: row;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 0;
+  background: #142b31;
+  color: #f0f5f3;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.brand-symbol {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #a3d5c4;
+  border-radius: 0;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.brand-word {
+  font-family: var(--font-heading);
+  color: inherit;
+}
+
+.incident-badge-group {
+  padding-left: 20px;
+  border-left: 1px solid #ffffff26;
+}
+
+.incident-badge-group strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.incident-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #b6c9c8;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-data {
+  text-align: right;
+  margin-right: 8px;
+}
+
+.header-data .update-label {
+  font-size: 12px;
+  color: #b6c9c8;
+  display: block;
+}
+
+.header-data strong { color: #f0f5f3; font-weight: 500; font-variant-numeric: tabular-nums; }
+.app-header .header-actions > button, .app-header .settings-anchor > button { background: transparent; border-color: #ffffff24; color: #e0eeea; border-radius: 6px; }
+.app-header .header-actions > button:hover, .app-header .settings-anchor > button:hover { background: #ffffff12; border-color: #ffffff40; }
+.app-header .settings-menu { color: var(--ws-text); }
+.settings-anchor { position: relative; }
+.settings-menu {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: 276px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 76px);
+  overflow-y: auto;
+  z-index: 50;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--ws-line);
+  border-radius: 12px;
+  background: var(--ws-surface);
+  box-shadow: var(--shadow-pop);
+}
+.settings-label { display: block; margin-bottom: 8px; color: var(--ws-muted); font-size: 11px; font-weight: 600; }
+.settings-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 3px; border: 1px solid var(--ws-line); border-radius: 8px; background: var(--ws-bg); }
+.settings-option { min-width: 0; min-height: 34px; padding: 5px 7px; border: 0; border-radius: 5px; background: transparent; color: var(--ws-muted); font-size: 12px; }
+.settings-option:hover { color: var(--ws-text); }
+.settings-option[aria-pressed="true"] { color: var(--ws-text); background: var(--ws-surface); box-shadow: 0 1px 3px #13253a1a; font-weight: 600; }
+.font-options { display: grid; gap: 6px; }
+.font-option { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 50px; padding: 7px 9px; border: 1px solid var(--ws-line); border-radius: 8px; background: var(--ws-surface); text-align: left; }
+.font-option:hover { background: var(--ws-bg); }
+.font-option[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); }
+.font-sample { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 6px; background: var(--ws-bg); color: var(--ws-text); font-size: 17px; font-weight: 600; }
+.font-sample-modern { font-family: 'Space Grotesk', sans-serif; }
+.font-sample-plex { font-family: 'IBM Plex Sans', sans-serif; }
+.font-sample-classic { font-family: Inter, sans-serif; }
+.font-option-copy { display: grid; gap: 1px; min-width: 0; }
+.font-option-copy strong { font-size: 12px; font-weight: 600; }
+.font-option-copy small { color: var(--ws-muted); font-size: 11px; }
+.settings-link { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: var(--select-ink); font-size: 12px; text-align: left; }
+.settings-link:hover { text-decoration: underline; }
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--ws-line);
+  margin: 0 4px;
+}

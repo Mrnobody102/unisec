@@ -1,4 +1,5 @@
 import type { ChangeEvent } from 'react';
+import '../features/terrain/model-upload.css';
 
 export type UploadMode = 'single' | 'merge';
 
@@ -24,15 +25,15 @@ export function ModelUploadPanel({ locale = 'vi', mode, geographicMerge, fileNam
   return <section className="upload-panel" aria-label={t('Nạp mô hình địa hình', 'Import terrain model')}>
     <div className="upload-modes" role="radiogroup" aria-label={t('Số mô hình', 'Model count')}>
       <label className={mode === 'single' ? 'upload-mode active' : 'upload-mode'}>
-        <input type="radio" name="upload-mode" checked={mode === 'single'} onChange={() => onModeChange('single')} />
+        <input type="radio" name="upload-mode" disabled={busy} checked={mode === 'single'} onChange={() => onModeChange('single')} />
         <strong>{t('Một mô hình', 'Single model')}</strong>
       </label>
       <label className={mode === 'merge' ? 'upload-mode active' : 'upload-mode'}>
-        <input type="radio" name="upload-mode" checked={mode === 'merge'} onChange={() => onModeChange('merge')} />
+        <input type="radio" name="upload-mode" disabled={busy} checked={mode === 'merge'} onChange={() => onModeChange('merge')} />
         <strong>{t('Nhiều mô hình', 'Multiple models')}</strong>
       </label>
     </div>
-    {mode === 'merge' && <label className="geographic-toggle"><input type="checkbox" checked={geographicMerge} onChange={event => onGeographicMergeChange(event.target.checked)} /><span><strong>{t('Ghép theo tọa độ', 'Align by coordinates')}</strong><small>{t('Các mô hình cần cùng hệ tọa độ theo mét.', 'Models require the same coordinate system in meters.')}</small></span></label>}
+    {mode === 'merge' && <label className="geographic-toggle"><input type="checkbox" disabled={busy} checked={geographicMerge} onChange={event => onGeographicMergeChange(event.target.checked)} /><span><strong>{t('Ghép theo tọa độ', 'Align by coordinates')}</strong><small>{t('Các mô hình cần cùng hệ tọa độ theo mét.', 'Models require the same coordinate system in meters.')}</small></span></label>}
     <label className="upload-dropzone">
       <strong>{busy ? t('Đang tải mô hình…', 'Loading model…') : t('Chọn tệp mô hình', 'Choose model files')}</strong>
       <input type="file" multiple accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json" onChange={handleFiles} disabled={busy} />
