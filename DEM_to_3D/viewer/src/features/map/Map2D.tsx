@@ -70,9 +70,6 @@ export function Map2D(props: Props): JSX.Element {
     };
     const updateLayout = () => {
       frame = 0; markers?.update(project);
-      const markerLayer = host.querySelector<HTMLElement>('.map-marker-layer');
-      const current = propsRef.current;
-      if (markerLayer) markerLayer.inert = current.locationOpen || (current.measurementOpen && (!current.measureSession.finished || current.measureSession.editing));
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
     };
     const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(updateLayout); };
@@ -126,6 +123,7 @@ export function Map2D(props: Props): JSX.Element {
       markers?.dispose(); overlay?.remove(); markers = null; overlay = L.layerGroup().addTo(map);
       if (scenario && terrain) {
         markers = createScreenMarkers(host, { ...scenario, locale,
+          interactive: !propsRef.current.locationOpen && !(propsRef.current.measurementOpen && (!propsRef.current.measureSession.finished || propsRef.current.measureSession.editing)),
           allowCounts: () => map.getZoom() < 14,
           onExpandGroup: points => {
             const positions = points.map(ll).filter((point): point is L.LatLng => point !== null);
@@ -185,6 +183,11 @@ export function Map2D(props: Props): JSX.Element {
       if (props.viewControlRef) props.viewControlRef.current = null;
     };
   }, []);
+  useLayoutEffect(() => {
+    // Tool interaction must change before paint, independently of marker positioning.
+    const markerLayer = hostRef.current?.querySelector<HTMLElement>('.map-marker-layer');
+    if (markerLayer) markerLayer.inert = props.locationOpen || interacting;
+  }, [props.locationOpen, interacting]);
   useEffect(() => { runtime.current?.refresh(); }, [props.terrain, props.imageUrl, props.locale,
     interacting, props.locationOpen,
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,

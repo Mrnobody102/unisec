@@ -9,6 +9,7 @@ export type ScreenMarkerOptions = {
   responseSites?: ResponseSite[];
   selectedCommunityId: string | null; selectedObjectId: string | null; locale: Locale;
   onSelect: (hit: OverlayHit) => void;
+  interactive?: boolean;
   allowCounts?: () => boolean;
   appearance?: import('../features/map/layerAppearance').LayerAppearance;
   onExpandGroup?: (points: Array<{ x: number; y: number }>) => void;
@@ -32,6 +33,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   };
   const layer = document.createElement('div');
   layer.className = 'map-marker-layer';
+  layer.inert = options.interactive === false;
   layer.dataset.basemap = layers.imagery === false ? 'terrain' : 'imagery';
   host.appendChild(layer);
   const markers: Marker[] = [];

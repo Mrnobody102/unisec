@@ -103,8 +103,34 @@ def run(url, chrome, captures):
             assert box['x'] + box['width'] <= area['x'] + area['width'] - 63, (area, box)
             assert box['y'] + box['height'] <= area['y'] + area['height'] - 31, (area, box)
 
+        # Observe mode changes and replacement layers before the next animation frame.
+        # A retry of the final inert property alone would hide the interaction gap.
+        page.evaluate("""() => {
+            const host = document.querySelector('.map-2d');
+            window.markerInteractionAudit = [];
+            window.markerInteractionObserver = new MutationObserver(records => {
+                const locked = host.classList.contains('is-measuring') || host.classList.contains('is-locating');
+                for (const record of records) {
+                    const layers = record.type === 'attributes'
+                        ? [host.querySelector('.map-marker-layer')]
+                        : [...record.addedNodes].filter(node => node.classList?.contains('map-marker-layer'));
+                    for (const layer of layers) {
+                        if (layer) window.markerInteractionAudit.push({locked, inert: layer.inert});
+                    }
+                }
+            });
+            window.markerInteractionObserver.observe(host, {attributes: true, attributeFilter: ['class'], childList: true});
+        }""")
+
+        def assert_marker_interaction(locked):
+            page.wait_for_function('(locked) => window.markerInteractionAudit.some(item => item.locked === locked)', arg=locked)
+            assert page.locator('.map-2d .map-marker-layer').evaluate('node => node.inert') == locked
+            audit = page.evaluate('window.markerInteractionAudit')
+            assert all(item['locked'] == item['inert'] for item in audit), audit
+
         toolbar.get_by_role('button', name='Measure on 2D map', exact=True).click()
         assert road.evaluate("path => getComputedStyle(path).pointerEvents") == 'none'
+        assert_marker_interaction(True)
         measure = page.locator('.map-measure-panel')
         handle = measure.get_by_role('group', name='Measurement panel position', exact=True)
         original = measure.bounding_box()
@@ -114,6 +140,7 @@ def run(url, chrome, captures):
         expect(page.locator('.map-measure-vertex')).to_have_count(0)
         assert_inside(measure)
         measure.get_by_role('button', name='Close measurement', exact=True).click()
+        assert_marker_interaction(False)
         toolbar.get_by_role('button', name='Measure on 2D map', exact=True).click()
         assert abs(measure.bounding_box()['x'] - moved['x']) < 1
         handle.focus(); page.keyboard.press('ArrowRight')
@@ -195,7 +222,7 @@ def run(url, chrome, captures):
 
         page.get_by_role('button', name='Location information', exact=True).click()
         assert road.evaluate("path => getComputedStyle(path).pointerEvents") == 'none'
-        assert page.locator('.map-2d .map-marker-layer').evaluate('node => node.inert')
+        assert_marker_interaction(True)
         location = page.locator('.map-location-panel')
         expect(location).to_contain_text('Select a point on the map')
         area = page.locator('.map-2d-surface').bounding_box()
@@ -208,6 +235,7 @@ def run(url, chrome, captures):
         location.get_by_role('button', name='Copy coordinates', exact=True).click()
         expect(location.get_by_role('button', name='Copied', exact=True)).to_be_visible()
         assert 'EPSG:32648' in page.evaluate('navigator.clipboard.readText()')
+        page.evaluate('window.markerInteractionObserver.disconnect()')
         page.get_by_role('button', name='Switch to 3D', exact=True).click()
         expect(page.locator('canvas.terrain-canvas')).to_be_visible(timeout=25000)
         expect(page.locator('.map-load-state')).to_have_count(0, timeout=25000)
@@ -220,6 +248,8 @@ def run(url, chrome, captures):
         location.get_by_role('button', name='Close location information', exact=True).click()
         expect(location).to_have_count(0)
         page.get_by_role('button', name='Switch to 2D', exact=True).click()
+        expect(page.locator('.map-2d .map-marker-layer')).to_have_count(1)
+        assert not page.locator('.map-2d .map-marker-layer').evaluate('node => node.inert')
 
         for width in [390, 320]:
             page.set_viewport_size({'width': width, 'height': 740})
