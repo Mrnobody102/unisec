@@ -32,7 +32,17 @@ def run(url, chrome, captures):
             page.mouse.click(*position) if click else page.mouse.move(*position)
 
         def mode(value):
-            panel.get_by_role('combobox', name='Measurement type', exact=True).select_option(value)
+            selector = panel.get_by_role('combobox', name='Measurement type', exact=True)
+            expect(selector).to_be_enabled()
+            index = selector.evaluate('(node, value) => [...node.options].findIndex(option => option.value === value)', value)
+            assert index >= 0, value
+            # Use a real mouse click and native menu keys, not select_option().
+            # This catches blocked pointer targets and an unexpectedly disabled control.
+            selector.click()
+            page.keyboard.press('Home')
+            for _ in range(index): page.keyboard.press('ArrowDown')
+            page.keyboard.press('Enter')
+            expect(selector).to_have_value(value)
 
         pick(.55, .3); pick(.75, .35, False)
         expect(panel.locator('.map-measure-result')).to_contain_text('km')
@@ -75,9 +85,19 @@ def run(url, chrome, captures):
         assert panel.bounding_box()['height'] < normal * .5
         if captures: page.screenshot(path=str(captures / 'measurement-compact.png'))
         panel.get_by_role('button', name='Expand measurement', exact=True).click()
-        panel.get_by_role('button', name='New', exact=True).click()
+        # The operator can change tools while editing. The valid result is retained.
+        retained_value = panel.locator('.map-measure-result dd').first.text_content()
+        panel.get_by_role('button', name='Edit', exact=True).click()
+        mode('area')
+        expect(panel).to_have_attribute('data-stage', 'drawing')
+        expect(page.locator('.map-measure-vertex')).to_have_count(0)
         expect(page.locator('.map-measure-label')).to_have_count(1)
-        mode('area'); pick(.55, .3); pick(.75, .3); pick(.75, .5)
+        assert panel.bounding_box() == initial_box
+        panel.get_by_text('Retained results', exact=False).click()
+        expect(panel.locator('.measure-history-row')).to_have_count(1)
+        expect(panel.locator('.measure-history-row').first).to_contain_text(retained_value)
+        panel.get_by_role('button', name='Measurement', exact=True).click()
+        pick(.55, .3); pick(.75, .3); pick(.75, .5)
         # Closing by the first vertex avoids appending duplicate polygon points.
         page.locator('.map-measure-vertex').first.click()
         expect(panel.get_by_role('button', name='New', exact=True)).to_be_visible()
@@ -177,7 +197,7 @@ def run(url, chrome, captures):
         expect(panel.get_by_role('button', name='Copy results', exact=True)).to_be_visible()
         assert not errors, errors
         context.close(); browser.close()
-        print('Measurement tools passed: six modes, live preview, editing, undo/redo, units, copy, history, collapse, mobile and 3D lifecycle.')
+        print('Measurement tools passed: six modes, native type selection while editing, live preview, undo/redo, units, copy, history, collapse, mobile and 3D lifecycle.')
 
 
 if __name__ == '__main__':

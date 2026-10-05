@@ -52,11 +52,11 @@ export function MapMeasurement({ mapRef, enabled, locale, session, dispatch, sou
     <div className="map-measure-heading floating-panel-handle" {...floating} tabIndex={0} role="group" aria-label={t('Vị trí công cụ đo', 'Measurement panel position')} aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home" title={t('Kéo để đổi vị trí. Nhấp đúp để đặt lại.', 'Drag to move. Double-click to reset.')}>
       <strong>{t('Đo bản đồ', 'Map measurement')}</strong>
       <button className="icon-button" aria-label={t('Tùy chọn đo', 'Measurement settings')} title={t('Tùy chọn đo', 'Measurement settings')} aria-expanded={view === 'options' && !collapsed} aria-controls="measurement-options" onClick={() => { setCollapsed(false); setView(value => value === 'options' ? 'measure' : 'options'); }}><UiIcon name="settings" size={16}/></button>
-      <button className="icon-button" aria-label={collapsed ? t('Mở rộng công cụ đo', 'Expand measurement') : t('Thu gọn công cụ đo', 'Collapse measurement')} aria-expanded={!collapsed} onClick={() => setCollapsed(value => !value)}><UiIcon name={collapsed ? 'plus' : 'minus'} size={16}/></button>
+      <button className="icon-button" aria-label={collapsed ? t('Mở rộng công cụ đo', 'Expand measurement') : t('Thu gọn công cụ đo', 'Collapse measurement')} aria-expanded={!collapsed} onClick={() => setCollapsed(value => !value)}><UiIcon name={collapsed ? 'expand' : 'collapse'} size={16}/></button>
       <button className="icon-button" aria-label={t('Đóng công cụ đo', 'Close measurement')} onClick={close}><UiIcon name="close" size={16}/></button>
     </div>
     {collapsed ? <button className="map-measure-compact" onClick={() => setCollapsed(false)}><span>{t(...modeNames[session.mode])}</span><strong>{results[0]?.[1] ?? t('Chọn điểm', 'Select points')}</strong></button> : <>
-      <label className="map-measure-type"><span>{t('Kiểu đo', 'Measurement type')}</span><select aria-label={t('Kiểu đo', 'Measurement type')} disabled={session.editing} value={session.mode} onChange={event => { dispatch({ type: 'mode', mode: event.target.value as MeasureMode }); setView('measure'); }}>
+      <label className="map-measure-type"><span>{t('Kiểu đo', 'Measurement type')}</span><select aria-label={t('Kiểu đo', 'Measurement type')} value={session.mode} onChange={event => { dispatch({ type: 'mode', mode: event.target.value as MeasureMode }); setView('measure'); }}>
         {Object.entries(modeNames).map(([mode, name]) => <option key={mode} value={mode}>{t(...name)}</option>)}
       </select></label>
       <div className="measure-tabs" aria-label={t('Nội dung công cụ đo', 'Measurement views')}>

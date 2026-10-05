@@ -35,7 +35,13 @@ export function measurementSessionReducer(state: MeasurementSession, action: Mea
     case 'finish': return canFinish(state.mode, state.points) ? { ...state, finished: true, editing: false, editStart: undefined } : state;
     case 'cancel': return state.editing && state.editStart ? { ...state, ...state.editStart, editing: false, editStart: undefined, undo: [], redo: [] } : state.finished ? state : fresh(state);
     case 'new': return state.editing ? state : archive(state);
-    case 'mode': return state.editing || action.mode === state.mode ? state : { ...archive(state), mode: action.mode };
+    case 'mode': {
+      if (action.mode === state.mode) return state;
+      // Retain a valid edit, or the original result if the edit is incomplete.
+      const result = state.editing && !canFinish(state.mode, state.points)
+        ? { ...state, ...state.editStart } : state;
+      return { ...archive(result), mode: action.mode };
+    }
     case 'import': return !state.editing && canFinish(action.mode, action.points)
       ? { ...archive(state), mode: action.mode, points: action.points, finished: true, source: action.source } : state;
     case 'visible': return { ...state, saved: state.saved.map(item => item.id === action.id ? { ...item, visible: !item.visible } : item) };

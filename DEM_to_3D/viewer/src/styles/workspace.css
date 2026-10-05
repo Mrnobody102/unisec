@@ -692,8 +692,8 @@ h3 {
 .feature-reference summary { cursor: pointer; padding: 8px 0; }
 .workspace summary { list-style: none; display: flex; align-items: center; gap: 12px; }
 .workspace summary::-webkit-details-marker { display: none; }
-.workspace summary::after { content: ''; flex: none; margin-left: auto; width: 12px; height: 12px; background: linear-gradient(currentColor, currentColor) center / 10px 1px no-repeat, linear-gradient(currentColor, currentColor) center / 1px 10px no-repeat; opacity: .65; }
-.workspace details[open] > summary::after { background: linear-gradient(currentColor, currentColor) center / 10px 1px no-repeat; }
+.workspace summary::after { content: ''; flex: none; margin: 0 3px 0 auto; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); opacity: .65; }
+.workspace details[open] > summary::after { transform: rotate(45deg); }
 .feature-reference dl { margin-top: 8px; }
 .evidence-document-status { margin: 16px 0 0; }
 .upload-requirements { margin-top: 16px; font-size: 12px; color: var(--ws-muted); }

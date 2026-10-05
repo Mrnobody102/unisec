@@ -51,11 +51,41 @@ describe('measurement session', () => {
     expect(applied.editing).toBe(false);
     expect(applied.source).toBeUndefined();
   });
-  it('does not apply invalid edits and does not switch modes during editing', () => {
+  it('does not apply invalid edits and restores the original result when switching modes', () => {
     const finished = reduce(reduce(initialMeasurementSession, { type: 'points', points: [a, b] }), { type: 'finish' });
     const invalid = reduce(reduce(finished, { type: 'edit' }), { type: 'points', points: [a] });
     expect(reduce(invalid, { type: 'finish' })).toBe(invalid);
-    expect(reduce(invalid, { type: 'mode', mode: 'area' })).toBe(invalid);
+    const switched = reduce(invalid, { type: 'mode', mode: 'area' });
+    expect(switched.mode).toBe('area');
+    expect(switched.points).toEqual([]);
+    expect(switched.editing).toBe(false);
+    expect(switched.saved[0].points).toEqual([a, b]);
     expect(reduce(invalid, { type: 'cancel' }).points).toEqual([a, b]);
+  });
+  it('retains valid edits in their original mode and starts a new measurement', () => {
+    const imported = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
+    const editedPoints = [a, { ...b, x: b.x + 100 }];
+    const edited = reduce(reduce(imported, { type: 'edit' }), { type: 'points', points: editedPoints });
+    expect(reduce(edited, { type: 'mode', mode: 'distance' })).toBe(edited);
+    const switched = reduce(edited, { type: 'mode', mode: 'area' });
+    expect(switched.saved).toEqual([{ id: 1, mode: 'distance', points: editedPoints, visible: true, source: undefined }]);
+    expect(switched.points).toEqual([]);
+    expect(switched.editStart).toBeUndefined();
+    expect(switched.undo).toEqual([]);
+    expect(switched.finished).toBe(false);
+  });
+  it('preserves source attribution when an invalid edit is discarded during a mode change', () => {
+    const imported = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
+    const invalid = reduce(reduce(imported, { type: 'edit' }), { type: 'points', points: [a] });
+    expect(reduce(invalid, { type: 'mode', mode: 'bearing' }).saved[0]).toEqual({ id: 1, mode: 'distance', points: [a, b], visible: true, source: 'Road' });
+  });
+  it('discards an unfinished sketch when switching tools without losing completed results', () => {
+    const imported = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
+    const next = reduce(imported, { type: 'new' });
+    const draft = reduce(next, { type: 'points', points: [a] });
+    const switched = reduce(draft, { type: 'mode', mode: 'area' });
+    expect(switched.points).toEqual([]);
+    expect(switched.saved).toEqual(next.saved);
+    expect(switched.nextId).toBe(next.nextId);
   });
 });

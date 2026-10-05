@@ -31,7 +31,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |
 | Thanh bản đồ | Nút panel, tìm kiếm, lớp và đo cùng thanh trên trái. Điều hướng và thông tin vị trí ở nhóm trên phải |
 | Đo bản đồ | Ba trạng thái: vẽ, xem kết quả, chỉnh sửa. Kết thúc bằng nút, Enter hoặc nhấp đúp điểm cuối. Chọn Chỉnh sửa trước khi kéo điểm. Phép đo và kết quả đã giữ dùng hai mục riêng; tùy chọn thay nội dung bên trong bảng |
-| Mở nội dung phụ | Không dùng tam giác mặc định. Dấu cộng/trừ nhỏ ở cuối hàng, toàn bộ hàng bấm được. Không lồng nhiều cấp mở rộng |
+| Mở nội dung phụ | Chevron nét mảnh ở cuối hàng, toàn bộ hàng bấm được. Trạng thái mở có `aria-expanded`. Không lồng nhiều cấp hoặc giấu hành động chính |
 | Không gian bản đồ | Panel trái chỉnh độ rộng hoặc thu gọn, giữ lựa chọn. Chú giải có thể thu về một nút. Mở lớp/đo/tọa độ tạm ẩn chú giải |
 | Cửa sổ công cụ | Header cố định, nội dung cuộn trong bảng. Không đổi vị trí khi nội dung tăng hoặc mở tùy chọn. Kéo tiêu đề trên desktop, phím mũi tên để dịch, Home/nhấp đúp để đặt lại. Giữ vị trí trong phiên; mobile dùng vị trí cố định |
 | Thông tin vị trí | Dùng chung trên 2D và 3D. Chọn điểm để đọc tọa độ, độ cao, đổi WGS84/hệ tọa độ dữ liệu và sao chép. Không mở lại bảng thông số kỹ thuật đầy màn hình |

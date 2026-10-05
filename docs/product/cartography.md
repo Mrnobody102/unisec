@@ -57,6 +57,7 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 | Hình học có sẵn | Đo trực tiếp đoạn đường, tuyến đang chọn hoặc AOI để giữ đúng đường gấp khúc/ranh giới |
 | Kết thúc | Nút Kết thúc, Enter/F2 hoặc nhấp đúp điểm cuối. Vùng có thể đóng bằng điểm đầu. Ctrl+Z/Ctrl+Y hoạt động khi vẽ hoặc chỉnh. Chuột phải không kết thúc phép đo |
 | Giữ kết quả | Đo mới hoặc đổi kiểu giữ phép đo đã hoàn tất. Có thể ẩn/xóa từng hình và sao chép kết quả. Đóng công cụ tạm dừng bản vẽ; mở lại để tiếp tục. Hủy/Escape bỏ bản vẽ chưa hoàn tất |
+| Đổi kiểu khi chỉnh sửa | Luôn chọn được kiểu đo. Giữ kết quả chỉnh hợp lệ theo kiểu cũ, rồi bắt đầu phép đo mới. Nếu chỉnh chưa hợp lệ, giữ kết quả trước khi chỉnh. Bản vẽ chưa kết thúc không được lưu khi đổi kiểu |
 | Vòng đời | Hình đo tồn tại trong phiên, hiện trên 2D và giữ khi đổi qua 3D. Tải lại trang hoặc Đặt lại phiên xóa hình đo. Chưa lưu thành lớp nghiệp vụ |
 | Diện tích màn hình | Thu gọn công cụ vẫn đo được. Mobile dùng khung đáy cao tối đa 48% vùng bản đồ. Thông số, từng đoạn và kết quả đã giữ mặc định đóng |
 | Nhãn đo | Chỉ giá trị và đơn vị, diện tích ở tâm hình. Ưu tiên phép đo hiện tại, tránh công cụ và đối tượng nghiệp vụ. Không đủ chỗ thì ẩn nhãn, kết quả vẫn có trong panel |
