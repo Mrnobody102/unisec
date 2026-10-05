@@ -22,6 +22,7 @@ type Props = Pick<TerrainViewerProps, 'locale' | 'scenarioProps' | 'onSelectOver
 };
 
 export function Map2D(props: Props): JSX.Element {
+  const interacting = props.measurementOpen && (!props.measureSession.finished || props.measureSession.editing);
   const geometry = useMemo(() => measurementGeometry(props.scenarioProps, props.locale ?? 'vi'), [props.scenarioProps, props.locale]);
   const [mapReady, setMapReady] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null), mapRef = useRef<L.Map | null>(null);
@@ -58,7 +59,8 @@ export function Map2D(props: Props): JSX.Element {
     const updateLayout = () => {
       frame = 0; markers?.update(project);
       const markerLayer = host.querySelector<HTMLElement>('.map-marker-layer');
-      if (markerLayer) markerLayer.inert = propsRef.current.measurementOpen;
+      const current = propsRef.current;
+      if (markerLayer) markerLayer.inert = current.measurementOpen && (!current.measureSession.finished || current.measureSession.editing);
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
     };
     const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(updateLayout); };
@@ -169,7 +171,7 @@ export function Map2D(props: Props): JSX.Element {
     };
   }, []);
   useEffect(() => { runtime.current?.refresh(); }, [props.terrain, props.imageUrl, props.locale,
-    props.measurementOpen,
+    interacting,
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,
     props.scenarioProps?.selectedRoute, props.scenarioProps?.selectedCommunityId,
     props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers, props.scenarioProps?.appearance]);
@@ -204,7 +206,7 @@ export function Map2D(props: Props): JSX.Element {
     marker?.getElement()?.classList.add('map-location-point');
     return () => { map.off('click', pick); marker?.remove(); };
   }, [mapReady, props.locationOpen, props.locationPoint]);
-  return <div className={`terrain-viewer map-2d${props.measurementOpen ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+  return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
     {mapReady && <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}
       session={props.measureSession} dispatch={props.dispatchMeasureSession} sources={geometry.sources} selected={geometry.selected}/>}
   </div>;

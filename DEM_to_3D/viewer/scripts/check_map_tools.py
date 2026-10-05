@@ -36,16 +36,18 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='IBM Plex Sans', exact=True).click()
         page.keyboard.press('Escape')
         expect(panel).to_be_visible()
-        expect(panel).to_contain_text('Horizontal grid')
+        panel.get_by_role('button', name='Measurement settings', exact=True).click()
+        expect(panel).to_contain_text('UTM 48N planar')
+        panel.get_by_role('button', name='Measurement settings', exact=True).click()
         page.get_by_role('button', name='Close measurement', exact=True).click()
         expect(panel).to_have_count(0)
         page.get_by_role('button', name='Legend', exact=True).click()
         expect(page.locator('.map-legend')).to_contain_text('Overlapping points')
         if captures:
             page.screenshot(path=str(captures / 'workspace-dark-en.png'))
-        # Closing and reopening starts a new measurement without orphan layers.
+        # Closing and reopening resumes the current drawing without orphan layers.
         page.get_by_role('button', name='Measure on 2D map', exact=True).click()
-        expect(panel.locator('.map-measure-result')).to_have_count(0)
+        expect(page.locator('.map-measure-vertex')).to_have_count(2)
         page.get_by_role('button', name='Layers', exact=True).click()
         expect(panel).to_have_count(0)
         expect(page.locator('.layers-panel')).to_be_visible()

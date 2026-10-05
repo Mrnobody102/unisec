@@ -29,8 +29,33 @@ describe('measurement session', () => {
     const imported = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
     expect(imported.finished).toBe(true);
     expect(reduce(imported, { type: 'mode', mode: 'area' }).saved[0].source).toBe('Road');
-    const edited = reduce(imported, { type: 'points', points: [a, { ...b, x: b.x + 100 }] });
+    const edited = reduce(reduce(imported, { type: 'edit' }), { type: 'points', points: [a, { ...b, x: b.x + 100 }] });
     expect(edited.source).toBeUndefined(); expect(edited.finished).toBe(true);
     expect(reduce(imported, { type: 'import', mode: 'area', points: [a, b], source: 'Bad polygon' })).toBe(imported);
+  });
+  it('locks a completed result until editing, and restores geometry and source on cancel', () => {
+    const imported = reduce(initialMeasurementSession, { type: 'import', mode: 'distance', points: [a, b], source: 'Road' });
+    expect(reduce(imported, { type: 'points', points: [b] })).toBe(imported);
+    expect(reduce(imported, { type: 'undo' })).toBe(imported);
+    const editing = reduce(imported, { type: 'edit' });
+    const changed = reduce(editing, { type: 'points', points: [a, { ...b, x: b.x + 100 }] });
+    expect(changed.finished).toBe(true);
+    expect(reduce(changed, { type: 'undo' }).editing).toBe(true);
+    expect(reduce(changed, { type: 'new' })).toBe(changed);
+    const cancelled = reduce(changed, { type: 'cancel' });
+    expect(cancelled.points).toEqual(imported.points);
+    expect(cancelled.source).toBe('Road');
+    expect(cancelled.editing).toBe(false);
+    const applied = reduce(changed, { type: 'finish' });
+    expect(applied.points).toEqual(changed.points);
+    expect(applied.editing).toBe(false);
+    expect(applied.source).toBeUndefined();
+  });
+  it('does not apply invalid edits and does not switch modes during editing', () => {
+    const finished = reduce(reduce(initialMeasurementSession, { type: 'points', points: [a, b] }), { type: 'finish' });
+    const invalid = reduce(reduce(finished, { type: 'edit' }), { type: 'points', points: [a] });
+    expect(reduce(invalid, { type: 'finish' })).toBe(invalid);
+    expect(reduce(invalid, { type: 'mode', mode: 'area' })).toBe(invalid);
+    expect(reduce(invalid, { type: 'cancel' }).points).toEqual([a, b]);
   });
 });

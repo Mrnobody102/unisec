@@ -53,10 +53,10 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 | Tọa độ | Vĩ độ/kinh độ WGS84. Mở chi tiết để xem E/N UTM 48N |
 | Thông tin vị trí 2D/3D | Công cụ riêng đọc WGS84 hoặc hệ tọa độ của mô hình, độ cao và sao chép. 2D lấy độ cao từ DEM, ngoài DEM không có giá trị. 3D lấy điểm trên địa hình, không dùng độ cao đã phóng đại |
 | Phạm vi | Múi UTM 48N, 102° đến 108° Đông. Phép đo ngang, không cộng chiều dài theo sườn dốc |
-| Vẽ và chỉnh | Rê chuột xem trước, bấm thêm điểm, kéo đỉnh để sửa. Bắt điểm vào hình học của lớp đang hiện trong ngưỡng 10 px, không tự chạy theo đường |
+| Vẽ và chỉnh | Rê chuột xem trước, bấm thêm điểm. Sau khi kết thúc, chọn Chỉnh sửa để kéo đỉnh, Áp dụng để lưu, Hủy/Escape để khôi phục. Bắt điểm vào lớp đang hiện trong ngưỡng 10 px |
 | Hình học có sẵn | Đo trực tiếp đoạn đường, tuyến đang chọn hoặc AOI để giữ đúng đường gấp khúc/ranh giới |
-| Kết thúc | Nút Kết thúc, Enter/F2, nhấp đúp hoặc chuột phải. Vùng có thể đóng bằng điểm đầu. Hoàn tác/làm lại hỗ trợ Ctrl+Z/Ctrl+Y |
-| Giữ kết quả | Đo mới hoặc đổi kiểu giữ phép đo đã hoàn tất. Có thể ẩn/xóa từng hình và sao chép kết quả. Đóng công cụ giữ hình đã hoàn tất, bỏ hình đang vẽ |
+| Kết thúc | Nút Kết thúc, Enter/F2 hoặc nhấp đúp điểm cuối. Vùng có thể đóng bằng điểm đầu. Ctrl+Z/Ctrl+Y hoạt động khi vẽ hoặc chỉnh. Chuột phải không kết thúc phép đo |
+| Giữ kết quả | Đo mới hoặc đổi kiểu giữ phép đo đã hoàn tất. Có thể ẩn/xóa từng hình và sao chép kết quả. Đóng công cụ tạm dừng bản vẽ; mở lại để tiếp tục. Hủy/Escape bỏ bản vẽ chưa hoàn tất |
 | Vòng đời | Hình đo tồn tại trong phiên, hiện trên 2D và giữ khi đổi qua 3D. Tải lại trang hoặc Đặt lại phiên xóa hình đo. Chưa lưu thành lớp nghiệp vụ |
 | Diện tích màn hình | Thu gọn công cụ vẫn đo được. Mobile dùng khung đáy cao tối đa 48% vùng bản đồ. Thông số, từng đoạn và kết quả đã giữ mặc định đóng |
 | Nhãn đo | Chỉ giá trị và đơn vị, diện tích ở tâm hình. Ưu tiên phép đo hiện tại, tránh công cụ và đối tượng nghiệp vụ. Không đủ chỗ thì ẩn nhãn, kết quả vẫn có trong panel |

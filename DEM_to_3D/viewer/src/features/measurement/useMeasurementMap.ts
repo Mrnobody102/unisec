@@ -15,6 +15,13 @@ export function useMeasurementMap(props: Props) {
   const [outside, setOutside] = useState(false);
   const ink = useRef<L.LayerGroup | null>(null), preview = useRef<L.LayerGroup | null>(null);
   const resultLabels = useRef<L.Tooltip[]>([]);
+  const drawing = props.enabled && !props.session.finished;
+  useEffect(() => {
+    const node = props.mapRef.current?.getContainer();
+    if (!node) return;
+    node.dataset.measureDrawing = String(drawing);
+    return () => { delete node.dataset.measureDrawing; };
+  }, [drawing, props.mapRef]);
   useEffect(() => {
     const map = props.mapRef.current;
     if (!map) return;
@@ -37,7 +44,8 @@ export function useMeasurementMap(props: Props) {
   useEffect(() => {
     const map = props.mapRef.current;
     if (!map || !props.enabled) { setHover(null); return; }
-    const zoom = map.doubleClickZoom.enabled(); map.doubleClickZoom.disable();
+    map.getContainer().focus({ preventScroll: true });
+    const zoom = map.doubleClickZoom.enabled(); if (drawing) map.doubleClickZoom.disable();
     let frame = 0, nextHover: { point: MeasurePoint; name?: string } | null = null;
     const pick = (position: L.LatLng) => {
       const point = measurementPoint(position.lat, position.lng);
@@ -50,6 +58,7 @@ export function useMeasurementMap(props: Props) {
       if (!['distance', 'area'].includes(session.mode) && session.points.length >= minimumPoints(session.mode)) return;
       const hit = pick(event.latlng); setOutside(!hit);
       if (!hit) return;
+      map.getContainer().focus({ preventScroll: true });
       const last = session.points.at(-1);
       if (last && Math.hypot(last.x - hit.point.x, last.y - hit.point.y) < 0.1) return;
       dispatch({ type: 'points', points: [...session.points, hit.point], automatic: !['distance', 'area'].includes(session.mode) });
@@ -60,14 +69,13 @@ export function useMeasurementMap(props: Props) {
     };
     const leave = () => { nextHover = null; cancelAnimationFrame(frame); frame = 0; setHover(null); };
     const finish = () => { live.current.dispatch({ type: 'finish' }); leave(); };
-    const context = (event: L.LeafletMouseEvent) => { event.originalEvent.preventDefault(); finish(); };
     const keyboard = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (event.defaultPrevented || target?.closest('input,textarea,select,[data-popover],.settings-anchor,.map-help,.map-source-popover,.modal-overlay')) return;
       if (target !== document.body && !target?.closest('.map-area')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
-        if (live.current.session.points.length && !live.current.session.finished) live.current.dispatch({ type: 'cancel' }); else live.current.onClose();
+        if (live.current.session.editing || live.current.session.points.length && !live.current.session.finished) live.current.dispatch({ type: 'cancel' }); else live.current.onClose();
         leave();
       }
       if (event.key === 'F2' || (event.key === 'Enter' && !target?.closest('button,summary,a'))) { event.preventDefault(); finish(); }
@@ -75,13 +83,14 @@ export function useMeasurementMap(props: Props) {
         event.preventDefault(); live.current.dispatch({ type: event.key.toLowerCase() === 'y' || event.shiftKey ? 'redo' : 'undo' }); leave();
       }
     };
-    map.on('click', click); map.on('mousemove', move); map.on('mouseout', leave); map.on('dblclick', finish); map.on('contextmenu', context);
+    map.on('click', click); map.on('mousemove', move); map.on('mouseout', leave); if (drawing) map.on('dblclick', finish);
     document.addEventListener('keydown', keyboard);
     return () => {
-      cancelAnimationFrame(frame); map.off('click', click); map.off('mousemove', move); map.off('mouseout', leave); map.off('dblclick', finish); map.off('contextmenu', context);
+      cancelAnimationFrame(frame); map.off('click', click); map.off('mousemove', move); map.off('mouseout', leave); map.off('dblclick', finish);
       document.removeEventListener('keydown', keyboard); if (zoom) map.doubleClickZoom.enable();
     };
-  }, [props.enabled, props.mapRef]);
+  }, [props.enabled, props.mapRef, drawing]);
+  useEffect(() => { setHover(null); setOutside(false); }, [props.enabled, props.session.mode, props.session.finished, props.session.editing]);
   useEffect(() => {
     const layer = ink.current;
     if (!layer) return;
@@ -92,17 +101,25 @@ export function useMeasurementMap(props: Props) {
       const positions = points.map(point => L.latLng(point.lat, point.lng));
       const style = { pane: 'measurementPane', color: editable ? '#0c7560' : '#667f8a', weight: 2, interactive: false, dashArray: finished ? undefined : '5 4' };
       let path: L.Polyline | L.Polygon | undefined;
+      let circle: L.Polygon | undefined;
       if (mode === 'radius' && points.length === 2) {
         const ring = radiusRing(points).map(point => L.latLng(point.lat, point.lng));
-        if (ring.length) L.polygon(ring, { ...style, fillOpacity: 0.06 }).addTo(layer);
+        if (ring.length) circle = L.polygon(ring, { ...style, fillOpacity: 0.06 }).addTo(layer);
       }
       if (mode === 'area' && points.length >= 3) path = L.polygon(positions, { ...style, fillOpacity: 0.08 }).addTo(layer);
       else if (points.length >= 2) path = L.polyline(positions, style).addTo(layer);
       points.forEach((point, index) => {
         if (!editable || !enabled) { L.circleMarker([point.lat, point.lng], { ...style, radius: 3, color: '#fff', fillColor: style.color, fillOpacity: 1 }).addTo(layer); return; }
-        const icon = L.divIcon({ className: `map-measure-vertex${mode === 'angle' ? ' has-number' : ''}`, html: `<span>${mode === 'angle' ? index + 1 : ''}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] });
-        const marker = L.marker([point.lat, point.lng], { icon, draggable: true, bubblingMouseEvents: false, title: locale === 'vi' ? `Kéo điểm ${index + 1}` : `Drag point ${index + 1}` }).addTo(layer);
-        marker.on('drag', () => { const moved = positions.slice(); moved[index] = marker.getLatLng(); path?.setLatLngs(moved); });
+        const canEdit = !finished || session.editing;
+        const icon = L.divIcon({ className: `map-measure-vertex${canEdit ? ' is-editable' : ''}${mode === 'angle' ? ' has-number' : ''}`, html: `<span>${mode === 'angle' ? index + 1 : ''}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+        const marker = L.marker([point.lat, point.lng], { icon, draggable: canEdit, interactive: canEdit, keyboard: canEdit, bubblingMouseEvents: false, title: canEdit ? (locale === 'vi' ? `Kéo điểm ${index + 1}` : `Drag point ${index + 1}`) : undefined }).addTo(layer);
+        marker.on('drag', () => {
+          const moved = positions.slice(); moved[index] = marker.getLatLng(); path?.setLatLngs(moved);
+          if (circle) {
+            const draft = moved.map(p => measurementPoint(p.lat, p.lng));
+            if (draft.every(p => p !== null)) circle.setLatLngs(radiusRing(draft).map(p => L.latLng(p.lat, p.lng)));
+          }
+        });
         marker.on('dragend', () => {
           const position = marker.getLatLng(), updated = measurementPoint(position.lat, position.lng);
           if (!updated) { marker.setLatLng(positions[index]); path?.setLatLngs(positions); setOutside(true); return; }
@@ -110,9 +127,10 @@ export function useMeasurementMap(props: Props) {
           live.current.dispatch({ type: 'points', points: live.current.session.points.map((old, i) => i === index ? hit : old) });
           setOutside(false);
         });
-        marker.on('click', () => { if (index === 0 && mode === 'area' && canFinish(mode, points)) live.current.dispatch({ type: 'finish' }); });
+        marker.on('click', () => { if (!finished && index === 0 && mode === 'area' && canFinish(mode, points)) live.current.dispatch({ type: 'finish' }); });
+        marker.on('dblclick', () => { if (!finished && index === points.length - 1) live.current.dispatch({ type: 'finish' }); });
       });
-      if (labels && finished && positions.length) {
+      if (labels && finished && canFinish(mode, points) && positions.length) {
         const label = document.createElement('span');
         const result = measurementResults(mode, points, units, locale)[0];
         label.textContent = (title ? title + '  ' : '') + (mode === 'location' ? `${points[0].lat.toFixed(5)}°, ${points[0].lng.toFixed(5)}°` : result?.[1]);

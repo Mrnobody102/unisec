@@ -6,6 +6,12 @@ export function constrainPanel(position: Position, width: number, height: number
     y: Math.max(64, Math.min(position.y, Math.max(64, height - panelHeight - 32))) };
 }
 
+/** Preserve the heading position as content grows; use the space below it for scrolling. */
+export function anchoredPanel(position: Position, width: number, height: number, panelWidth: number) {
+  const anchor = constrainPanel(position, width, height, panelWidth, 240);
+  return { ...anchor, maxHeight: Math.max(0, height - anchor.y - 32) };
+}
+
 /** Move a tool window, preserving geographic features and keeping navigation accessible. */
 export function useFloatingPanel(root: RefObject<HTMLElement>, key: string, enabled = true) {
   const position = useRef<Position | null>(null);
@@ -15,10 +21,12 @@ export function useFloatingPanel(root: RefObject<HTMLElement>, key: string, enab
     if (!node || !area) return;
     if (window.innerWidth <= 900 || !position.current) {
       node.style.removeProperty('left'); node.style.removeProperty('top');
+      node.style.removeProperty('--floating-panel-height');
     } else {
       const bounds = area.getBoundingClientRect(), rect = node.getBoundingClientRect();
-      position.current = constrainPanel(position.current, bounds.width, bounds.height, rect.width, rect.height);
-      node.style.left = `${position.current.x}px`; node.style.top = `${position.current.y}px`;
+      const anchor = anchoredPanel(position.current, bounds.width, bounds.height, rect.width);
+      node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`;
+      node.style.setProperty('--floating-panel-height', `${anchor.maxHeight}px`);
     }
     area.dispatchEvent(new Event('dear:map-layout'));
   };
@@ -52,7 +60,8 @@ export function useFloatingPanel(root: RefObject<HTMLElement>, key: string, enab
     },
     onPointerMove: (event: PointerEvent<HTMLElement>) => {
       if (!drag.current || drag.current.pointerId !== event.pointerId) return;
-      position.current = { x: drag.current.origin.x + event.clientX - drag.current.client.x, y: drag.current.origin.y + event.clientY - drag.current.client.y };
+      const node = root.current!, bounds = node.closest('.map-area')!.getBoundingClientRect();
+      position.current = constrainPanel({ x: drag.current.origin.x + event.clientX - drag.current.client.x, y: drag.current.origin.y + event.clientY - drag.current.client.y }, bounds.width, bounds.height, node.offsetWidth, 240);
       apply();
     },
     onPointerUp: (event: PointerEvent<HTMLElement>) => {

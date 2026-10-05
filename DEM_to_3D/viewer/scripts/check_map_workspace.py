@@ -63,6 +63,13 @@ def run(url, chrome, captures):
         assert abs(measure.bounding_box()['x'] - original['x']) < 1, (original, measure.bounding_box(), handle.evaluate('(node) => document.activeElement.outerHTML'))
         drag(handle, 1000, 1000)
         assert_inside(measure)
+        anchored = measure.bounding_box()
+        measure.get_by_role('button', name='Measurement settings', exact=True).click()
+        assert measure.bounding_box() == anchored, (anchored, measure.bounding_box())
+        measure.get_by_text('Retained results', exact=False).click()
+        assert measure.bounding_box() == anchored
+        measure.get_by_role('button', name='Measurement', exact=True).click()
+        assert measure.bounding_box() == anchored
         page.set_viewport_size({'width': 1024, 'height': 768})
         assert_inside(measure)
         page.set_viewport_size({'width': 1366, 'height': 768})
@@ -80,6 +87,11 @@ def run(url, chrome, captures):
         assert layers.bounding_box()['x'] > original['x'] + 150
         assert_inside(layers)
         layers.get_by_text('Display options', exact=True).click()
+        assert layers.bounding_box()['y'] == original['y'] + 70
+        assert layers.locator('summary').evaluate("node => getComputedStyle(node).listStyleType") == 'none'
+        for row in layers.locator('.layer-source-row:has(label)').all():
+            label, info = row.locator('label').bounding_box(), row.locator('.layer-info-button').bounding_box()
+            assert abs(label['y'] + label['height'] / 2 - info['y'] - info['height'] / 2) < 1, (label, info)
         # Geographic marker anchors do not move when their labels are hidden.
         positions = page.locator('[data-map-object]').evaluate_all('(nodes) => Object.fromEntries(nodes.map(n => [n.dataset.mapObject, n.style.transform]))')
         layers.get_by_role('combobox', name='Place labels', exact=True).select_option('none')
