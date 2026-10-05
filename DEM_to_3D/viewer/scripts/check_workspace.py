@@ -172,7 +172,7 @@ def run(url, chrome, captures, prepared=False):
         page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
         panel = page.locator('.map-measure-panel')
         expect(panel).to_be_visible()
-        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_disabled()
+        expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_enabled()
         area = page.locator('.map-2d-surface').bounding_box()
         def pick(x, y):
             page.mouse.click(area['x'] + area['width'] * x, area['y'] + area['height'] * y)

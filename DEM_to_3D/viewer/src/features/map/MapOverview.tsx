@@ -32,7 +32,7 @@ export function MapOverview({ mapRef, raster, enabled, locale, area }: Props): J
     if (area.length) L.polygon(area, { fill: false, color: '#e7f0f8', weight: 1, dashArray: '3 3', interactive: false }).addTo(overview);
     const extent = L.rectangle(main.getBounds(), {
       className: 'overview-extent', color: '#ffffff', weight: 1.5,
-      fillColor: '#225c96', fillOpacity: .16, interactive: false
+      fillColor: '#197663', fillOpacity: .16, interactive: false
     }).addTo(overview);
     const context = L.latLngBounds(raster.bounds).extend(area);
     const fit = () => {
@@ -78,6 +78,6 @@ export function MapOverview({ mapRef, raster, enabled, locale, area }: Props): J
     {expanded && <div ref={host} id="overview-map-surface" className="map-overview-surface" tabIndex={0} role="group"
       aria-label={t('Định hướng bản đồ chính', 'Navigate the main map')}
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
-      title={t('Chọn vị trí hoặc dùng phím mũi tên để di chuyển bản đồ chính.', 'Choose a position or use arrow keys to move the main map.')}/>}
+      title={t('Chọn vị trí trên bản đồ', 'Choose a map location')}/>}
   </section>;
 }

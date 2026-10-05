@@ -91,7 +91,7 @@ def run(url, chrome, captures):
         anchored = measure.bounding_box()
         measure.get_by_role('button', name='Measurement settings', exact=True).click()
         assert measure.bounding_box() == anchored, (anchored, measure.bounding_box())
-        measure.get_by_text('Retained results', exact=False).click()
+        measure.locator('[aria-controls="measurement-saved-view"]').click()
         assert measure.bounding_box() == anchored
         measure.get_by_role('button', name='Measurement', exact=True).click()
         assert measure.bounding_box() == anchored

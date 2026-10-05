@@ -9,7 +9,7 @@ Hiện hành, cập nhật 2026-10-05. Web React là bản triển khai chuẩn.
 | Bố cục | Panel và bản đồ liền nhau, không bo góc hoặc chừa viền ngoài. Panel mặc định 384 px, kéo để đổi trong khoảng 320 đến 560 px và giới hạn theo cửa sổ. Mobile có hai chế độ Thông tin và Bản đồ |
 | Chữ | Inter mặc định. Cài đặt có IBM Plex Sans và Space Grotesk/Be Vietnam Pro. Nội dung 13–14 px, tiêu đề panel 23 px. Dùng font mono cho tọa độ hoặc mã cần đối chiếu |
 | Khoảng cách | Thang 4, 8, 12, 16, 20, 24, 32 px. Căn theo khối nội dung, không chèn khoảng trắng để căn nút |
-| Màu | Mặc định sáng, header navy. Bề mặt trắng/xám, màu tương tác xanh dương. Màu chọn giao diện tách khỏi màu tình trạng đường. Công cụ bản đồ dùng nền đặc, viền mảnh, bóng nhẹ |
+| Màu | Mặc định sáng, header xanh đậm. Bề mặt trắng/xám, màu tương tác xanh lá. Màu giao diện tách khỏi màu tình trạng đường. Công cụ bản đồ dùng nền đặc, viền mảnh, bóng nhẹ |
 | Icon và nút | [Lucide](https://lucide.dev/guide/react), qua `shared/ui/UiIcon`: lưới 24 px, hiển thị 18 px, nét 1,75 px. Nút bản đồ 40 × 40 px. Nút đóng 28–36 px theo bề mặt. Có tên truy cập và focus rõ |
 
 Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/styles/tokens.css). Bố cục nằm trong [workspace.css](../../DEM_to_3D/viewer/src/styles/workspace.css).
@@ -30,7 +30,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |
 | Thanh bản đồ | Nút panel, tìm kiếm, lớp và đo cùng thanh trên trái. Điều hướng và thông tin vị trí ở nhóm trên phải |
-| Đo bản đồ | Ba trạng thái: vẽ, xem kết quả, chỉnh sửa. Kết thúc bằng nút, Enter hoặc nhấp đúp điểm cuối. Chọn Chỉnh sửa trước khi kéo điểm. Phép đo và kết quả đã giữ dùng hai mục riêng; tùy chọn thay nội dung bên trong bảng |
+| Đo bản đồ | Ba trạng thái: vẽ, xem kết quả, chỉnh sửa. Kết thúc bằng nút, Enter hoặc nhấp đúp điểm cuối. Chọn Chỉnh sửa trước khi kéo điểm. Phép đo hiện tại và kết quả trước đó ở hai mục riêng. Đóng khi đang chỉnh trả về kết quả trước chỉnh |
 | Mở nội dung phụ | Chevron nét mảnh ở cuối hàng, toàn bộ hàng bấm được. Trạng thái mở có `aria-expanded`. Không lồng nhiều cấp hoặc giấu hành động chính |
 | Không gian bản đồ | Panel trái chỉnh độ rộng hoặc thu gọn, giữ lựa chọn. Chú giải có thể thu về một nút. Mở lớp/đo/tọa độ tạm ẩn chú giải |
 | Bản đồ tổng quan | Công cụ phụ trên 2D desktop, thu gọn mặc định. Hiển thị khung nhìn thật, click hoặc dùng bàn phím để di chuyển. Tạm ẩn khi đo, xem tọa độ, lớp hoặc mặt cắt |

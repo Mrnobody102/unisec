@@ -101,6 +101,11 @@ export function Map2D(props: Props): JSX.Element {
       north.title = locale === 'vi' ? 'Bắc địa lý' : 'True north'; north.setAttribute('aria-label', north.title);
       setTiles(layers.imagery !== false, layers.context !== false);
       if (terrain && !hasFit && scenario) { fit(); hasFit = true; }
+      if (!terrain && localData) {
+        rasterAbort?.abort(); raster?.remove(); raster = null;
+        localData = null; rasterKey = ''; hasFit = false; lastSelection = '';
+        setOverviewRaster(null);
+      }
       const nextRasterKey = `${terrain?.metadata.asset_id}:${layers.imagery}:${layers.hillshade}:${propsRef.current.imageUrl}`;
       if (terrain && (terrain !== localData || nextRasterKey !== rasterKey)) {
         localData = terrain; rasterKey = nextRasterKey; rasterAbort?.abort(); rasterAbort = new AbortController();

@@ -21,7 +21,9 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Mục mở rộng và hàng lớp bị lệch | Chevron nét mảnh ở cuối hàng. Căn giữa checkbox, tên lớp và nút nguồn |
 | Không chọn được kiểu đo khi chỉnh sửa | Bỏ khóa bộ chọn. Đổi kiểu giữ kết quả hợp lệ trước khi bắt đầu phép đo mới. Kiểm tra bằng click thật và bàn phím |
 | Hàng địa bàn sát nền hover/chọn | Khoảng đệm 12/16 px, giữ nguyên vị trí chữ khi chọn. Tên và trạng thái xuống hàng khi thiếu chiều rộng |
-| Bề mặt và điều khiển chưa đồng bộ | Nền đặc, viền mảnh, giảm bóng/bo góc. Màu navy/xanh dương cho giao diện, giữ màu tình trạng bản đồ |
+| Bề mặt và điều khiển chưa đồng bộ | Nền đặc, viền mảnh, giảm bóng/bo góc. Giữ màu tương tác xanh lá, tách khỏi màu tình trạng bản đồ |
+| Đổi công cụ khi đang sửa hình đo | Đóng công cụ trả về hình đã áp dụng. Bản vẽ chưa kết thúc vẫn còn khi mở lại. Nút 3D dùng được và tự đóng đo trên 2D |
+| Gỡ mô hình để bản đồ trống hoặc còn ảnh cũ | Khôi phục địa hình Chế Tạo; dọn raster và điểm của mô hình vừa gỡ. Danh sách tệp chỉ ghi mô hình do người dùng nạp |
 | Thiếu định hướng khi xem gần | Tổng quan 2D thu gọn được, đồng bộ khung nhìn, click và bàn phím. Không tải thêm tile |
 | Ảnh nền tối và bậc màu khi đổi hệ tọa độ | Giảm bóng trên ảnh, lấy mẫu màu song tuyến tính, giữ nodata. Texture 3D dùng anisotropic filtering theo GPU |
 
@@ -83,7 +85,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Kiểm tra | Kết quả |
 |---|---|
 | TypeScript và build | Đạt. JavaScript đầu vào khoảng 803 KB, 252 KB gzip. Chunk app khoảng 377 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 154 kiểm thử đạt, gồm lấy mẫu màu/giữ nodata, đổi kiểu đo khi chỉnh sửa, giữ kết quả hợp lệ, đo/chỉnh/hủy, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
+| TypeScript unit tests | 156 kiểm thử đạt, gồm đóng bản chỉnh sửa, lấy mẫu màu/giữ nodata, đổi kiểu đo, đo/chỉnh/hủy, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
 | Python | 8 kiểm thử dữ liệu, 3 API và 2 đóng gói đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |

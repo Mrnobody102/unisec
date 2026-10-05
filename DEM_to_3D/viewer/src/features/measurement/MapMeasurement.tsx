@@ -61,7 +61,7 @@ export function MapMeasurement({ mapRef, enabled, locale, session, dispatch, sou
       </select></label>
       <div className="measure-tabs" aria-label={t('Nội dung công cụ đo', 'Measurement views')}>
         <button aria-pressed={view === 'measure'} aria-controls="measurement-result-view" onClick={() => setView('measure')}>{t('Phép đo', 'Measurement')}</button>
-        <button aria-pressed={view === 'saved'} aria-controls="measurement-saved-view" onClick={() => setView('saved')}>{t('Kết quả đã giữ', 'Retained results')} <span>{session.saved.length}</span></button>
+        <button aria-pressed={view === 'saved'} aria-controls="measurement-saved-view" onClick={() => setView('saved')}>{t('Kết quả', 'Results')} <span>{session.saved.length}</span></button>
       </div>
       <div className="measure-body" id="measurement-result-view" hidden={view !== 'measure'}>
         <dl className="map-measure-result" aria-label={t('Kết quả đo', 'Measurement result')}>

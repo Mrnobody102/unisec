@@ -126,14 +126,10 @@ export type CommunityFilter = 'all' | 'priority' | 'monitor';
 export type ActiveDialog =
   | null
   | 'timeline'
-  | 'freshness'
   | 'data'
   | 'layers'
   | 'alerts'
   | 'notificationCenter'
   | 'comparison'
-  | 'sources'
   | 'evidence'
-  | 'segmentAnalysis'
-  | 'exportDecision'
-  | 'uploadModel';
+  | 'exportDecision';

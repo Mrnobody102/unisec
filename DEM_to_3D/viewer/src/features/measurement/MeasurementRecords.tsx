@@ -21,7 +21,7 @@ export function MeasurementDetails({ session, units, locale }: Props) {
 export function MeasurementRecords({ session, dispatch, units, locale }: Props & { dispatch: Dispatch<MeasureAction> }) {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   return <div className="measure-history">
-    {!session.saved.length && <p className="measure-empty">{t('Chưa có phép đo được giữ.', 'No retained measurements.')}</p>}
+    {!session.saved.length && <p className="measure-empty">{t('Chưa có kết quả.', 'No results.')}</p>}
     {session.saved.map(item => <div className="measure-history-row" key={item.id}><label><input type="checkbox" checked={item.visible} onChange={() => dispatch({ type: 'visible', id: item.id })}/><span><strong>{t(...modeNames[item.mode])} {item.id}</strong><small>{measurementResults(item.mode, item.points, units, locale)[0]?.[1]}</small></span></label><button className="icon-button" aria-label={t('Xóa phép đo ', 'Delete measurement ') + item.id} onClick={() => dispatch({ type: 'delete', id: item.id })}><UiIcon name="trash" size={16}/></button></div>)}
     {session.saved.length > 0 && <button className="text-button measure-feature" disabled={session.editing} onClick={() => dispatch({ type: 'reset' })}>{t('Xóa toàn bộ phép đo', 'Clear all measurements')}</button>}
   </div>;
