@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unisec-demo.local/terrain.schema.v1.json",
+  "title": "Terrain 3D asset contract v1",
+  "type": "object",
+  "required": ["schema_version", "asset_id", "crs", "scene_axes", "world_origin", "grid", "grid_transform", "elevation", "analysis_supported"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "asset_id": {"type": "string", "minLength": 1},
+    "scene_axes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {"x": {"const": "east"}, "y": {"const": "up"}, "z": {"const": "negative_north"}}
+    },
+    "world_origin": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y"],
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+    },
+    "crs": {
+      "type": "object", "required": ["authority", "code", "linear_unit"],
+      "properties": {
+        "authority": {"type": "string"}, "code": {"type": "integer", "minimum": 0},
+        "proj4": {"type": "string"}, "wkt": {"type": "string"}, "linear_unit": {"type": "string"}
+      },
+      "anyOf": [{"required": ["proj4"]}, {"required": ["wkt"]}]
+    },
+    "grid": {
+      "type": "object", "required": ["file", "shape", "shape_order", "dtype", "byte_order", "layout", "nodata_encoding", "elevation_unit", "sampling_method", "source_step", "byte_length"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\]+$"}, "shape": {"type": "array", "prefixItems": [{"type": "integer", "minimum": 1}, {"type": "integer", "minimum": 1}], "minItems": 2, "maxItems": 2},
+        "shape_order": {"const": "rows_cols"}, "dtype": {"const": "float32"}, "byte_order": {"const": "little_endian"}, "layout": {"const": "row_major"}, "nodata_encoding": {"const": "nan"}, "elevation_unit": {"const": "metre"}, "sampling_method": {"const": "nearest_subsample"}, "source_step": {"type": "integer", "minimum": 1}, "byte_length": {"type": "integer", "minimum": 0}
+      }
+    },
+    "grid_transform": {
+      "type": "object", "required": ["a", "b", "c", "d", "e", "f", "convention", "pixel_reference"],
+      "properties": {"a": {"type": "number"}, "b": {"type": "number"}, "c": {"type": "number"}, "d": {"type": "number"}, "e": {"type": "number"}, "f": {"type": "number"}, "convention": {"const": "rasterio_affine"}, "pixel_reference": {"const": "center"}}
+    },
+    "elevation": {
+      "type": "object", "required": ["base_elevation", "exaggeration", "normalize_base", "min", "max"],
+      "properties": {"base_elevation": {"type": "number"}, "exaggeration": {"type": "number", "exclusiveMinimum": 0}, "normalize_base": {"type": "boolean"}, "min": {"type": "number"}, "max": {"type": "number"}}
+    },
+    "analysis_supported": {"type": "boolean"},
+    "mesh": {
+      "type": "object", "required": ["file", "vertex_count", "triangle_count"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\]+$"},
+        "vertex_count": {"type": "integer", "minimum": 0},
+        "triangle_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "hole_mode": {"enum": ["mask", "fill"]}
+  }
+}

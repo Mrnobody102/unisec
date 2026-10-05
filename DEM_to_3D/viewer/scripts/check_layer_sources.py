@@ -1,0 +1,82 @@
+"""Check layer provenance, revision timestamps, keyboard controls and narrow layouts."""
+import argparse
+from pathlib import Path
+from playwright.sync_api import expect, sync_playwright
+
+
+def run(url, chrome, captures):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
+        context = browser.new_context(viewport={'width': 1366, 'height': 768})
+        context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
+        page = context.new_page(); errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(url)
+        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        page.locator('.incident-priority-row').first.click()
+        page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
+        source = page.get_by_role('button', name='Nguồn lớp Bản đồ nền', exact=True)
+        source.focus(); source.press('Enter')
+        expect(source).to_have_attribute('aria-expanded', 'true')
+        expect(page.locator('.layer-details')).to_contain_text('Chưa ghi trong metadata')
+        expect(page.locator('.layer-details')).not_to_contain_text('09:31')
+        page.get_by_role('button', name='Nguồn lớp Nền bản đồ khu vực', exact=True).click()
+        expect(page.locator('.layer-details')).to_contain_text('Sentinel-2 cloudless')
+        expect(page.locator('.layer-details')).to_contain_text('2016')
+        page.get_by_role('radio', name='Địa hình', exact=True).check()
+        expect(page.locator('.layer-details')).to_contain_text('Terrain Light')
+        expect(page.locator('.layer-details')).to_contain_text('OpenStreetMap')
+        expect(page.locator('.layer-details')).not_to_contain_text('2016')
+        expect(page.locator('.layer-details')).not_to_contain_text('CC BY 4.0')
+        page.get_by_role('radio', name='Ảnh nền', exact=True).check()
+        page.get_by_role('button', name='Nguồn lớp Tình trạng đường', exact=True).click()
+        expect(page.locator('.layer-details')).to_have_count(1)
+        expect(page.locator('.layer-details')).to_contain_text('09:31')
+        expect(page.locator('.layer-details')).to_contain_text('08:58')
+        expect(page.locator('.layer-details')).not_to_contain_text('09:40')
+        page.get_by_role('button', name='Nguồn lớp Điểm hạ cánh trực thăng', exact=True).click()
+        expect(page.locator('.layer-details')).to_contain_text('chưa khảo sát')
+        page.get_by_role('button', name='Nguồn lớp Tuyến đang xem', exact=True).click()
+        expect(page.locator('.layer-details')).to_contain_text('Đường vòng')
+        page.keyboard.press('Escape')
+        expect(page.get_by_role('button', name='Lớp bản đồ', exact=True)).to_be_focused()
+        page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
+        page.get_by_role('button', name='Xem chi tiết', exact=True).click()
+        page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
+        page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
+        page.get_by_role('button', name='Nguồn lớp Tình trạng đường', exact=True).click()
+        expect(page.locator('.layer-details')).to_contain_text('09:45')
+        expect(page.locator('.layer-details')).to_contain_text('09:40')
+        if captures:
+            expect(page.locator('.toast')).to_have_count(0, timeout=6000)
+            page.screenshot(path=str(captures / 'workspace-layer-sources.png'))
+        page.keyboard.press('Escape')
+        page.locator('.header-revision').click()
+        page.get_by_role('radio', name='Đánh giá ban đầu').click()
+        page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
+        page.get_by_role('button', name='Nguồn lớp Tình trạng đường', exact=True).click()
+        expect(page.locator('.layer-details')).to_contain_text('09:31')
+        expect(page.locator('.layer-details')).not_to_contain_text('09:40')
+        page.keyboard.press('Escape')
+        page.get_by_role('button', name='Về dữ liệu mới nhất', exact=True).click()
+        for width in [1024, 390, 320]:
+            page.keyboard.press('Escape'); page.set_viewport_size({'width': width, 'height': 740})
+            if width < 900: page.get_by_role('button', name='Bản đồ', exact=True).click()
+            page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
+            page.get_by_role('button', name='Nguồn lớp Mạng đường', exact=True).click()
+            expect(page.locator('.layer-details')).to_contain_text('chưa đầy đủ')
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            assert page.locator('.layers-content').evaluate('(e) => e.scrollWidth <= e.clientWidth + 1')
+        assert not errors, errors
+        browser.close()
+    print('Layer sources passed: provenance, unknown acquisition date, active revision, HLZ limitation, keyboard and responsive layout.')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--url', default='http://127.0.0.1:5213')
+    parser.add_argument('--chrome')
+    parser.add_argument('--captures', type=Path)
+    args = parser.parse_args()
+    if args.captures: args.captures.mkdir(parents=True, exist_ok=True)
+    run(args.url.rstrip('/'), args.chrome, args.captures)

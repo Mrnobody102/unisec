@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "asset_id": "lao_chai_v2_tex",
+  "crs": {
+    "authority": "EPSG",
+    "code": 32648,
+    "proj4": "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs=True",
+    "wkt": "PROJCS[\"WGS 84 / UTM zone 48N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",105],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32648\"]]",
+    "linear_unit": "metre"
+  },
+  "scene_axes": {
+    "x": "east",
+    "y": "up",
+    "z": "negative_north"
+  },
+  "world_origin": {
+    "x": 396534.0389277693,
+    "y": 2412905.5046692095
+  },
+  "grid": {
+    "file": "lao_chai_v2_tex.grid.bin",
+    "shape": [
+      505,
+      659
+    ],
+    "shape_order": "rows_cols",
+    "dtype": "float32",
+    "byte_order": "little_endian",
+    "layout": "row_major",
+    "nodata_encoding": "nan",
+    "elevation_unit": "metre",
+    "sampling_method": "nearest_subsample",
+    "source_step": 1,
+    "byte_length": 1331180
+  },
+  "grid_transform": {
+    "a": 28.801616592485974,
+    "b": 0.0,
+    "c": 387043.90626054513,
+    "d": 0.0,
+    "e": -28.801616592485974,
+    "f": 2420177.912858812,
+    "convention": "rasterio_affine",
+    "pixel_reference": "center"
+  },
+  "elevation": {
+    "base_elevation": 586.6198120117188,
+    "exaggeration": 1.5,
+    "normalize_base": true,
+    "min": 586.6198120117188,
+    "max": 2380.142333984375
+  },
+  "analysis_supported": true,
+  "hole_mode": "mask",
+  "mesh": {
+    "file": "lao_chai_v2_tex.glb",
+    "vertex_count": 192645,
+    "triangle_count": 382444
+  },
+  "texture": {
+    "source": "sentinel2_VN15_2024-11-27_2025-07-26_raw_rgb321_geo.tif",
+    "file": "lao_chai_v2_tex.texture.tif",
+    "cropped_to_grid": true,
+    "note": "Ảnh gốc đã cắt về bbox lưới DEM (pixel-center + nửa pixel đệm) trước khi resample."
+  }
+}

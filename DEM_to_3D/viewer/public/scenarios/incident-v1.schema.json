@@ -1,0 +1,576 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DEAR prepared incident v1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "datasetVersion": {
+      "$ref": "#/definitions/text"
+    },
+    "dataKind": {
+      "type": "string",
+      "enum": [
+        "synthetic",
+        "historical",
+        "operational"
+      ]
+    },
+    "reviewStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "reviewed",
+        "published"
+      ]
+    },
+    "crs": {
+      "type": "string",
+      "const": "EPSG:32648"
+    },
+    "incident": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "api"
+          ]
+        },
+        "schemaVersion": {
+          "$ref": "#/definitions/text"
+        },
+        "triggeredAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "asOf": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "asOfUpdated": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/text"
+            },
+            "minItems": 5,
+            "maxItems": 5
+          },
+          "minItems": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/source"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "schemaVersion",
+        "triggeredAt",
+        "asOf",
+        "asOfUpdated",
+        "timeline",
+        "sources"
+      ],
+      "additionalProperties": false
+    },
+    "communities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/community"
+      },
+      "minItems": 1
+    },
+    "roads": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/road"
+      },
+      "minItems": 0
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/hazard"
+      },
+      "minItems": 0
+    },
+    "responseSites": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/responseSite"
+      },
+      "minItems": 1
+    },
+    "signals": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/communitySignal"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/evidence"
+      },
+      "minItems": 0
+    },
+    "report": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "roadId": {
+          "$ref": "#/definitions/identifier"
+        },
+        "hazard": {
+          "$ref": "#/definitions/hazard"
+        },
+        "evidence": {
+          "$ref": "#/definitions/evidence"
+        }
+      },
+      "required": [
+        "id",
+        "roadId",
+        "hazard",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "aoi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "points",
+        "observedAt",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/text"
+        },
+        "name": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "points": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "$ref": "#/definitions/projectedPoint"
+          }
+        },
+        "observedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "source": {
+          "$ref": "#/definitions/localizedText"
+        }
+      }
+    },
+    "routingAssumptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary",
+        "secondary",
+        "track"
+      ],
+      "properties": {
+        "primary": {
+          "$ref": "#/definitions/speedRange"
+        },
+        "secondary": {
+          "$ref": "#/definitions/speedRange"
+        },
+        "track": {
+          "$ref": "#/definitions/speedRange"
+        }
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "datasetVersion",
+    "dataKind",
+    "reviewStatus",
+    "crs",
+    "incident",
+    "communities",
+    "roads",
+    "hazards",
+    "responseSites",
+    "signals",
+    "evidence",
+    "report",
+    "aoi",
+    "routingAssumptions"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "[+-][0-9]{2}:[0-9]{2}$"
+    },
+    "localizedText": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/text"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "projectedPoint": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "name": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "observedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "observedAtUpdated": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "note": {
+          "$ref": "#/definitions/localizedText"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "observedAt",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "community": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "name": {
+          "$ref": "#/definitions/text"
+        },
+        "commune": {
+          "$ref": "#/definitions/text"
+        },
+        "pop": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hh": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "desc": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/text"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "minItems": 0
+        },
+        "projected": {
+          "$ref": "#/definitions/projectedPoint"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "commune",
+        "pop",
+        "hh",
+        "desc",
+        "facts",
+        "projected"
+      ],
+      "additionalProperties": false
+    },
+    "road": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "name": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "scenarioRoadCode": {
+          "$ref": "#/definitions/text"
+        },
+        "cls": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "secondary",
+            "track"
+          ]
+        },
+        "len": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "blocked",
+            "uncertain"
+          ]
+        },
+        "hz": {
+          "$ref": "#/definitions/identifier"
+        },
+        "note": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "fromKm": {
+          "type": "number"
+        },
+        "toKm": {
+          "type": "number"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/projectedPoint"
+          },
+          "minItems": 2
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "cls",
+        "len",
+        "status",
+        "points"
+      ],
+      "additionalProperties": false
+    },
+    "hazard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "name": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "landslide",
+            "flood",
+            "bridge",
+            "crossing"
+          ]
+        },
+        "observation": {
+          "type": "string",
+          "enum": [
+            "suspected",
+            "reported"
+          ]
+        },
+        "area": {
+          "type": "number",
+          "minimum": 0
+        },
+        "src": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "detected": {
+          "type": "string",
+          "pattern": "^[0-9]{2}:[0-9]{2} [0-9]{2}/[0-9]{2}/[0-9]{4}$"
+        },
+        "projected": {
+          "$ref": "#/definitions/projectedPoint"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "observation",
+        "src",
+        "detected",
+        "projected"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "hazardId": {
+          "$ref": "#/definitions/identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "field-report",
+            "image-analysis"
+          ]
+        },
+        "observedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "receivedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "source": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "finding": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "limitation": {
+          "$ref": "#/definitions/localizedText"
+        }
+      },
+      "required": [
+        "id",
+        "hazardId",
+        "type",
+        "observedAt",
+        "receivedAt",
+        "source",
+        "finding",
+        "limitation"
+      ],
+      "additionalProperties": false
+    },
+    "responseSite": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/identifier"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "staging",
+            "hlz"
+          ]
+        },
+        "name": {
+          "$ref": "#/definitions/localizedText"
+        },
+        "projected": {
+          "$ref": "#/definitions/projectedPoint"
+        },
+        "assessment": {
+          "type": "string",
+          "enum": [
+            "candidate",
+            "assessed",
+            "unavailable"
+          ]
+        },
+        "observedAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "source": {
+          "$ref": "#/definitions/localizedText"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "projected",
+        "assessment",
+        "observedAt",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "communitySignal": {
+      "type": "object",
+      "properties": {
+        "communication": {
+          "type": "string",
+          "enum": [
+            "lost",
+            "available",
+            "unknown"
+          ]
+        },
+        "urgentNeed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "communication",
+        "urgentNeed"
+      ],
+      "additionalProperties": false
+    },
+    "speedRange": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100
+      }
+    }
+  }
+}

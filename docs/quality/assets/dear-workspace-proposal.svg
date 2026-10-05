@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="850" viewBox="0 0 1320 850" role="img" aria-labelledby="title desc">
+  <title id="title">Đề xuất workspace ứng phó DEAR</title>
+  <desc id="desc">Một bản đồ 2D, bảng chi tiết địa điểm bên trái, hai phương án tiếp cận và thông tin cần xác minh. Sơ đồ và dữ liệu giả lập.</desc>
+  <defs>
+    <pattern id="unknown" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 3L3-3M0 12L12 0M9 15L15 9" stroke="#a5afb9" stroke-width="1"/></pattern>
+    <style>
+      text{font-family:'Segoe UI',Arial,sans-serif;fill:#1e293b;font-size:16px}
+      .small{font-size:14px;fill:#526175}.muted{fill:#526175}.heading{font-size:21px;font-weight:600}.strong{font-weight:600}
+      .road{fill:none;stroke-linecap:round;stroke-linejoin:round}.white{fill:white}.blue{fill:#1d4ed8}.amber{fill:#854d0e}.red{fill:#b91c1c}
+    </style>
+  </defs>
+  <rect width="1320" height="850" fill="#eef2f6"/>
+  <rect width="1320" height="42" fill="#e7edf4"/>
+  <text x="24" y="27" class="small strong">PHÁC THẢO ĐỀ XUẤT · DỮ LIỆU GIẢ LẬP · Chưa phải giao diện triển khai</text>
+  <rect y="42" width="1320" height="76" fill="white"/>
+  <text x="24" y="78" class="heading">DEAR</text><text x="24" y="100" class="small">Hỗ trợ ứng phó</text>
+  <path d="M145 58V103" stroke="#d8e0e8"/>
+  <text x="165" y="76" class="strong">Sạt lở · Khu vực minh họa</text><text x="165" y="101" class="small">Dữ liệu đến 09:30 · UTC+7</text>
+  <rect x="485" y="60" width="350" height="42" rx="8" fill="#f2f5f8" stroke="#c4ceda"/>
+  <circle cx="506" cy="80" r="6" fill="none" stroke="#526175" stroke-width="2"/><path d="M511 85l5 5" stroke="#526175" stroke-width="2"/>
+  <text x="530" y="87" class="muted">Tìm thôn/bản, đường, địa điểm</text>
+  <text x="875" y="86" class="small">Bộ dữ liệu demo</text>
+  <rect x="1050" y="59" width="132" height="44" rx="8" fill="#eff4ff" stroke="#b7cafa"/><text x="1071" y="87" class="blue strong">Chia sẻ</text>
+  <text x="1212" y="86" class="small strong">VI / EN</text>
+  <path d="M0 118H1320" stroke="#cbd5e1"/>
+  <rect x="0" y="119" width="356" height="688" fill="white"/>
+  <text x="24" y="154" class="blue">← Danh sách cần chú ý</text>
+  <text x="24" y="194" class="heading">Bản A</text>
+  <rect x="212" y="172" width="119" height="30" rx="6" fill="#fff1dc"/><text x="225" y="192" class="small amber strong">Cần xác minh</text>
+  <text x="24" y="226" class="small">Dân số nền: 410 · Cần hỗ trợ: chưa rõ</text>
+  <path d="M24 249H332" stroke="#dce3eb"/>
+  <text x="24" y="281" class="strong">Tình hình đã biết</text>
+  <circle cx="30" cy="309" r="5" fill="#dc2626"/><text x="44" y="315">Đường chính có điểm chặn</text>
+  <text x="44" y="339" class="small">Tin hiện trường · quan sát 09:10</text>
+  <circle cx="30" cy="368" r="5" fill="#b45309"/><text x="44" y="374">Chưa rõ tình trạng đường vòng</text>
+  <text x="44" y="398" class="small">Đoạn B chưa được kiểm tra</text>
+  <text x="24" y="440" class="strong">Phương án tiếp cận</text>
+  <text x="24" y="464" class="small">Từ điểm tập kết · xét xe 4×4</text>
+  <rect x="24" y="483" width="308" height="67" rx="8" fill="#f8fafc" stroke="#d9e1ea"/>
+  <text x="38" y="509" class="strong">1. Đường chính</text><text x="38" y="534" class="small red">Bị chặn tại A · có tin hiện trường</text>
+  <rect x="24" y="562" width="308" height="83" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="38" y="589" class="blue strong">2. Đường vòng · đang xem</text>
+  <text x="38" y="615" class="small amber">Cần xác minh đoạn B</text><text x="38" y="635" class="small">Chưa đủ căn cứ ước tính thời gian</text>
+  <text x="24" y="677" class="small">Chưa xác định được tuyến khả dụng.</text>
+  <rect x="24" y="697" width="308" height="46" rx="8" fill="#1d4ed8"/><text x="47" y="727" class="white strong">Ghi chú cần xác minh đoạn B</text>
+  <text x="24" y="779" class="blue">Nguồn và bằng chứng</text><text x="233" y="779" class="blue">Độ cao tuyến</text>
+  <rect x="357" y="119" width="963" height="688" fill="#eaf0e5"/>
+  <path d="M390 120C610 200 670 125 860 242S1060 350 1320 275M370 180C570 270 700 190 845 300S1110 410 1320 355M400 580C620 490 860 620 1050 580S1220 510 1320 590M380 640C620 560 845 710 1080 640S1220 590 1320 680" fill="none" stroke="#d2dfc8" stroke-width="3"/>
+  <path d="M710 119C650 240 840 340 890 413S1110 620 1055 807" class="road" stroke="#a6cce0" stroke-width="24"/>
+  <path d="M710 119C650 240 840 340 890 413S1110 620 1055 807" class="road" stroke="#d7e8f1" stroke-width="12"/>
+  <path d="M1040 137L1280 144L1295 376L1116 361Z" fill="url(#unknown)" stroke="#9aa5b1" stroke-dasharray="6 5"/>
+  <rect x="1087" y="245" width="199" height="55" rx="6" fill="#f7f9fb"/><text x="1103" y="268" class="small strong">Chưa có quan sát mới</text><text x="1103" y="288" class="small">Không suy ra an toàn</text>
+  <rect x="380" y="140" width="394" height="42" rx="8" fill="white" stroke="#cbd5e1"/><text x="396" y="167" class="small">Đang xem đường tới Bản A · 2 phương án</text>
+  <rect x="1136" y="136" width="160" height="44" rx="8" fill="white" stroke="#b8c5ce"/><text x="1153" y="164" class="strong">Lớp bản đồ</text>
+  <path d="M1190 575L1000 466L859 449L696 350L533 314" class="road" stroke="#fafafa" stroke-width="12"/>
+  <path d="M1190 575L1000 466L859 449L696 350L533 314" class="road" stroke="#748396" stroke-width="5"/>
+  <path d="M891 449L823 428" class="road" stroke="#dc2626" stroke-width="7"/>
+  <path d="M847 424l20 25m0-25l-20 25" stroke="#b91c1c" stroke-width="4"/>
+  <path d="M1190 575L1050 667L827 674L632 574L490 447L533 314" class="road" stroke="white" stroke-width="12"/>
+  <path d="M1190 575L1050 667L827 674L632 574L490 447L533 314" class="road" stroke="#2563eb" stroke-width="6"/>
+  <path d="M955 670L827 674L766 643" class="road" stroke="#ffffff" stroke-width="9"/>
+  <path d="M955 670L827 674L766 643" class="road" stroke="#b45309" stroke-width="6" stroke-dasharray="8 8"/>
+  <circle cx="533" cy="314" r="16" fill="#fff" stroke="#1d4ed8" stroke-width="4"/><circle cx="533" cy="314" r="6" fill="#1d4ed8"/>
+  <rect x="462" y="250" width="149" height="40" rx="8" fill="white"/><text x="482" y="277" class="strong">Bản A</text>
+  <rect x="1177" y="562" width="26" height="26" rx="4" fill="#fff" stroke="#1e293b" stroke-width="3"/>
+  <rect x="1083" y="511" width="206" height="37" rx="7" fill="white"/><text x="1099" y="536" class="strong">Điểm tập kết</text>
+  <rect x="770" y="360" width="235" height="54" rx="8" fill="white" stroke="#e9b7b7"/><text x="787" y="383" class="red strong">A · Đường bị chặn</text><text x="787" y="403" class="small">Tin hiện trường · 09:10</text>
+  <path d="M858 414V429" stroke="#b91c1c"/>
+  <rect x="751" y="570" width="244" height="64" rx="8" fill="#fffaf0" stroke="#bd8535"/><text x="767" y="595" class="amber strong">B · Cần xác minh</text><text x="767" y="619" class="small">Chưa có tin về xe đi qua</text>
+  <path d="M866 634V670" stroke="#b45309"/>
+  <circle cx="690" cy="243" r="8" fill="#fff" stroke="#7c8897" stroke-width="2"/><text x="706" y="250" class="small">Bản B</text>
+  <rect x="1250" y="415" width="45" height="85" rx="8" fill="white" stroke="#b8c5ce"/><text x="1265" y="445" class="heading">+</text><path d="M1258 457H1287" stroke="#dae0e7"/><text x="1265" y="484" class="heading">−</text>
+  <rect x="380" y="740" width="915" height="45" rx="8" fill="white" stroke="#cbd5e1"/>
+  <path d="M396 763h25" stroke="#dc2626" stroke-width="4"/><text x="430" y="768" class="small">Bị chặn</text>
+  <path d="M518 763h25" stroke="#b45309" stroke-width="4" stroke-dasharray="5 4"/><text x="552" y="768" class="small">Cần xác minh</text>
+  <path d="M680 763h25" stroke="#2563eb" stroke-width="4"/><text x="714" y="768" class="small">Phương án đang xem</text>
+  <rect x="912" y="755" width="24" height="16" fill="url(#unknown)"/><text x="948" y="768" class="small">Thiếu quan sát</text>
+  <text x="1122" y="768" class="small strong">2D</text><text x="1166" y="768" class="small">Xem 3D</text>
+  <rect y="807" width="1320" height="43" fill="#f8fafc"/>
+  <path d="M0 807H1320" stroke="#cbd5e1"/><text x="24" y="834" class="small">Cập nhật liên quan: tin mới về đoạn A · nhận lúc 09:25, quan sát lúc 09:10</text><text x="1115" y="834" class="blue small">Xem thay đổi →</text>
+</svg>

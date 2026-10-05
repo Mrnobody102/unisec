@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">DEAR workspace layout study</title>
+  <desc id="desc">Illustrative Response workspace with layers on the left, map in the center, route comparison on the right and surface elevation below. All geographic content is schematic, not operational evidence.</desc>
+  <defs>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V10" stroke="#ca8a04" stroke-width="2" opacity=".3"/></pattern>
+    <clipPath id="map"><rect x="280" y="164" width="772" height="522" rx="10"/></clipPath>
+  </defs>
+  <style>
+    text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#1e293b;font-size:14px}
+    .muted{fill:#526174}.small{font-size:12px}.label{font-size:12px;font-weight:700;letter-spacing:1px}.heading{font-size:18px;font-weight:650}.bold{font-weight:650}.white{fill:white}.teal{fill:#0f766e}.amber{fill:#854d0e}.line{stroke:#dce3eb;stroke-width:1}
+  </style>
+  <rect width="1440" height="900" fill="#eef2f6"/>
+  <text x="24" y="25" class="label muted">DEAR / INTERFACE STUDY</text>
+  <text x="1416" y="25" text-anchor="end" class="small muted">PROPOSED LAYOUT · SCHEMATIC DATA · 24 SEP 2026</text>
+  <rect x="24" y="42" width="1392" height="812" rx="16" fill="#fff" stroke="#dce3eb"/>
+  <path d="M24 112H1416" class="line"/>
+  <rect x="44" y="62" width="34" height="34" rx="9" fill="#0f766e"/>
+  <path d="M51 85L61 70L71 85Z" fill="none" stroke="white" stroke-width="2"/>
+  <text x="91" y="77" class="heading">DEAR</text>
+  <text x="91" y="95" class="small muted">Emergency response workspace</text>
+  <text x="340" y="75" class="bold">Mountain response</text>
+  <text x="340" y="95" class="small muted">Scenario placeholder · Event date pending</text>
+  <rect x="1060" y="63" width="226" height="32" rx="16" fill="#f1f5f9"/>
+  <circle cx="1078" cy="79" r="4" fill="#64748b"/>
+  <text x="1090" y="84" class="small bold">Illustrative data · Version —</text>
+  <rect x="1300" y="61" width="94" height="36" rx="7" fill="white" stroke="#cbd5e1"/>
+  <text x="1347" y="84" text-anchor="middle">Reset view</text>
+  <text x="44" y="142" class="label muted">WORKSPACE</text>
+  <text x="289" y="142" class="muted">01  Situation</text>
+  <text x="442" y="142" class="muted">02  Impact</text>
+  <rect x="576" y="120" width="140" height="34" rx="7" fill="#e7f4f1"/>
+  <text x="595" y="142" class="bold teal">03  Response</text>
+  <text x="1392" y="142" text-anchor="end" class="small muted">Selection persists across steps</text>
+
+  <rect x="40" y="164" width="224" height="522" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="58" y="194" class="heading">Map layers</text>
+  <text x="58" y="216" class="small muted">Source details available per layer</text>
+  <text x="58" y="253" class="label muted">BASELINE</text>
+  <rect x="58" y="270" width="17" height="17" rx="4" fill="#0f766e"/><path d="M62 278L66 282L72 274" stroke="white" stroke-width="1.5" fill="none"/>
+  <text x="86" y="284">Terrain reference</text>
+  <rect x="58" y="306" width="17" height="17" rx="4" fill="#0f766e"/><path d="M62 314L66 318L72 310" stroke="white" stroke-width="1.5" fill="none"/>
+  <text x="86" y="320">Road network</text>
+  <text x="58" y="362" class="label muted">POST-EVENT ASSESSMENT</text>
+  <rect x="58" y="379" width="17" height="17" rx="4" fill="#0f766e"/><path d="M62 387L66 391L72 383" stroke="white" stroke-width="1.5" fill="none"/>
+  <text x="86" y="393">Evidence areas</text>
+  <text x="58" y="435" class="label muted">RESPONSE</text>
+  <rect x="58" y="452" width="17" height="17" rx="4" fill="#0f766e"/><path d="M62 460L66 464L72 456" stroke="white" stroke-width="1.5" fill="none"/>
+  <text x="86" y="466">Communities</text>
+  <rect x="58" y="488" width="17" height="17" rx="4" fill="#0f766e"/><path d="M62 496L66 500L72 492" stroke="white" stroke-width="1.5" fill="none"/>
+  <text x="86" y="502">Access options</text>
+  <path d="M58 525H246" class="line"/>
+  <text x="58" y="553" class="label muted">LEGEND</text>
+  <path d="M58 578H87" stroke="#0f766e" stroke-width="4"/><text x="98" y="583" class="small">Route A · Selected</text>
+  <path d="M58 608H87" stroke="#64748b" stroke-width="3" stroke-dasharray="6 4"/><text x="98" y="613" class="small">Route B · Alternative</text>
+  <rect x="58" y="631" width="29" height="15" fill="url(#hatch)" stroke="#a16207" stroke-dasharray="3 2"/><text x="98" y="644" class="small">Evidence area</text>
+
+  <g clip-path="url(#map)">
+    <rect x="280" y="164" width="772" height="522" fill="#edf2ed"/>
+    <path d="M273 260C394 122 487 278 591 222S827 142 1067 264V346C853 227 829 386 597 329S404 366 273 410Z" fill="#dce7db"/>
+    <path d="M276 548C421 471 490 508 616 480S826 446 1065 559V703H276Z" fill="#dce7db"/>
+    <g fill="none" stroke="#c6d5c6" stroke-width="1.5" opacity=".8">
+      <path d="M298 281C445 170 462 304 609 252S833 211 1050 297"/>
+      <path d="M295 304C436 203 476 328 616 275S843 241 1055 320"/>
+      <path d="M286 574C431 499 501 544 634 513S850 477 1046 584"/>
+      <path d="M285 602C420 528 513 573 641 542S863 507 1046 614"/>
+      <path d="M283 632C420 556 519 600 650 573S876 536 1048 644"/>
+    </g>
+    <path d="M731 151C646 257 787 326 704 427S719 586 617 704" fill="none" stroke="#bad9e4" stroke-width="22"/>
+    <path d="M731 151C646 257 787 326 704 427S719 586 617 704" fill="none" stroke="#edf8fb" stroke-width="4" opacity=".7"/>
+    <path d="M304 475C433 424 503 508 637 375S847 390 1069 278" fill="none" stroke="white" stroke-width="10"/>
+    <path d="M304 475C433 424 503 508 637 375S847 390 1069 278" fill="none" stroke="#cbd5c7" stroke-width="3"/>
+    <path d="M431 510L498 574L636 556L775 479L885 360" fill="none" stroke="white" stroke-width="9"/>
+    <path d="M431 510L498 574L636 556L775 479L885 360" fill="none" stroke="#64748b" stroke-width="3" stroke-dasharray="9 7"/>
+    <path d="M431 510L493 448L580 458L653 387L769 398L885 360" fill="none" stroke="white" stroke-width="10"/>
+    <path d="M431 510L493 448L580 458L653 387L769 398L885 360" fill="none" stroke="#0f766e" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M615 347L687 358L711 427L639 443L607 400Z" fill="#fef3c7" opacity=".8"/>
+    <path d="M615 347L687 358L711 427L639 443L607 400Z" fill="url(#hatch)" stroke="#a16207" stroke-width="2" stroke-dasharray="5 4"/>
+    <circle cx="431" cy="510" r="9" fill="white" stroke="#334155" stroke-width="3"/>
+    <circle cx="885" cy="360" r="18" fill="#0f766e" opacity=".12"/>
+    <circle cx="885" cy="360" r="10" fill="#0f766e" stroke="white" stroke-width="3"/>
+    <rect x="334" y="526" width="132" height="32" rx="6" fill="white" stroke="#dce3eb"/><text x="350" y="547" class="small bold">Response origin</text>
+    <rect x="838" y="307" width="150" height="32" rx="6" fill="white" stroke="#dce3eb"/><text x="854" y="328" class="bold">Community A</text>
+    <rect x="564" y="466" width="42" height="28" rx="6" fill="#0f766e"/><text x="585" y="485" text-anchor="middle" class="white bold">A</text>
+    <rect x="749" y="495" width="42" height="28" rx="6" fill="white" stroke="#64748b"/><text x="770" y="514" text-anchor="middle" class="bold">B</text>
+  </g>
+  <rect x="296" y="181" width="152" height="40" rx="7" fill="white" stroke="#dce3eb"/>
+  <rect x="300" y="185" width="65" height="32" rx="5" fill="#e7f4f1"/><text x="332" y="206" text-anchor="middle" class="bold teal">2D</text>
+  <text x="405" y="206" text-anchor="middle" class="muted">3D</text>
+  <rect x="934" y="181" width="101" height="40" rx="7" fill="white" stroke="#dce3eb"/><text x="984" y="206" text-anchor="middle">Fit AOI</text>
+  <rect x="298" y="632" width="380" height="36" rx="6" fill="white" opacity=".95"/><text x="313" y="655" class="small muted">Schematic map · No geographic or operational validity</text>
+
+  <rect x="1068" y="164" width="332" height="522" rx="10" fill="white" stroke="#e2e8f0"/>
+  <text x="1088" y="194" class="heading">Access options</text>
+  <text x="1088" y="218" class="muted">Response origin → Community A</text>
+  <rect x="1088" y="237" width="292" height="58" rx="7" fill="#fffbeb"/>
+  <text x="1100" y="260" class="bold amber">Verification pending</text>
+  <text x="1100" y="280" class="small amber">Road access requires supporting evidence.</text>
+  <rect x="1088" y="309" width="292" height="104" rx="8" fill="#f1faf7" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="1102" y="334" class="bold teal">A  Route A</text><text x="1366" y="334" text-anchor="end" class="small teal">Selected</text>
+  <text x="1102" y="360" class="small muted">Distance  —</text><text x="1240" y="360" class="small muted">ETA  —</text>
+  <text x="1102" y="390" class="small">Road status: Unknown</text>
+  <rect x="1088" y="425" width="292" height="104" rx="8" fill="white" stroke="#cbd5e1"/>
+  <text x="1102" y="450" class="bold">B  Route B</text>
+  <text x="1102" y="476" class="small muted">Distance  —</text><text x="1240" y="476" class="small muted">ETA  —</text>
+  <text x="1102" y="506" class="small">Road status: Unknown</text>
+  <text x="1088" y="554" class="small muted">ETA assumes a passable route.</text>
+  <path d="M1088 569H1380" class="line"/>
+  <text x="1088" y="592" class="small muted">Evidence: pending · Date: not available</text>
+  <text x="1088" y="614" class="small teal">View sources and limitations →</text>
+  <rect x="1088" y="632" width="292" height="38" rx="7" fill="#0f766e"/><text x="1234" y="657" text-anchor="middle" class="white bold">Preview briefing</text>
+
+  <rect x="40" y="704" width="1360" height="132" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="58" y="731" class="bold">Surface elevation along route</text>
+  <text x="58" y="754" class="small muted">Route A · Source / height model pending</text>
+  <text x="58" y="779" class="small muted">Display unavailable until profile is validated.</text>
+  <text x="58" y="817" class="small muted">A terrain profile alone does not establish road passability.</text>
+  <path d="M550 729V804H1375" fill="none" stroke="#cbd5e1"/>
+  <path d="M550 752H1375M550 778H1375" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+  <text x="959" y="774" text-anchor="middle" class="muted">No validated profile data</text>
+  <text x="1375" y="823" text-anchor="end" class="small muted">Distance along route (m)</text>
+  <text x="24" y="882" class="small muted">DESIGN INTENT: persistent context · evidence visible · map-first workspace</text>
+  <text x="1416" y="882" text-anchor="end" class="small muted">Not an application screenshot</text>
+</svg>

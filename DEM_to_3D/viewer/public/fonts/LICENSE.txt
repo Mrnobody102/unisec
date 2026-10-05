@@ -1,0 +1,5 @@
+Inter (rsms.me/inter) and JetBrains Mono (jetbrains.com/mono) are licensed under the SIL Open Font License 1.1.
+Files here are subsets (Latin + Vietnamese) of Inter 4.1 variable and JetBrains Mono 1.0.6 Regular/Medium.
+Space Grotesk and Be Vietnam Pro are also licensed under the SIL Open Font License 1.1.
+Their license texts are in LICENSE-SpaceGrotesk.txt and LICENSE-BeVietnamPro.txt.
+IBM Plex Sans is licensed under the SIL Open Font License 1.1; see LICENSE-IBMPlexSans.txt.
