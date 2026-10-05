@@ -157,10 +157,11 @@ def run(url, chrome, captures):
         # The event overview and destination view must read the same updated snapshot.
         page.set_viewport_size({'width': 1366, 'height': 768})
         page.locator('.workspace-nav button').first.click()
+        expect(page.locator('.incident-priority-row').first).to_contain_text('Kiểm tra đoạn chưa rõ trước khi sử dụng tuyến')
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Xem chi tiết', exact=True).click()
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
-        expect(page.locator('.incident-priority-row').first).to_contain_text('Các tuyến đã biết đều bị chặn')
+        expect(page.locator('.incident-priority-row').first).to_contain_text('Xác minh phương án tiếp cận khác')
         page.locator('.incident-priority-row').first.click()
         expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)

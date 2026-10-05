@@ -18,6 +18,14 @@ flowchart LR
 
 Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết định trong proposal. Các giai đoạn xử lý ảnh không trở thành menu bắt buộc của người trực.
 
+| Người trực cần trả lời | Màn hình và hành động |
+|---|---|
+| Cần xử lý ở đâu trước? | Sự kiện: địa bàn ưu tiên kèm lý do. Chọn địa bàn |
+| Tiếp cận thế nào, vướng ở đâu? | Chi tiết địa bàn: phương án, đoạn bị chặn/chưa rõ. Mở tuyến hoặc đoạn cần kiểm tra |
+| Căn cứ đã đủ chưa? | Bản ghi nguồn và mặt cắt khi cần. Tin mới phải được áp dụng trước khi lưu đánh giá mới |
+
+Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và tuyến sơ tán theo phương thức. Đây là phần chưa có trong demo, không thay bằng H đề xuất. Phạm vi mở rộng ở [nền tảng GIS](../architecture/geospatial-platform.md#ứng-phó-và-hướng-dẫn-tới-nơi-an-toàn).
+
 ## Màn hình và thông tin
 
 | Vị trí | Thông tin chính | Mở khi cần |
@@ -48,6 +56,7 @@ Panel bên trái chỉnh độ rộng hoặc thu gọn bằng nút đầu thanh 
 | Tìm trên bản đồ | Tìm tên/mã hoặc tiếng Việt không dấu. Enter chọn khi danh sách mở. Escape đóng, phím lên/xuống mở lại. Chọn kết quả bật lớp tương ứng và đưa đối tượng vào vùng nhìn |
 | Bấm lại địa bàn đang xem | Giữ tab và tuyến đã chọn |
 | Chọn đoạn đường hoặc điểm ảnh hưởng | Thay nội dung trong cùng panel. Đưa điểm vào vùng nhìn nếu đang ngoài màn hình hoặc sau điều khiển |
+| Xem mặt cắt một đoạn đường | Chọn đường → Mặt cắt địa hình. Lấy mẫu chính hình đoạn đường, không cần chọn địa bàn/tuyến trước |
 | Đóng chi tiết | Trở về nơi mở chi tiết, giữ tìm kiếm, bộ lọc và vị trí cuộn |
 | Đọc tin hoặc xem đoạn đường từ tin | Không đổi dữ liệu bản đồ |
 | Cập nhật bản đồ | Áp dụng tin và cập nhật đánh giá tiếp cận |

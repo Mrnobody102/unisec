@@ -42,6 +42,39 @@ def run(url, chrome, captures):
             expect(overview.locator('.leaflet-container')).to_have_count(1)
         overview.get_by_role('button', name='Hide overview map', exact=True).click()
         page.get_by_role('button', name='Fit area', exact=True).click()
+        # A road stays visually thin but can be picked 6 px away from its centreline.
+        road = page.locator('.map-road-target[data-road-id="E1"]')
+        point = road.evaluate("""path => {
+            const matrix = path.getScreenCTM(), length = path.getTotalLength();
+            const map = document.querySelector('.map-area').getBoundingClientRect();
+            for (let i = 2; i < 18; i++) {
+                const at = path.getPointAtLength(length * i / 20);
+                const next = path.getPointAtLength(length * i / 20 + 1);
+                const a = new DOMPoint(at.x, at.y).matrixTransform(matrix);
+                const b = new DOMPoint(next.x, next.y).matrixTransform(matrix);
+                const distance = Math.hypot(b.x - a.x, b.y - a.y);
+                if (!distance) continue;
+                const x = a.x - (b.y - a.y) / distance * 6;
+                const y = a.y + (b.x - a.x) / distance * 6;
+                if (x > map.left + 340 && x < map.right - 70 && y > map.top + 90 && y < map.bottom - 110 && document.elementFromPoint(x, y) === path) return {x, y};
+            }
+            throw new Error('No unobstructed road selection point');
+        }""")
+        page.mouse.click(point['x'], point['y'])
+        expect(page.locator('.sidebar .road-profile-action')).to_be_visible()
+        assert road.evaluate("path => path.previousElementSibling.getAttribute('stroke')") == '#e2e8ee', 'Selecting a road must not create a blue route'
+        road_name = page.locator('.sidebar h1').text_content()
+        page.get_by_role('button', name='Elevation profile', exact=True).click()
+        expect(page.locator('.profile-panel')).to_be_visible()
+        expect(page.locator('.profile-target-name')).to_have_text(road_name)
+        expect(page.locator('.profile-chart-container svg')).to_be_visible()
+        if captures: page.screenshot(path=str(captures / 'workspace-road-profile.png'))
+        page.get_by_role('button', name='Close profile', exact=True).click()
+        assert page.locator('.map-road-target').evaluate_all("nodes => nodes.every(n => Number(n.getAttribute('stroke-width')) >= 16)")
+        # Status warnings must render above the selected route, with tools above both.
+        panes = page.locator('.leaflet-pane').evaluate_all("nodes => Object.fromEntries(nodes.map(n => [n.className, Number(getComputedStyle(n).zIndex)]))")
+        def pane_order(name): return next(value for key, value in panes.items() if f'dear-{name}-pane' in key)
+        assert pane_order('imagery') < pane_order('roads') < pane_order('route') < pane_order('roadStatus') < pane_order('selection')
         toolbar = page.locator('.map-toolbar')
         toggle = toolbar.get_by_role('button', name='Hide information panel', exact=True)
         expect(toggle).to_be_visible()
@@ -71,6 +104,7 @@ def run(url, chrome, captures):
             assert box['y'] + box['height'] <= area['y'] + area['height'] - 31, (area, box)
 
         toolbar.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        assert road.evaluate("path => getComputedStyle(path).pointerEvents") == 'none'
         measure = page.locator('.map-measure-panel')
         handle = measure.get_by_role('group', name='Measurement panel position', exact=True)
         original = measure.bounding_box()
@@ -106,6 +140,8 @@ def run(url, chrome, captures):
 
         toolbar.get_by_role('button', name='Layers', exact=True).click()
         layers = page.locator('.layers-panel')
+        expect(layers.locator('.basemap-preview')).to_have_count(2)
+        assert layers.locator('.basemap-preview img').evaluate('node => node.complete && node.naturalWidth > 0')
         handle = layers.get_by_role('group', name='Layers panel position', exact=True)
         original = layers.bounding_box()
         drag(handle, 210, 70)
@@ -143,6 +179,8 @@ def run(url, chrome, captures):
         toolbar.get_by_role('button', name='Show information panel', exact=True).click()
 
         page.get_by_role('button', name='Location information', exact=True).click()
+        assert road.evaluate("path => getComputedStyle(path).pointerEvents") == 'none'
+        assert page.locator('.map-2d .map-marker-layer').evaluate('node => node.inert')
         location = page.locator('.map-location-panel')
         expect(location).to_contain_text('Select a point on the map')
         area = page.locator('.map-2d-surface').bounding_box()

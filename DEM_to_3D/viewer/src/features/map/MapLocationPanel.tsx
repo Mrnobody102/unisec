@@ -39,7 +39,7 @@ export function MapLocationPanel({ locale, point, onClose }: { locale: Locale; p
         <option value="wgs84">WGS84</option>{point.projected && <option value="projected">{point.crs === 'EPSG:32648' ? 'UTM 48N' : point.crs}</option>}
       </select>
       <dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}<div><dt>{t('Độ cao', 'Elevation')}</dt><dd>{point.elevation === undefined ? t('Chưa có dữ liệu', 'No data') : `${point.elevation.toFixed(1)} m`}</dd></div></dl>
-      <button className="text-button" onClick={copy}>{copied === 'done' ? t('Đã sao chép', 'Copied') : t('Sao chép tọa độ', 'Copy coordinates')}</button>
+      <button className="icon-button" onClick={copy} aria-label={copied === 'done' ? t('Đã sao chép', 'Copied') : t('Sao chép tọa độ', 'Copy coordinates')} title={copied === 'done' ? t('Đã sao chép', 'Copied') : t('Sao chép tọa độ', 'Copy coordinates')}><UiIcon name={copied === 'done' ? 'check' : 'copy'} size={16}/></button>
       {copied === 'error' && <p role="status">{t('Không sao chép được. Chọn trực tiếp phần tọa độ để sao chép.', 'Copy failed. Select the coordinate text to copy.')}</p>}
     </> : <p>{t('Chọn một điểm trên bản đồ.', 'Select a point on the map.')}</p>}</div>
   </section>;

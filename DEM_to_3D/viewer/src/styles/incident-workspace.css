@@ -175,6 +175,7 @@
 .priority-community-symbol { display: grid; place-items: center; width: 24px; height: 24px; color: var(--ws-brand); }
 .priority-access { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-text); }
 .incident-priority-row small { display: block; margin-top: 5px; font-size: 12px; line-height: 1.55; color: var(--ws-muted); }
+.incident-priority-row .priority-next-action { color: var(--ws-text); }
 .incident-community-action { width: 100%; margin-top: 12px; }
 .incident-data-summary dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
 .incident-data-summary dt { font-size: 11px; color: var(--ws-muted); }

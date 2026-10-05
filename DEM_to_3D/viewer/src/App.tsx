@@ -217,8 +217,11 @@ export default function App(): JSX.Element {
     mapTerrain.metadata.crs.authority.toUpperCase() === 'EPSG' &&
     mapTerrain.metadata.crs.code === 32648 && mapTerrain.metadata.crs.linear_unit === 'metre');
   const analysisModels = useMemo(() => models.length ? models : defaultTerrainData ? [defaultTerrainData] : [], [models, defaultTerrainData]);
+  const profileTarget = useMemo(() => selectedObjectId?.startsWith('road:')
+    ? roads.find(road => `road:${road.id}` === selectedObjectId) ?? null
+    : activeRoute, [selectedObjectId, roads, activeRoute]);
   const { analysisTerrain, routeProfile, focusPoint } =
-    useRouteTerrainAnalysis(analysisModels, scenarioTerrainCompatible ? activeRoute : null, focusDistance);
+    useRouteTerrainAnalysis(analysisModels, scenarioTerrainCompatible ? profileTarget : null, focusDistance);
   const communityTerrainCoverage = useMemo(() => {
     if (!analysisTerrain || analysisTerrain.metadata.crs.authority.toUpperCase() !== 'EPSG' || analysisTerrain.metadata.crs.code !== 32648) return null;
     return new Map(communities.map(community => [community.id,
@@ -355,7 +358,10 @@ export default function App(): JSX.Element {
               communities={communities}
               responseSites={responseSites}
               routes={routes}
-              onBack={() => setSelectedObjectId(null)}
+              hasTerrainProfile={Boolean(routeProfile?.samples.some(sample => sample.elevation !== undefined))}
+              profileOpen={showProfile}
+              onToggleProfile={() => { setFocusDistance(null); setShowProfile(open => !open); setMeasurementOpen(false); setMobileView('map'); setActiveDialog(null); }}
+              onBack={() => { setSelectedObjectId(null); setShowProfile(false); setFocusDistance(null); }}
               onSelectCommunity={selectCommunity}
               onSelectObject={inspectObject}
               onOpenEvidence={(hzId) => {
@@ -403,6 +409,7 @@ export default function App(): JSX.Element {
               updated={updated}
               communities={communities}
               routes={routes}
+              assessments={assessments}
               blockedRoadCount={roads.filter(road => road.status === 'blocked').length}
               uncertainRoadCount={roads.filter(road => road.status === 'uncertain').length}
               onSelectCommunity={selectCommunity}
@@ -447,6 +454,7 @@ export default function App(): JSX.Element {
           {mapMode === '2d' ? <Map2D
             terrain={mapTerrain}
             profileOpen={showProfile}
+            profilePoints={showProfile ? profileTarget?.points : undefined}
             locationOpen={locationOpen}
             locationPoint={locationPoint}
             onLocation={setLocationPoint}
@@ -553,6 +561,7 @@ export default function App(): JSX.Element {
           {activeDialog === 'layers' && (
             <LayersDialog
               locale={locale}
+              imageryPreview={defaultTerrainData ? scenarioManifest?.terrain.image?.url : undefined}
               layers={layers}
               appearance={layerAppearance}
               mapMode={mapMode}
@@ -568,9 +577,10 @@ export default function App(): JSX.Element {
             />
           )}
 
-          {showProfile && activeRoute && (
+          {showProfile && profileTarget && (
             <ProfileDrawer
-              key={activeRoute.id}
+              key={profileTarget.id}
+              name={profileTarget.name[locale === 'vi' ? 0 : 1]}
               locale={locale}
               profile={routeProfile}
               onHoverDistance={setFocusDistance}

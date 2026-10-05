@@ -61,15 +61,17 @@ export function MapMeasurement({ mapRef, enabled, locale, session, dispatch, sou
       </select></label>
       <div className="measure-tabs" aria-label={t('Nội dung công cụ đo', 'Measurement views')}>
         <button aria-pressed={view === 'measure'} aria-controls="measurement-result-view" onClick={() => setView('measure')}>{t('Phép đo', 'Measurement')}</button>
-        <button aria-pressed={view === 'saved'} aria-controls="measurement-saved-view" onClick={() => setView('saved')}>{t('Kết quả', 'Results')} <span>{session.saved.length}</span></button>
+        <button aria-pressed={view === 'saved'} aria-controls="measurement-saved-view" onClick={() => setView('saved')}>{t('Kết quả', 'Results')}{session.saved.length > 0 && <span>{session.saved.length}</span>}</button>
       </div>
       <div className="measure-body" id="measurement-result-view" hidden={view !== 'measure'}>
-        <dl className="map-measure-result" aria-label={t('Kết quả đo', 'Measurement result')}>
+        <div className="measure-result-header">
+        <dl className="map-measure-result" data-empty={!results.length} aria-label={t('Kết quả đo', 'Measurement result')}>
           {(results.length ? results : [[t(...modeNames[session.mode]), t('Chưa đo', 'No measurement')]]).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
         </dl>
+        {session.finished && !session.editing && <button className="icon-button measure-copy" onClick={copy} aria-label={copyState === 'copied' ? t('Đã sao chép', 'Copied') : t('Sao chép kết quả', 'Copy results')} title={copyState === 'copied' ? t('Đã sao chép', 'Copied') : t('Sao chép kết quả', 'Copy results')}><UiIcon name={copyState === 'copied' ? 'check' : 'copy'} size={16}/></button>}
+        </div>
         <p className="map-measure-context map-measure-source" title={session.source ?? hover?.name}>{session.source ?? (hover?.name && !session.finished ? t('Bắt điểm: ', 'Snapped: ') + hover.name : '')}</p>
         <p className="map-measure-hint" role="status">{copyState === 'error' ? t('Không sao chép được. Hãy chọn trực tiếp kết quả.', 'Copy failed. Select the result text directly.') : hint}</p>
-        {session.finished && !session.editing && <button className="text-button measure-copy" onClick={copy}>{copyState === 'copied' ? t('Đã sao chép', 'Copied') : t('Sao chép kết quả', 'Copy results')}</button>}
         {selected && <button className="text-button measure-feature" disabled={session.editing} title={selected.name} onClick={() => dispatch({ type: 'import', points: selected.points, mode: selected.closed ? 'area' : 'distance', source: selected.name })}>{selected.kind === 'road' ? t('Đo đoạn đường', 'Measure road segment') : selected.kind === 'aoi' ? t('Đo vùng đánh giá', 'Measure assessment area') : t('Đo tuyến đang xem', 'Measure selected route')}</button>}
         <MeasurementDetails session={session} units={units} locale={locale}/>
       </div>

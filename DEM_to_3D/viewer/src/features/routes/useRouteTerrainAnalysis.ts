@@ -7,7 +7,7 @@ import { projectedToScene } from '../../terrain/coordinate';
 
 export function useRouteTerrainAnalysis(
   models: Array<LoadedModel | TerrainData>,
-  activeRoute: ScenarioRoute | null,
+  activeRoute: Pick<ScenarioRoute, 'id' | 'points'> | null,
   focusDistance: number | null
 ) {
   const analysisTerrain = useMemo(() => selectAnalysisTerrain(models), [models]);

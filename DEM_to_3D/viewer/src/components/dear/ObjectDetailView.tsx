@@ -24,6 +24,9 @@ type Props = {
   communities: Community[];
   responseSites: ResponseSite[];
   routes: Map<string, ScenarioRoutePair>;
+  hasTerrainProfile: boolean;
+  profileOpen: boolean;
+  onToggleProfile: () => void;
   onBack: () => void;
   onSelectCommunity: (id: string) => void;
   onOpenEvidence: (id: string) => void;
@@ -42,6 +45,9 @@ export const ObjectDetailView: React.FC<Props> = ({
   communities,
   responseSites,
   routes,
+  hasTerrainProfile,
+  profileOpen,
+  onToggleProfile,
   onBack,
   onSelectCommunity,
   onOpenEvidence,
@@ -80,6 +86,7 @@ export const ObjectDetailView: React.FC<Props> = ({
         <div className="detail-title"><h1 id="object-title">{title}</h1><button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
         {road && <div className="detail-priority"><StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>{road.status === 'blocked' ? t('Bị chặn', 'Blocked') : road.status === 'uncertain' ? t('Chưa xác minh khả năng đi qua', 'Passability unverified') : t('Chưa ghi nhận chặn', 'No blockage reported')}</StatusText></div>}
         {road && <p className="small object-length">{t('Chiều dài đoạn', 'Segment length')}: {road.len} km</p>}
+        {road && <button className="button road-profile-action" disabled={!hasTerrainProfile} aria-pressed={profileOpen} onClick={onToggleProfile} title={!hasTerrainProfile ? t('Chưa có DEM cho đoạn đường này', 'DEM unavailable for this road section') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>}
       </div>
 
       <div className="sidebar-scroll">

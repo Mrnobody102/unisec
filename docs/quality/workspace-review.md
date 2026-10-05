@@ -27,7 +27,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Thiếu định hướng khi xem gần | Tổng quan 2D thu gọn được, đồng bộ khung nhìn, click và bàn phím. Không tải thêm tile |
 | Ảnh nền tối và bậc màu khi đổi hệ tọa độ | Giảm bóng trên ảnh, lấy mẫu màu song tuyến tính, giữ nodata. Texture 3D dùng anisotropic filtering theo GPU |
 
-[Hàng địa bàn](assets/workspace-community-hover.png), [bản đồ tổng quan](assets/workspace-overview.png) và [công cụ đo](assets/workspace-measurement.png) đã cập nhật. Lượt này chạy lại sáu bộ kiểm tra CI, gồm panel trên 1366, 1024, 390, 320 px, các địa bàn thiếu tuyến và tiếng Anh.
+Ảnh tham chiếu giữ ba màn: tiếp cận, mặt cắt và công cụ đo. Ảnh kiểm thử phát sinh nằm trong thư mục review đã ignore. Bộ kiểm tra CI gồm panel trên 1366, 1024, 390, 320 px, các địa bàn thiếu tuyến và tiếng Anh.
 
 ## Kết quả nghiệp vụ
 
@@ -62,21 +62,16 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
 | Nguồn lớp | Nút thông tin cạnh từng lớp, mở một lớp mỗi lần. Tách ngày thu nhận, quan sát và tổng hợp. Metadata thiếu được ghi rõ |
 | Tìm kiếm | Tên/mã hoặc tiếng Việt không dấu, chọn kết quả bằng bàn phím, mở chi tiết và đưa vào vùng nhìn |
+| Chọn đường | Vùng bấm rộng hơn nét vẽ, viền sáng giữ màu tình trạng. Mặt cắt mở trực tiếp theo đoạn đường được chọn |
 | Bản xuất | Snapshot được sao chép khi mở xem trước. PNG không phụ thuộc GPU hoặc Internet |
 
 ![Tiếp cận Nậm Khắt](assets/workspace-summary.png)
 
-![Bản ghi ảnh hưởng tại cầu](assets/workspace-evidence.png)
+![Mặt cắt địa hình](assets/workspace-profile.png)
 
 [Xem bản xuất PNG](assets/decision-map.png). Ảnh có cùng tuyến, thời điểm và nhận định với bản xem trước trong ứng dụng.
 
 [Công cụ đo bản đồ](assets/workspace-measurement.png). Hình đo tạm giữ lớp tình huống để người trực đối chiếu.
-
-[Thông tin vị trí trên 3D](assets/workspace-location.png). Chọn điểm để đọc tọa độ và độ cao.
-
-[Lịch sử tin trong sự kiện](assets/workspace-notifications.png). Mở từng tin để đọc quan sát, nguồn, thời gian và hành động liên quan.
-
-[Nguồn từng lớp](assets/workspace-layer-sources.png). Mở khi cần đối chiếu nguồn, ngày quan sát và thời điểm tổng hợp.
 
 Ảnh từ bản build khi chặn Internet. Khoảng trống ngoài ảnh địa hình là vùng thiếu nền cục bộ, không phải vùng đã xác nhận không có thiên tai.
 
@@ -90,6 +85,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
 | Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Tổng quan theo pan/zoom, click, bàn phím và mở/đóng không tạo bản đồ trùng. Khoảng đệm hàng địa bàn đạt, hover không dịch chữ. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
+| Chrome: đường và mặt cắt | Bấm lệch tâm nét đường 6 px vẫn chọn được. Nút mở mặt cắt trực tiếp, tên đúng đoạn đường. Kiểm thứ tự nền/đường/tuyến/cảnh báo, ảnh xem trước và thao tác đo/lấy tọa độ |
 | Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
 | Chrome: công cụ và biến thể | 6 kiểu đo, xem trước, kéo đỉnh, hoàn tác/làm lại, đơn vị, sao chép, giữ/ẩn/xóa hình, đo trực tiếp tuyến/AOI, thu gọn và 12 vòng đóng/mở. Đổi tối/Anh/font và qua 3D về 2D giữ phép đo. Mobile 390/320 px không tràn hoặc đè hướng Bắc |
 | Chrome: công cụ phụ | Thông báo, xem dữ liệu cũ/về bản mới, độ rõ/lọc/nhãn, so GeoTIFF có tọa độ, mở lại cặp ảnh, GeoJSON, bản in và đặt lại phiên |
@@ -97,7 +93,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Chrome: nguồn lớp | Đạt: nguồn/ngày theo bản dữ liệu cũ/mới, ngày ảnh chưa có, giới hạn H, nguồn riêng cho Imagery/Terrain Light, bàn phím và chiều rộng 320–1366 px |
 | Vòng đời 3D | Sửa gỡ listener trước khi React tháo canvas. Giải phóng tài nguyên GPU của renderer cũ, giữ dữ liệu để mở lại. 25 vòng thử nhanh không tăng DOM/listener |
 | Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
-| Lặp phiên trên build cuối | Linux: 3 vòng trong 46,8 giây, DOM/listener giữ nguyên, JS heap tăng 0,39 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
+| Lặp phiên trên build cuối | Linux: 3 vòng trong 46,8 giây, DOM/listener giữ nguyên, JS heap tăng 0,46 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
 | CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
 | GitHub Actions | Run của commit `756510a` dừng ở npm test. Tái hiện lỗi checksum JSON do CRLF/LF, đã chuẩn hóa file và thêm `.gitattributes`. Commit mới cần push để xác nhận trạng thái GitHub |
 | Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |
