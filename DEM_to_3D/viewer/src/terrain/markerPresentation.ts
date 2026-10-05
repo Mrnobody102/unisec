@@ -1,10 +1,14 @@
-type Member = { symbol: string; selected: boolean };
-export type MarkerPresentation = 'single' | 'selected-overlap' | 'cluster' | 'overlap';
+type Member = { symbol: string; selected: boolean; priority?: number };
+export type MarkerPresentation = 'single' | 'feature-overlap' | 'cluster' | 'overlap';
 
 /** Counts describe a single feature category, never a mixture of map objects. */
 export function markerPresentation(members: Member[], allowCounts: boolean): MarkerPresentation {
   if (members.length < 2) return 'single';
-  if (members.some(member => member.selected)) return 'selected-overlap';
-  if (allowCounts && members.every(member => member.symbol === members[0].symbol)) return 'cluster';
+  // The first member is the actual anchor, which may differ from a selected
+  // member hidden behind a control. Never label that anchor as another feature.
+  const anchor = members[0];
+  const sameCategory = members.every(member => member.symbol === anchor.symbol);
+  if (anchor.selected || ((!allowCounts || !sameCategory) && anchor.symbol === 'community' && (anchor.priority ?? 0) >= 50)) return 'feature-overlap';
+  if (allowCounts && sameCategory) return 'cluster';
   return 'overlap';
 }

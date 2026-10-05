@@ -55,12 +55,12 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     chooser.className = 'map-object-chooser'; chooser.setAttribute('role', 'group');
     chooser.setAttribute('aria-label', locale === 'vi' ? 'Chọn đối tượng' : 'Choose an object');
     const heading = document.createElement('div'); heading.className = 'map-object-chooser-heading';
-    heading.textContent = locale === 'vi' ? 'Đối tượng tại vị trí này' : 'Objects at this location';
+    heading.textContent = locale === 'vi' ? 'Các điểm trong nhóm' : 'Points in this group';
     chooser.appendChild(heading);
     if (options.onExpandGroup && members.some(member => Math.hypot(member.point.x - members[0].point.x, member.point.y - members[0].point.y) > 1)) {
       const expand = document.createElement('button'); expand.type = 'button';
       expand.className = 'map-chooser-expand';
-      expand.textContent = locale === 'vi' ? 'Phóng tới các điểm' : 'Zoom to these points';
+      expand.textContent = locale === 'vi' ? 'Xem khu vực này' : 'View this area';
       expand.onclick = () => { closeChooser(); options.onExpandGroup?.(members.map(member => member.point)); };
       chooser.appendChild(expand);
     }
@@ -181,19 +181,19 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       const marker = markers.find(m => m.id === group.anchor.id)!;
       const { x, y } = group.anchor, half = group.rect.width / 2;
       const clustered = group.members.length > 1;
-      const members = groups.get(marker.id)!;
+      const members = [marker, ...groups.get(marker.id)!.filter(member => member !== marker)];
       const presentation = markerPresentation(members, options.allowCounts?.() ?? false);
       const display = marker;
       marker.button.hidden = false;
       marker.button.style.transform = `translate(${x - half}px,${y - half}px)`;
       marker.button.classList.toggle('is-cluster', presentation === 'cluster');
       marker.button.classList.toggle('is-overlap', presentation === 'overlap');
-      marker.button.classList.toggle('has-overlap', presentation === 'selected-overlap');
+      marker.button.classList.toggle('has-overlap', presentation === 'feature-overlap');
       marker.button.classList.toggle('is-selected', marker.selected);
       marker.button.classList.toggle('has-critical', (presentation === 'overlap' || presentation === 'cluster') && members.some(member => member.priority >= 50 || (member.symbol === 'landslide' && !member.button.classList.contains('is-suspected'))));
       marker.button.setAttribute('aria-label', clustered ? (presentation === 'cluster'
         ? `${group.members.length} ${categoryNames[marker.symbol][locale === 'vi' ? 0 : 1]}`
-        : `${display.name}. ${locale === 'vi' ? 'Chọn đối tượng tại vị trí này' : 'Choose objects at this location'}`) : marker.name);
+        : `${display.name}. ${locale === 'vi' ? 'Mở danh sách điểm trong nhóm' : 'Browse points in this group'}`) : marker.name);
       marker.button.title = clustered ? group.members.map(p => markers.find(m => m.id === p.id)!.name).join(', ') : marker.name;
       if (clustered) { marker.button.setAttribute('aria-haspopup', 'true'); marker.button.setAttribute('aria-expanded', String(chooserTrigger === marker.button)); }
       else { marker.button.removeAttribute('aria-haspopup'); marker.button.removeAttribute('aria-expanded'); }
@@ -206,7 +206,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       }
       marker.icon.hidden = false; marker.count.hidden = presentation !== 'cluster';
       if (marker.count.textContent !== String(group.members.length)) marker.count.textContent = String(group.members.length);
-      if (!marker.label || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'selected-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
+      if (!marker.label || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
       const choices = [{ x: x + 22, y: y - 10 }, { x: x - marker.width - 22, y: y - 10 }, { x: x - marker.width / 2, y: y - 43 }, { x: x - marker.width / 2, y: y + 22 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);

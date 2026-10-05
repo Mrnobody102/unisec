@@ -1,10 +1,10 @@
 # Yêu cầu sản phẩm
 
-> Trạng thái: Đích bàn giao SIC ngày 20/10, chưa nghiệm thu · Phụ trách: PO · Cập nhật: 2026-10-02
+Trạng thái: Chưa nghiệm thu. Đích bàn giao SIC ngày 20/10. Phụ trách: PO. Cập nhật: 2026-10-05.
 
 ## Mục tiêu demo
 
-DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh giá tác động sau lũ quét/sạt lở miền núi. Bản SIC dùng **một sự kiện, một khu vực, một cộng đồng trọng tâm và hai tuyến tiếp cận**, với dữ liệu chuẩn bị trước. Đây là **đích bàn giao**, không phải danh sách chức năng đã chạy. [Bản demo 03/10](../operations/demo.md) và [tiến độ hiện tại](../tasks/sic-2026.md) ghi rõ phần đã có và còn thiếu.
+DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh giá tác động sau lũ quét/sạt lở miền núi. Bản SIC dùng **một sự kiện, một khu vực, một cộng đồng trọng tâm và hai tuyến tiếp cận**, với dữ liệu chuẩn bị trước. Xem [luồng trình diễn](../operations/walkthrough.md) và [tiến độ hiện tại](../tasks/sic-2026.md).
 
 | Bước | Câu hỏi cần trả lời | Kết quả người xem nhận được |
 |---|---|---|
@@ -29,13 +29,32 @@ DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh g
 
 Phạm vi theo [S02](../../references/SIC2026/DEAR_SIC2026.docx) và [S03](../../references/SIC2026/DEAR_SIC2026_WebApp.pdf). Cách kiểm tra từng chức năng: [A01–A10](../quality/acceptance.md). Bố cục màn hình: [thiết kế giao diện](interface.md).
 
-**Bản chạy 03/10:** có 2D độc lập WebGL, 3D với fallback, AOI mô phỏng, địa bàn/đường, tính tuyến từ network, ưu tiên theo quy tắc, ETA theo tốc độ giả định, nguồn và cập nhật bản tin. Gói JSON có schema và API snapshot chỉ đọc. Chưa có ảnh trước/sau, bản xuất hay dữ liệu thực được duyệt.
+**Bản chạy 05/10:** có bản đồ 2D/3D, tuyến/ưu tiên theo quy tắc, ETA có điều kiện, bản ghi nguồn, cập nhật tin và xem dữ liệu cũ. Có xem trước và xuất PNG, JSON, GeoJSON, in/lưu PDF. Công cụ so GeoTIFF đã có, chưa có cặp ảnh thiên tai được duyệt. API hiện chỉ đọc snapshot, chưa phải backend vận hành.
+
+## Chức năng nhập và phân tích
+
+Phạm vi mở rộng để nghiên cứu, chưa triển khai trong đợt demo hiện tại. Các chức năng xem đã có không thay cho tiếp nhận, lưu và công bố dữ liệu.
+
+| Chức năng | Hiện tại | Phần cần xây |
+|---|---|---|
+| Vẽ đo trên bản đồ | Hình đo tạm trong phiên | Giữ là công cụ đo, không tự đưa vào lớp nghiệp vụ |
+| Chọn/vẽ vùng phân tích | AOI cố định trong gói | Tạo AOI bản nháp, kiểm nguồn phủ vùng, gửi yêu cầu và mở kết quả |
+| Nhập tin tại vị trí/đoạn đường | Tin cố định trong kịch bản | Form hiện trường, lưu server, kiểm tra và công bố |
+| Nhập lớp của admin/chuyên viên | Chuẩn bị file trong repo | Quản lý dữ liệu theo sự kiện, upload/metadata, xem trước và lỗi kiểm tra |
+| Nạp địa hình / cặp ảnh | Nạp để xem trong phiên | Nhập vào kho dữ liệu có phiên bản khi cần dùng chung hoặc phân tích |
+| Chạy phân tích | Tính tuyến/ưu tiên trong trình duyệt | Yêu cầu phân tích, kết quả theo version đầu vào, trạng thái và lỗi |
+| Nhập kết quả AI/viễn thám | Chưa có pipeline | Nhập sản phẩm có nguồn/phương pháp, kiểm tra rồi đưa vào đánh giá |
+| Duyệt và lịch sử | Hai mốc mô phỏng | Bản nháp, người duyệt, revision bất biến, lịch sử và nhiều người dùng |
+
+Luồng và dữ liệu dự kiến: [tiếp nhận và công bố dữ liệu](../architecture/data-ingestion.md). Thứ tự triển khai và lựa chọn công nghệ: [kế hoạch backend](../plans/backend.md).
+
+## Phạm vi SIC
 
 | Phạm vi | Quyết định |
 |---|---|
 | Phải có | Luồng 2D đầy đủ, bằng chứng, hai tuyến đã kiểm tra, xuất PNG |
 | Chốt tại G2 | 3D và so ảnh trước/sau; nếu không đạt chất lượng thì ghi rõ phần rút gọn |
-| Làm thêm khi luồng chính ổn định | Xuất PDF |
+| Đã triển khai, cần thử máy trình chiếu | In/lưu PDF từ trình duyệt, gói chạy offline |
 | Sau SIC | Nhận/xử lý ảnh tự động, điểm cô lập được kiểm chứng, routing theo điều kiện phương tiện và dữ liệu thực, bãi đáp được khảo sát, dự báo ngập, GeoPackage, nhiều sự kiện/tài khoản |
 
 ## Chọn dữ liệu và diễn giải kết quả

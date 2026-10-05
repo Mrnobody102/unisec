@@ -47,13 +47,6 @@ Lịch phụ thuộc việc có đối tác và dữ liệu. Đo: thời gian t�
 | Đề xuất vùng đáp trực thăng | Có tiêu chí và chuyên gia thẩm định |
 | Chứng minh mục tiêu 3–6 giờ | Chốt điểm đầu/cuối phép đo; đo riêng chờ ảnh, xử lý và duyệt |
 
-Backend bổ sung theo [kiến trúc](../architecture/overview.md), dùng tiếp [định dạng dữ liệu](../architecture/data-contract.md) của SIC.
+Backend tiếp nhận/công bố chưa triển khai. Công nghệ và thứ tự được nghiên cứu tại [kế hoạch backend](backend.md), không đưa vào mốc demo SIC hiện tại. [Hợp đồng v1](../architecture/data-contract.md) vẫn dùng cho bộ prepared; [luồng ghi v2](../architecture/data-ingestion.md) là thiết kế dự kiến.
 
-| Thứ tự backend | Đầu ra |
-|---|---|
-| 1. Nhập và duyệt | FastAPI, PostGIS và kho file. Nhập bộ dữ liệu, kiểm nguồn/CRS, lưu người duyệt, công bố snapshot có phiên bản |
-| 2. Đồng bộ và quyền truy cập | Web đọc snapshot qua API, đăng nhập, quyền xem/duyệt, lịch sử cập nhật và khôi phục bản trước |
-| 3. Xử lý ảnh | Worker Python nhận job, tạo lớp tác động, ghi phương pháp/version và thời gian. Công bố sau kiểm tra chất lượng |
-| 4. Vận hành | Sao lưu, giám sát job/API, diễn tập trên dữ liệu thực và đo thời gian toàn luồng |
-
-Giữ pipeline và API tách khỏi giao diện. Đợt đầu ưu tiên công bố dữ liệu đã kiểm tra; chỉ tự động hóa bước phân tích khi phương pháp và đầu vào đủ điều kiện.
+Khi mở pilot, xác nhận nhu cầu nhập dữ liệu, đơn vị vận hành và người kiểm tra nghiệp vụ trước khi chốt lịch backend. Pipeline ảnh tích hợp theo dữ liệu và phương pháp đã kiểm chứng.

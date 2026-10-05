@@ -10,6 +10,7 @@ import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { RouteOption } from '../../features/routes/RouteOption';
 import type { ResponseAssessment } from '../../features/incident/responseAssessment';
+import { communityAccessText } from '../../features/routes/accessAssessment';
 
 type Props = {
   community: Community;
@@ -59,7 +60,6 @@ export const CommunityDetailView: React.FC<Props> = ({
   const effectiveRouteType = selectedRouteType === 'direct' && directRoute ? 'direct' : 'candidate';
   const activeRoute = effectiveRouteType === 'direct' ? directRoute : candidateRoute;
   const isBlocked = activeRoute?.status === 'blocked';
-  const isUncertain = activeRoute?.status === 'uncertain';
   const bothRoutesBlocked = directRoute?.status === 'blocked' && candidateRoute?.status === 'blocked';
   const accessIssues = [...new Map(
     [directRoute, candidateRoute].flatMap(route => route?.segs ?? [])
@@ -67,23 +67,13 @@ export const CommunityDetailView: React.FC<Props> = ({
       .map(segment => [segment.id, segment] as const)
   ).values()];
 
-  const routeStateText = !activeRoute
-    ? t('Chưa đủ dữ liệu tuyến', 'Insufficient route data')
-    : bothRoutesBlocked
-    ? t('Cả hai tuyến bị chặn', 'Both routes blocked')
-    : directRoute?.status === 'blocked'
-    ? t('Đường chính bị chặn', 'Main road blocked')
-    : isBlocked
-    ? t('Có đoạn bị chặn', 'Contains a blocked section')
-    : isUncertain
-    ? t('Cần xác minh', 'Verification needed')
-    : t('Chưa xác minh toàn tuyến', 'Full route unverified');
+  const routeStateText = t(...communityAccessText({ direct: directRoute, candidate: candidateRoute }));
 
   const warningText = bothRoutesBlocked
-    ? t('Đường chính và đường vòng đều có đoạn bị chặn. Cần xác minh tuyến khác.', 'Both mapped routes contain blocked sections. Verify another access option.')
+    ? t('Cả hai tuyến đã biết đều có đoạn bị chặn. Cần tìm phương án khác.', 'Both mapped routes contain blocked sections. Find another access option.')
     : isBlocked
     ? directRoute && effectiveRouteType === 'direct'
-      ? t('Đường chính bị chặn. Xem phương án đường vòng.', 'Main road blocked. Review the bypass option.')
+      ? t('Tuyến này có đoạn bị chặn. Chọn tuyến khác để so sánh.', 'This route contains a blocked section. Select another route to compare.')
       : t('Tuyến có đoạn bị chặn. Cần xác minh phương án khác.', 'Route contains a blocked section. Verify another access option.')
     : activeRoute?.segs.some((s) => s.cls === 'track')
     ? t('Đường mòn, chưa xác minh khả năng xe đi qua.', 'Mountain track. Vehicle access unverified.')
@@ -135,7 +125,7 @@ export const CommunityDetailView: React.FC<Props> = ({
           <div>
             <div className="decision-overview">
               <div>
-                <small>{t('Tiếp cận', 'Access')}</small>
+                <small>{t('Các tuyến đã biết', 'Mapped access routes')}</small>
                 <strong>{routeStateText}</strong>
               </div>
             </div>
@@ -143,8 +133,11 @@ export const CommunityDetailView: React.FC<Props> = ({
             {activeRoute ? <div className="decision-route">
               <div className="section-line">
                 <h3>
-                  {isBlocked ? t('Tình trạng tuyến', 'Route condition') : t('Phương án tiếp cận', 'Access option')}
+                  {t('Tuyến đang xem', 'Selected route')}
                 </h3>
+                <StatusText tone={isBlocked ? 'critical' : 'warning'} icon={isBlocked ? 'blocked' : 'uncertain'}>
+                  {isBlocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}
+                </StatusText>
               </div>
 
               <strong>{t(activeRoute.name[0], activeRoute.name[1])}</strong>
@@ -249,7 +242,14 @@ export const CommunityDetailView: React.FC<Props> = ({
 
         {detailTab === 'evidence' && (
           <div>
-            <section className="assessment-basis"><h3>{t('Căn cứ đánh giá', 'Assessment basis')}</h3><p>{t('Tình trạng các đoạn đường được đối chiếu với báo cáo ảnh hưởng và tình trạng liên lạc.', 'Road-section conditions are checked against impact reports and community contact.')}</p></section>
+            <section className="assessment-basis">
+              <h3>{t('Căn cứ đánh giá', 'Assessment basis')}</h3>
+              <dl className="community-reference">
+                <div><dt>{t('Lý do ưu tiên', 'Priority basis')}</dt><dd>{t(...assessment.reason)}</dd></div>
+                <div><dt>{t('Khả năng tiếp cận', 'Access assessment')}</dt><dd>{routeStateText}</dd></div>
+              </dl>
+              <button className="text-button" onClick={onOpenSources}>{t('Phương pháp và nguồn dữ liệu', 'Method and data sources')}</button>
+            </section>
             <dl className="community-reference">
               <div><dt>{t('Dân số tham chiếu', 'Baseline population')}</dt><dd>{community.pop} {t('người', 'residents')}, {community.hh} {t('hộ', 'households')}</dd></div>
               <div><dt>{t('Địa hình tại địa bàn', 'Local terrain')}</dt><dd>{terrainCovered === false ? t('Ngoài phạm vi DEM', 'Outside DEM coverage') : terrainCovered === true ? t('Có dữ liệu độ cao', 'Elevation data available') : t('Chưa đánh giá', 'Not assessed')}</dd></div>
@@ -257,9 +257,6 @@ export const CommunityDetailView: React.FC<Props> = ({
             <section className="workflow-section" style={{ borderTop: 0 }}>
               <div className="section-line">
                 <h3>{t('Thông tin tại địa bàn', 'Community findings')}</h3>
-                <button className="text-button" onClick={onOpenSources}>
-                  {t('Tất cả nguồn', 'All sources')}
-                </button>
               </div>
               {community.facts.map((f, i) => (
                 <div key={i} className="fact">

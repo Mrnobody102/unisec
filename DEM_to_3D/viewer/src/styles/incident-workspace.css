@@ -138,6 +138,26 @@
   font-weight: 400;
   color: var(--ws-muted);
 }
+
+/* Body copy and actions need spacing even though the global paragraph reset is 0. */
+.workflow-section > p { font-size: 13px; line-height: 1.65; }
+.workflow-section > p + p,
+.workflow-section > p + .button,
+.workflow-section > p + .text-button { margin-top: 12px; }
+.area-facts { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin: 0 0 20px; }
+.area-facts dt { color: var(--ws-muted); font-size: 12px; margin-bottom: 6px; }
+.area-facts dd { margin: 0; font-size: 22px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.area-facts small { font-size: 13px; font-weight: 400; }
+.area-action .button { width: 100%; justify-content: center; }
+.object-facts { display: grid; gap: 16px; margin: 20px 0; }
+.object-facts > div { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; }
+.object-facts dt { color: var(--ws-muted); font-size: 12px; }
+.object-facts dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.object-source { margin-top: 16px; }
+.object-reference { border-top: 1px solid var(--ws-line); padding: 16px 0; font-size: 13px; }
+.object-reference summary { cursor: pointer; color: var(--ws-muted); }
+.object-reference p { margin-top: 12px; line-height: 1.65; }
+.assessment-basis .community-reference { border: 0; padding-bottom: 0; }
 .incident-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .incident-facts dt { min-height: 36px; font-size: 12px; line-height: 1.5; }
 .incident-facts dd { font-size: 22px; font-variant-numeric: tabular-nums; }

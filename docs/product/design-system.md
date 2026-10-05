@@ -22,6 +22,9 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Trạng thái | `StatusText`: chữ và ký hiệu nhỏ. Không chỉ dựa vào màu, không đóng hộp mọi trạng thái |
 | Hàng danh sách | Tên trước, dữ kiện sau. Tên dài xuống dòng, trạng thái không chen giữa tên |
 | Panel chi tiết | Một tiêu đề, một trạng thái. Đường: ghi nhận, việc cần xử lý, nguồn. Địa bàn: tiếp cận, tuyến, căn cứ. X đóng về ngữ cảnh mở |
+| Mô tả và hành động | Cách ít nhất 12 px từ đoạn mô tả đến nút. Không dùng reset margin của paragraph làm khoảng cách mặc định |
+| Số liệu và nguồn | Diện tích và đơn vị nằm cùng dòng. Metadata dài dùng hàng nhãn/giá trị, không dùng cột KPI lớn. Nguồn ranh giới mở khi cần |
+| Tiếp cận và tuyến chọn | Tình trạng chung tính từ mọi tuyến đã biết. Tuyến đang chọn có trạng thái riêng. Không gọi tuyến ngắn nhất là đường chính nếu dữ liệu không xác nhận |
 | Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |

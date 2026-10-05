@@ -10,7 +10,13 @@ describe('map group semantics', () => {
     expect(markerPresentation([community, community], false)).toBe('overlap');
   });
   it('retains the selected object instead of replacing it with a count', () => {
-    expect(markerPresentation([landslide, { ...community, selected: true }], true)).toBe('selected-overlap');
+    expect(markerPresentation([{ ...community, selected: true }, landslide], true)).toBe('feature-overlap');
+    expect(markerPresentation([landslide, { ...community, selected: true }], true)).toBe('overlap');
     expect(markerPresentation([community], true)).toBe('single');
+  });
+  it('keeps a priority community identifiable when its symbol overlaps a nearby hazard', () => {
+    expect(markerPresentation([{ ...community, priority: 50 }, landslide], false)).toBe('feature-overlap');
+    expect(markerPresentation([{ ...community, priority: 50 }, landslide], true)).toBe('feature-overlap');
+    expect(markerPresentation([{ ...community, priority: 50 }, community], true)).toBe('cluster');
   });
 });

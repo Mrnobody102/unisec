@@ -2,10 +2,13 @@ import type { Community, IncidentModel, Locale } from '../../types/dear';
 import { localClock } from '../../features/incident/sourceTime';
 import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
+import { communityAccessText } from '../../features/routes/accessAssessment';
+import type { ScenarioRoutePair } from '../../types/dear';
 
 type Props = {
   incident: IncidentModel; locale: Locale; updated: boolean;
   communities: Community[];
+  routes: Map<string, ScenarioRoutePair>;
   blockedRoadCount: number; uncertainRoadCount: number;
   onSelectCommunity: (id: string) => void;
   onOpenTimeline: () => void; onOpenData: () => void;
@@ -13,7 +16,7 @@ type Props = {
   onOpenArea: () => void;
 };
 
-export function IncidentView({ incident, locale, updated, communities, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads, onOpenArea }: Props): JSX.Element {
+export function IncidentView({ incident, locale, updated, communities, routes, blockedRoadCount, uncertainRoadCount, onSelectCommunity, onOpenTimeline, onOpenData, onOpenCommunities, onOpenRoads, onOpenArea }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const asOf = updated ? incident.asOfUpdated : incident.asOf;
   const priorityCommunities = communities.filter(community => community.prio === 1);
@@ -35,12 +38,12 @@ export function IncidentView({ incident, locale, updated, communities, blockedRo
         <button className="text-button" onClick={onOpenRoads}>{t('Xem tình trạng đường', 'Review road conditions')}</button>
       </section>
       <section className="workflow-section">
-        <div className="section-line"><h3>{t('Địa bàn cần ưu tiên', 'Communities needing attention')}</h3></div>
+        <div className="section-line"><h3>{t('Ưu tiên kiểm tra tiếp cận', 'Prioritize access checks')}</h3></div>
         <div className="incident-priority-list">
           {priorityCommunities.map(community => {
             return <button className="incident-priority-row" key={community.id} onClick={() => onSelectCommunity(community.id)}>
               <span className="priority-community-symbol"><UiIcon name="people"/></span>
-              <span><strong>{community.name}</strong><small>{t(...community.desc)}</small></span>
+              <span><strong>{community.name}</strong><small>{t(...communityAccessText(routes.get(community.id)))}</small></span>
             </button>;
           })}
         </div>

@@ -84,9 +84,12 @@ export const ObjectDetailView: React.FC<Props> = ({
 
       <div className="sidebar-scroll">
         {kind === 'aoi' && <>
-          <dl className="incident-facts"><div><dt>{t('Diện tích đánh giá', 'Assessment area')}</dt><dd>{(areaM2(aoi.points) / 1000000).toFixed(1)} km²</dd></div><div><dt>{t('Địa bàn trong vùng', 'Communities in area')}</dt><dd>{communities.filter(community => withinArea(community.projected, aoi.points)).length}</dd></div></dl>
-          <section className="workflow-section"><h3>{t('Phạm vi tổng hợp', 'Assessment scope')}</h3><p>{t('Tổng hợp địa bàn và mạng đường trong ranh giới này. Phạm vi dữ liệu độ cao có thể nhỏ hơn.', 'Summarizes communities and the road network within this boundary. Elevation coverage may be smaller.')}</p><button className="button primary" onClick={onOpenPriority}>{t('Xem các địa bàn', 'Review communities')}</button></section>
-          <section className="workflow-section"><h3>{t('Nguồn ranh giới', 'Boundary source')}</h3><p>{t(...aoi.source)}</p></section>
+          <dl className="area-facts"><div><dt>{t('Diện tích', 'Area')}</dt><dd>{(areaM2(aoi.points) / 1000000).toFixed(1)} <small>km²</small></dd></div><div><dt>{t('Thôn, bản', 'Communities')}</dt><dd>{communities.filter(community => withinArea(community.projected, aoi.points)).length}</dd></div></dl>
+          <section className="workflow-section area-action">
+            <p>{t('Ranh giới vùng đánh giá, không phải phạm vi sạt lở hoặc ngập.', 'Assessment boundary, not a landslide or flood extent.')}</p>
+            <button className="button primary" onClick={onOpenPriority}>{t('Xem địa bàn trong vùng', 'View communities in area')}</button>
+          </section>
+          <details className="object-reference"><summary>{t('Nguồn ranh giới', 'Boundary source')}</summary><p>{t(...aoi.source)}</p></details>
         </>}
         {kind === 'road' && road && (
           <>
@@ -122,21 +125,21 @@ export const ObjectDetailView: React.FC<Props> = ({
             </StatusText>
             {hazardRecord && <p className="hazard-observation">{t(...hazardRecord.finding)}</p>}
 
-            <dl className="incident-facts" style={{ marginTop: '14px' }}>
+            <dl className="object-facts">
               {hazard.area != null && (hazard.kind === 'landslide' || hazard.kind === 'flood') && <div>
                 <dt>{t('Diện tích ước tính', 'Estimated area')}</dt>
                 <dd>{hazard.area} ha</dd>
               </div>}
               <div>
                 <dt>{t('Ghi nhận ảnh hưởng', 'Impact recorded')}</dt>
-                <dd style={{ fontSize: '13px' }}>{hazard.detected}</dd>
+                <dd>{hazard.detected}</dd>
               </div>
             </dl>
 
             {affectedRoads.length > 0 && <section className="workflow-section"><h3>{t('Đoạn đường liên quan', 'Related road sections')}</h3>{affectedRoads.map(item => <button className="object-row impact-row" key={item.id} onClick={() => onSelectObject(`road:${item.id}`)}><span><strong>{t(...item.name)}</strong><small>{item.len} km</small></span><StatusText tone={item.status === 'blocked' ? 'critical' : item.status === 'uncertain' ? 'warning' : 'neutral'} icon={item.status === 'blocked' ? 'blocked' : item.status === 'uncertain' ? 'uncertain' : undefined}>{item.status === 'blocked' ? t('Bị chặn', 'Blocked') : item.status === 'uncertain' ? t('Chưa rõ', 'Uncertain') : t('Chưa ghi nhận chặn', 'No blockage reported')}</StatusText></button>)}</section>}
 
-            <p style={{ marginTop: '8px' }}>
-              {t('Nguồn căn cứ: ', 'Source basis: ')}
+            <p className="object-source">
+              {t('Nguồn: ', 'Source: ')}
               <strong>{t(hazard.src[0], hazard.src[1])}</strong>
             </p>
 
@@ -158,7 +161,7 @@ export const ObjectDetailView: React.FC<Props> = ({
                 'Starting staging point for all access options in the Nậm Kha incident.'
               )}
             </p>
-            {site.kind === 'hlz' && <dl className="incident-facts"><div><dt>{t('Trạng thái khảo sát', 'Survey status')}</dt><dd>{site.assessment === 'assessed' ? t('Đã khảo sát', 'Assessed') : site.assessment === 'unavailable' ? t('Không sử dụng', 'Unavailable') : t('Vị trí đề xuất', 'Proposed location')}</dd></div><div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(site.source[0], site.source[1])}</dd></div><div><dt>{t('Cập nhật', 'Updated')}</dt><dd>{new Date(site.observedAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</dd></div></dl>}
+            {site.kind === 'hlz' && <dl className="object-facts"><div><dt>{t('Trạng thái khảo sát', 'Survey status')}</dt><dd>{site.assessment === 'assessed' ? t('Đã khảo sát', 'Assessed') : site.assessment === 'unavailable' ? t('Không sử dụng', 'Unavailable') : t('Vị trí đề xuất', 'Proposed location')}</dd></div><div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(site.source[0], site.source[1])}</dd></div><div><dt>{t('Cập nhật', 'Updated')}</dt><dd>{new Date(site.observedAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</dd></div></dl>}
             {site.kind === 'hlz' && site.assessment === 'candidate' && <section className="workflow-section"><h3>{t('Cần khảo sát', 'Survey required')}</h3><p>{t('Độ phẳng, vật cản và hướng tiếp cận trước khi xác nhận điểm hạ cánh.', 'Ground levelness, obstacles and approach direction before confirming a landing site.')}</p></section>}
             {site.kind === 'staging' && <button
               className="button primary"

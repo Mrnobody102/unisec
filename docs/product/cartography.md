@@ -1,6 +1,6 @@
 # Hiển thị bản đồ
 
-Cập nhật: 2026-10-04. Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
+Cập nhật: 2026-10-05. Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 
 ## Ký hiệu và tỷ lệ
 
@@ -20,8 +20,8 @@ Cập nhật: 2026-10-04. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 
 - Điểm dùng biểu tượng 28 px, không mô tả kích thước thật. Zoom làm thay đổi vị trí và mật độ nhãn, không phóng icon theo địa hình.
 - Nhãn ưu tiên đối tượng đang chọn, cộng đồng ưu tiên, điểm tập kết, rồi địa danh khác. Đo độ rộng theo font thực, thử nhiều vị trí, ẩn nhãn khi không còn chỗ. Tránh đè marker, nhãn và điều khiển.
-- Điểm chồng nhau dùng ký hiệu nhóm 34 px tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc phóng tới các điểm.
-- Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Khác loại hoặc trong 3D dùng ký hiệu chồng lớp, không hiện tổng số. Đối tượng được chọn giữ ký hiệu và tên khi có chỗ hiển thị. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
+- Điểm chồng nhau dùng ký hiệu nhóm 34 px tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc chọn **Xem khu vực này** để tách điểm. Nhóm điểm gần nhau không có nghĩa là các điểm trùng tọa độ.
+- Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Khác loại hoặc trong 3D không hiện tổng số, giữ ký hiệu/tên địa bàn ưu tiên làm điểm đại diện khi có chỗ. Đối tượng đang chọn giữ ký hiệu và dấu nhóm. Nếu điểm chọn nằm sau điều khiển, không gắn tên của nó lên điểm khác. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
 - Polygon phải bám hình học thật. Chỉ có tọa độ điểm thì không vẽ vòng tròn/ellipse giả làm phạm vi sạt lở hoặc ngập.
 - Lớp, tìm kiếm và đo nằm cùng thanh trên trái. Chú giải dưới trái chỉ liệt kê lớp đang hiện. Bản gọn giải thích mạng đường, tình trạng đường và tuyến đang xem. Mở rộng để xem ký hiệu điểm và AOI. Mở lớp tạm ẩn chú giải để hai khối không che nhau.
 - 2D dùng Bắc địa lý và thước khoảng cách ngang tại tâm bản đồ theo zoom. 3D dùng Bắc lưới, xoay theo camera. Không dùng thước phẳng cho góc nhìn nghiêng.

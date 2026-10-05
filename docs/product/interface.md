@@ -23,7 +23,7 @@ Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết 
 | Vị trí | Thông tin chính | Mở khi cần |
 |---|---|---|
 | Sự kiện | Sự kiện, giờ kích hoạt, dữ liệu đến, địa bàn ưu tiên, số đoạn bị chặn/chưa rõ | Diễn biến phân tích, nguồn dữ liệu |
-| Chi tiết địa bàn | Lý do ưu tiên, tiếp cận, phương án và việc cần xử lý | Tuyến, căn cứ, dân số tham chiếu |
+| Chi tiết địa bàn | Lý do ưu tiên, tình trạng các tuyến đã biết, tuyến đang chọn và việc cần xử lý | So tuyến, căn cứ cụ thể, dân số tham chiếu |
 | Tuyến | Danh sách so sánh phương án, khoảng cách, ETA có điều kiện, tình trạng từng đoạn | Địa hình dọc tuyến, nguồn của đoạn đường |
 | Đường sá | Tên, trạng thái, chiều dài. Đoạn bị chặn xếp trước | Ghi nhận, việc cần xử lý, bản ghi nguồn |
 | Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Thanh tìm/lớp/đo trên trái, chú giải dưới trái, nguồn sau nút thông tin |
@@ -41,7 +41,9 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 |---|---|
 | Đo trên bản đồ | Chuyển sang 2D, đóng lớp/mặt cắt. Chọn điểm để đo ngang. Không đổi tuyến hoặc căn cứ. Chọn địa bàn/đường từ panel kết thúc chế độ đo |
 | Chọn địa bàn mới | Mở chi tiết và tuyến mặc định của địa bàn |
-| Tìm trên bản đồ | Tìm bằng tên/mã hoặc tiếng Việt không dấu. Enter mở kết quả, bật lớp của đối tượng nếu đang tắt và đưa bản đồ đến vị trí đó |
+| Đổi tuyến | Đổi tuyến trên bản đồ và thông tin tuyến đang xem. Tình trạng tiếp cận chung của địa bàn vẫn dựa trên tất cả tuyến đã biết |
+| Chọn số đoạn bị chặn/chưa rõ | Xóa từ khóa tìm kiếm, mở nhóm đường tương ứng, kể cả khi đang xem điểm ảnh hưởng |
+| Tìm trên bản đồ | Tìm tên/mã hoặc tiếng Việt không dấu. Enter chọn khi danh sách mở. Escape đóng, phím lên/xuống mở lại. Chọn kết quả bật lớp tương ứng và đưa đối tượng vào vùng nhìn |
 | Bấm lại địa bàn đang xem | Giữ tab và tuyến đã chọn |
 | Chọn đoạn đường hoặc điểm ảnh hưởng | Thay nội dung trong cùng panel. Đưa điểm vào vùng nhìn nếu đang ngoài màn hình hoặc sau điều khiển |
 | Đóng chi tiết | Trở về nơi mở chi tiết, giữ tìm kiếm, bộ lọc và vị trí cuộn |
@@ -53,10 +55,10 @@ Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. B�
 | So ảnh | Chọn hai GeoTIFF có ngày, nguồn và vùng chung. Pan/zoom cùng bản đồ, kéo thanh để so. Vùng thiếu ảnh để trống. Không tự xác nhận sạt lở |
 | Đặt lại phiên | Về dữ liệu ban đầu, bỏ lựa chọn/bộ lọc/hình đo và cặp ảnh tạm. Giữ font, theme và chiều rộng panel |
 | Đổi tuyến khi mở mặt cắt | Lấy mẫu tuyến mới, đặt vị trí đọc về đầu tuyến |
-| Nhiều điểm quá gần nhau | Số đếm cho nhóm cùng loại trên 2D. Nhóm khác loại hoặc 3D có danh sách chọn. Giữ ký hiệu đối tượng đang xem |
+| Nhiều điểm quá gần nhau | Số đếm cho nhóm cùng loại trên 2D. Nhóm khác loại hoặc 3D có danh sách chọn. Giữ tên địa bàn ưu tiên và đối tượng đang xem khi có chỗ. Xem khu vực để tách các điểm |
 | GLB hoặc GPU lỗi | Chuyển về 2D, giữ lựa chọn. 2D không tải mô hình GLB |
 | Lưu đánh giá | Chụp snapshot khi mở xem trước. Mọi định dạng dùng cùng snapshot. Đóng và mở lại sau khi đổi tuyến hoặc cập nhật tin để lấy đánh giá mới |
 
 Không có nút điều động, giao nhiệm vụ hay xác nhận cứu hộ khi chưa có quy trình và dữ liệu tương ứng. Dữ liệu mô phỏng được ghi trong **Nguồn dữ liệu**, không gắn nhãn cuộc thi lên màn thao tác.
 
-Quy tắc tính ưu tiên và tuyến: [phân tích ứng phó](../architecture/response-analysis.md). Thành phần: [design system](design-system.md). Ký hiệu và mặt cắt: [hiển thị bản đồ](cartography.md). Luồng trình diễn: [demo](../operations/demo.md).
+Quy tắc tính ưu tiên và tuyến: [phân tích ứng phó](../architecture/response-analysis.md). Thành phần: [design system](design-system.md). Ký hiệu và mặt cắt: [hiển thị bản đồ](cartography.md). Luồng trình diễn: [walkthrough](../operations/walkthrough.md).

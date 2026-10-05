@@ -1,6 +1,6 @@
 # Hợp đồng dữ liệu
 
-Cập nhật: 2026-10-02. Gói hiện hành: [Chế Tạo v0.2](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.2/manifest.json), dữ liệu mô phỏng ở trạng thái `draft`.
+Cập nhật: 2026-10-05. Gói hiện hành: [Chế Tạo v0.2](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.2/manifest.json), dữ liệu mô phỏng ở trạng thái `draft`.
 
 ## Gói hiện hành
 
@@ -49,6 +49,8 @@ Liên hệ cần truy được: **địa bàn, tuyến, đoạn đường, đi�
 | `GET /api/health` | Trạng thái và phiên bản dữ liệu |
 
 Chạy bằng `npm run serve:workspace` sau build. Đây là dịch vụ cục bộ chỉ đọc. Chưa có tiếp nhận tin, xử lý ảnh, phân quyền hoặc lưu thay đổi. `workspace-config.json` chọn nguồn `prepared` hoặc `api`; API lỗi phải báo lỗi, không lấy bộ mô phỏng thay thế.
+
+Luồng ghi cần hợp đồng v2 cho nhiều báo cáo và revision công bố, xem [tiếp nhận dữ liệu](data-ingestion.md). Đây là thiết kế dự kiến, thuộc [kế hoạch nghiên cứu backend](../plans/backend.md), không triển khai trong đợt demo hiện tại. Không thêm báo cáo tùy ý vào packet v1 hoặc đổi cờ `updated` rồi coi là đã lưu backend.
 
 ## Mở rộng cho dữ liệu thực
 

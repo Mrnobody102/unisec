@@ -4,7 +4,7 @@ import { buildScenarioRoutes, initialRoadSegments, scenarioHazards } from '../..
 
 describe('community access assessment', () => {
   it('keeps a blocked main road distinct from an unverified bypass', () => {
-    expect(communityAccessText(buildScenarioRoutes(initialRoadSegments).get('NK'))[0]).toBe('Đường chính bị chặn, đường vòng cần xác minh');
+    expect(communityAccessText(buildScenarioRoutes(initialRoadSegments).get('NK'))[0]).toBe('Có tuyến bị chặn, tuyến khác cần xác minh');
   });
   it('limits blockage conclusions to the routes actually mapped', () => {
     const roads = initialRoadSegments.map(road => road.id === 'E13' ? { ...road, status: 'blocked' as const } : road);

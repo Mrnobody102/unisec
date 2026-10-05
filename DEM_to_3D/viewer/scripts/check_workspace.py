@@ -234,7 +234,7 @@ def run(url, chrome, captures, prepared=False):
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
         expect(page.locator('.sidebar h1')).to_have_text('Nậm Khắt')
         expect(page.locator('.header-data')).to_contain_text('09:45')
-        expect(page.locator('.decision-overview')).to_contain_text('Cả hai tuyến bị chặn')
+        expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
         page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
         with page.expect_download() as download:

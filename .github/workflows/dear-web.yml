@@ -48,4 +48,5 @@ jobs:
           python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
           python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
           python scripts/check_layer_sources.py
+          python scripts/check_panel_usability.py
           python scripts/check_session.py --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json

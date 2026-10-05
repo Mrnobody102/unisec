@@ -16,6 +16,8 @@
 | Thế nào là hoàn thành? | [Tiêu chí nghiệm thu](quality/acceptance.md) | Cả nhóm |
 | Luồng ứng phó hiện tại đã ổn chưa? | [Rà soát giao diện](quality/workspace-review.md) | PO, SW, RS |
 | Dùng công nghệ gì, chia phần mềm thế nào? | [Kiến trúc hệ thống](architecture/overview.md) | SW, AI |
+| Backend cần xây gì, chọn công nghệ và triển khai thế nào? | [Kế hoạch backend](plans/backend.md), chỉ nghiên cứu | SW, AI, RS, PO |
+| Luồng nhập trên bản đồ/admin cần dữ liệu và API gì? | [Tiếp nhận và công bố dữ liệu](architecture/data-ingestion.md), thiết kế dự kiến | SW, AI, RS, PO |
 | Mức ưu tiên và tuyến được tính từ đâu? | [Phân tích ứng phó](architecture/response-analysis.md) | Cả nhóm |
 | Bản đồ và nhận định được lưu thế nào? | [Bản xuất đánh giá](architecture/decision-export.md) | SW, PO, RS |
 | Dữ liệu bàn giao theo định dạng nào? | [Đặc tả dữ liệu](architecture/data-contract.md) | SW, AI, RS |

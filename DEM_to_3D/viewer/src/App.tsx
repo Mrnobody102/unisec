@@ -367,6 +367,11 @@ export default function App(): JSX.Element {
 
   const selectCommunity = useCallback((id: string) => {
     setMeasurementOpen(false);
+    if (id === selectedCommunityId) {
+      setSelectedObjectId(null);
+      setMobileView('info');
+      return;
+    }
     if (!selectedCommunityId) setCommunityOrigin({ view, objectId: selectedObjectId });
     if (id !== selectedCommunityId) setSelectedRouteType('candidate');
     setSelectedCommunityId(id);
@@ -490,7 +495,7 @@ export default function App(): JSX.Element {
                 setEvidenceModalId(hzId);
                 setActiveDialog('evidence');
               }}
-              onOpenPriority={() => changeView('priority')}
+              onOpenPriority={() => { setCommunityFilter('all'); setCommunityQuery(''); changeView('priority'); }}
             />
           ) : selectedCommunity && selectedRoutePair ? (
             <CommunityDetailView
@@ -530,12 +535,13 @@ export default function App(): JSX.Element {
               locale={locale}
               updated={updated}
               communities={communities}
+              routes={routes}
               blockedRoadCount={roads.filter(road => road.status === 'blocked').length}
               uncertainRoadCount={roads.filter(road => road.status === 'uncertain').length}
               onSelectCommunity={selectCommunity}
               onOpenTimeline={() => setActiveDialog('timeline')}
               onOpenData={() => setActiveDialog('data')}
-              onOpenCommunities={() => { setCommunityFilter('all'); changeView('priority'); }}
+              onOpenCommunities={() => { setCommunityFilter('all'); setCommunityQuery(''); changeView('priority'); }}
               onOpenRoads={() => changeView('impact')}
             />
           ) : view === 'impact' ? (
@@ -550,7 +556,7 @@ export default function App(): JSX.Element {
               onChangeTab={setImpactTab}
               onChangeRoadFilter={setRoadFilter}
               onSelectObject={inspectObject}
-              onNext={() => setView('priority')}
+              onNext={() => { setCommunityFilter('priority'); setCommunityQuery(''); changeView('priority'); }}
             />
           ) : (
             <CommunityListView
@@ -562,6 +568,7 @@ export default function App(): JSX.Element {
               onChangeFilter={setCommunityFilter}
               onSelectCommunity={selectCommunity}
               selectedId={selectedCommunityId}
+              routes={routes}
             />
           )}
         </aside>

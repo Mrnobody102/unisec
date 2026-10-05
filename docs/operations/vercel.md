@@ -53,4 +53,19 @@ Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu
 | Web gọi `localhost` hoặc `/api/v1/...` | Xóa `VITE_DEAR_API_BASE`, kiểm tra config là prepared, redeploy |
 | URL vẫn chạy bản cũ | Kiểm tra commit của deployment và nhánh production |
 
-Khi tích hợp backend thật: deploy API riêng qua HTTPS, cấu hình CORS cho domain web và đặt `VITE_DEAR_API_BASE` trước khi build lại. Các biến `VITE_*` có thể đọc từ trình duyệt, không dùng để chứa khóa bí mật. Xem [Vercel Vite](https://vercel.com/docs/frameworks/frontend/vite).
+## Backend sau này
+
+Bản demo hiện tại chỉ cần project Vite này. Không cần triển khai API, database hoặc worker để trình diễn luồng đã chuẩn bị. Giữ `dataSource: "prepared"` và để trống `VITE_DEAR_API_BASE`.
+
+Định hướng API là NestJS/TypeScript, dữ liệu PostgreSQL/PostGIS, worker Python khi xử lý ảnh. NestJS có thể deploy thành project thứ hai ngay trên [Vercel Functions](https://vercel.com/docs/frameworks/backend/nestjs), hoặc dịch vụ riêng. Không bắt buộc dùng VPS riêng.
+
+| Khi tích hợp API | Cách nối |
+|---|---|
+| Cùng domain web | Rewrite `/api/:path*` đến API. Chế độ API phải được bật rõ trong config |
+| Khác domain | API HTTPS, CORS đúng domain web, cấu hình `VITE_DEAR_API_BASE` trước khi build |
+| Dữ liệu dùng chung | DB và kho file bền vững ngoài Functions, không lưu báo cáo vào file tạm của function |
+| Nhập ảnh/DEM lớn | Upload trực tiếp vào kho file bằng URL có thời hạn; API nhận metadata và kiểm tra file |
+
+Cấu hình demo hiện tại chưa thêm các kết nối này. API ghi sẽ dùng adapter/contract v2, không đưa nhiều báo cáo vào packet v1. API lỗi phải báo lỗi, không đổi sang prepared. Các biến `VITE_*` đọc được từ trình duyệt, không chứa khóa bí mật.
+
+Lộ trình ở [kế hoạch backend](../plans/backend.md). Căn cứ triển khai: [Vercel Vite](https://vercel.com/docs/frameworks/frontend/vite), [rewrites](https://vercel.com/docs/routing/rewrites), [giới hạn Functions](https://vercel.com/docs/functions/limitations).

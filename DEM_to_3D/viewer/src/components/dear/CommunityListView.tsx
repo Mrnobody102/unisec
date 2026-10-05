@@ -2,6 +2,9 @@ import { UiIcon } from './UiIcon';
 import React from 'react';
 import type { Community, CommunityFilter, Locale } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
+import { normalizeSearch } from '../../features/search/searchIndex';
+import { communityAccessText } from '../../features/routes/accessAssessment';
+import type { ScenarioRoutePair } from '../../types/dear';
 
 type Props = {
   communities: Community[];
@@ -12,6 +15,7 @@ type Props = {
   onChangeFilter: (f: CommunityFilter) => void;
   onSelectCommunity: (id: string) => void;
   selectedId: string | null;
+  routes: Map<string, ScenarioRoutePair>;
 };
 
 export const CommunityListView: React.FC<Props> = ({
@@ -22,7 +26,8 @@ export const CommunityListView: React.FC<Props> = ({
   onChangeQuery,
   onChangeFilter,
   onSelectCommunity,
-  selectedId
+  selectedId,
+  routes
 }) => {
 
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
@@ -36,7 +41,7 @@ export const CommunityListView: React.FC<Props> = ({
     })
     .filter((c) => {
       const text = `${c.name} ${c.commune} ${c.desc[0]} ${c.desc[1]}`.toLowerCase();
-      return text.includes(query.toLowerCase());
+      return normalizeSearch(text).includes(normalizeSearch(query));
     });
 
   return (
@@ -104,7 +109,7 @@ export const CommunityListView: React.FC<Props> = ({
                   {c.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
                 </StatusText>
               </span>
-              <p>{t(c.desc[0], c.desc[1])}</p>
+              <p>{t(...communityAccessText(routes.get(c.id)))}</p>
             </button>
           ))
         )}

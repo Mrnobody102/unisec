@@ -59,12 +59,13 @@ Renderer không quyết định ưu tiên. Component không giữ một bản b�
 
 ## Pipeline theo proposal
 
-| Bước proposal | Hiện tại | Phần cần tích hợp |
+| Giai đoạn proposal | Hiện tại | Phần cần tích hợp |
 |---|---|---|
-| Theo dõi và trigger | Mốc và thông báo trong gói mô phỏng | GPM, ngưỡng trigger, feed sự kiện |
-| Thu nhận, tiền xử lý ảnh | Có dữ liệu nền địa hình và ảnh | SAR trước/sau, căn chỉnh, vùng quan sát hợp lệ |
-| Nhận diện sạt lở | Các điểm đã chuẩn bị | Mô hình AI, chất lượng và kiểm chứng |
-| Đánh giá tiếp cận | Tính trên mạng đường mẫu và báo cáo | Mạng đường đủ vùng, điều kiện phương tiện, chính sách nghiệp vụ |
-| Bản đồ ưu tiên | Có luồng địa bàn, tuyến, căn cứ và xuất PNG/PDF/JSON/GeoJSON | Dữ liệu được RS/PO duyệt, thử bản xuất trên máy trình chiếu |
+| 1. Chuẩn bị trước sự kiện | Ảnh nền, DEM và mạng đường mẫu | SAR tham chiếu, bản đồ nhạy cảm sạt lở, dữ liệu nền được duyệt |
+| 2. Kích hoạt sự kiện | Mốc trigger và thông báo mô phỏng | Mưa GPM, ngưỡng kích hoạt, yêu cầu ảnh khẩn cấp qua DMC |
+| 3. Phân tích sau sự kiện | Báo cáo ảnh hưởng, tính tuyến và ưu tiên bằng quy tắc. Có công cụ so GeoTIFF | So SAR trước/sau, AI nhận diện tác động, Community Isolation Score và kiểm chứng mạng đường |
+| 4. Sản phẩm hỗ trợ quyết định | Bản đồ ưu tiên, tuyến, căn cứ, H đề xuất. Xuất PNG/PDF/JSON/GeoJSON, chạy online/offline | Điểm và vùng tác động được duyệt, điểm số rủi ro/ưu tiên theo phương pháp thống nhất, GeoPackage |
 
-Sau SIC, triển khai FastAPI, PostgreSQL/PostGIS, kho ảnh/tile và worker Python khi cần nhận dữ liệu, xử lý ảnh, duyệt công bố hoặc nhiều người dùng. Worker tạo kết quả phân tích, API công bố snapshot, web trình bày và kiểm tra phương án. LLM không nằm trong đường tính ưu tiên hiện tại.
+Ưu tiên hiện tại là demo SIC, deploy Vite trên Vercel bằng dữ liệu prepared và không cần backend. Định hướng phần mở rộng là NestJS/TypeScript, PostgreSQL/PostGIS và worker Python khi tích hợp xử lý ảnh, chưa triển khai. Kiến trúc và phương án deploy ở [kế hoạch backend](../plans/backend.md). LLM không nằm trong đường tính ưu tiên hiện tại.
+
+[Tiếp nhận và công bố dữ liệu](data-ingestion.md) mô tả nghiệp vụ và contract dự kiến cho luồng ghi. Các luồng này không thuộc bản demo hiện tại.

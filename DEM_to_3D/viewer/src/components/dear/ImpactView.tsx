@@ -2,6 +2,7 @@ import { UiIcon } from './UiIcon';
 import React from 'react';
 import type { Hazard, ImpactTab, Locale, RoadFilter, RoadSegment } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
+import { normalizeSearch } from '../../features/search/searchIndex';
 
 type Props = {
   roads: RoadSegment[];
@@ -44,7 +45,7 @@ export const ImpactView: React.FC<Props> = ({
     })
     .filter((r) => {
       const text = `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${r.hz || ''}`.toLowerCase();
-      return text.includes(query.toLowerCase());
+      return normalizeSearch(text).includes(normalizeSearch(query));
     })
     .sort((a, b) => {
       const rank = { blocked: 0, uncertain: 1, open: 2 };
@@ -53,7 +54,7 @@ export const ImpactView: React.FC<Props> = ({
 
   const filteredHazards = hazards.filter((h) => {
     const text = `${h.name[0]} ${h.name[1]} ${h.id} ${h.src[0]} ${h.src[1]}`.toLowerCase();
-    return text.includes(query.toLowerCase());
+    return normalizeSearch(text).includes(normalizeSearch(query));
   });
 
   return (
@@ -64,8 +65,8 @@ export const ImpactView: React.FC<Props> = ({
         <div className="impact-metrics">
           <button
             data-road-filter="blocked"
-            aria-pressed={roadFilter === 'blocked'}
-            onClick={() => onChangeRoadFilter(roadFilter === 'blocked' ? 'all' : 'blocked')}
+            aria-pressed={tab === 'roads' && roadFilter === 'blocked'}
+            onClick={() => { onChangeQuery(''); onChangeTab('roads'); onChangeRoadFilter(tab === 'roads' && roadFilter === 'blocked' ? 'all' : 'blocked'); }}
           >
             <strong>{blockedCount}</strong>
             <span>{t('Bị chặn', 'Blocked')}</span>
@@ -73,8 +74,8 @@ export const ImpactView: React.FC<Props> = ({
 
           <button
             data-road-filter="uncertain"
-            aria-pressed={roadFilter === 'uncertain'}
-            onClick={() => onChangeRoadFilter(roadFilter === 'uncertain' ? 'all' : 'uncertain')}
+            aria-pressed={tab === 'roads' && roadFilter === 'uncertain'}
+            onClick={() => { onChangeQuery(''); onChangeTab('roads'); onChangeRoadFilter(tab === 'roads' && roadFilter === 'uncertain' ? 'all' : 'uncertain'); }}
           >
             <strong>{uncertainCount}</strong>
             <span>{t('Chưa rõ', 'Uncertain')}</span>
@@ -82,8 +83,8 @@ export const ImpactView: React.FC<Props> = ({
 
           <button
             data-road-filter="all"
-            aria-pressed={roadFilter === 'all'}
-            onClick={() => onChangeRoadFilter('all')}
+            aria-pressed={tab === 'roads' && roadFilter === 'all'}
+            onClick={() => { onChangeQuery(''); onChangeTab('roads'); onChangeRoadFilter('all'); }}
           >
             <strong>{roads.length}</strong>
             <span>{t('Đoạn đường', 'Segments')}</span>
@@ -152,7 +153,7 @@ export const ImpactView: React.FC<Props> = ({
           <div>
             {filteredHazards.length === 0 ? (
               <p className="small" style={{ padding: '16px 0', color: 'var(--ws-muted)' }}>
-                {t('Không có vùng ảnh hưởng phù hợp.', 'No hazard areas match the filter.')}
+                {t('Không tìm thấy điểm ảnh hưởng.', 'No matching impact sites.')}
               </p>
             ) : (
               filteredHazards.map((hz) => (
