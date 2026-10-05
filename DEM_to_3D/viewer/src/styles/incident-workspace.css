@@ -167,8 +167,8 @@
 .assessment-action span { color: var(--ws-text); }
 .decision-route > strong, .decision-overview strong { font-size: 14px; }
 .community-heading strong { font-weight: 600; }
-.incident-priority-row { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 12px; width: 100%; padding: 14px 0; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 0; background: transparent; text-align: left; }
-.incident-priority-row:first-child { padding-top: 2px; }
+.incident-priority-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; gap: 12px; width: calc(100% + 24px); margin-inline: -12px; padding: 16px 12px; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 4px; background: transparent; text-align: left; }
+.incident-priority-row:hover { background: var(--hover); }
 .incident-priority-row:last-child { border-bottom: 0; }
 .incident-priority-row:hover strong { color: var(--select-ink); }
 .incident-priority-row strong { display: block; font-size: 15px; }

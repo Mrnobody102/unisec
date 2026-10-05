@@ -139,11 +139,11 @@
   --open: #10b981;
   --open-soft: rgba(16, 185, 129, 0.16);
   --open-ink: #4edea3;
-  --primary: #a3d5c4;
-  --on-primary: #102a23;
-  --select: #8bceba;
-  --select-soft: rgba(139, 206, 186, 0.12);
-  --select-ink: #b4e1d2;
+  --primary: #a8cdf3;
+  --on-primary: #122a42;
+  --select: #83b6eb;
+  --select-soft: rgba(131, 182, 235, 0.12);
+  --select-ink: #bbd9f6;
   --prio-3: #8a93a6;
   --flood: #22d3ee;
   --focus: var(--select);
@@ -158,14 +158,15 @@
   --shadow-panel: 0 12px 32px -4px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.30);
   --shadow-pop: 0 8px 24px rgba(0,0,0,0.50);
 
-  --ws-bg: #101c20;
-  --ws-surface: #19282d;
-  --ws-text: #e7eeeb;
-  --ws-muted: #a4b6b6;
-  --ws-line: #314347;
-  --ws-brand: #a3d5c4;
-  --ws-tint: #223b36;
+  --ws-bg: #141c26;
+  --ws-surface: #1b2531;
+  --ws-text: #e8edf3;
+  --ws-muted: #a5b4c4;
+  --ws-line: #334252;
+  --ws-brand: #a8cdf3;
+  --ws-tint: #23354b;
   --ws-map: #0b1220;
+  --shadow-map-control: 0 2px 8px rgba(0,0,0,0.24);
 }
 
 [data-theme="light"] {
@@ -189,11 +190,11 @@
   --open: #059669;
   --open-soft: rgba(5, 150, 105, 0.10);
   --open-ink: #047857;
-  --primary: #163b35;
+  --primary: #225c96;
   --on-primary: #ffffff;
-  --select: #197663;
-  --select-soft: #edf5f1;
-  --select-ink: #166553;
+  --select: #2563a6;
+  --select-soft: #edf3f9;
+  --select-ink: #225c96;
   --prio-3: #64748b;
   --flood: #0891b2;
   --focus: var(--select);
@@ -206,16 +207,17 @@
   --map-halo: #ffffff;
   --map-building: #475569;
   --shadow-panel: 0 12px 32px -8px rgba(15,23,42,0.20), 0 2px 6px rgba(15,23,42,0.08);
-  --shadow-pop: 0 8px 24px rgba(15,23,42,0.16);
+  --shadow-pop: 0 4px 16px rgba(15,23,42,0.12);
 
-  --ws-bg: #edf1ef;
+  --ws-bg: #f3f5f7;
   --ws-surface: #ffffff;
-  --ws-text: #223238;
-  --ws-muted: #617177;
-  --ws-line: #e1e7e5;
-  --ws-brand: #166553;
-  --ws-tint: #edf5f1;
+  --ws-text: #243446;
+  --ws-muted: #606f80;
+  --ws-line: #dfe5eb;
+  --ws-brand: #225c96;
+  --ws-tint: #edf3f9;
   --ws-map: #e7eeef;
+  --shadow-map-control: 0 2px 8px rgba(15,23,42,0.10);
 }
 
 :root {

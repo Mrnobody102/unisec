@@ -20,8 +20,12 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Vẽ và kết thúc đo thiếu rõ ràng | Tách vẽ/xem/chỉnh sửa. Nhấp đúp điểm cuối, Enter hoặc nút Kết thúc. Đóng tạm dừng bản vẽ; Hủy chỉnh sửa khôi phục kết quả cũ |
 | Mục mở rộng và hàng lớp bị lệch | Chevron nét mảnh ở cuối hàng. Căn giữa checkbox, tên lớp và nút nguồn |
 | Không chọn được kiểu đo khi chỉnh sửa | Bỏ khóa bộ chọn. Đổi kiểu giữ kết quả hợp lệ trước khi bắt đầu phép đo mới. Kiểm tra bằng click thật và bàn phím |
+| Hàng địa bàn sát nền hover/chọn | Khoảng đệm 12/16 px, giữ nguyên vị trí chữ khi chọn. Tên và trạng thái xuống hàng khi thiếu chiều rộng |
+| Bề mặt và điều khiển chưa đồng bộ | Nền đặc, viền mảnh, giảm bóng/bo góc. Màu navy/xanh dương cho giao diện, giữ màu tình trạng bản đồ |
+| Thiếu định hướng khi xem gần | Tổng quan 2D thu gọn được, đồng bộ khung nhìn, click và bàn phím. Không tải thêm tile |
+| Ảnh nền tối và bậc màu khi đổi hệ tọa độ | Giảm bóng trên ảnh, lấy mẫu màu song tuyến tính, giữ nodata. Texture 3D dùng anisotropic filtering theo GPU |
 
-[Panel vùng đánh giá](assets/workspace-area.png) và [bãi đáp đề xuất](assets/workspace-landing-site.png) giữ từ lượt trước. Ảnh công cụ đo đã cập nhật. Lượt này chạy lại sáu bộ kiểm tra CI, gồm panel trên 1366, 1024, 390, 320 px, các địa bàn thiếu tuyến và tiếng Anh.
+[Hàng địa bàn](assets/workspace-community-hover.png), [bản đồ tổng quan](assets/workspace-overview.png) và [công cụ đo](assets/workspace-measurement.png) đã cập nhật. Lượt này chạy lại sáu bộ kiểm tra CI, gồm panel trên 1366, 1024, 390, 320 px, các địa bàn thiếu tuyến và tiếng Anh.
 
 ## Kết quả nghiệp vụ
 
@@ -50,6 +54,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
 | Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
 | Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm cùng loại mới có số đếm trên 2D. Nhóm khác loại/3D mở chọn đối tượng. Nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
+| Tổng quan | Dùng lại raster, khung nhìn thật của 2D. Thu gọn mặc định, không tạo thêm thông tin nghiệp vụ. Chưa có footprint camera 3D |
 | Công cụ đo | 6 kiểu đo ngang UTM trên 2D. Xem trước, bắt điểm, kết thúc, chỉnh sửa có áp dụng/hủy, hoàn tác/làm lại và giữ hình trong phiên. Tùy chọn và danh sách kết quả thay nội dung trong bảng |
 | Tọa độ | Nút tâm ngắm mở bảng vị trí trên 2D/3D. Có WGS84, hệ tọa độ mô hình, độ cao và sao chép. Không hiển thị độ cao ngoài DEM trên 2D |
 | Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
@@ -77,12 +82,12 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 | Kiểm tra | Kết quả |
 |---|---|
-| TypeScript và build | Đạt. JavaScript đầu vào khoảng 800 KB, 251 KB gzip. Chunk app khoảng 374 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 151 kiểm thử đạt, gồm đổi kiểu đo khi chỉnh sửa, giữ kết quả hợp lệ, đo/chỉnh/hủy, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
+| TypeScript và build | Đạt. JavaScript đầu vào khoảng 803 KB, 252 KB gzip. Chunk app khoảng 377 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
+| TypeScript unit tests | 154 kiểm thử đạt, gồm lấy mẫu màu/giữ nodata, đổi kiểu đo khi chỉnh sửa, giữ kết quả hợp lệ, đo/chỉnh/hủy, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
 | Python | 8 kiểm thử dữ liệu, 3 API và 2 đóng gói đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
-| Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
+| Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Tổng quan theo pan/zoom, click, bàn phím và mở/đóng không tạo bản đồ trùng. Khoảng đệm hàng địa bàn đạt, hover không dịch chữ. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
 | Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
 | Chrome: công cụ và biến thể | 6 kiểu đo, xem trước, kéo đỉnh, hoàn tác/làm lại, đơn vị, sao chép, giữ/ẩn/xóa hình, đo trực tiếp tuyến/AOI, thu gọn và 12 vòng đóng/mở. Đổi tối/Anh/font và qua 3D về 2D giữ phép đo. Mobile 390/320 px không tràn hoặc đè hướng Bắc |
 | Chrome: công cụ phụ | Thông báo, xem dữ liệu cũ/về bản mới, độ rõ/lọc/nhãn, so GeoTIFF có tọa độ, mở lại cặp ảnh, GeoJSON, bản in và đặt lại phiên |
@@ -90,7 +95,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Chrome: nguồn lớp | Đạt: nguồn/ngày theo bản dữ liệu cũ/mới, ngày ảnh chưa có, giới hạn H, nguồn riêng cho Imagery/Terrain Light, bàn phím và chiều rộng 320–1366 px |
 | Vòng đời 3D | Sửa gỡ listener trước khi React tháo canvas. Giải phóng tài nguyên GPU của renderer cũ, giữ dữ liệu để mở lại. 25 vòng thử nhanh không tăng DOM/listener |
 | Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
-| Lặp phiên trên build cuối | Linux: 6 vòng trong 39,4 giây, DOM/listener giữ nguyên, JS heap tăng 0,74 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
+| Lặp phiên trên build cuối | Linux: 3 vòng trong 46,8 giây, DOM/listener giữ nguyên, JS heap tăng 0,39 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
 | CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
 | GitHub Actions | Run của commit `756510a` dừng ở npm test. Tái hiện lỗi checksum JSON do CRLF/LF, đã chuẩn hóa file và thêm `.gitattributes`. Commit mới cần push để xác nhận trạng thái GitHub |
 | Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |

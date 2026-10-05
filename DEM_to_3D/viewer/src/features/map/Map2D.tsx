@@ -6,7 +6,8 @@ import { createScreenMarkers } from '../../terrain/screenMarkers';
 import { roadColors } from '../../terrain/roadStyle';
 import type { TerrainData } from '../../types/terrain';
 import type { TerrainViewerProps } from '../../components/TerrainViewer';
-import { createRaster2d } from './raster2d';
+import { createRaster2d, type Raster2D } from './raster2d';
+import { MapOverview } from './MapOverview';
 import { MapMeasurement } from '../measurement/MapMeasurement';
 import { measurementGeometry } from '../measurement/measurementGeometry';
 import type { MeasureAction, MeasurementSession } from '../measurement/measurementSession';
@@ -25,6 +26,12 @@ export function Map2D(props: Props): JSX.Element {
   const interacting = props.measurementOpen && (!props.measureSession.finished || props.measureSession.editing);
   const geometry = useMemo(() => measurementGeometry(props.scenarioProps, props.locale ?? 'vi'), [props.scenarioProps, props.locale]);
   const [mapReady, setMapReady] = useState(false);
+  const [overviewRaster, setOverviewRaster] = useState<Raster2D | null>(null);
+  const overviewArea = useMemo(() => (props.scenarioProps?.aoi?.points ?? []).flatMap(point => {
+    if (!props.terrain) return [];
+    const position = projectedToWgs84(props.terrain.metadata, point);
+    return position.latitude === undefined || position.longitude === undefined ? [] : [[position.latitude, position.longitude] as [number, number]];
+  }), [props.scenarioProps?.aoi, props.terrain]);
   const hostRef = useRef<HTMLDivElement>(null), mapRef = useRef<L.Map | null>(null);
   const propsRef = useRef(props); propsRef.current = props;
   const runtime = useRef<{ refresh: () => void } | null>(null);
@@ -101,6 +108,7 @@ export function Map2D(props: Props): JSX.Element {
         void createRaster2d(terrain, propsRef.current.imageUrl, layers.imagery !== false, Boolean(layers.hillshade), signal).then(result => {
           if (disposed || signal.aborted) return;
           raster?.remove(); raster = L.imageOverlay(result.url, result.bounds, { opacity: propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1, interactive: false, pane: 'overlayPane', alt: locale === 'vi' ? 'Ảnh nền khu vực Chế Tạo' : 'Chế Tạo area imagery' }).addTo(map);
+          setOverviewRaster(result);
           schedule();
         }).catch(error => { if (!signal.aborted) console.warn('Local 2D raster unavailable', error); });
       }
@@ -207,6 +215,8 @@ export function Map2D(props: Props): JSX.Element {
     return () => { map.off('click', pick); marker?.remove(); };
   }, [mapReady, props.locationOpen, props.locationPoint]);
   return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+    <MapOverview mapRef={mapRef} raster={overviewRaster} area={overviewArea} locale={props.locale ?? 'vi'}
+      enabled={mapReady && !props.measurementOpen && !props.locationOpen && !props.profileOpen}/>
     {mapReady && <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}
       session={props.measureSession} dispatch={props.dispatchMeasureSession} sources={geometry.sources} selected={geometry.selected}/>}
   </div>;

@@ -9,7 +9,7 @@ Hiện hành, cập nhật 2026-10-05. Web React là bản triển khai chuẩn.
 | Bố cục | Panel và bản đồ liền nhau, không bo góc hoặc chừa viền ngoài. Panel mặc định 384 px, kéo để đổi trong khoảng 320 đến 560 px và giới hạn theo cửa sổ. Mobile có hai chế độ Thông tin và Bản đồ |
 | Chữ | Inter mặc định. Cài đặt có IBM Plex Sans và Space Grotesk/Be Vietnam Pro. Nội dung 13–14 px, tiêu đề panel 23 px. Dùng font mono cho tọa độ hoặc mã cần đối chiếu |
 | Khoảng cách | Thang 4, 8, 12, 16, 20, 24, 32 px. Căn theo khối nội dung, không chèn khoảng trắng để căn nút |
-| Màu | Mặc định sáng, header tối. Bề mặt trung tính. Màu chọn giao diện tách khỏi màu tình trạng đường |
+| Màu | Mặc định sáng, header navy. Bề mặt trắng/xám, màu tương tác xanh dương. Màu chọn giao diện tách khỏi màu tình trạng đường. Công cụ bản đồ dùng nền đặc, viền mảnh, bóng nhẹ |
 | Icon và nút | [Lucide](https://lucide.dev/guide/react), qua `shared/ui/UiIcon`: lưới 24 px, hiển thị 18 px, nét 1,75 px. Nút bản đồ 40 × 40 px. Nút đóng 28–36 px theo bề mặt. Có tên truy cập và focus rõ |
 
 Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/styles/tokens.css). Bố cục nằm trong [workspace.css](../../DEM_to_3D/viewer/src/styles/workspace.css).
@@ -20,7 +20,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 |---|---|
 | Tab | Chữ đậm và gạch chân cho lựa chọn. Không dùng badge làm tab |
 | Trạng thái | `StatusText`: chữ và ký hiệu nhỏ. Không chỉ dựa vào màu, không đóng hộp mọi trạng thái |
-| Hàng danh sách | Tên trước, dữ kiện sau. Tên dài xuống dòng, trạng thái không chen giữa tên |
+| Hàng danh sách | Tên trước, dữ kiện sau. Vùng hover chừa ít nhất 12 px hai bên, 16 px trên/dưới. Chọn không dịch chữ. Tên/trạng thái xuống hàng khi panel hẹp |
 | Panel chi tiết | Một tiêu đề, một trạng thái. Đường: ghi nhận, việc cần xử lý, nguồn. Địa bàn: tiếp cận, tuyến, căn cứ. X đóng về ngữ cảnh mở |
 | Mô tả và hành động | Cách ít nhất 12 px từ đoạn mô tả đến nút. Không dùng reset margin của paragraph làm khoảng cách mặc định |
 | Số liệu và nguồn | Diện tích và đơn vị nằm cùng dòng. Metadata dài dùng hàng nhãn/giá trị, không dùng cột KPI lớn. Nguồn ranh giới mở khi cần |
@@ -33,6 +33,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Đo bản đồ | Ba trạng thái: vẽ, xem kết quả, chỉnh sửa. Kết thúc bằng nút, Enter hoặc nhấp đúp điểm cuối. Chọn Chỉnh sửa trước khi kéo điểm. Phép đo và kết quả đã giữ dùng hai mục riêng; tùy chọn thay nội dung bên trong bảng |
 | Mở nội dung phụ | Chevron nét mảnh ở cuối hàng, toàn bộ hàng bấm được. Trạng thái mở có `aria-expanded`. Không lồng nhiều cấp hoặc giấu hành động chính |
 | Không gian bản đồ | Panel trái chỉnh độ rộng hoặc thu gọn, giữ lựa chọn. Chú giải có thể thu về một nút. Mở lớp/đo/tọa độ tạm ẩn chú giải |
+| Bản đồ tổng quan | Công cụ phụ trên 2D desktop, thu gọn mặc định. Hiển thị khung nhìn thật, click hoặc dùng bàn phím để di chuyển. Tạm ẩn khi đo, xem tọa độ, lớp hoặc mặt cắt |
 | Cửa sổ công cụ | Header cố định, nội dung cuộn trong bảng. Không đổi vị trí khi nội dung tăng hoặc mở tùy chọn. Kéo tiêu đề trên desktop, phím mũi tên để dịch, Home/nhấp đúp để đặt lại. Giữ vị trí trong phiên; mobile dùng vị trí cố định |
 | Thông tin vị trí | Dùng chung trên 2D và 3D. Chọn điểm để đọc tọa độ, độ cao, đổi WGS84/hệ tọa độ dữ liệu và sao chép. Không mở lại bảng thông số kỹ thuật đầy màn hình |
 | Lưu đánh giá | Hành động phụ trong chi tiết địa bàn. Mở xem trước trước khi tải, không thêm trang báo cáo vào menu chính |

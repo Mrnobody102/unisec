@@ -59,6 +59,23 @@ def run(url, chrome, captures):
             query = page.get_by_role('searchbox', name='Tìm địa bàn', exact=True)
             query.fill('nam khat')
             expect(page.locator('.sidebar .community')).to_have_count(1)
+            row = page.locator('.sidebar .community').first
+            spacing = row.evaluate("""row => {
+                const box = row.getBoundingClientRect();
+                const title = row.querySelector('strong').getBoundingClientRect();
+                const status = row.querySelector('.status-text').getBoundingClientRect();
+                const description = row.querySelector('p').getBoundingClientRect();
+                return {left: title.left-box.left, right: box.right-status.right,
+                    top: title.top-box.top, gap: description.top-Math.max(title.bottom,status.bottom),
+                    bottom: box.bottom-description.bottom};
+            }""")
+            assert min(spacing['left'], spacing['right'], spacing['top'], spacing['bottom']) >= 11, spacing
+            assert spacing['gap'] >= 7, spacing
+            before = row.locator('strong').bounding_box()
+            row.hover()
+            assert row.locator('strong').bounding_box() == before
+            if captures and width == 1366:
+                page.screenshot(path=str(captures / 'workspace-community-hover.png'))
             page.locator('.sidebar .community').click()
             expect(page.locator('.decision-overview')).to_contain_text('Có tuyến bị chặn, tuyến khác cần xác minh')
             check_panel(page)

@@ -12,15 +12,15 @@ Web đủ để trình diễn sự kiện → ảnh hưởng → địa bàn ưu
 
 | Ưu tiên | Vấn đề | Kết quả cần có |
 |---|---|---|
-| 1. Thao tác | Khóa bộ chọn, panel dịch vị trí, khó kết thúc/chỉnh hình | Đổi công cụ được, giữ kết quả hợp lệ, header đứng yên. Click/Enter/nhấp đúp có hành vi thống nhất |
+| 1. Thao tác | Đã sửa bộ chọn, vị trí panel và kết thúc/chỉnh hình | Kiểm tra trình duyệt đạt. Giữ các tình huống này trong bộ kiểm tra hồi quy |
 | 2. Đọc tình huống | Nhiều khối giải thích cạnh tranh với quyết định chính | Màn đầu giữ sự kiện, giờ cập nhật, địa bàn ưu tiên và đường cản trở. Chi tiết địa bàn giữ phương án và việc cần kiểm tra. Phương pháp/metadata mở khi cần |
 | 3. Căn cứ | Bản ghi văn bản chưa thay thế bằng chứng ảnh | Từ đoạn đường/điểm ảnh hưởng mở đúng ảnh hoặc báo cáo gốc, vị trí, giờ quan sát và kết luận. Phân biệt dữ liệu thiếu với nhận định chưa chắc chắn |
 | 4. Sản phẩm bản đồ | Proposal có vùng sạt lở/ngập, khu cô lập và H. Hiện chủ yếu có điểm ảnh hưởng và H đề xuất | Polygon có nguồn, ngày và mức xác minh. Chỉ vẽ phạm vi khi có dữ liệu. Kết luận cô lập cần mạng tiếp cận đủ vùng. H cần khảo sát khả năng sử dụng |
-| 5. Dữ liệu ảnh | Có so GeoTIFF nhưng chưa có cặp ảnh được RS duyệt | Ngày thu nhận, cảm biến, độ phân giải, mức xử lý, vùng dữ liệu hợp lệ và mask chất lượng. Nền Sentinel 2016 chỉ làm bối cảnh |
+| 5. Dữ liệu ảnh | Có so GeoTIFF nhưng chưa có cặp ảnh được RS duyệt | Ngày thu nhận, cảm biến, độ phân giải, mức xử lý, vùng dữ liệu hợp lệ và mask chất lượng. Nền khu vực EOX 2016 chỉ làm bối cảnh |
 | 6. Đọc bản đồ theo tỷ lệ | Đã có gom điểm và tránh chồng nhãn, cần kiểm trên dữ liệu thực | Nhãn ít khi zoom xa, giữ đối tượng đang chọn và ưu tiên. Nền giảm tương phản, lớp tình huống nổi bật. Ký hiệu có hình/nét bổ sung màu |
 | 7. Bối cảnh khu vực | Khi mất mạng, ngoài ảnh địa hình còn trống | Chuẩn bị nền khu vực có quyền sử dụng cho gói demo. Giữ rõ phạm vi DEM, AOI và vùng đã phân tích |
 
-Hai mục đầu phục vụ demo ngay. Dữ liệu ảnh và sản phẩm phân tích cần phối hợp RS/AI/BA. Skill và cải thiện CSS không thay thế dữ liệu đã kiểm chứng.
+Thao tác và bố cục đã được kiểm tra cho demo. Dữ liệu ảnh và sản phẩm phân tích cần phối hợp RS/AI/BA. Skill và cải thiện CSS không thay thế dữ liệu đã kiểm chứng.
 
 ## Quy tắc giao diện
 
@@ -30,6 +30,7 @@ Hai mục đầu phục vụ demo ngay. Dữ liệu ảnh và sản phẩm phân
 | Cái gì được thu gọn? | Từng đoạn đo, nguồn và tùy chọn. Kết quả, trạng thái đường và hành động tiếp theo luôn thấy | [Calcite Block](https://developers.arcgis.com/calcite-design-system/components/block/) tổ chức nhóm điều khiển trong panel và khuyến cáo không giấu thông tin thiết yếu |
 | Kết thúc phép đo thế nào? | Nhấp đúp, Enter hoặc nút Kết thúc. Kéo bản đồ không kết thúc phép đo | [ArcGIS Map Viewer](https://doc.arcgis.com/en/arcgis-online/get-started/measure-mv.htm) dùng click để thêm đỉnh, nhấp đúp để kết thúc và vẫn cho pan |
 | Có cần ghi mọi giới hạn trên bản đồ? | Chỉ hiện cảnh báo ảnh hưởng trực tiếp tới thao tác/kết luận. CRS, cách tính và nguồn ở thông tin công cụ/lớp | Quyết định thiết kế của DEAR. Không xóa nguồn hoặc giới hạn khỏi metadata/bản xuất |
+| Có cần bản đồ nhỏ? | Có trên 2D desktop, thu gọn mặc định. Giúp định hướng khi xem gần, hiển thị đúng khung nhìn, ẩn khi mở công cụ | [ArcGIS Overview map](https://developers.arcgis.com/javascript/latest/sample-code/overview-map/) là mẫu tham khảo. Đây là lựa chọn thiết kế, không phải yêu cầu bắt buộc của GIS |
 
 UNOSAT là tham chiếu về thứ bậc bản đồ, lớp ảnh hưởng, nguồn và ngày. [PDF Nepal 2024](https://unosat.org/static/unosat_filesystem/3990/UNOSAT_A3_Natural_Protrait_FL20240928NPL_01Oct2024.pdf) tách vùng phân tích, nước thường xuyên và phạm vi nước theo ngày, đồng thời ghi hạn chế phân tích radar. Không cần đưa toàn bộ ghi chú lên bản đồ web, nhưng nguồn và giới hạn phải đọc được khi mở lớp/bản xuất. Đây là sự kiện khác với [web Nepal 2026](https://unosat.org/products/4256), chưa kiểm tra đầy đủ tương tác trực tiếp trong lượt này.
 

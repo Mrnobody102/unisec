@@ -192,12 +192,18 @@ export function TerrainViewer({
 
     type SurfaceMaterial = THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
     const originalMaterials = new Map<SurfaceMaterial, { map: THREE.Texture | null; color: THREE.Color; vertexColors: boolean }>();
+    const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     entries.forEach(entry => entry.root.traverse(object => {
       const mesh = object as THREE.Mesh;
       if (!mesh.isMesh) return;
       (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(material => {
         const surface = material as SurfaceMaterial;
-        if (surface.color && 'map' in surface && !originalMaterials.has(surface)) originalMaterials.set(surface, { map: surface.map, color: surface.color.clone(), vertexColors: surface.vertexColors });
+        if (surface.color && 'map' in surface && !originalMaterials.has(surface)) {
+          if (surface.map && surface.map.anisotropy !== textureAnisotropy) {
+            surface.map.anisotropy = textureAnisotropy; surface.map.needsUpdate = true;
+          }
+          originalMaterials.set(surface, { map: surface.map, color: surface.color.clone(), vertexColors: surface.vertexColors });
+        }
       });
     }));
     const updateSurface = (): void => {
