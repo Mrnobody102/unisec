@@ -138,10 +138,25 @@ def run(url, chrome, captures):
         if captures: page.screenshot(path=str(captures / 'workspace-tools.png'))
         measure.get_by_role('button', name='Close measurement', exact=True).click()
 
+        # Hold the thumbnail response to reproduce a slow CI image request.
+        pending_images = []
+        def hold_thumbnail(route):
+            if route.request.resource_type == 'image':
+                pending_images.append(route)
+            else:
+                route.continue_()
+        context.route('**/*.png', hold_thumbnail)
         toolbar.get_by_role('button', name='Layers', exact=True).click()
         layers = page.locator('.layers-panel')
         expect(layers.locator('.basemap-preview')).to_have_count(2)
-        assert layers.locator('.basemap-preview img').evaluate('node => node.complete && node.naturalWidth > 0')
+        preview = layers.locator('.basemap-preview img')
+        expect(preview).to_be_visible()
+        page.wait_for_function('node => !node.complete && node.naturalWidth === 0', arg=preview.element_handle())
+        assert pending_images, 'Slow thumbnail regression did not intercept an image request'
+        for image_request in pending_images:
+            image_request.continue_()
+        page.wait_for_function('node => node.complete && node.naturalWidth > 0', arg=preview.element_handle(), timeout=15000)
+        context.unroute('**/*.png', hold_thumbnail)
         handle = layers.get_by_role('group', name='Layers panel position', exact=True)
         original = layers.bounding_box()
         drag(handle, 210, 70)

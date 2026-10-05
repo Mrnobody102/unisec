@@ -77,7 +77,7 @@ def run(url, chrome, captures, prepared=False):
         expect(page.locator('.route-travel-estimate')).to_contain_text('40')
         if captures:
             page.screenshot(path=str(captures / 'workspace-summary.png'))
-        page.locator('.decision-tabs button').nth(1).click()
+        page.get_by_role('button', name='So sánh tuyến', exact=True).click()
         page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         with page.expect_download() as download:

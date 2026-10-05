@@ -4,7 +4,7 @@ Cập nhật: 2026-10-05.
 
 | Nội dung | Quy tắc |
 |---|---|
-| Điểm bắt đầu | **Lưu đánh giá** trong chi tiết địa bàn hoặc tab Tuyến |
+| Điểm bắt đầu | **Lưu đánh giá** trong phần Tiếp cận của chi tiết địa bàn |
 | Phiên bản | Sao chép snapshot khi mở xem trước. Giữ sự kiện, phiên bản, thời điểm, tin đã áp dụng và tuyến đang chọn |
 | PNG | Bố cục 2D, bản đồ và nhận định. Có đường, địa bàn, điểm ảnh hưởng, điểm ứng phó, AOI, chú giải, hướng Bắc và tỷ lệ |
 | JSON | Snapshot gồm quy tắc, giả định tốc độ, hình tuyến, trạng thái đường, căn cứ và checksum tài sản địa hình |

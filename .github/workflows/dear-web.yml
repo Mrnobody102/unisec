@@ -48,7 +48,7 @@ jobs:
           python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
-          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:5213 > /dev/null
+          python scripts/wait_for_server.py http://127.0.0.1:5213
           python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
           python scripts/check_measurement_tools.py --url http://127.0.0.1:5213
           python scripts/check_map_workspace.py --url http://127.0.0.1:5213

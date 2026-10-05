@@ -118,7 +118,7 @@ export type ScenarioRoutePair = {
 };
 
 export type WorkspaceView = 'incident' | 'impact' | 'priority';
-export type DetailTab = 'decision' | 'route' | 'evidence';
+export type DetailTab = 'decision' | 'evidence';
 export type RoadFilter = 'all' | 'blocked' | 'uncertain';
 export type ImpactTab = 'roads' | 'hazards';
 export type CommunityFilter = 'all' | 'priority' | 'monitor';

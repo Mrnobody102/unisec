@@ -21,10 +21,10 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Tab | Chữ đậm và gạch chân cho lựa chọn. Không dùng badge làm tab |
 | Trạng thái | `StatusText`: chữ và ký hiệu nhỏ. Không chỉ dựa vào màu, không đóng hộp mọi trạng thái |
 | Hàng danh sách | Tên trước, dữ kiện sau. Vùng hover chừa ít nhất 12 px hai bên, 16 px trên/dưới. Chọn không dịch chữ. Tên/trạng thái xuống hàng khi panel hẹp |
-| Panel chi tiết | Một tiêu đề, một trạng thái. Đường: ghi nhận, việc cần xử lý, nguồn. Địa bàn: tiếp cận, tuyến, căn cứ. X đóng về ngữ cảnh mở |
+| Panel chi tiết | Một tiêu đề, một trạng thái. Đường: ghi nhận, việc cần xử lý, nguồn. Địa bàn: Tiếp cận và Căn cứ. X đóng về ngữ cảnh mở |
 | Mô tả và hành động | Cách ít nhất 12 px từ đoạn mô tả đến nút. Không dùng reset margin của paragraph làm khoảng cách mặc định |
 | Số liệu và nguồn | Diện tích và đơn vị nằm cùng dòng. Metadata dài dùng hàng nhãn/giá trị, không dùng cột KPI lớn. Nguồn ranh giới mở khi cần |
-| Tiếp cận và tuyến chọn | Tình trạng chung tính từ mọi tuyến đã biết. Tuyến đang chọn có trạng thái riêng. Không gọi tuyến ngắn nhất là đường chính nếu dữ liệu không xác nhận |
+| Tiếp cận và tuyến chọn | Tình trạng chung tính từ mọi tuyến đã biết. Chỉ đưa đoạn cản trở của tuyến đang chọn lên màn chính. So sánh tuyến và toàn bộ đoạn mở tại chỗ. Không gọi tuyến ngắn nhất là đường chính nếu dữ liệu không xác nhận |
 | Thông tin lặp | Không lặp cùng kết luận trong các khối cùng vai trò. Thiếu tuyến: một trạng thái và việc cần bổ sung. Tab Căn cứ giữ lý do và nguồn, không lặp lại lý do ở header |
 | Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |

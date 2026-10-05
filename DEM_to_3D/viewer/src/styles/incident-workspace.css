@@ -167,7 +167,7 @@
 .assessment-action span { color: var(--ws-text); }
 .decision-route > strong, .decision-overview strong { font-size: 14px; }
 .community-heading strong { font-weight: 600; }
-.incident-priority-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; gap: 12px; width: calc(100% + 24px); margin-inline: -12px; padding: 16px 12px; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 4px; background: transparent; text-align: left; }
+.incident-priority-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 12px; width: calc(100% + 24px); margin-inline: -12px; padding: 16px 12px; border: 0; border-bottom: 1px solid var(--ws-line); border-radius: 4px; background: transparent; text-align: left; }
 .incident-priority-row:hover { background: var(--hover); }
 .incident-priority-row:last-child { border-bottom: 0; }
 .incident-priority-row:hover strong { color: var(--select-ink); }
@@ -451,6 +451,15 @@
 .access-issues { margin-top: 18px; }
 .access-issues h3 { margin-bottom: 4px; font-size: 13px; }
 .access-issues .object-row:last-child { border-bottom: 0; }
+.priority-reason { margin-top: 8px; color: var(--ws-muted); font-size: 12px; line-height: 1.55; }
+.access-primary { width: 100%; justify-content: center; margin-top: 16px; }
+.access-supplementary { margin-top: 20px; border-block: 1px solid var(--ws-line); }
+.access-disclosure { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; padding: 10px 0; border: 0; background: transparent; color: var(--ws-muted); text-align: left; font-size: 12px; }
+.access-disclosure svg { flex: none; }
+.access-disclosure:hover { color: var(--select-ink); }
+.access-supplementary .route-options { margin: 0 0 8px; }
+.access-tools { flex-wrap: wrap; }
+.access-tools .button { flex: 1; min-width: 0; gap: 6px; justify-content: center; font-size: 12px; }
 .terrain-coverage-note { display: block; margin-top: 6px; color: var(--ws-muted); font-size: 11px; line-height: 1.45; }
 
 .scenario-code { display: block; margin: 2px 0 6px; color: var(--ws-muted); font-size: 11px; }

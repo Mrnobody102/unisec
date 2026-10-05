@@ -15,7 +15,10 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Số tổng đường không khớp danh sách do giữ từ khóa cũ | Chọn số tổng sẽ xóa tìm kiếm và mở đúng nhóm đường. Không đánh dấu bộ lọc đường khi đang xem điểm ảnh hưởng |
 | Tìm không dấu không nhất quán | Tìm đường/địa bàn trong panel và bản đồ dùng cùng phép chuẩn hóa |
 | Enter chọn kết quả sau khi đã đóng tìm kiếm | Chỉ chọn khi danh sách mở. Phím xuống mở lại ở kết quả đầu tiên, phím lên ở kết quả cuối |
-| Thiếu tuyến được nhắc lại ở nhiều khối | Tab Tiếp cận giữ một kết luận và việc cần bổ sung. Tab Tuyến có một trạng thái trống và mở thông tin địa bàn. Lý do chi tiết nằm trong Căn cứ, không lặp trên header |
+| Thiếu tuyến được nhắc lại ở nhiều khối | Tiếp cận giữ một kết luận, việc cần bổ sung và nút mở thông tin địa bàn. Không tạo tab Tuyến trống |
+| Khó biết cần kiểm tra đoạn nào | Tiếp cận chỉ liệt kê đoạn cản trở trên tuyến đang xem. So tuyến và toàn bộ các đoạn mở khi cần |
+| Lý do không khớp tuyến bị chặn khi thiếu báo cáo ảnh hưởng | Đọc trạng thái tuyến độc lập với bản ghi hazard. Giữ mất liên lạc trong căn cứ ưu tiên khi đường còn chưa rõ |
+| CI đọc ảnh trước khi tải xong | Chờ ảnh giải mã thành công có timeout. Kiểm tra với request ảnh bị giữ lại, rồi cho tải tiếp. Chờ HTTP sẵn sàng trước khi chạy browser |
 | Panel nhảy khi mở tùy chọn hoặc có kết quả | Giữ header tại vị trí đã chọn, cuộn nội dung bên trong. Kiểm tra sát đáy: không dịch vị trí khi đổi nội dung |
 | Vẽ và kết thúc đo thiếu rõ ràng | Tách vẽ/xem/chỉnh sửa. Nhấp đúp điểm cuối, Enter hoặc nút Kết thúc. Đóng tạm dừng bản vẽ; Hủy chỉnh sửa khôi phục kết quả cũ |
 | Mục mở rộng và hàng lớp bị lệch | Chevron nét mảnh ở cuối hàng. Căn giữa checkbox, tên lớp và nút nguồn |
@@ -52,7 +55,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Thành phần | Cách tổ chức |
 |---|---|
 | Panel | Bên trái, rộng 320–560 px. Nút đầu thanh tìm kiếm thu gọn và giữ lựa chọn. Khung lớp/đo/tọa độ kéo bằng tiêu đề, nhấp đúp hoặc Home để đặt lại |
-| Địa bàn | Tiếp cận, Tuyến, Căn cứ. Màn chính giữ trạng thái, phương án, thời gian có điều kiện và việc cần xử lý |
+| Địa bàn | Hai phần Tiếp cận và Căn cứ. Màn chính giữ trạng thái chung, tuyến đang xem, thời gian có điều kiện và đoạn cần kiểm tra |
 | Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
 | Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
 | Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm cùng loại mới có số đếm trên 2D. Nhóm khác loại/3D mở chọn đối tượng. Nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
@@ -80,8 +83,8 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Kiểm tra | Kết quả |
 |---|---|
 | TypeScript và build | Đạt. JavaScript đầu vào khoảng 803 KB, 252 KB gzip. Chunk app khoảng 377 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 156 kiểm thử đạt, gồm đóng bản chỉnh sửa, lấy mẫu màu/giữ nodata, đổi kiểu đo, đo/chỉnh/hủy, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
-| Python | 8 kiểm thử dữ liệu, 3 API và 2 đóng gói đạt |
+| TypeScript unit tests | 158 kiểm thử đạt, gồm trạng thái tuyến bị chặn khi thiếu báo cáo hazard, mất liên lạc với tuyến chưa rõ, đo/chỉnh/hủy, tọa độ, cửa sổ, nhóm điểm, snapshot, so ảnh, GeoJSON, timeout/hủy tải và manifest |
+| Python | 8 kiểm thử dữ liệu, 3 API, 2 đóng gói và 3 kiểm tra chờ HTTP sẵn sàng đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
 | Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Tổng quan theo pan/zoom, click, bàn phím và mở/đóng không tạo bản đồ trùng. Khoảng đệm hàng địa bàn đạt, hover không dịch chữ. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
@@ -95,7 +98,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
 | Lặp phiên trên build cuối | Linux: 3 vòng trong 46,8 giây, DOM/listener giữ nguyên, JS heap tăng 0,46 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
 | CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
-| GitHub Actions | Run của commit `756510a` dừng ở npm test. Tái hiện lỗi checksum JSON do CRLF/LF, đã chuẩn hóa file và thêm `.gitattributes`. Commit mới cần push để xác nhận trạng thái GitHub |
+| GitHub Actions | Lỗi ảnh xem trước chưa tải xong đã tái hiện bằng request bị giữ lại. Sửa chờ có timeout, không bỏ kiểm tra ảnh lỗi. [Theo dõi workflow](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml) |
 | Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |
 | Dependency audit | Vite 7.3.6, plugin React 5.2.0, Vitest 4.1.11. `npm audit`: 0 cảnh báo, gồm cả công cụ phát triển |
 | Chrome: gói offline | Kiểm checksum, giải nén vào thư mục mới, khởi động prepared, không gọi Internet, áp dụng tin, xuất PNG, 3D/2D và đặt lại |

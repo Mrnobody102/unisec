@@ -1,6 +1,6 @@
 # Phân tích ứng phó
 
-Cập nhật: 2026-10-02. Quy tắc thử nghiệm cho gói dữ liệu mô phỏng Chế Tạo, đối chiếu proposal trang 2–3.
+Cập nhật: 2026-10-05. Quy tắc thử nghiệm cho gói dữ liệu mô phỏng Chế Tạo, đối chiếu proposal trang 2–3.
 
 ## Đầu vào và kết quả
 
@@ -14,6 +14,8 @@ Cập nhật: 2026-10-02. Quy tắc thử nghiệm cho gói dữ liệu mô ph�
 | Tốc độ giả định trong gói | Cộng thời gian từng đoạn | Khoảng thời gian nếu thông tuyến |
 
 Nhận diện sạt lở bằng AI là bước xử lý ảnh **chưa tích hợp**. Các điểm ảnh hưởng hiện có là đầu vào mô phỏng. Mức ưu tiên và tuyến do hàm có quy tắc tính, không do LLM tạo.
+
+Luồng panel: **Sự kiện → địa bàn ưu tiên → tuyến đang xem → đoạn cần kiểm tra → bản ghi nguồn**. Tiếp cận tổng hợp mọi tuyến đã biết, nhưng danh sách cần kiểm tra chỉ lấy đoạn của tuyến đang xem. So sánh phương án mở tại chỗ. Căn cứ chứa tin tại địa bàn, dân số tham chiếu, điều kiện ETA và nguồn.
 
 ## Quy tắc hiện hành
 
