@@ -17,6 +17,8 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Enter chọn kết quả sau khi đã đóng tìm kiếm | Chỉ chọn khi danh sách mở. Phím xuống mở lại ở kết quả đầu tiên, phím lên ở kết quả cuối |
 | Thiếu tuyến được nhắc lại ở nhiều khối | Tiếp cận giữ một kết luận, việc cần bổ sung và nút mở thông tin địa bàn. Không tạo tab Tuyến trống |
 | Khó biết cần kiểm tra đoạn nào | Tiếp cận chỉ liệt kê đoạn cản trở trên tuyến đang xem. So tuyến và toàn bộ các đoạn mở khi cần |
+| Dữ kiện và nguồn dính thành nhiều câu | Ghi nhận có chủ đề, nguồn và thời gian riêng. Tách thiếu dữ liệu khỏi báo cáo. Bỏ liên hệ cầu với địa bàn chưa xác định tuyến |
+| Cảnh báo và bước xử lý còn chung chung | Hướng dẫn theo tuyến chọn, nêu cầu/điểm vượt khe. Tuyến bị chặn không được gọi là gợi ý, không có ETA. Nút xử lý đặt trước phần hỗ trợ |
 | Lý do không khớp tuyến bị chặn khi thiếu báo cáo ảnh hưởng | Đọc trạng thái tuyến độc lập với bản ghi hazard. Giữ mất liên lạc trong căn cứ ưu tiên khi đường còn chưa rõ |
 | CI đọc ảnh trước khi tải xong | Chờ ảnh giải mã thành công có timeout. Kiểm tra với request ảnh bị giữ lại, rồi cho tải tiếp. Chờ HTTP sẵn sàng trước khi chạy browser |
 | Panel nhảy khi mở tùy chọn hoặc có kết quả | Giữ header tại vị trí đã chọn, cuộn nội dung bên trong. Kiểm tra sát đáy: không dịch vị trí khi đổi nội dung |
@@ -82,8 +84,8 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 | Kiểm tra | Kết quả |
 |---|---|
-| TypeScript và build | Đạt. JavaScript đầu vào khoảng 803 KB, 252 KB gzip. Chunk app khoảng 377 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 158 kiểm thử đạt, gồm trạng thái tuyến bị chặn khi thiếu báo cáo hazard, mất liên lạc với tuyến chưa rõ, đo/chỉnh/hủy, tọa độ, cửa sổ, nhóm điểm, snapshot, so ảnh, GeoJSON, timeout/hủy tải và manifest |
+| TypeScript và build | Đạt. JavaScript đầu vào khoảng 809 KB, 254 KB gzip. Chunk app khoảng 383 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
+| TypeScript unit tests | 168 kiểm thử đạt, gồm nguồn/thời gian ghi nhận, snapshot cập nhật, chỉ dẫn theo tuyến chọn, tương thích gói cũ, tuyến/ưu tiên, đo, tọa độ, so ảnh, GeoJSON, timeout/hủy tải và manifest |
 | Python | 8 kiểm thử dữ liệu, 3 API, 2 đóng gói và 3 kiểm tra chờ HTTP sẵn sàng đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
@@ -96,7 +98,7 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Chrome: nguồn lớp | Đạt: nguồn/ngày theo bản dữ liệu cũ/mới, ngày ảnh chưa có, giới hạn H, nguồn riêng cho Imagery/Terrain Light, bàn phím và chiều rộng 320–1366 px |
 | Vòng đời 3D | Sửa gỡ listener trước khi React tháo canvas. Giải phóng tài nguyên GPU của renderer cũ, giữ dữ liệu để mở lại. 25 vòng thử nhanh không tăng DOM/listener |
 | Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
-| Lặp phiên trên build cuối | Linux: 3 vòng trong 46,8 giây, DOM/listener giữ nguyên, JS heap tăng 0,46 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
+| Lặp phiên trên build cuối | Linux: 2 vòng trong 50,5 giây, DOM/listener giữ nguyên, JS heap tăng 0,22 MB giữa hai vòng. Thử dài 30 phút ở hàng trên là kết quả của build trước |
 | CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
 | GitHub Actions | Lỗi ảnh xem trước chưa tải xong đã tái hiện bằng request bị giữ lại. Sửa chờ có timeout, không bỏ kiểm tra ảnh lỗi. [Theo dõi workflow](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml) |
 | Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |

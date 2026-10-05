@@ -1,8 +1,10 @@
 # Danh mục trường dữ liệu
 
-> Trạng thái: Đề xuất · Phụ trách: SW / AI · Cập nhật: 2026-09-24
+> Trạng thái: Đề xuất · Phụ trách: SW / AI · Cập nhật: 2026-10-05
 
 Danh mục dự kiến cho gói dữ liệu vận hành, dùng cùng [hợp đồng dữ liệu](data-contract.md). Gói mô phỏng đang chạy dùng [JSON Schema v1](../../DEM_to_3D/viewer/public/scenarios/incident-v1.schema.json); tên trường bên dưới là phần cần mở rộng, không phải định dạng đã triển khai đầy đủ.
+
+`Community.facts` trong gói hiện tại nhận mục có `kind` (`report` / `context` / `gap`), `label`, `value` và metadata nguồn/thời gian. `hazardId` nối với evidence của snapshot hiện hành. Schema kiểm nguồn, quan hệ và thứ tự thời gian, vẫn nhận tuple từ gói cũ. Gói v0.2 đang draft, checksum manifest đã cập nhật theo nội dung mới.
 
 ## Đối tượng và trường
 

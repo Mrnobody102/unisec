@@ -3,6 +3,7 @@ import type {
   Community,
   DetailTab,
   Hazard,
+  IncidentEvidence,
   Locale,
   ScenarioRoute
 } from '../../types/dear';
@@ -10,12 +11,15 @@ import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { AccessPanel } from '../../features/routes/AccessPanel';
 import type { ResponseAssessment } from '../../features/incident/responseAssessment';
+import { CommunityFindings } from '../../features/incident/CommunityFindings';
+import { selectAccessRoute } from '../../features/routes/routeReview';
 
 type Props = {
   community: Community;
   assessment: ResponseAssessment;
   terrainCovered: boolean | null;
   hazards: Hazard[];
+  evidence: IncidentEvidence[];
   locale: Locale;
   detailTab: DetailTab;
   onChangeDetailTab: (tab: DetailTab) => void;
@@ -28,6 +32,7 @@ type Props = {
   onToggleProfile: () => void;
   onOpenSources: () => void;
   onSelectObject: (obj: string) => void;
+  onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
 };
 
@@ -36,6 +41,7 @@ export const CommunityDetailView: React.FC<Props> = ({
   assessment,
   terrainCovered,
   hazards,
+  evidence,
   locale,
   detailTab,
   onChangeDetailTab,
@@ -48,6 +54,7 @@ export const CommunityDetailView: React.FC<Props> = ({
   onToggleProfile,
   onOpenSources,
   onSelectObject,
+  onOpenEvidence,
   onExport
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
@@ -56,8 +63,7 @@ export const CommunityDetailView: React.FC<Props> = ({
     return hazard ? t(hazard.name[0], hazard.name[1]) : id;
   };
 
-  const effectiveRouteType = selectedRouteType === 'direct' && directRoute ? 'direct' : 'candidate';
-  const activeRoute = effectiveRouteType === 'direct' ? directRoute : candidateRoute;
+  const activeRoute = selectAccessRoute({ candidate: candidateRoute, direct: directRoute }, selectedRouteType);
   const accessIssues = [...new Map(
     [directRoute, candidateRoute].flatMap(route => route?.segs ?? [])
       .filter(segment => segment.status !== 'open')
@@ -97,7 +103,7 @@ export const CommunityDetailView: React.FC<Props> = ({
 
       <div className="sidebar-scroll">
         {detailTab === 'decision' && <AccessPanel key={community.id}
-          assessment={assessment} locale={locale} candidate={candidateRoute} direct={directRoute}
+          locale={locale} candidate={candidateRoute} direct={directRoute} hazards={hazards} evidence={evidence}
           selected={selectedRouteType} onSelectRoute={onChangeRouteType}
           hasProfile={hasTerrainProfile} onProfile={onToggleProfile} onInspect={onSelectObject}
           onFindings={() => onChangeDetailTab('evidence')} onExport={onExport}/>}
@@ -119,17 +125,7 @@ export const CommunityDetailView: React.FC<Props> = ({
               <div><dt>{t('Dân số tham chiếu', 'Baseline population')}</dt><dd>{community.pop} {t('người', 'residents')}, {community.hh} {t('hộ', 'households')}</dd></div>
               <div><dt>{t('Địa hình tại địa bàn', 'Local terrain')}</dt><dd>{terrainCovered === false ? t('Ngoài phạm vi DEM', 'Outside DEM coverage') : terrainCovered === true ? t('Có dữ liệu độ cao', 'Elevation data available') : t('Chưa đánh giá', 'Not assessed')}</dd></div>
             </dl>
-            <section className="workflow-section" style={{ borderTop: 0 }}>
-              <div className="section-line">
-                <h3>{t('Thông tin tại địa bàn', 'Community findings')}</h3>
-              </div>
-              {community.facts.map((f, i) => (
-                <div key={i} className="fact">
-                  <div>{t(f[0], f[1])}</div>
-                  <small style={{ color: 'var(--ws-muted)' }}>{t(f[2], f[3])}</small>
-                </div>
-              ))}
-            </section>
+            <CommunityFindings facts={community.facts} evidence={evidence} locale={locale} onOpenEvidence={onOpenEvidence}/>
 
             {accessIssues.length > 0 && <section className="workflow-section">
               <h3>{t('Báo cáo ảnh hưởng tiếp cận', 'Access impact reports')}</h3>

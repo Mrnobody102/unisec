@@ -1,12 +1,13 @@
 import React from 'react';
-import type { Locale } from '../../types/dear';
+import type { Locale, RoadSegment } from '../../types/dear';
 import type { IncidentPacket } from '../../data/incidentPacket';
-import { localClock } from '../../features/incident/sourceTime';
+import { observationTime } from '../../features/incident/sourceTime';
 import { UiIcon } from './UiIcon';
 
 type Props = {
   locale: Locale;
   report: IncidentPacket['report'];
+  road?: RoadSegment;
   updated: boolean;
   historical?: boolean;
   onApplyReport: () => void;
@@ -17,6 +18,7 @@ type Props = {
 export const NotificationDialog: React.FC<Props> = ({
   locale,
   report,
+  road,
   updated,
   historical,
   onApplyReport,
@@ -45,9 +47,13 @@ export const NotificationDialog: React.FC<Props> = ({
                 <strong style={{ color: 'var(--critical-ink)' }}>
                   {t(...report.hazard.name)}
                 </strong>
-                <small>
-                  {t('Quan sát', 'Observed')} {localClock(report.evidence.observedAt)}, {t('nhận tin', 'received')} {localClock(report.evidence.receivedAt)}
-                </small>
+                {road && <p className="notification-road-name">{t(...road.name)}</p>}
+                <p className="notification-finding">{t(...report.evidence.finding)}</p>
+                <dl className="evidence-metadata">
+                  <div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(...report.evidence.source)}</dd></div>
+                  <div><dt>{t('Quan sát', 'Observed')}</dt><dd><time dateTime={report.evidence.observedAt}>{observationTime(report.evidence.observedAt, locale)}</time></dd></div>
+                  <div><dt>{t('Nhận tin', 'Received')}</dt><dd><time dateTime={report.evidence.receivedAt}>{observationTime(report.evidence.receivedAt, locale)}</time></dd></div>
+                </dl>
                 {!updated && <small className="notification-pending">{t('Chưa áp dụng vào bản đồ', 'Not yet applied to the map')}</small>}
                 <div className="notification-actions">
                   {!updated && <button className="button primary" onClick={() => { onApplyReport(); onClose(); }}>{t('Cập nhật bản đồ', 'Update map')}</button>}
@@ -58,7 +64,6 @@ export const NotificationDialog: React.FC<Props> = ({
             </div>
 
           </div>
-          <p className="notification-finding">{t(...report.evidence.finding)}</p>
 
         </div>
       </div>

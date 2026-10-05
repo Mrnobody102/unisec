@@ -34,6 +34,7 @@ import { useMeasurementSession } from './features/measurement/useMeasurementSess
 import { useTerrainWorkspace } from './features/terrain/useTerrainWorkspace';
 import { Map3DBoundary } from './features/map/Map3DBoundary';
 import { useRouteTerrainAnalysis } from './features/routes/useRouteTerrainAnalysis';
+import { selectAccessRoute } from './features/routes/routeReview';
 import { usePanelScroll } from './shared/hooks/usePanelScroll';
 import { useModalFocus } from './shared/hooks/useModalFocus';
 import { PanelResizeHandle } from './shared/ui/PanelResizeHandle';
@@ -205,10 +206,7 @@ export default function App(): JSX.Element {
   );
 
   const activeRoute = useMemo(() => {
-    if (!selectedRoutePair) return null;
-    return selectedRouteType === 'direct' && selectedRoutePair.direct
-      ? selectedRoutePair.direct
-      : selectedRoutePair.candidate;
+    return selectAccessRoute(selectedRoutePair, selectedRouteType);
   }, [selectedRoutePair, selectedRouteType]);
 
   const mapTerrain = useMemo(() => models[0]?.metadata && models[0]?.grid && models[0]?.gridBuffer
@@ -307,6 +305,7 @@ export default function App(): JSX.Element {
         locale={locale}
         incident={incident}
         report={packet.report}
+        reportRoad={roads.find(road => road.id === packet.report.roadId)}
         dataAvailable={snapshotReady}
         theme={theme}
         fontChoice={fontChoice}
@@ -376,6 +375,7 @@ export default function App(): JSX.Element {
               terrainCovered={communityTerrainCoverage?.get(selectedCommunity.id) ?? null}
               assessment={assessments.get(selectedCommunity.id)!}
               hazards={hazards}
+              evidence={evidence}
               locale={locale}
               detailTab={detailTab}
               onChangeDetailTab={setDetailTab}
@@ -399,6 +399,7 @@ export default function App(): JSX.Element {
                 setActiveDialog('data');
               }}
               onSelectObject={inspectObject}
+              onOpenEvidence={(hazardId) => { setEvidenceModalId(hazardId); setActiveDialog('evidence'); }}
               onExport={openDecisionExport}
             />
           ) : view === 'incident' ? (
@@ -604,6 +605,7 @@ export default function App(): JSX.Element {
         <NotificationDialog
           locale={locale}
           report={packet.report}
+          road={roads.find(road => road.id === packet.report.roadId)}
           updated={reportApplied}
           historical={historical}
           onApplyReport={handleSimulateUpdate}

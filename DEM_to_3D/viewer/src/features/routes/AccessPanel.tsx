@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import type { Locale, ScenarioRoute } from '../../types/dear';
-import type { ResponseAssessment } from '../incident/responseAssessment';
+import type { Hazard, IncidentEvidence, Locale, ScenarioRoute } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { communityAccessText } from './accessAssessment';
 import { RouteOption } from './RouteOption';
+import { RoadConstraint } from './RoadConstraint';
+import { routeNextAction, selectAccessRoute } from './routeReview';
 
 type Props = {
-  assessment: ResponseAssessment; locale: Locale;
+  locale: Locale; hazards: Hazard[]; evidence: IncidentEvidence[];
   candidate: ScenarioRoute | null; direct: ScenarioRoute | null;
   selected: 'candidate' | 'direct'; onSelectRoute: (type: 'candidate' | 'direct') => void;
   hasProfile: boolean; onProfile: () => void; onInspect: (id: string) => void;
@@ -15,18 +16,17 @@ type Props = {
 };
 
 /** One access review: selected route, its constraints, then optional comparisons. */
-export function AccessPanel({ assessment, locale, candidate, direct, selected, onSelectRoute, hasProfile, onProfile, onInspect, onFindings, onExport }: Props): JSX.Element {
+export function AccessPanel({ locale, hazards, evidence, candidate, direct, selected, onSelectRoute, hasProfile, onProfile, onInspect, onFindings, onExport }: Props): JSX.Element {
   const [compare, setCompare] = useState(false), [allSections, setAllSections] = useState(false);
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
-  const active = selected === 'direct' && direct ? direct : candidate;
+  const active = selectAccessRoute({ candidate, direct }, selected);
   const constraints = active?.segs.filter(road => road.status !== 'open') ?? [];
   const blocked = active?.status === 'blocked';
   const other = active === direct ? candidate : direct;
-  const canCompare = Boolean(candidate && direct);
   const needsOtherRoute = Boolean(blocked && other && other.status !== 'blocked');
   const action = needsOtherRoute
     ? t('Tuyến đang xem bị chặn. Kiểm tra phương án còn lại.', 'This route is blocked. Review the other option.')
-    : t(...assessment.nextAction);
+    : t(...routeNextAction(active, hazards));
   const firstConstraint = constraints.find(road => road.status === 'blocked') ?? constraints[0];
   const inspect = (id: string) => onInspect(`road:${id}`);
   const primaryAction = () => {
@@ -44,24 +44,24 @@ export function AccessPanel({ assessment, locale, candidate, direct, selected, o
   return <>
     <div className="decision-overview"><small>{t('Tiếp cận địa bàn', 'Community access')}</small><strong>{t(...communityAccessText({ candidate, direct }))}</strong></div>
     {active && <section className="decision-route">
-      <div className="section-line"><h3>{t('Tuyến đang xem', 'Selected route')}</h3>{blocked && <StatusText tone="critical" icon="blocked">{t('Bị chặn', 'Blocked')}</StatusText>}</div>
+      <div className="section-line"><h3>{active.type === 'candidate' && !blocked ? t('Tuyến gợi ý', 'Suggested route') : t('Tuyến đang xem', 'Selected route')}</h3><StatusText tone={blocked ? 'critical' : 'warning'} icon={blocked ? 'blocked' : 'uncertain'}>{blocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}</StatusText></div>
       <strong>{t(...active.name)}</strong>
       <p className="route-summary-distance">{active.lengthKm} km · {t('từ điểm tập kết Nậm Kha', 'from Nậm Kha staging point')}</p>
       {active.eta && <p className="route-travel-estimate">{active.eta.minMinutes} {t('đến', 'to')} {active.eta.maxMinutes} {t('phút', 'min')}<small>{active.eta.mode === 'foot' ? t('Đi bộ, nếu thông tuyến', 'On foot, assuming passage') : t('Xe 4x4, nếu thông tuyến', '4WD, assuming passage')}</small></p>}
     </section>}
-    <div className="assessment-action"><strong>{t('Cần xử lý', 'Next action')}</strong><span>{action}</span></div>
-    {constraints.length > 0 && <section className="access-issues" aria-label={t('Đoạn ảnh hưởng tiếp cận', 'Access constraints')}>
-      <h3>{t('Đoạn cần kiểm tra trên tuyến', 'Selected route constraints')}</h3>{roadRows(constraints)}
-    </section>}
-    <button className="button primary access-primary" onClick={primaryAction}>
+    <div id="route-next-action" className={'assessment-action route-action ' + (blocked ? 'is-blocked' : active ? 'is-uncertain' : '')}><strong>{blocked ? t('Đường bị chặn', 'Road blocked') : t('Cần xử lý', 'Next action')}</strong><span>{action}</span></div>
+    <button className="button primary access-primary" aria-describedby="route-next-action" onClick={primaryAction}>
       {needsOtherRoute ? t('Xem tuyến khác', 'Review other route') : firstConstraint ? t('Xem đoạn cần kiểm tra', 'Inspect road constraint') : active ? t('Xem các đoạn đường', 'Review road sections') : t('Xem thông tin địa bàn', 'Review community findings')}
     </button>
+    {constraints.length > 0 && <section className="access-issues" aria-label={t('Đoạn ảnh hưởng tiếp cận', 'Access constraints')}>
+      <h3>{t('Đoạn cần kiểm tra trên tuyến', 'Selected route constraints')}</h3>{constraints.map(road => <RoadConstraint key={road.id} road={road} record={evidence.find(item => item.hazardId === road.hz)} locale={locale} onInspect={() => inspect(road.id)}/>)}
+    </section>}
     {active && <div className="access-supplementary">
-      {canCompare && <>
+      {candidate && direct && <>
         <button className="access-disclosure" aria-expanded={compare} aria-controls="access-route-options" onClick={() => setCompare(open => !open)}>{t('So sánh tuyến', 'Compare routes')}<UiIcon name={compare ? 'collapse' : 'expand'} size={16}/></button>
         {compare && <div id="access-route-options" className="route-options" role="group" aria-label={t('Chọn tuyến tiếp cận', 'Select access route')}>
-          <RouteOption route={candidate!} selected={active === candidate} locale={locale} onSelect={() => onSelectRoute('candidate')}/>
-          <RouteOption route={direct!} selected={active === direct} locale={locale} onSelect={() => onSelectRoute('direct')}/>
+          <RouteOption route={candidate} selected={active === candidate} locale={locale} onSelect={() => onSelectRoute('candidate')}/>
+          <RouteOption route={direct} selected={active === direct} locale={locale} onSelect={() => onSelectRoute('direct')}/>
         </div>}
       </>}
       <button className="access-disclosure" aria-expanded={allSections} aria-controls="access-route-sections" onClick={() => setAllSections(open => !open)}><span>{t('Các đoạn trên tuyến', 'Route sections')} ({active.segs.length})</span><UiIcon name={allSections ? 'collapse' : 'expand'} size={16}/></button>

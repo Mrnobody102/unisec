@@ -17,6 +17,8 @@ Nhận diện sạt lở bằng AI là bước xử lý ảnh **chưa tích hợ
 
 Luồng panel: **Sự kiện → địa bàn ưu tiên → tuyến đang xem → đoạn cần kiểm tra → bản ghi nguồn**. Tiếp cận tổng hợp mọi tuyến đã biết, nhưng danh sách cần kiểm tra chỉ lấy đoạn của tuyến đang xem. So sánh phương án mở tại chỗ. Căn cứ chứa tin tại địa bàn, dân số tham chiếu, điều kiện ETA và nguồn.
 
+Ghi nhận tại địa bàn tách `report`, `context` và `gap`. Ghi nhận có `hazardId` đọc nội dung, nguồn và thời gian từ evidence của snapshot đang xem. Không suy ra một cầu thuộc tuyến vào bản khi chưa có kết nối đường. Chỉ dẫn tiếp cận theo tuyến chọn, còn mức ưu tiên vẫn theo quy tắc địa bàn bên dưới.
+
 ## Quy tắc hiện hành
 
 | Kết quả | Điều kiện |

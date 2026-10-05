@@ -1,6 +1,6 @@
 import { UiIcon } from './UiIcon';
 import React, { useEffect, useRef, useState } from 'react';
-import type { FontChoice, IncidentModel, Locale } from '../../types/dear';
+import type { FontChoice, IncidentModel, Locale, RoadSegment } from '../../types/dear';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { NotificationPopover } from './NotificationPopover';
 import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
@@ -9,6 +9,7 @@ type Props = {
   locale: Locale;
   incident: IncidentModel;
   report: IncidentPacket['report'];
+  reportRoad?: RoadSegment;
   dataAvailable: boolean;
   theme: 'light' | 'dark';
   fontChoice: FontChoice;
@@ -30,6 +31,7 @@ export const AppHeader: React.FC<Props> = ({
   locale,
   incident,
   report,
+  reportRoad,
   dataAvailable,
   theme,
   fontChoice,
@@ -105,7 +107,7 @@ export const AppHeader: React.FC<Props> = ({
           <UiIcon name="bell"/>
           {!alertRead && <span className="unread-indicator" />}
         </button>
-        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} updated={reportApplied} onOpenAll={() => { setNotificationsOpen(false); onOpenNotifications(); }} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
+        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} road={reportRoad} updated={reportApplied} onOpenAll={() => { setNotificationsOpen(false); onOpenNotifications(); }} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
         </div>
 
         <button

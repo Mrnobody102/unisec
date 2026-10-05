@@ -1,4 +1,5 @@
 import type { Hazard, ScenarioRoutePair } from '../../types/dear';
+import { routeNextAction } from '../routes/routeReview';
 
 export type CommunitySignal = { communication: 'lost' | 'available' | 'unknown'; urgentNeed: boolean };
 export type ResponseAssessment = {
@@ -44,7 +45,7 @@ export function assessCommunity(pair: ScenarioRoutePair | undefined, hazards: Ha
     : access === 'unmapped'
     ? ['Bổ sung tuyến đường và tin hiện trường', 'Obtain road geometry and field observations']
     : access === 'uncertain'
-    ? ['Kiểm tra đoạn chưa rõ trước khi sử dụng tuyến', 'Verify uncertain sections before using the route']
+    ? routeNextAction(pair?.candidate?.status !== 'blocked' ? pair?.candidate ?? pair?.direct ?? null : pair?.direct ?? null, hazards)
     : ['Xác minh khả năng đi qua toàn tuyến', 'Verify full-route passability'];
   return { priority, access, reason, nextAction, hazardIds, methodVersion: 'access-v1' };
 }

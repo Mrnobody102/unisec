@@ -44,6 +44,8 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Hộp thoại | Focus vào khi mở. Tab giữ bên trong, Escape đóng và trả focus về nút mở |
 | Câu chữ | Tên cụ thể, trạng thái nhất quán, câu ngắn. Không dùng chấm phẩy để ghép nhiều ý, mũi tên trang trí hoặc dấu gạch dài để ngăn dữ kiện |
 | Giải thích kỹ thuật | Đặt trong tùy chọn hoặc nguồn nếu cần đối chiếu. Màn thao tác chỉ giữ dữ kiện, trạng thái và hướng dẫn cho bước hiện tại |
+| Ghi nhận tại địa bàn | Mỗi mục có chủ đề và một nhận định. Nguồn, giờ quan sát và nhận tin có nhãn riêng. Tách thông tin thiếu khỏi ghi nhận, không gắn tin cầu vào địa bàn chưa xác định tuyến |
+| Cảnh báo tuyến | Vàng cho việc cần kiểm tra, đỏ khi tuyến bị chặn. Chỉ dẫn theo tuyến chọn, nêu rõ cầu/điểm vượt khe/đoạn sạt lở. Hành động chính nằm trước thông tin bổ trợ |
 | Dữ liệu chưa có | Ghi ở nơi liên quan đến quyết định hoặc phân tích. Không rải ghi chú kỹ thuật trên mọi nhãn. Không dùng số 0 thay cho chưa xác định |
 | Mã tham chiếu | Mã dùng cho tìm kiếm và đối chiếu dữ liệu, không tạo mục mở ra chỉ có một ID. Số hiệu đường chính thức chỉ hiện khi có nguồn xác nhận |
 | Đổi độ rộng panel | Kéo đường phân cách hoặc dùng phím mũi tên. Nhấp đúp về mặc định. Lưu tùy chọn tại máy |

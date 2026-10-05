@@ -12,6 +12,7 @@ import type {
 import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { areaM2, withinArea } from '../../terrain/areaGeometry';
+import { observationTime } from '../../features/incident/sourceTime';
 
 type Props = {
   objectId: string;
@@ -61,6 +62,7 @@ export const ObjectDetailView: React.FC<Props> = ({
   const road = kind === 'road' ? roads.find((r) => r.id === id) : undefined;
   const hazard = kind === 'hazard' ? hazards.find((h) => h.id === id) : undefined;
   const relatedHazard = road?.hz ? hazards.find(item => item.id === road.hz) : undefined;
+  const roadRecord = road?.hz ? evidence.find(item => item.hazardId === road.hz) : undefined;
   const hazardRecord = hazard ? evidence.find(item => item.hazardId === hazard.id) : undefined;
   const affectedRoads = hazard ? roads.filter(item => item.hz === hazard.id) : [];
   const site = kind === 'poi' ? responseSites.find(item => item.id === id) : undefined;
@@ -68,7 +70,7 @@ export const ObjectDetailView: React.FC<Props> = ({
     const pair = routes.get(community.id);
     return [pair?.candidate, pair?.direct].some(route => route?.segs.some(segment => segment.id === road.id));
   }) : [];
-  const observation = road?.note ? t(...road.note).replace(/^(Tin|Report at) \d{2}:\d{2}:\s*/i, '') : null;
+  const observation = roadRecord ? t(...roadRecord.finding) : road?.note ? t(...road.note).replace(/^(Tin|Report at) \d{2}:\d{2}:\s*/i, '') : null;
   const roadObservation = observation ? observation[0].toLocaleUpperCase() + observation.slice(1) : null;
 
   let title = id;
@@ -100,7 +102,7 @@ export const ObjectDetailView: React.FC<Props> = ({
         {kind === 'road' && road && (
           <>
             <section className="object-observation">
-              <div className="section-line"><h3>{t('Ghi nhận', 'Observation')}</h3>{relatedHazard && <time>{relatedHazard.detected}</time>}</div>
+              <div className="section-line"><h3>{t('Ghi nhận', 'Observation')}</h3>{roadRecord ? <time dateTime={roadRecord.observedAt}>{observationTime(roadRecord.observedAt, locale)}</time> : relatedHazard && <time>{relatedHazard.detected}</time>}</div>
               <p>{roadObservation || t('Chưa có báo cáo về khả năng phương tiện đi qua.', 'Vehicle passage has not been reported.')}</p>
             </section>
             <section className="workflow-section">
@@ -114,7 +116,7 @@ export const ObjectDetailView: React.FC<Props> = ({
             </section>
             {relatedHazard && <section className="workflow-section object-source-section">
               <h3>{t('Nguồn ghi nhận', 'Observation source')}</h3>
-              <p>{t(...relatedHazard.src)}</p>
+              {roadRecord ? <dl className="finding-source"><div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(...roadRecord.source)}</dd></div><div><dt>{t('Nhận tin', 'Received')}</dt><dd><time dateTime={roadRecord.receivedAt}>{observationTime(roadRecord.receivedAt, locale)}</time></dd></div></dl> : <p>{t(...relatedHazard.src)}</p>}
               {road.hz && <button className="text-button" onClick={() => onOpenEvidence(road.hz!)}>{t('Xem bản ghi', 'View source record')}</button>}
             </section>}
           </>

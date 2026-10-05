@@ -47,6 +47,13 @@ export function validateIncidentPacket(value: unknown): IncidentPacket {
   check(Object.keys(value.signals).length === communities.size && Object.keys(value.signals).every(id => communities.has(id)), 'community signals');
   const trigger = Date.parse(value.incident.triggeredAt), snapshot = Date.parse(value.incident.asOf);
   check(trigger <= snapshot && snapshot < Date.parse(value.incident.asOfUpdated), 'incident timestamps');
+  for (const community of value.communities) for (const fact of community.facts) {
+    if (Array.isArray(fact)) continue;
+    check(!fact.hazardId || hazards.has(fact.hazardId), `unknown hazard in community finding: ${community.id}`);
+    check(fact.kind !== 'report' || Boolean(fact.hazardId || fact.source), `community finding source: ${community.id}`);
+    if (fact.observedAt) check(Date.parse(fact.observedAt) <= snapshot, `community finding timestamp: ${community.id}`);
+    if (fact.receivedAt) check(Boolean(fact.observedAt) && Date.parse(fact.observedAt!) <= Date.parse(fact.receivedAt) && Date.parse(fact.receivedAt) <= snapshot, `community finding receipt: ${community.id}`);
+  }
   for (const source of value.incident.sources) {
     check(Date.parse(source.observedAt) <= snapshot, `source timestamp: ${source.id}`);
     if (source.observedAtUpdated) check(Date.parse(source.observedAtUpdated) >= Date.parse(source.observedAt) &&

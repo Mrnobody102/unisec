@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localClock, sourceObservedAt } from './sourceTime';
+import { localClock, observationTime, sourceObservedAt } from './sourceTime';
 
 describe('incident observation times', () => {
   it('shows UTC+7 regardless of the input timezone, including midnight rollover', () => {
@@ -12,5 +12,10 @@ describe('incident observation times', () => {
     expect(sourceObservedAt(source, false)).toBe(source.observedAt);
     expect(sourceObservedAt(source, true)).toBe(source.observedAtUpdated);
     expect(sourceObservedAt({ ...source, observedAtUpdated: undefined }, true)).toBe(source.observedAt);
+  });
+  it('preserves the observation date when UTC+7 crosses midnight', () => {
+    const display = observationTime('2026-09-29T17:10:00+00:00', 'vi');
+    expect(display).toContain('00:10');
+    expect(display).toContain('30/09/2026');
   });
 });

@@ -28,6 +28,19 @@ export type IncidentModel = {
   sources: IncidentSource[];
 };
 
+export type CommunityFinding = {
+  kind: 'report' | 'gap' | 'context';
+  label: [vi: string, en: string];
+  value: [vi: string, en: string];
+  hazardId?: string;
+  source?: [vi: string, en: string];
+  observedAt?: string;
+  receivedAt?: string;
+};
+
+/** Tuple records are accepted for compatibility with earlier snapshot packets. */
+export type CommunityFact = CommunityFinding | [vi: string, en: string, viSource: string, enSource: string];
+
 export type Community = {
   id: string;
   name: string;
@@ -36,7 +49,7 @@ export type Community = {
   pop: number;
   hh: number;
   desc: [vi: string, en: string];
-  facts: Array<[viFact: string, enFact: string, viSource: string, enSource: string]>;
+  facts: CommunityFact[];
   projected: { x: number; y: number };
 };
 
