@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { projectedToWgs84, sceneToProjected } from '../../terrain/coordinate';
@@ -8,15 +8,21 @@ import type { TerrainData } from '../../types/terrain';
 import type { TerrainViewerProps } from '../../components/TerrainViewer';
 import { createRaster2d } from './raster2d';
 import { MapMeasurement } from '../measurement/MapMeasurement';
+import { measurementGeometry } from '../measurement/measurementGeometry';
+import type { MeasureAction, MeasurementSession } from '../measurement/measurementSession';
 import { showRoad, defaultLayerAppearance } from './layerAppearance';
+import { readMapLocation, type MapLocation } from './mapLocation';
 
 type Props = Pick<TerrainViewerProps, 'locale' | 'scenarioProps' | 'onSelectOverlayHit' | 'viewControlRef' | 'onBasemapState' | 'focusPoint' | 'profileMetadata'> & {
   terrain: TerrainData | null; imageUrl?: string; viewportRef: React.MutableRefObject<{ center: [number, number]; zoom: number } | null>;
   profileOpen: boolean;
+  locationOpen: boolean; locationPoint: MapLocation | null; onLocation: (point: MapLocation) => void;
   measurementOpen: boolean; onCloseMeasurement: () => void;
+  measureSession: MeasurementSession; dispatchMeasureSession: Dispatch<MeasureAction>;
 };
 
 export function Map2D(props: Props): JSX.Element {
+  const geometry = useMemo(() => measurementGeometry(props.scenarioProps, props.locale ?? 'vi'), [props.scenarioProps, props.locale]);
   const [mapReady, setMapReady] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null), mapRef = useRef<L.Map | null>(null);
   const propsRef = useRef(props); propsRef.current = props;
@@ -152,9 +158,11 @@ export function Map2D(props: Props): JSX.Element {
     const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); schedule(); }); resize.observe(host);
     const ui = new MutationObserver(schedule);
     if (host.parentElement) ui.observe(host.parentElement, { childList: true, subtree: true });
+    const area = host.closest('.map-area'); area?.addEventListener('dear:map-layout', schedule);
     map.on('move zoom resize viewreset', schedule);
     return () => {
       disposed = true; rasterAbort?.abort(); cancelAnimationFrame(frame); resize.disconnect(); ui.disconnect(); markers?.dispose();
+      area?.removeEventListener('dear:map-layout', schedule);
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
       map.remove(); north.remove(); surface.remove(); mapRef.current = null; runtime.current = null; focusLayer.current = null;
       if (props.viewControlRef) props.viewControlRef.current = null;
@@ -186,7 +194,18 @@ export function Map2D(props: Props): JSX.Element {
     const point = L.circleMarker([latitude, longitude], { radius: 4, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map);
     point.getElement()?.classList.add('map-profile-point-2d'); focusLayer.current = point;
   }, [props.focusPoint, props.profileMetadata]);
-  return <div className={`terrain-viewer map-2d${props.measurementOpen ? ' is-measuring' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
-    <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen && mapReady} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}/>
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !props.locationOpen) return;
+    const pick = (event: L.LeafletMouseEvent) => propsRef.current.onLocation(readMapLocation(event.latlng.lat, event.latlng.lng, propsRef.current.terrain));
+    map.on('click', pick);
+    const point = props.locationPoint;
+    const marker = point ? L.circleMarker([point.latitude, point.longitude], { radius: 5, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map) : null;
+    marker?.getElement()?.classList.add('map-location-point');
+    return () => { map.off('click', pick); marker?.remove(); };
+  }, [mapReady, props.locationOpen, props.locationPoint]);
+  return <div className={`terrain-viewer map-2d${props.measurementOpen ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+    {mapReady && <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}
+      session={props.measureSession} dispatch={props.dispatchMeasureSession} sources={geometry.sources} selected={geometry.selected}/>}
   </div>;
 }

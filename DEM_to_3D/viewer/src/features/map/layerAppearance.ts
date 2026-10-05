@@ -1,7 +1,7 @@
 export type LayerAppearance = {
   imageryOpacity: number;
   networkOpacity: number;
-  labels: 'auto' | 'selected';
+  labels: 'auto' | 'selected' | 'none';
   roads: 'all' | 'affected';
 };
 export const defaultLayerAppearance: LayerAppearance = { imageryOpacity: 1, networkOpacity: 1, labels: 'auto', roads: 'all' };

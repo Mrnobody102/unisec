@@ -155,7 +155,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   void document.fonts.ready.then(onFontsLoaded);
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
-    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.revision-notice') ?? [])
+    return Array.from(host.parentElement?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {
@@ -206,7 +206,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       }
       marker.icon.hidden = false; marker.count.hidden = presentation !== 'cluster';
       if (marker.count.textContent !== String(group.members.length)) marker.count.textContent = String(group.members.length);
-      if (!marker.label || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
+      if (!marker.label || options.appearance?.labels === 'none' || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
       const choices = [{ x: x + 22, y: y - 10 }, { x: x - marker.width - 22, y: y - 10 }, { x: x - marker.width / 2, y: y - 43 }, { x: x - marker.width / 2, y: y + 22 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);

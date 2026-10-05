@@ -1,5 +1,5 @@
 import type { Hazard, Locale } from '../../types/dear';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { UiIcon } from './UiIcon';
 import { roadColors } from '../../terrain/roadStyle';
 import { MapSymbol } from '../../shared/ui/MapSymbol';
@@ -9,6 +9,8 @@ import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover'
 const swatchColors: Record<string, string> = { selected: roadColors.selected, blocked: roadColors.blocked, uncertain: roadColors.uncertain };
 
 type Props = {
+  panelCollapsed: boolean; onTogglePanel: () => void;
+  locating: boolean; onLocation: () => void;
   locale: Locale; mapMode: '3d' | '2d';
   onToggleMapMode: () => void; onZoomIn: () => void; onZoomOut: () => void;
   onResetView: () => void; onOpenLayers: () => void;
@@ -18,9 +20,11 @@ type Props = {
   children?: ReactNode; onMeasure: () => void; measuring: boolean;
 };
 
-export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring }: Props): JSX.Element {
+export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoomOut, onResetView, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
+  const [legendMinimized, setLegendMinimized] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  useEffect(() => { if (measuring || layersOpen) setHelpOpen(false); }, [measuring, layersOpen]);
   const helpRef = useRef<HTMLDivElement>(null);
   useDismissiblePopover(helpRef, helpOpen, () => setHelpOpen(false));
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
@@ -43,6 +47,7 @@ export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoom
 
   return <>
     <div className="map-toolbar">
+      <button className="icon-button map-panel-toggle" aria-controls="response-panel" aria-expanded={!panelCollapsed} onClick={onTogglePanel} aria-label={panelCollapsed ? t('Mở panel thông tin', 'Show information panel') : t('Ẩn panel thông tin', 'Hide information panel')} title={panelCollapsed ? t('Mở panel thông tin', 'Show information panel') : t('Ẩn panel thông tin', 'Hide information panel')}><UiIcon name={panelCollapsed ? 'panelOpen' : 'panelClose'}/></button>
       {children}
       <button className="icon-button map-layer-trigger map-layer-launcher" data-map-layers-trigger aria-label={t('Lớp bản đồ', 'Layers')} title={t('Lớp bản đồ', 'Layers')} aria-expanded={layersOpen} aria-controls="map-layers-panel" onClick={onOpenLayers}><UiIcon name="layers"/></button>
       <button className="icon-button map-measure-trigger" aria-label={t('Đo trên bản đồ 2D', 'Measure on 2D map')} title={t('Đo trên bản đồ 2D', 'Measure on 2D map')} aria-pressed={measuring} onClick={onMeasure}><UiIcon name="ruler"/></button>
@@ -56,16 +61,18 @@ export function MapControls({ locale, mapMode, onToggleMapMode, onZoomIn, onZoom
       <button className="icon-button" onClick={onResetView} aria-label={t('Xem toàn khu vực', 'Fit area')} title={t('Xem toàn khu vực', 'Fit area')}>
         <UiIcon name="fit" />
       </button>
+      <button className="icon-button map-location-trigger" aria-label={t('Thông tin vị trí', 'Location information')} title={t('Thông tin vị trí', 'Location information')} aria-pressed={locating} onClick={onLocation}><UiIcon name="location"/></button>
       <div className="map-help" ref={helpRef}>
         <button className="icon-button" aria-label={t('Thao tác bản đồ', 'Map gestures')} aria-expanded={helpOpen} aria-controls="map-gesture-help" onClick={() => setHelpOpen(open => !open)}><UiIcon name="help"/></button>
         {helpOpen && <div id="map-gesture-help" data-popover><strong>{t('Thao tác bản đồ', 'Map gestures')}</strong><dl><dt>{t('Di chuyển', 'Pan')}</dt><dd>{t('Kéo chuột trái', 'Left-drag')}</dd><dt>{t('Phóng to / thu nhỏ', 'Zoom')}</dt><dd>{t('Cuộn chuột', 'Mouse wheel')}</dd>{mapMode === '3d' && <><dt>{t('Nghiêng và xoay', 'Tilt and rotate')}</dt><dd>{t('Ctrl + kéo hoặc kéo chuột phải', 'Ctrl + drag or right-drag')}</dd></>}</dl></div>}
       </div>
     </div>
-    <div className="map-bottom-bar" hidden={layersOpen} data-expanded={legendExpanded}>
+    <div className="map-bottom-bar" hidden={layersOpen || measuring || locating || !legend.length} data-expanded={legendExpanded} data-minimized={legendMinimized}>
       <div className="map-legend-heading">
-        {legend.length > 0 && <button className="text-button legend-toggle" aria-expanded={legendExpanded} aria-controls="map-legend-items" onClick={() => { if (layersOpen) onOpenLayers(); setLegendExpanded(expanded => !expanded); }}>{t('Chú giải', 'Legend')}<UiIcon name={legendExpanded ? 'collapse' : 'expand'} size={14}/></button>}
+        {legend.length > 0 && <button className="text-button legend-toggle" aria-expanded={!legendMinimized && legendExpanded} aria-controls="map-legend-items" onClick={() => { setLegendMinimized(false); setLegendExpanded(expanded => legendMinimized || !expanded); }}>{t('Chú giải', 'Legend')}<UiIcon name={!legendMinimized && legendExpanded ? 'collapse' : 'expand'} size={14}/></button>}
+        {!legendMinimized && <button className="icon-button legend-minimize" aria-label={t('Thu gọn chú giải', 'Minimize legend')} title={t('Thu gọn chú giải', 'Minimize legend')} onClick={() => setLegendMinimized(true)}><UiIcon name="minus" size={14}/></button>}
       </div>
-      {!layersOpen && visibleLegend.length > 0 && <div className="map-legend" id="map-legend-items" aria-label={t('Chú giải', 'Legend')}>
+      {!layersOpen && !measuring && !legendMinimized && visibleLegend.length > 0 && <div className="map-legend" id="map-legend-items" aria-label={t('Chú giải', 'Legend')}>
         {visibleLegend.map(({ kind, label, symbol, uiSymbol }) => <span className="legend-item" key={kind}>
           {symbol ? <i className={'legend-symbol ' + kind}><MapSymbol name={symbol} size={15} /></i> : uiSymbol ? <UiIcon name={uiSymbol} size={20}/> : <i className={'line ' + kind} style={{ borderColor: kind === 'network' ? (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain) : swatchColors[kind] }} aria-hidden="true"/>}{label}
         </span>)}

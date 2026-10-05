@@ -2,9 +2,9 @@ name: DEAR web
 
 on:
   push:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
   pull_request:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
   workflow_dispatch:
 
 permissions:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
@@ -36,7 +36,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: python -m unittest discover -s scripts -p 'test_*.py'
-      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm audit --audit-level=moderate
       - run: npm run build
       - run: python scripts/package_workspace.py --output dist-release/dear-offline.zip
       - name: Install browser checks
@@ -46,7 +46,12 @@ jobs:
       - name: Verify static browser flow
         run: |
           python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:5213 > /dev/null
           python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
+          python scripts/check_measurement_tools.py --url http://127.0.0.1:5213
+          python scripts/check_map_workspace.py --url http://127.0.0.1:5213
           python scripts/check_layer_sources.py
           python scripts/check_panel_usability.py
           python scripts/check_session.py --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json

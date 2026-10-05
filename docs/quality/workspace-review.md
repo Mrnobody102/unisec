@@ -39,12 +39,13 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 | Thành phần | Cách tổ chức |
 |---|---|
-| Panel | Cố định bên trái, dùng toàn bộ chiều cao, rộng 320–560 px tùy diện tích màn hình. Chi tiết đóng về ngữ cảnh đã mở |
+| Panel | Bên trái, rộng 320–560 px. Nút đầu thanh tìm kiếm thu gọn và giữ lựa chọn. Khung lớp/đo/tọa độ kéo bằng tiêu đề, nhấp đúp hoặc Home để đặt lại |
 | Địa bàn | Tiếp cận, Tuyến, Căn cứ. Màn chính giữ trạng thái, phương án, thời gian có điều kiện và việc cần xử lý |
 | Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
 | Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
 | Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm cùng loại mới có số đếm trên 2D. Nhóm khác loại/3D mở chọn đối tượng. Nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
-| Công cụ đo | Khoảng cách/diện tích/chu vi UTM trên 2D. Sửa điểm, giữ kết quả khi kết thúc, đóng hoặc đo lại. Không tạo dữ liệu nghiệp vụ |
+| Công cụ đo | 6 kiểu đo ngang UTM trên 2D. Xem trước, bắt điểm, kéo đỉnh, hoàn tác/làm lại và giữ hình trong phiên. Nhãn chỉ giá trị/đơn vị. Tùy chọn mở bằng icon điều chỉnh trên tiêu đề |
+| Tọa độ | Nút tâm ngắm mở bảng vị trí trên 2D/3D. Có WGS84, hệ tọa độ mô hình, độ cao và sao chép. Không hiển thị độ cao ngoài DEM trên 2D |
 | Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
 | Nguồn lớp | Nút thông tin cạnh từng lớp, mở một lớp mỗi lần. Tách ngày thu nhận, quan sát và tổng hợp. Metadata thiếu được ghi rõ |
 | Tìm kiếm | Tên/mã hoặc tiếng Việt không dấu, chọn kết quả bằng bàn phím, mở chi tiết và đưa vào vùng nhìn |
@@ -58,6 +59,8 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 [Công cụ đo bản đồ](assets/workspace-measurement.png). Hình đo tạm giữ lớp tình huống để người trực đối chiếu.
 
+[Thông tin vị trí trên 3D](assets/workspace-location.png). Chọn điểm để đọc tọa độ và độ cao.
+
 [Lịch sử tin trong sự kiện](assets/workspace-notifications.png). Mở từng tin để đọc quan sát, nguồn, thời gian và hành động liên quan.
 
 [Nguồn từng lớp](assets/workspace-layer-sources.png). Mở khi cần đối chiếu nguồn, ngày quan sát và thời điểm tổng hợp.
@@ -68,33 +71,32 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 
 | Kiểm tra | Kết quả |
 |---|---|
-| TypeScript và build | Đạt. JavaScript đầu vào khoảng 760 KB, 240 KB gzip. Chunk app 336 KB, React/Leaflet/validation riêng để dùng lại cache. Tổng tải không giảm nhờ tách chunk. 2D không tải Three.js/GLB; 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 129 kiểm thử đạt, gồm phép đo, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và 10 trường hợp kiểm manifest/packet |
+| TypeScript và build | Đạt. JavaScript đầu vào khoảng 796 KB, 250 KB gzip. Chunk app khoảng 370 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
+| TypeScript unit tests | 145 kiểm thử đạt, gồm phép đo, tọa độ/độ cao, giới hạn cửa sổ, nhóm điểm, snapshot, tuyến/ưu tiên, so ảnh, GeoJSON, timeout/hủy tải và manifest |
 | Python | 8 kiểm thử dữ liệu, 3 API và 2 đóng gói đạt |
 | Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
 | Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
 | Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
 | Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
-| Chrome: công cụ và biến thể | Đo đường/diện tích, sửa điểm, đóng/mở lại, chuyển từ 3D sang 2D. Đổi tối/Anh/font giữ phép đo, Escape đóng hộp đang tương tác |
+| Chrome: công cụ và biến thể | 6 kiểu đo, xem trước, kéo đỉnh, hoàn tác/làm lại, đơn vị, sao chép, giữ/ẩn/xóa hình, đo trực tiếp tuyến/AOI, thu gọn và 12 vòng đóng/mở. Đổi tối/Anh/font và qua 3D về 2D giữ phép đo. Mobile 390/320 px không tràn hoặc đè hướng Bắc |
 | Chrome: công cụ phụ | Thông báo, xem dữ liệu cũ/về bản mới, độ rõ/lọc/nhãn, so GeoTIFF có tọa độ, mở lại cặp ảnh, GeoJSON, bản in và đặt lại phiên |
 | Chrome: static delivery | Luồng chính và công cụ phụ đạt qua server tĩnh, không cần API. Lỗi CRS khi so ảnh cho phép chọn lại và thử tiếp |
 | Chrome: nguồn lớp | Đạt: nguồn/ngày theo bản dữ liệu cũ/mới, ngày ảnh chưa có, giới hạn H, nguồn riêng cho Imagery/Terrain Light, bàn phím và chiều rộng 320–1366 px |
 | Vòng đời 3D | Sửa gỡ listener trước khi React tháo canvas. Giải phóng tài nguyên GPU của renderer cũ, giữ dữ liệu để mở lại. 25 vòng thử nhanh không tăng DOM/listener |
 | Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
-| Lặp phiên trên build cuối | Đạt: 7 vòng trong 36,6 giây, DOM/listener không tăng. Thử dài 30 phút ở hàng trên là kết quả của build trước |
-| GitHub Actions | Có workflow Node 22/Python 3.12, unit/dữ liệu/audit runtime/build/gói/browser. YAML hợp lệ, chưa chạy trên GitHub |
+| Lặp phiên trên build cuối | Linux: 5 vòng trong 34,7 giây, DOM/listener giữ nguyên, JS heap tăng 0,61 MB. Thử dài 30 phút ở hàng trên là kết quả của build trước |
+| CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
+| GitHub Actions | Run của commit `756510a` dừng ở npm test. Tái hiện lỗi checksum JSON do CRLF/LF, đã chuẩn hóa file và thêm `.gitattributes`. Commit mới cần push để xác nhận trạng thái GitHub |
 | Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |
-| Dependency audit | Đã vá `fast-uri` lên 3.1.8. `npm audit --omit=dev`: 0 cảnh báo. Audit toàn bộ còn 4 cảnh báo ở Vite/esbuild/Vitest/vite-node |
+| Dependency audit | Vite 7.3.6, plugin React 5.2.0, Vitest 4.1.11. `npm audit`: 0 cảnh báo, gồm cả công cụ phát triển |
 | Chrome: gói offline | Kiểm checksum, giải nén vào thư mục mới, khởi động prepared, không gọi Internet, áp dụng tin, xuất PNG, 3D/2D và đặt lại |
 
-Kiểm tra trình duyệt: `scripts/check_workspace.py`, `check_map_tools.py`, `check_secondary_tools.py`, `check_layer_sources.py`, `check_session.py` và `check_offline_package.py`. Cài Playwright từ `scripts/requirements-browser.txt`, dùng Chromium hoặc `--chrome` trỏ đến Chrome đã cài. So ảnh dùng GeoTIFF RGB có tọa độ do script tạo, không phải ảnh thiên tai thực.
+CI chạy `check_workspace.py`, `check_measurement_tools.py`, `check_map_workspace.py`, `check_layer_sources.py`, `check_panel_usability.py` và `check_session.py`. Bộ công cụ phụ/ảnh/offline có script riêng trong `scripts/`. Cài Playwright từ `scripts/requirements-browser.txt`, dùng Chromium hoặc `--chrome` trỏ đến Chrome đã cài.
 
 Bước in PDF trong kiểm tra Chrome tự động có một lần timeout. Hai lần chạy lại đạt, chưa xác định nguyên nhân. Cần kiểm tra bản in trên máy trình chiếu.
 
-Review ngày 2026-10-05 sửa timeout/hủy tải, giữ đúng thời gian thông báo và dọn tài nguyên 3D. Bộ nạp dữ liệu được tách khỏi App; chỉ đưa vào UI khi packet/địa hình khớp manifest. Cấu hình và [hướng dẫn Vercel](../operations/vercel.md) đã có. Máy local dùng Windows, Node 25.8.1/Python 3.12.4. Chưa chạy Node 22/Linux trên CI hoặc Vercel.
+Đã kiểm tra trên Windows và Linux. Cấu hình và [hướng dẫn Vercel](../operations/vercel.md) đã có. Chưa xác nhận bản deploy Vercel.
 
 [Log phiên 30 phút](assets/session-30min.json): Chrome 154 headless, 1366×768, localhost và chặn Internet. Mở 2D đến khi ảnh hiện: 0,67 giây. Mở canvas/marker 3D lần đầu: 0,44 giây. Xuất PNG: 0,49–1,41 giây. Hash bản build nằm trong log; sửa nội dung nguồn nền sau phiên đã được kiểm tra riêng trên build cuối. Chưa đo FPS/GPU hoặc tốc độ trên máy trình chiếu.
-
-Nâng Vite/Vitest lên bản đã vá chưa hoàn tất: proxy trả `403 MediaTypeBlocked` cho binary esbuild 0.28.2 và 0.27.7. Repo giữ bộ build/test cũ đã kiểm tra, không bỏ xác minh TLS. Các advisory còn lại liên quan máy chủ dev/test, không phải máy chủ file tĩnh của Vercel. Cần hoàn tất nâng công cụ ở môi trường tải được binary và chạy lại các kiểm tra trước khi dùng máy chủ dev/test chung.
 
 Đã đối chiếu bốn giai đoạn tại proposal trang 2–3. Luồng web đạt trên dữ liệu mô phỏng; còn GPM/DMC, xử lý SAR/AI, Community Isolation Score, điểm số rủi ro/ưu tiên và GeoPackage. Chưa nghiệm thu dữ liệu, đo mục tiêu 3–6 giờ hoặc thử trên máy trình chiếu. Backend hiện chỉ có kế hoạch. PDF dùng bản in của trình duyệt. Xem [luồng demo sáu phút](../operations/walkthrough.md), [công việc SIC](../tasks/sic-2026.md), [gói offline](../operations/offline.md).

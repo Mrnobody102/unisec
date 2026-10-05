@@ -29,6 +29,9 @@ import { UiIcon } from './components/dear/UiIcon';
 import { ModelUploadPanel, type UploadMode } from './components/ModelUploadPanel';
 import type { ViewControls } from './components/TerrainViewer';
 import { Map2D } from './features/map/Map2D';
+import { MapLocationPanel } from './features/map/MapLocationPanel';
+import { readTerrainLocation, type MapLocation } from './features/map/mapLocation';
+import { initialMeasurementSession, measurementSessionReducer } from './features/measurement/measurementSession';
 import { Map3DBoundary } from './features/map/Map3DBoundary';
 import { useRouteTerrainAnalysis } from './features/routes/useRouteTerrainAnalysis';
 import { usePanelScroll } from './shared/hooks/usePanelScroll';
@@ -59,11 +62,10 @@ import type {
   RoadFilter,
   WorkspaceView
 } from './types/dear';
-import type { LoadedModel, TerrainData, TerrainPoint } from './types/terrain';
+import type { LoadedModel, TerrainData, TerrainPoint, TerrainMetadata } from './types/terrain';
 
 import { createGeographicPlacements } from './terrain/geographic';
 import { loadModelFiles, releaseModels, loadTerrain3D } from './terrain/modelRuntime';
-import { initialMeasurementState, measurementReducer } from './state/measurementStore';
 import type { ScenarioManifest } from './data/scenarioManifest';
 import type { OverlayHit } from './terrain/scenarioOverlays';
 import { sampleTiles } from './terrain/analysisTerrain';
@@ -106,11 +108,17 @@ export default function App(): JSX.Element {
   const [alertRead, setAlertRead] = useState<boolean>(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
   const [measurementOpen, setMeasurementOpen] = useState(false);
+  const [measureSession, dispatchMeasureSession] = useReducer(measurementSessionReducer, initialMeasurementSession);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   useEffect(() => { if (showProfile) setMeasurementOpen(false); }, [showProfile]);
   const [mapMode, setMapMode] = useState<'3d' | '2d'>('2d');
   const [mobileView, setMobileView] = useState<'map' | 'info'>('map');
   const [basemapState, setBasemapState] = useState<BasemapState>({ status: 'off', style: 'satellite', loaded: 0, total: 0 });
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationPoint, setLocationPoint] = useState<MapLocation | null>(null);
+  useEffect(() => { if (measurementOpen || showProfile || activeDialog) setLocationOpen(false); }, [measurementOpen, showProfile, activeDialog]);
+  const closeLocation = useCallback(() => { setLocationOpen(false); document.querySelector<HTMLButtonElement>('.map-location-trigger')?.focus(); }, []);
   const [evidenceModalId, setEvidenceModalId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<[string, string] | null>(null);
   const [showCustomUploadModal, setShowCustomUploadModal] = useState<boolean>(false);
@@ -133,7 +141,6 @@ export default function App(): JSX.Element {
   const [terrain3DBusy, setTerrain3DBusy] = useState(false);
   const map2DViewport = useRef<{ center: [number, number]; zoom: number } | null>(null);
   const modelsRef = useRef<LoadedModel[]>([]);
-  const [measurement, dispatchMeasurement] = useReducer(measurementReducer, initialMeasurementState);
   const [focusDistance, setFocusDistance] = useState<number | null>(null);
   const viewControlRef = useRef<ViewControls | null>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -251,7 +258,7 @@ export default function App(): JSX.Element {
     setUploadError(null);
     setShowProfile(false);
     setFocusDistance(null);
-    dispatchMeasurement({ type: 'clear' });
+    setLocationPoint(null); setLocationOpen(false);
   }, [replaceModels]);
 
   const handleUpload = useCallback(
@@ -270,7 +277,7 @@ export default function App(): JSX.Element {
         replaceModels(next);
         setDefaultTerrainData(null);
         setUploadedNames(names);
-        dispatchMeasurement({ type: 'clear' });
+        setLocationPoint(null); setLocationOpen(false);
         setFocusDistance(null);
         setShowProfile(false);
         setShowCustomUploadModal(false);
@@ -321,7 +328,7 @@ export default function App(): JSX.Element {
     []
   );
 
-  const handlePick = useCallback((point: TerrainPoint) => dispatchMeasurement({ type: 'pick', point }), []);
+  const handlePick = useCallback((point: TerrainPoint, metadata: TerrainMetadata) => setLocationPoint(readTerrainLocation(point, metadata)), []);
 
   const geographicPlacements = useMemo(() => {
     if (uploadMode !== 'merge' || !geographicMerge || models.length === 0) return undefined;
@@ -366,6 +373,7 @@ export default function App(): JSX.Element {
   }, [analysisTerrain, communities]);
 
   const selectCommunity = useCallback((id: string) => {
+    setPanelCollapsed(false);
     setMeasurementOpen(false);
     if (id === selectedCommunityId) {
       setSelectedObjectId(null);
@@ -384,6 +392,7 @@ export default function App(): JSX.Element {
   }, [selectedCommunityId, selectedObjectId, view]);
 
   const inspectObject = useCallback((id: string) => {
+    setPanelCollapsed(false);
     setMeasurementOpen(false);
     setSelectedObjectId(id);
     setShowProfile(false);
@@ -395,6 +404,7 @@ export default function App(): JSX.Element {
   // Inspect map objects without losing the destination and route being reviewed.
   const handleOverlayHit = useCallback(
     (hit: OverlayHit) => {
+      setPanelCollapsed(false);
       setMobileView('info');
       if (hit.type === 'community') {
         if (selectedCommunityId === hit.id) setSelectedObjectId(null);
@@ -414,6 +424,7 @@ export default function App(): JSX.Element {
   }, [showToast, reportApplied, historical]);
 
   const changeView = (next: WorkspaceView): void => {
+    setPanelCollapsed(false);
     setMeasurementOpen(false);
     setView(next);
     setSelectedCommunityId(null);
@@ -434,7 +445,7 @@ export default function App(): JSX.Element {
   };
 
   return (
-    <div ref={workspaceRef} className="workspace" data-mobile={mobileView}>
+    <div ref={workspaceRef} className="workspace" data-mobile={mobileView} data-panel-collapsed={panelCollapsed}>
       <AppHeader
         locale={locale}
         incident={incident}
@@ -458,6 +469,8 @@ export default function App(): JSX.Element {
         onOpenTimeline={() => setActiveDialog('timeline')}
         onOpenNotifications={() => { setAlertRead(true); setActiveDialog('notificationCenter'); }}
         onReset={() => {
+          dispatchMeasureSession({ type: 'reset' }); setPanelCollapsed(false);
+          setLocationOpen(false); setLocationPoint(null);
           setReportApplied(false); setHistorical(false); setAlertRead(false); setActiveDialog(null);
           setSelectedCommunityId(null); setSelectedObjectId(null); setSelectedRouteType('candidate');
           setView('incident'); setDetailTab('decision'); setRoadFilter('all'); setImpactTab('roads');
@@ -475,7 +488,7 @@ export default function App(): JSX.Element {
 
       <main className="work-area">
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
-        <aside ref={sidebarRef} className="sidebar" aria-label={locale === 'vi' ? 'Thông tin ứng phó' : 'Response information'}>
+        <aside id="response-panel" ref={sidebarRef} className="sidebar" aria-label={locale === 'vi' ? 'Thông tin ứng phó' : 'Response information'}>
           {!snapshotReady ? <div className="sidebar-top"><h1>{startupError ? (locale === 'vi' ? 'Chưa tải được dữ liệu' : 'Dataset unavailable') : (locale === 'vi' ? 'Đang tải dữ liệu' : 'Loading dataset')}</h1>{startupError && <button className="button soft" onClick={() => setStartupAttempt(attempt => attempt + 1)}>{locale === 'vi' ? 'Thử lại' : 'Retry'}</button>}</div> : selectedObjectId ? (
             <ObjectDetailView
               objectId={selectedObjectId}
@@ -575,12 +588,17 @@ export default function App(): JSX.Element {
 
         <PanelResizeHandle locale={locale}/>
 
-        <section className="map-area" aria-label={locale === 'vi' ? 'Bản đồ ứng phó' : 'Response map'} data-profile={showProfile}>
+        <section className="map-area" aria-label={locale === 'vi' ? 'Bản đồ ứng phó' : 'Response map'} data-profile={showProfile} data-locating={locationOpen}>
           {historical && reportApplied && <RevisionNotice locale={locale} timestamp={incident.asOf} onLatest={() => setHistorical(false)}/>}
           {mapMode === '2d' ? <Map2D
             terrain={mapTerrain}
             profileOpen={showProfile}
+            locationOpen={locationOpen}
+            locationPoint={locationPoint}
+            onLocation={setLocationPoint}
             measurementOpen={measurementOpen}
+            measureSession={measureSession}
+            dispatchMeasureSession={dispatchMeasureSession}
             onCloseMeasurement={() => { setMeasurementOpen(false); document.querySelector<HTMLButtonElement>('.map-measure-trigger')?.focus(); }}
             imageUrl={defaultTerrainData ? scenarioManifest?.terrain.image?.url : undefined}
             viewportRef={map2DViewport}
@@ -594,11 +612,11 @@ export default function App(): JSX.Element {
           /> : <Map3DBoundary onUnavailable={handle3DUnavailable}><React.Suspense fallback={<div className="map-load-state" role="status">{locale === 'vi' ? 'Đang mở địa hình 3D' : 'Opening 3D terrain'}</div>}><TerrainViewer
             models={models}
             geographicPlacements={geographicPlacements}
-            measureMode={false}
+            measureMode={locationOpen}
             onPick={handlePick}
             profile={showProfile ? routeProfile : null}
             profileMetadata={analysisTerrain?.metadata}
-            focusPoint={showProfile ? focusPoint : null}
+            focusPoint={locationOpen ? locationPoint?.scene : showProfile ? focusPoint : null}
             mapMode={mapMode}
             theme={theme}
             locale={locale}
@@ -636,6 +654,8 @@ export default function App(): JSX.Element {
           </p>}
 
           <MapControls
+            panelCollapsed={panelCollapsed}
+            onTogglePanel={() => setPanelCollapsed(value => !value)}
             locale={locale}
             mapMode={mapMode}
             onToggleMapMode={() => setMapMode(mapMode === '3d' ? '2d' : '3d')}
@@ -653,11 +673,14 @@ export default function App(): JSX.Element {
             hasSelectedRoute={scenarioTerrainCompatible && Boolean(activeRoute)}
             hasHLZData={scenarioTerrainCompatible && responseSites.some(site => site.kind === 'hlz')}
             measuring={measurementOpen}
+            locating={locationOpen}
+            onLocation={() => { setMeasurementOpen(false); setShowProfile(false); setActiveDialog(null); setLocationOpen(open => !open); }}
             affectedOnly={layerAppearance.roads === 'affected'}
             onMeasure={() => { setShowProfile(false); setFocusDistance(null); setActiveDialog(null); setMapMode('2d'); setMeasurementOpen(open => !open); }}
           >
           <MapSearch locale={locale} query={mapQuery} onQuery={setMapQuery} results={mapResults} disabled={!snapshotReady}
             onSelect={result => {
+              setPanelCollapsed(false);
               const [kind, id] = result.key.split(':');
               const hazard = kind === 'hazard' ? hazards.find(h => h.id === id) : undefined;
               const site = kind === 'poi' ? responseSites.find(s => s.id === id) : undefined;
@@ -671,6 +694,7 @@ export default function App(): JSX.Element {
             }}/>
           </MapControls>
           <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh Sentinel-2 và địa hình Chế Tạo', 'Sentinel-2 imagery and Chế Tạo terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
+          {locationOpen && <MapLocationPanel locale={locale} point={locationPoint} onClose={closeLocation}/>}
 
           {activeDialog === 'layers' && (
             <LayersDialog

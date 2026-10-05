@@ -29,8 +29,11 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |
-| Thanh bản đồ | Tìm kiếm, lớp và đo cùng một thanh trên trái. Điều hướng thành một nhóm trên phải. Không tạo card riêng cho mỗi nút |
-| Đo bản đồ | Mở trên 2D, chọn khoảng cách hoặc diện tích. Đổi kiểu đo xóa hình cũ. Kết thúc giữ kết quả, X/Escape đóng. Không sửa dữ liệu sự kiện |
+| Thanh bản đồ | Nút panel, tìm kiếm, lớp và đo cùng thanh trên trái. Điều hướng và thông tin vị trí ở nhóm trên phải |
+| Đo bản đồ | Giá trị và đơn vị là nội dung chính. Tùy chọn mở từ icon điều chỉnh trên tiêu đề, chỉ hiện đơn vị liên quan. Phương pháp ghi theo hàng nhãn/giá trị trong tùy chọn. Nhãn trên bản đồ bỏ tên đại lượng và số thứ tự đỉnh, trừ đo góc |
+| Không gian bản đồ | Panel trái chỉnh độ rộng hoặc thu gọn, giữ lựa chọn. Chú giải có thể thu về một nút. Mở lớp/đo/tọa độ tạm ẩn chú giải |
+| Cửa sổ công cụ | Lớp, đo và tọa độ kéo bằng tiêu đề trên desktop. Phím mũi tên để dịch, Home hoặc nhấp đúp để đặt lại. Giới hạn trong bản đồ, giữ vị trí trong phiên. Mobile dùng vị trí cố định |
+| Thông tin vị trí | Dùng chung trên 2D và 3D. Chọn điểm để đọc tọa độ, độ cao, đổi WGS84/hệ tọa độ dữ liệu và sao chép. Không mở lại bảng thông số kỹ thuật đầy màn hình |
 | Lưu đánh giá | Hành động phụ trong chi tiết địa bàn. Mở xem trước trước khi tải, không thêm trang báo cáo vào menu chính |
 | Hộp xem nhanh | Nội dung ngắn và hành động xem chi tiết. Không khóa bản đồ |
 | Công cụ phụ | Độ rõ/lọc/nhãn trong Lớp bản đồ. Định dạng xuất phụ trong một menu. Không thêm trang hoặc card vào màn ứng phó |
@@ -38,6 +41,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | So ảnh | Hộp thoại rộng, hai ảnh cùng bản đồ, ngày/nguồn rõ, pan/zoom đồng thời, thanh trượt hỗ trợ bàn phím |
 | Hộp thoại | Focus vào khi mở. Tab giữ bên trong, Escape đóng và trả focus về nút mở |
 | Câu chữ | Tên cụ thể, trạng thái nhất quán, câu ngắn. Không dùng chấm phẩy để ghép nhiều ý, mũi tên trang trí hoặc dấu gạch dài để ngăn dữ kiện |
+| Giải thích kỹ thuật | Đặt trong tùy chọn hoặc nguồn nếu cần đối chiếu. Màn thao tác chỉ giữ dữ kiện, trạng thái và hướng dẫn cho bước hiện tại |
 | Dữ liệu chưa có | Ghi ở nơi liên quan đến quyết định hoặc phân tích. Không rải ghi chú kỹ thuật trên mọi nhãn. Không dùng số 0 thay cho chưa xác định |
 | Mã tham chiếu | Mã dùng cho tìm kiếm và đối chiếu dữ liệu, không tạo mục mở ra chỉ có một ID. Số hiệu đường chính thức chỉ hiện khi có nguồn xác nhận |
 | Đổi độ rộng panel | Kéo đường phân cách hoặc dùng phím mũi tên. Nhấp đúp về mặc định. Lưu tùy chọn tại máy |

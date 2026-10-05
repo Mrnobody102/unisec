@@ -23,7 +23,8 @@ Cập nhật: 2026-10-05. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 - Điểm chồng nhau dùng ký hiệu nhóm 34 px tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc chọn **Xem khu vực này** để tách điểm. Nhóm điểm gần nhau không có nghĩa là các điểm trùng tọa độ.
 - Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Khác loại hoặc trong 3D không hiện tổng số, giữ ký hiệu/tên địa bàn ưu tiên làm điểm đại diện khi có chỗ. Đối tượng đang chọn giữ ký hiệu và dấu nhóm. Nếu điểm chọn nằm sau điều khiển, không gắn tên của nó lên điểm khác. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
 - Polygon phải bám hình học thật. Chỉ có tọa độ điểm thì không vẽ vòng tròn/ellipse giả làm phạm vi sạt lở hoặc ngập.
-- Lớp, tìm kiếm và đo nằm cùng thanh trên trái. Chú giải dưới trái chỉ liệt kê lớp đang hiện. Bản gọn giải thích mạng đường, tình trạng đường và tuyến đang xem. Mở rộng để xem ký hiệu điểm và AOI. Mở lớp tạm ẩn chú giải để hai khối không che nhau.
+- Nút panel, tìm kiếm, lớp và đo nằm cùng thanh trên trái. Chú giải thu gọn được và tạm ẩn khi mở công cụ. Khung lớp/đo/tọa độ có thể kéo, không che nhóm điều hướng. Vị trí địa lý không đổi.
+- Nhãn có ba chế độ: tự động, chỉ đối tượng đang xem, tắt. Bật lại lớp giữ nguyên tọa độ. Đỉnh hình đo là dữ liệu người dùng vẽ, có thể chỉnh riêng.
 - 2D dùng Bắc địa lý và thước khoảng cách ngang tại tâm bản đồ theo zoom. 3D dùng Bắc lưới, xoay theo camera. Không dùng thước phẳng cho góc nhìn nghiêng.
 - Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Màu xanh đánh dấu phần tuyến đang xem, không che đoạn đỏ hoặc vàng.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
@@ -47,10 +48,24 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 |---|---|
 | Khoảng cách | Cộng đoạn thẳng trên mặt phẳng EPSG:32648, đơn vị m/km. Không dùng pixel hoặc khoảng cách trên mặt phẳng Web Mercator |
 | Diện tích | Đa giác từ ít nhất 3 điểm, đơn vị m²/ha/km². Hiển thị chu vi. Không nhận vùng tự cắt hoặc suy biến |
+| Bán kính | Tâm và điểm trên đường tròn, tính bán kính và diện tích. Đây là hình đo, không phải vùng an toàn hoặc phạm vi ảnh hưởng |
+| Phương vị / góc | Phương vị từ Bắc lưới UTM, 0–360°. Góc giữa 3 điểm, điểm thứ 2 là đỉnh, 0–180° |
+| Tọa độ | Vĩ độ/kinh độ WGS84. Mở chi tiết để xem E/N UTM 48N |
+| Thông tin vị trí 2D/3D | Công cụ riêng đọc WGS84 hoặc hệ tọa độ của mô hình, độ cao và sao chép. 2D lấy độ cao từ DEM, ngoài DEM không có giá trị. 3D lấy điểm trên địa hình, không dùng độ cao đã phóng đại |
 | Phạm vi | Múi UTM 48N, 102° đến 108° Đông. Phép đo ngang, không cộng chiều dài theo sườn dốc |
-| Thao tác | Bấm thêm điểm, Bỏ điểm cuối/Backspace để sửa, Kết thúc giữ hình, Đo lại bắt đầu mới, X/Escape đóng. Kéo/cuộn vẫn di chuyển và zoom |
+| Vẽ và chỉnh | Rê chuột xem trước, bấm thêm điểm, kéo đỉnh để sửa. Bắt điểm vào hình học của lớp đang hiện trong ngưỡng 10 px, không tự chạy theo đường |
+| Hình học có sẵn | Đo trực tiếp đoạn đường, tuyến đang chọn hoặc AOI để giữ đúng đường gấp khúc/ranh giới |
+| Kết thúc | Nút Kết thúc, Enter/F2, nhấp đúp hoặc chuột phải. Vùng có thể đóng bằng điểm đầu. Hoàn tác/làm lại hỗ trợ Ctrl+Z/Ctrl+Y |
+| Giữ kết quả | Đo mới hoặc đổi kiểu giữ phép đo đã hoàn tất. Có thể ẩn/xóa từng hình và sao chép kết quả. Đóng công cụ giữ hình đã hoàn tất, bỏ hình đang vẽ |
+| Vòng đời | Hình đo tồn tại trong phiên, hiện trên 2D và giữ khi đổi qua 3D. Tải lại trang hoặc Đặt lại phiên xóa hình đo. Chưa lưu thành lớp nghiệp vụ |
+| Diện tích màn hình | Thu gọn công cụ vẫn đo được. Mobile dùng khung đáy cao tối đa 48% vùng bản đồ. Thông số, từng đoạn và kết quả đã giữ mặc định đóng |
+| Nhãn đo | Chỉ giá trị và đơn vị, diện tích ở tâm hình. Ưu tiên phép đo hiện tại, tránh công cụ và đối tượng nghiệp vụ. Không đủ chỗ thì ẩn nhãn, kết quả vẫn có trong panel |
 
 Đo không tạo vùng ảnh hưởng, thay tình trạng đường hoặc tính lại mức ưu tiên.
+
+Độ chính xác phụ thuộc dữ liệu nền. Đo trên ellipsoid, chiều dài bề mặt DEM, thể tích và chỉnh sửa lớp nghiệp vụ chưa thuộc bộ công cụ này. Mặt cắt dọc tuyến dùng công cụ địa hình riêng.
+
+Mở rộng tiếp theo: mặt cắt theo đường tự vẽ và lưu/xuất hình đo thành lớp dữ liệu.
 
 ## Đối chiếu Hình 2 của proposal
 
@@ -70,9 +85,10 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 |---|---|
 | [ArcGIS: cấu hình clustering](https://doc.arcgis.com/en/arcgis-online/create-maps/configure-clustering-mv.htm) | Nhóm điểm thay đổi theo tỷ lệ, có ngưỡng zoom, số đếm và truy cập thành viên. Là mẫu tương tác GIS phổ biến, không phải quy định bắt buộc |
 | [PROJ: UTM](https://proj.org/en/stable/operations/projections/utm.html) | Chuyển tọa độ địa lý sang mặt phẳng trong múi phù hợp trước khi đo |
+| [ArcGIS Pro: Measure](https://doc.esri.com/en/arcgis-pro/latest/help/mapping/navigation/measure.html), [QGIS: Measuring](https://documentation.qgis.org/3.44/en/docs/user_manual/map_views/map_view.html#measuring) | Đơn vị, đoạn/tổng, bắt điểm, tọa độ, sao chép kết quả và phân biệt phương pháp đo |
 | [QCVN 70:2022/BTNMT, bản hợp nhất có sửa đổi 2025](https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/01/96-vbhn-bnnmt.pdf) | Quy chuẩn cho bản đồ địa hình quốc gia 1:50.000 và 1:100.000. Phân biệt ký hiệu theo tỷ lệ, nửa theo tỷ lệ và không theo tỷ lệ. Không coi đây là chứng nhận cho web ứng phó |
 | [Mapbox: bố trí nhãn](https://docs.mapbox.com/help/dive-deeper/optimize-map-label-placement/) | Thứ tự ưu tiên, nhiều vị trí nhãn, tránh chồng lấn. Áp dụng chung cho 2D và 3D |
-| [ArcGIS: clustering](https://doc.arcgis.com/en/arcgis-online/create-maps/configure-clustering-mv.htm) | Gộp điểm theo mật độ, số đếm và thay đổi nhóm theo zoom |
+| [ArcGIS: nhãn](https://doc.arcgis.com/en/arcgis-online/create-maps/configure-labels-mv.htm), [thông tin vị trí](https://doc.arcgis.com/en/arcgis-online/get-started/scene-find-location-information.htm) | Kiểm soát mật độ nhãn và công cụ đọc tọa độ/độ cao khi cần |
 | [Leaflet reference](https://leafletjs.com/reference), [EOX maps](https://maps.eox.at/) | Lớp 2D, ảnh, thước và attribution |
 | [Google Earth: mặt cắt theo đường](https://support.google.com/earth/answer/148134?hl=en) | Độ cao theo khoảng cách, đọc vị trí tương ứng trên đường |
 | [UNOSAT Nepal, 01/10/2024](https://unosat.org/static/unosat_filesystem/3990/UNOSAT_A3_Natural_Protrait_FL20240928NPL_01Oct2024.pdf) | Phân biệt vùng nước theo ngày, nước thường xuyên, phạm vi phân tích, nguồn và kiểm chứng. Đây là sản phẩm khác ảnh Nepal 2026 do người dùng cung cấp |

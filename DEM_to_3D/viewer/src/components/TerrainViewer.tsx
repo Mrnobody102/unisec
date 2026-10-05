@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { MapControls as ThreeMapControls } from 'three/examples/jsm/controls/MapControls.js';
-import type { LoadedModel, TerrainPoint } from '../types/terrain';
+import type { LoadedModel, TerrainPoint, TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from '../terrain/elevationGrid';
 import { projectedToScene, projectedToPixel, sceneToProjected } from '../terrain/coordinate';
 import { buildBvh, disposeBvh, disposeObjectResources } from '../terrain/raycast';
@@ -26,7 +26,7 @@ export type TerrainViewerProps = {
   models: LoadedModel[];
   geographicPlacements?: GeographicPlacement[];
   measureMode?: boolean;
-  onPick?: (point: TerrainPoint) => void;
+  onPick?: (point: TerrainPoint, metadata: TerrainMetadata) => void;
   focusPoint?: { x: number; y: number; z: number } | null;
   profile?: SurfaceProfile | null;
   profileMetadata?: LoadedModel['metadata'];
@@ -500,7 +500,7 @@ export function TerrainViewer({
 
       // Check scenario overlays first
       const overlayHit = pickOverlay();
-      if (overlayHit) { onSelectOverlayHitRef.current?.(overlayHit); return; }
+      if (overlayHit && !measureModeRef.current) { onSelectOverlayHitRef.current?.(overlayHit); return; }
 
       // If measure mode is active, pick ground point
       if (measureModeRef.current && onPickRef.current) {
@@ -510,7 +510,7 @@ export function TerrainViewer({
         const localPoint = entry.root.worldToLocal(hit.point.clone());
         const sample = sampleModel(entry.model, localPoint);
         if (!sample) return;
-        onPickRef.current({ scene: { x: hit.point.x, y: hit.point.y, z: hit.point.z }, projected: sample.projected, elevation: sample.elevation, row: sample.row, column: sample.column, interpolated: sample.interpolated });
+        onPickRef.current({ scene: { x: hit.point.x, y: hit.point.y, z: hit.point.z }, projected: sample.projected, elevation: sample.elevation, row: sample.row, column: sample.column, interpolated: sample.interpolated }, entry.model.metadata);
       }
     };
     renderer.domElement.addEventListener('click', onClick);
@@ -530,6 +530,9 @@ export function TerrainViewer({
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
     const mapUiObserver = new MutationObserver(() => { markerLayoutDirty = true; });
+    const mapArea = host.closest('.map-area');
+    const markLayoutDirty = () => { markerLayoutDirty = true; };
+    mapArea?.addEventListener('dear:map-layout', markLayoutDirty);
     if (host.parentElement) mapUiObserver.observe(host.parentElement, { childList: true, subtree: true });
     resize();
 
@@ -569,6 +572,7 @@ export function TerrainViewer({
       cancelAnimationFrame(hoverFrame);
       resizeObserver.disconnect();
       mapUiObserver.disconnect();
+      mapArea?.removeEventListener('dear:map-layout', markLayoutDirty);
       controls.removeEventListener('change', onControlsChange);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown, true);
       renderer.domElement.removeEventListener('wheel', onWheel, true);

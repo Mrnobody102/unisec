@@ -45,7 +45,7 @@ export function LayerDetails({ id, locale, packet, updated, evidence, terrain, r
     add('Nguồn', 'Source', t(...packet.aoi.source));
     add('Thời điểm', 'Timestamp', date(packet.aoi.observedAt));
     add('Phạm vi', 'Coverage', t(...packet.aoi.name));
-    note = t('Ranh giới đánh giá, không phải ranh giới hành chính hoặc phạm vi thiên tai.', 'Assessment boundary, not an administrative boundary or disaster extent.');
+    add('Loại ranh giới', 'Boundary type', t('Vùng đánh giá', 'Assessment area'));
   } else if (id === 'staging' || id === 'hlz') {
     const sites = packet.responseSites.filter(site => site.kind === id);
     for (const site of sites) add(t(...site.name), t(...site.name), `${t(...site.source)} (${date(site.observedAt)})`);
@@ -74,5 +74,5 @@ export function LayerDetails({ id, locale, packet, updated, evidence, terrain, r
     note = id === 'communities' ? t('Chưa ghi nguồn gốc dân số và số hộ trong gói.', 'Population and household provenance is not recorded in the packet.')
       : t('Mạng đường chưa đầy đủ cho mọi địa bàn. Chưa xác nhận nguồn hình tuyến và số hiệu thực địa.', 'The road network is incomplete. Geometry provenance and real-world route numbers are unconfirmed.');
   }
-  return <div className="layer-details"><dl>{rows.map(([label, value], index) => <div key={index}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p>{note}</p></div>;
+  return <div className="layer-details"><dl>{rows.map(([label, value], index) => <div key={index}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>{note && <p>{note}</p>}</div>;
 }

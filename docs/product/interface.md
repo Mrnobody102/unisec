@@ -33,13 +33,15 @@ Luồng này phục vụ bước phân tích và bản đồ hỗ trợ quyết 
 | Thời điểm dữ liệu trên header | Mốc bản đồ đang xem | Diễn biến và chọn bản dữ liệu trước/sau tin đã áp dụng |
 | Lớp bản đồ | Nền và nhóm lớp nghiệp vụ | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
 
-Panel bên trái, điều chỉnh độ rộng bằng đường phân cách. Bản đồ dùng hết phần còn lại. Ba tab **Sự kiện / Đường sá / Địa bàn** nằm trên panel. Mobile chuyển giữa **Thông tin** và **Bản đồ**.
+Panel bên trái chỉnh độ rộng hoặc thu gọn bằng nút đầu thanh tìm kiếm. Giữ tab, đối tượng và tuyến khi thu gọn. Chọn đối tượng sẽ mở lại panel. Ba tab **Sự kiện / Đường sá / Địa bàn** nằm trên panel. Mobile chuyển giữa **Thông tin** và **Bản đồ**.
 
 ## Hành vi
 
 | Thao tác | Kết quả |
 |---|---|
-| Đo trên bản đồ | Chuyển sang 2D, đóng lớp/mặt cắt. Chọn điểm để đo ngang. Không đổi tuyến hoặc căn cứ. Chọn địa bàn/đường từ panel kết thúc chế độ đo |
+| Đo trên bản đồ | Chuyển sang 2D, đóng lớp/mặt cắt và ẩn chú giải. Có 6 kiểu đo, bắt điểm, chỉnh đỉnh, đổi đơn vị và giữ kết quả. Không đổi tuyến hoặc căn cứ. Quy tắc tại [hiển thị bản đồ](cartography.md#đo-trên-bản-đồ) |
+| Thông tin vị trí | Nút tâm ngắm bên phải mở công cụ trên 2D/3D. Chọn điểm, đọc tọa độ và độ cao. Có đổi hệ tọa độ và sao chép |
+| Sắp xếp công cụ | Kéo tiêu đề bảng lớp/đo/tọa độ trên desktop. Thu gọn chú giải, tắt lớp hoặc đổi chế độ nhãn trong Lớp bản đồ. Không di chuyển tọa độ đối tượng nghiệp vụ |
 | Chọn địa bàn mới | Mở chi tiết và tuyến mặc định của địa bàn |
 | Đổi tuyến | Đổi tuyến trên bản đồ và thông tin tuyến đang xem. Tình trạng tiếp cận chung của địa bàn vẫn dựa trên tất cả tuyến đã biết |
 | Chọn số đoạn bị chặn/chưa rõ | Xóa từ khóa tìm kiếm, mở nhóm đường tương ứng, kể cả khi đang xem điểm ảnh hưởng |

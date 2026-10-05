@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from './UiIcon';
 import { clampOpacity, type LayerAppearance } from '../../features/map/layerAppearance';
+import { useFloatingPanel } from '../../shared/hooks/useFloatingPanel';
 
 type Props = { locale: Locale; layers: Record<string, boolean>; appearance: LayerAppearance; mapMode: '2d' | '3d'; onAppearance: (appearance: LayerAppearance) => void; onCompare: () => void; renderInfo: (id: string) => ReactNode; hasFloodData: boolean; hasHLZData?: boolean; hasSelectedRoute: boolean; hasIncidentLayers: boolean; onToggleLayer: (id: string) => void; onClose: () => void };
 
@@ -11,6 +12,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
   const info = (id: string, label: string) => <button type="button" className="layer-info-button" aria-label={t('Nguồn lớp ', 'Layer source: ') + label} aria-expanded={infoId === id} aria-controls={infoId === id ? `layer-info-${id}` : undefined} onClick={() => setInfoId(current => current === id ? null : id)}><UiIcon name="info"/></button>;
   const details = (id: string) => infoId === id ? <div id={`layer-info-${id}`}>{renderInfo(id)}</div> : null;
   const panelRef = useRef<HTMLElement>(null);
+  const floating = useFloatingPanel(panelRef, 'layers');
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   useEffect(() => {
@@ -32,7 +34,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
   ];
   const bases: Array<[boolean, string]> = [[true, t('Ảnh nền', 'Imagery')], [false, t('Địa hình', 'Terrain')]];
   return <section className="layers-panel" id="map-layers-panel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="map-layers-title">
-    <div className="layers-heading"><h2 id="map-layers-title">{t('Lớp bản đồ', 'Map layers')}</h2><button className="icon-button" onClick={onClose} aria-label={t('Đóng lớp bản đồ', 'Close map layers')}><UiIcon name="close" /></button></div>
+    <div className="layers-heading floating-panel-handle" {...floating} tabIndex={0} role="group" aria-label={t('Vị trí bảng lớp', 'Layers panel position')} aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home" title={t('Kéo để đổi vị trí. Nhấp đúp để đặt lại.', 'Drag to move. Double-click to reset.')}><h2 id="map-layers-title">{t('Lớp bản đồ', 'Map layers')}</h2><button className="icon-button" onClick={onClose} aria-label={t('Đóng lớp bản đồ', 'Close map layers')}><UiIcon name="close" /></button></div>
     <div className="layers-content">
       <fieldset className="basemap-choices"><legend>{t('Bản đồ nền', 'Base map')}</legend>
         {bases.map(([imagery, label]) => <label className={'basemap-choice ' + (layers.imagery === imagery ? 'is-active' : '')} key={String(imagery)}>
@@ -51,7 +53,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
         <label>{t('Độ rõ ảnh nền (2D)', 'Imagery opacity (2D)')}<output>{Math.round(appearance.imageryOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ ảnh nền', 'Imagery opacity')} disabled={mapMode !== '2d'} min="30" max="100" value={appearance.imageryOpacity * 100} onChange={event => onAppearance({ ...appearance, imageryOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
         <label>{t('Độ rõ mạng đường nền', 'Background road opacity')}<output>{Math.round(appearance.networkOpacity * 100)}%</output><input type="range" aria-label={t('Độ rõ mạng đường nền', 'Background road opacity')} min="30" max="100" value={appearance.networkOpacity * 100} onChange={event => onAppearance({ ...appearance, networkOpacity: clampOpacity(Number(event.target.value) / 100) })}/></label>
         <label>{t('Đường hiển thị', 'Road filter')}<select aria-label={t('Đường hiển thị', 'Road filter')} value={appearance.roads} onChange={event => onAppearance({ ...appearance, roads: event.target.value as LayerAppearance['roads'] })}><option value="all">{t('Toàn bộ mạng đường', 'All roads')}</option><option value="affected">{t('Đoạn bị ảnh hưởng và tuyến đang xem', 'Affected roads and selected route')}</option></select></label>
-        <label>{t('Nhãn địa danh', 'Place labels')}<select aria-label={t('Nhãn địa danh', 'Place labels')} value={appearance.labels} onChange={event => onAppearance({ ...appearance, labels: event.target.value as LayerAppearance['labels'] })}><option value="auto">{t('Tự động theo vùng nhìn', 'Automatic')}</option><option value="selected">{t('Chỉ đối tượng đang xem', 'Selected object only')}</option></select></label>
+        <label>{t('Nhãn địa danh', 'Place labels')}<select aria-label={t('Nhãn địa danh', 'Place labels')} value={appearance.labels} onChange={event => onAppearance({ ...appearance, labels: event.target.value as LayerAppearance['labels'] })}><option value="auto">{t('Tự động theo vùng nhìn', 'Automatic')}</option><option value="selected">{t('Chỉ đối tượng đang xem', 'Selected object only')}</option><option value="none">{t('Tắt nhãn', 'Off')}</option></select></label>
       </details>
       <button className="text-button layer-compare-action" onClick={onCompare}>{t('So ảnh trước và sau sự kiện', 'Compare pre/post imagery')}</button>
     </div>

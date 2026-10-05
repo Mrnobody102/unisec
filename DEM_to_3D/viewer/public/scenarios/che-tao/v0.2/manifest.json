@@ -29,13 +29,13 @@
     },
     "metadata": {
       "url": "/terrain/che_tao_v2_tex.terrain.json",
-      "byteLength": 2342,
-      "sha256": "f0d6832eec28625e22712ec079b4d98e5f824684ed83fd18a376ccbda0022241"
+      "byteLength": 2276,
+      "sha256": "a73c66a108651e645967ba39cfc06fd67427fb64bda6b390ba736a0bb2ace341"
     }
   },
   "workspace": {
     "url": "/scenarios/che-tao/v0.2/incident.json",
-    "byteLength": 24611,
-    "sha256": "c3f0d55e227427b78b5ea62a20070284b023b069fdf43aa2b07de80be3f0eba1"
+    "byteLength": 23727,
+    "sha256": "0529a35076ff427f709f240ebbde1b95237609d1923e9ccd6059d385fb9af3fe"
   }
 }

@@ -86,7 +86,6 @@ export const ObjectDetailView: React.FC<Props> = ({
         {kind === 'aoi' && <>
           <dl className="area-facts"><div><dt>{t('Diện tích', 'Area')}</dt><dd>{(areaM2(aoi.points) / 1000000).toFixed(1)} <small>km²</small></dd></div><div><dt>{t('Thôn, bản', 'Communities')}</dt><dd>{communities.filter(community => withinArea(community.projected, aoi.points)).length}</dd></div></dl>
           <section className="workflow-section area-action">
-            <p>{t('Ranh giới vùng đánh giá, không phải phạm vi sạt lở hoặc ngập.', 'Assessment boundary, not a landslide or flood extent.')}</p>
             <button className="button primary" onClick={onOpenPriority}>{t('Xem địa bàn trong vùng', 'View communities in area')}</button>
           </section>
           <details className="object-reference"><summary>{t('Nguồn ranh giới', 'Boundary source')}</summary><p>{t(...aoi.source)}</p></details>

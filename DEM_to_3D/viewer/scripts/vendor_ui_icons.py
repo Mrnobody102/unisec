@@ -15,6 +15,8 @@ ICONS = {
     'ruler': 'ruler', 'area': 'square-dashed', 'undo': 'undo-2', 'trash': 'trash',
     'check': 'check', 'blocked': 'circle-minus', 'uncertain': 'triangle-alert',
     'priority': 'flag',
+    'panelOpen': 'panel-left-open', 'panelClose': 'panel-left-close',
+    'location': 'locate-fixed',
 }
 
 def fetch(item):
