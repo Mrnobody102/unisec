@@ -96,7 +96,7 @@ export const CommunityDetailView: React.FC<Props> = ({
           </StatusText>
         </div>
 
-        <p className="sidebar-intro">{t(...assessment.reason)}</p>
+        {detailTab === 'decision' && assessment.access !== 'unmapped' && <p className="sidebar-intro">{t(...assessment.reason)}</p>}
 
         <div className="decision-tabs" role="group">
           <button
@@ -143,10 +143,7 @@ export const CommunityDetailView: React.FC<Props> = ({
               <strong>{t(activeRoute.name[0], activeRoute.name[1])}</strong>
               <p className="route-summary-distance">{activeRoute.lengthKm} km {t('từ điểm tập kết Nậm Kha', 'from Nậm Kha staging point')}</p>
               {activeRoute.eta && <p className="route-travel-estimate">{activeRoute.eta.minMinutes} {t('đến', 'to')} {activeRoute.eta.maxMinutes} {t('phút', 'min')}<small>{t('Giả định thông tuyến', 'Assuming passage')}</small></p>}
-            </div> : <div className="decision-route">
-              <h3>{t('Chưa có tuyến để đánh giá', 'No mapped access route')}</h3>
-              <p>{t('Chưa đủ dữ liệu đường để gợi ý tuyến cho địa bàn này.', 'Road data is insufficient to suggest an access route for this community.')}</p>
-            </div>}
+            </div> : null}
 
             <p className="assessment-action"><strong>{t('Việc cần xử lý', 'Next action')}</strong><span>{t(...assessment.nextAction)}</span></p>
             <div className="decision-actions"><button
@@ -177,10 +174,11 @@ export const CommunityDetailView: React.FC<Props> = ({
         )}
 
         {detailTab === 'route' && !activeRoute && (
-          <div className="decision-route">
+          <section className="workflow-section route-empty">
             <h3>{t('Chưa có tuyến để đánh giá', 'No mapped access route')}</h3>
-            <p>{t('Chưa đủ dữ liệu đường để gợi ý tuyến cho địa bàn này.', 'Road data is insufficient to suggest an access route for this community.')}</p>
-          </div>
+            <p>{t(...assessment.nextAction)}</p>
+            <button className="text-button" onClick={() => onChangeDetailTab('evidence')}>{t('Xem thông tin địa bàn', 'Review community findings')}</button>
+          </section>
         )}
 
         {detailTab === 'route' && candidateRoute && activeRoute && (
@@ -245,8 +243,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             <section className="assessment-basis">
               <h3>{t('Căn cứ đánh giá', 'Assessment basis')}</h3>
               <dl className="community-reference">
-                <div><dt>{t('Lý do ưu tiên', 'Priority basis')}</dt><dd>{t(...assessment.reason)}</dd></div>
-                <div><dt>{t('Khả năng tiếp cận', 'Access assessment')}</dt><dd>{routeStateText}</dd></div>
+                <div><dt>{assessment.priority === 1 ? t('Lý do ưu tiên', 'Priority basis') : t('Lý do theo dõi', 'Monitoring basis')}</dt><dd>{t(...assessment.reason)}</dd></div>
               </dl>
               <button className="text-button" onClick={onOpenSources}>{t('Phương pháp và nguồn dữ liệu', 'Method and data sources')}</button>
             </section>

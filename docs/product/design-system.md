@@ -25,6 +25,7 @@ Giá trị dùng chung nằm trong [tokens.css](../../DEM_to_3D/viewer/src/style
 | Mô tả và hành động | Cách ít nhất 12 px từ đoạn mô tả đến nút. Không dùng reset margin của paragraph làm khoảng cách mặc định |
 | Số liệu và nguồn | Diện tích và đơn vị nằm cùng dòng. Metadata dài dùng hàng nhãn/giá trị, không dùng cột KPI lớn. Nguồn ranh giới mở khi cần |
 | Tiếp cận và tuyến chọn | Tình trạng chung tính từ mọi tuyến đã biết. Tuyến đang chọn có trạng thái riêng. Không gọi tuyến ngắn nhất là đường chính nếu dữ liệu không xác nhận |
+| Thông tin lặp | Không lặp cùng kết luận trong các khối cùng vai trò. Thiếu tuyến: một trạng thái và việc cần bổ sung. Tab Căn cứ giữ lý do và nguồn, không lặp lại lý do ở header |
 | Mặt cắt | Gắn sát đáy vùng bản đồ, không bọc thêm card hoặc bo góc ngoài. Nguồn bản đồ nằm trong vùng nhìn phía trên |
 | Phương án tuyến | Dùng `RouteOption` trong một danh sách có đường phân cách. Tên, khoảng cách/ETA và trạng thái thành các dòng riêng. Dấu chọn biểu thị lựa chọn, không biểu thị an toàn |
 | Tìm kiếm bản đồ | Một ô chung cho địa bàn, đường và điểm. Kết quả ghi tên và loại đối tượng. Hỗ trợ Enter, mũi tên và Escape |

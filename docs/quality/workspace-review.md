@@ -15,8 +15,9 @@ Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API sn
 | Số tổng đường không khớp danh sách do giữ từ khóa cũ | Chọn số tổng sẽ xóa tìm kiếm và mở đúng nhóm đường. Không đánh dấu bộ lọc đường khi đang xem điểm ảnh hưởng |
 | Tìm không dấu không nhất quán | Tìm đường/địa bàn trong panel và bản đồ dùng cùng phép chuẩn hóa |
 | Enter chọn kết quả sau khi đã đóng tìm kiếm | Chỉ chọn khi danh sách mở. Phím xuống mở lại ở kết quả đầu tiên, phím lên ở kết quả cuối |
+| Thiếu tuyến được nhắc lại ở nhiều khối | Tab Tiếp cận giữ một kết luận và việc cần bổ sung. Tab Tuyến có một trạng thái trống và mở thông tin địa bàn. Lý do chi tiết nằm trong Căn cứ, không lặp trên header |
 
-[Panel vùng đánh giá](assets/workspace-area.png) và [bãi đáp đề xuất](assets/workspace-landing-site.png). Script `check_panel_usability.py` kiểm khoảng cách, tràn nội dung, tìm kiếm, ngữ cảnh tuyến, nhóm ưu tiên và cập nhật tin trên 1366, 1024, 390, 320 px. Đã chạy lại năm bộ kiểm tra trình duyệt trên build này, không ghi nhận lỗi JavaScript trong các luồng được thử.
+[Panel vùng đánh giá](assets/workspace-area.png) và [bãi đáp đề xuất](assets/workspace-landing-site.png). Script `check_panel_usability.py` kiểm khoảng cách, tràn nội dung, tìm kiếm, ngữ cảnh tuyến, nhóm ưu tiên và cập nhật tin trên 1366, 1024, 390, 320 px. Kiểm thêm bốn địa bàn thiếu tuyến, ba tab và tiếng Anh để tránh lặp kết luận. Các ảnh và năm bộ kiểm tra dưới đây được ghi ở lượt review trước; lượt sửa thông tin lặp chạy lại kiểm tra panel và luồng chính.
 
 ## Kết quả nghiệp vụ
 
