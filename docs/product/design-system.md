@@ -7,11 +7,11 @@ Quy tắc thiết kế dùng chung. Giá trị màu, font, kích thước và br
 | Nội dung | Quy tắc |
 |---|---|
 | Bố cục | Panel và bản đồ liền nhau, không bo góc ngoài. Panel đổi độ rộng; mobile tách Thông tin/Bản đồ |
-| Màu | Tối dùng xanh than/xanh xám, sáng dùng trắng/xám ấm. Trạng thái có cả chữ hoặc ký hiệu, không chỉ dựa vào màu |
+| Màu | Tối dùng than chì trung tính, sáng dùng trắng/xám ấm. Accent xanh lam nhạt ở tối và xanh lục ở sáng; màu trạng thái bản đồ độc lập với theme. Trạng thái có cả chữ hoặc ký hiệu, không chỉ dựa vào màu |
 | Chữ | Phân biệt tiêu đề, nội dung và metadata. Số đo/giờ dùng chữ số đều độ rộng. Tránh số lớn khi không giúp đọc quyết định |
 | Đường nét | Viền mảnh, góc nhỏ, bóng nhẹ trên lớp nổi. Không gradient trang trí, viền phát sáng hoặc nhiều thẻ lồng nhau |
 | Bản đồ | Nền làm bối cảnh, dữ liệu tình huống nổi bật. Ký hiệu và nhãn theo [cartography](cartography.md) |
-| Câu chữ | Theo [thuật ngữ](terminology.md). Tách nhận định, nguồn, thời gian và dữ liệu thiếu; không lặp cùng thông tin ở nhiều khối |
+| Câu chữ | Theo [thuật ngữ](terminology.md). Tách nhận định, nguồn, thời gian và dữ liệu thiếu; không lặp cùng thông tin ở nhiều khối. Dùng nhãn/giá trị và khoảng cách để chia metadata, không ghép bằng chấm giữa, mũi tên hoặc gạch dài |
 
 ## Thành phần
 
@@ -19,7 +19,7 @@ Quy tắc thiết kế dùng chung. Giá trị màu, font, kích thước và br
 |---|---|
 | Tab | Nghiệp vụ/công cụ dùng tab gắn với nội dung; chi tiết dùng gạch chân. Chừa đệm quanh nhãn, kể cả tiếng Anh |
 | Nút | Hành động có nhãn cụ thể. Copy/đóng/điều hướng có thể dùng icon với tên truy cập. Không áp cùng nền hover cho mọi loại nút |
-| Biểu mẫu | Giữ phần tử native và khả năng dùng bàn phím. Checkbox/select/slider nhất quán giữa workspace, modal và GIS mở riêng |
+| Biểu mẫu | Giữ phần tử native và khả năng dùng bàn phím. Checkbox/select/slider nhất quán giữa workspace, modal và GIS mở riêng. Desktop dùng picker theo theme, mục chọn có nền và vạch cạnh, không thêm dấu tích. Touch và forced colors giữ bộ chọn hệ thống. |
 | Hàng mở rộng | Chevron ở cuối, cả hàng bấm được, có đệm và focus rõ. Chỉ thu gọn thông tin phụ; giữ trạng thái và hành động chính |
 | Danh sách | Tên và trạng thái rõ, metadata nhỏ hơn. Hover không dịch chữ hoặc làm mất khoảng đệm |
 | Cửa sổ công cụ | Header cố định, nội dung cuộn. Thay nội dung không làm nhảy vị trí. Desktop kéo/đặt lại được, mobile giữ vị trí cố định |
