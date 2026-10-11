@@ -34,6 +34,14 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(directory), **kwargs)
 
+        def handle(self):
+            try:
+                super().handle()
+            except (BrokenPipeError, ConnectionResetError):
+                # Navigation and 2D/3D switches can cancel an asset download.
+                # The disconnected client needs no response; other errors still surface.
+                pass
+
         def do_GET(self):
             path = urlsplit(self.path).path
             payload = packet if path == endpoint else schema if path == '/api/v1/schema/incident-v1' else None

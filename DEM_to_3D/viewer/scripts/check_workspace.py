@@ -105,7 +105,8 @@ def run(url, chrome, captures, prepared=False):
         assert 'eta' not in direct['route']
         page.keyboard.press('Escape'); page.locator('.route-card').first.click()
         if captures:
-            page.screenshot(path=str(captures / 'workspace-routes.png'))
+            page.locator('.sidebar-scroll').evaluate('node => node.scrollTop = 0')
+            page.screenshot(path=str(captures / 'workspace-routes.png'), animations='disabled')
         page.get_by_role('button', name='Mặt cắt địa hình', exact=True).click()
         expect(page.locator('.profile-svg')).to_contain_text('km')
         slider = page.locator('#profile-dist-slider'); slider.focus(); page.keyboard.press('ArrowRight')
@@ -139,7 +140,7 @@ def run(url, chrome, captures, prepared=False):
         page.locator('.workspace-nav button').nth(1).click()
         page.get_by_role('searchbox', name='Tìm đường hoặc điểm ảnh hưởng').fill('E3')
         page.locator('.impact-row').click()
-        expect(page.locator('.sidebar')).to_contain_text('Kiểm tra mực nước')
+        expect(page.locator('.sidebar')).to_contain_text('Cần xác minh mực nước và khả năng qua cầu.')
         expect(page.locator('.sidebar')).not_to_contain_text('Thông tin tham chiếu')
         page.get_by_role('button', name='Xem báo cáo', exact=True).click()
         expect(page.locator('.evidence-metadata')).to_contain_text('03:55')
