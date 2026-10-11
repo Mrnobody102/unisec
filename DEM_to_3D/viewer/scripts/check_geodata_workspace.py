@@ -37,13 +37,13 @@ def check_controls(page, theme):
     assert toggle.evaluate("node => node.matches(':focus-visible') && getComputedStyle(node).outlineWidth === '2px'")
     assert page.locator('.geodata-workspace select').first.evaluate('''node => {
       const style = getComputedStyle(node);
-      return style.appearance === 'none' && parseFloat(style.paddingRight) >= 30 && style.backgroundImage.includes('svg');
+      return ['none', 'base-select'].includes(style.appearance) && parseFloat(style.paddingRight) >= 30 && style.backgroundImage.includes('svg');
     }''')
     checkbox = page.locator('.geodata-workspace input[type=checkbox]:checked').first
     if checkbox.count():
         paint = checkbox.evaluate("node => ({appearance: getComputedStyle(node).appearance, image: getComputedStyle(node).backgroundImage})")
         assert paint['appearance'] == 'none', paint
-        assert ('13201e' if theme == 'dark' else 'white') in paint['image'], paint
+        assert ('102031' if theme == 'dark' else 'white') in paint['image'], paint
 
 
 def paste(page, text, role='reference'):

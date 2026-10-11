@@ -119,10 +119,15 @@ def run(url, chrome, captures):
             for theme in ['light','dark']:
                 page.evaluate('(theme)=>document.documentElement.dataset.theme=theme',theme)
                 page.wait_for_timeout(200)
-                assert page.locator('#geo-panel-scenes input[type=date]').first.evaluate('node=>getComputedStyle(node).colorScheme') == ('dark' if theme=='dark' else 'normal')
+                assert page.locator('#geo-panel-scenes input[type=date]').first.evaluate('node=>getComputedStyle(node).colorScheme') == theme
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,theme)
                 # Wait for theme transitions before checking paint; mixing theme frames is not a UI state.
-                assert page.locator('.geodata-snap input').evaluate("node=>getComputedStyle(node).backgroundColor") == ('rgb(255, 255, 255)' if theme=='light' else 'rgb(32, 42, 37)')
+                assert page.locator('.geodata-snap input').evaluate('''node=>{
+                  const paint=document.createElement('span');
+                  paint.style.backgroundColor='var(--ws-surface)';node.parentElement.append(paint);
+                  const matches=getComputedStyle(node).backgroundColor===getComputedStyle(paint).backgroundColor;
+                  paint.remove();return matches;
+                }''')
                 rect=page.locator('.geodata-workspace').bounding_box()
                 assert rect['x']==0 and rect['width']==width
                 if captures and width in [1440,320]:

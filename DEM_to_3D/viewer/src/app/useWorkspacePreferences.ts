@@ -15,7 +15,7 @@ export function useWorkspacePreferences() {
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#18211d' : '#f0f1ec');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--header-bg').trim());
     try { window.localStorage.setItem('dear.theme', theme); } catch { /* Session preference remains available. */ }
   }, [theme]);
   useLayoutEffect(() => {
