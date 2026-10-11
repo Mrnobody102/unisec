@@ -140,7 +140,7 @@ export const ImpactView: React.FC<Props> = ({
                 >
                   <span>
                     <strong>{t(hz.name[0], hz.name[1])}</strong>
-                    <small>{hz.area != null ? `${hz.area} ha · ` : ''}{t(hz.src[0], hz.src[1])}</small>
+                    <small className="metadata-line">{hz.area != null && <span>{hz.area} ha</span>}<span>{t(hz.src[0], hz.src[1])}</span></small>
                   </span>
                   <StatusText>
                     {hz.observation === 'reported' ? t('Có báo cáo', 'Reported') : t('Chưa xác minh', 'Unverified')}

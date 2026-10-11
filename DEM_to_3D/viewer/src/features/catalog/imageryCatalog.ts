@@ -202,7 +202,7 @@ export function sceneRecord(scene: ImageryScene, retrievedAt: string): GeometryR
     id: `scene:${scene.id}`,
     name:
       scene.platform.toUpperCase().replace('SENTINEL-', 'S') +
-      ' · ' +
+      ' ' +
       scene.acquiredAt.slice(0, 19).replace('T', ' ') +
       ' UTC',
     role: 'footprint',

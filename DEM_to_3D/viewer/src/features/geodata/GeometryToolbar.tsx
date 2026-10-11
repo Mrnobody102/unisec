@@ -118,7 +118,7 @@ export function GeometryToolbar({
       </div>
       {!editor.active && (
         <span className="geodata-tool-status">
-          {aoiName ? `AOI · ${aoiName}` : t('Chưa có AOI', 'No AOI')}
+          {aoiName ? `AOI: ${aoiName}` : t('Chưa có AOI', 'No AOI')}
         </span>
       )}
     </div>

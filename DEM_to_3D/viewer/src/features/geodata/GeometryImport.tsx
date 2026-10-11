@@ -113,7 +113,7 @@ export function GeometryImport({
               />
             </label>
             <p className="geodata-hint">
-              {t('WGS84 · Điểm: DD hoặc DMS, mỗi dòng một điểm. WKT/GeoJSON: kinh độ, vĩ độ.', 'WGS84 · Points: DD or DMS, one point per line. WKT/GeoJSON: longitude, latitude.')}
+              {t('WGS84. Điểm: DD hoặc DMS, mỗi dòng một điểm. WKT/GeoJSON: kinh độ, vĩ độ.', 'WGS84. Points: DD or DMS, one point per line. WKT/GeoJSON: longitude, latitude.')}
             </p>
             <button
               className="button primary"
@@ -124,11 +124,12 @@ export function GeometryImport({
             </button>
           </form>
         )}
-        <p className="geodata-hint">
-          KML · GeoJSON · WKT · UTF-8 · {limits.inputBytes / 1_000_000} MB/{t('tệp', 'file')}
-          <br />
-          {t(`Tối đa ${limits.filesPerBatch} tệp/lần · ${limits.batchBytes / 1_000_000} MB/lần · ${limits.features.toLocaleString('vi-VN')} đối tượng/phiên`, `Up to ${limits.filesPerBatch} files/batch · ${limits.batchBytes / 1_000_000} MB/batch · ${limits.features.toLocaleString('en-US')} features/workspace`)}
-        </p>
+        <dl className="geodata-import-limits">
+          <dt>{t('Định dạng', 'Formats')}</dt><dd>KML, GeoJSON, WKT (UTF-8)</dd>
+          <dt>{t('Mỗi tệp', 'Per file')}</dt><dd>{limits.inputBytes / 1_000_000} MB</dd>
+          <dt>{t('Mỗi lần nhập', 'Per import')}</dt><dd>{limits.filesPerBatch} {t('tệp', 'files')}, {limits.batchBytes / 1_000_000} MB</dd>
+          <dt>{t('Mỗi phiên', 'Per workspace')}</dt><dd>{limits.features.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} {t('đối tượng', 'features')}</dd>
+        </dl>
       </div>
     </section>
   );

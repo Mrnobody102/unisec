@@ -89,8 +89,8 @@ export function IncidentJournal({
         <div className="response-work-context">
           {packet.dataKind === 'synthetic'
             ? t(
-                'Kịch bản mô phỏng · thao tác công việc lưu tại trình duyệt',
-                'Simulated scenario · work updates stored in this browser'
+                'Kịch bản mô phỏng. Cập nhật công việc lưu tại trình duyệt.',
+                'Simulated scenario. Work updates are stored in this browser.'
               )
             : t(
                 'Báo cáo nguồn và thao tác trong workspace',
@@ -149,12 +149,8 @@ export function IncidentJournal({
                       <strong>{t(...record.title)}</strong>
                       <small>
                         {record.kind === 'report' ? t('Tiếp nhận báo cáo', 'Report received') : kinds[record.kind]}
-                        {record.pending
-                          ? applied
-                            ? t(' · đã cập nhật bản đồ', ' · applied to map')
-                            : t(' · chờ kiểm tra', ' · awaiting review')
-                          : ''}
                       </small>
+                      {record.pending && <span className="journal-review-status">{applied ? t('Đã cập nhật bản đồ', 'Applied to map') : t('Chờ kiểm tra', 'Awaiting review')}</span>}
                     </span>
                   </summary>
                   <div className="notification-record">

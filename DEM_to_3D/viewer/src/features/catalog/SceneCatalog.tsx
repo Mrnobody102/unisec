@@ -97,8 +97,7 @@ export function SceneCatalog({
       <section className="geodata-section">
         <h2>{t('Tìm cảnh ảnh', 'Find imagery')}</h2>
         <p className="geodata-hint">
-          {t('Danh mục ảnh', 'Imagery catalog')} · {catalog.source.region} · {catalog.scenes.length}{' '}
-          {t('cảnh', 'scenes')}
+          {catalog.source.region}: {catalog.scenes.length} {t('cảnh trong danh mục', 'catalog scenes')}
         </p>
         <form
           onSubmit={(event) => {
@@ -239,12 +238,11 @@ export function SceneCatalog({
               >
                 <UiIcon name={scene.sensor === 'sar' ? 'layers' : 'image'} />
                 <span>
-                  <strong>
-                    {scene.platform.replace('sentinel-', 'S').toUpperCase()} ·{' '}
-                    {scene.sensor === 'sar' ? 'GRD' : 'L2A'}
+                  <strong className="metadata-line">
+                    <span>{scene.platform.replace('sentinel-', 'S').toUpperCase()} {scene.sensor === 'sar' ? 'GRD' : 'L2A'}</span>
                     {scene.sensor === 'optical' &&
                       scene.id.split('_').find((part) => /^T\d{2}[A-Z]{3}$/.test(part)) &&
-                      ` · ${scene.id.split('_').find((part) => /^T\d{2}[A-Z]{3}$/.test(part))}`}
+                      <span>{scene.id.split('_').find((part) => /^T\d{2}[A-Z]{3}$/.test(part))}</span>}
                   </strong>
                   <time>
                     {new Date(scene.acquiredAt).toLocaleString(
@@ -261,13 +259,13 @@ export function SceneCatalog({
                     )}{' '}
                     UTC
                   </time>
-                  <small>
-                    {t('Phủ AOI', 'AOI covered')} {(coverage * 100).toFixed(1)}% ·{' '}
-                    {scene.sensor === 'sar'
+                  <small className="metadata-line">
+                    <span>{t('Phủ AOI', 'AOI covered')} {(coverage * 100).toFixed(1)}%</span>
+                    <span>{scene.sensor === 'sar'
                       ? scene.polarizations.join('/') || '—'
                       : t('Mây cảnh', 'Scene cloud') +
                         ' ' +
-                        (scene.cloudCover === null ? '—' : scene.cloudCover + '%')}
+                        (scene.cloudCover === null ? '—' : scene.cloudCover + '%')}</span>
                   </small>
                 </span>
               </button>
@@ -298,8 +296,8 @@ export function SceneCatalog({
                   title={scene.id}
                   onClick={() => onInspect(scene)}
                 >
-                  {scene.platform.replace('sentinel-', 'S').toUpperCase()} ·{' '}
-                  {scene.acquiredAt.slice(0, 19).replace('T', ' ')} UTC
+                  <strong>{scene.platform.replace('sentinel-', 'S').toUpperCase()}</strong>
+                  <time dateTime={scene.acquiredAt}>{scene.acquiredAt.slice(0, 19).replace('T', ' ')} UTC</time>
                 </button>
                 <button
                   className="icon-button"
@@ -326,7 +324,7 @@ export function SceneCatalog({
           </button>
         </div>
         <p className="geodata-hint">
-          {catalog.source.provider} · {t('Thu thập danh mục', 'Catalog retrieved')}{' '}
+          {catalog.source.provider}. {t('Thu thập danh mục', 'Catalog retrieved')}{' '}
           {catalog.source.retrievedAt}.{' '}
           <a href={catalog.source.license} target="_blank" rel="noreferrer">
             {t('Quyền sử dụng', 'Terms')}

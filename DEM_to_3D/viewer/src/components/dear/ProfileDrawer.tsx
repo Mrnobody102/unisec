@@ -49,7 +49,7 @@ export function ProfileDrawer({ locale, name, profile, onHoverDistance, onClose 
           <div><dt>{t('Độ cao', 'Elevation')}</dt><dd>{value(current.elevation, 'm')}</dd></div>
           <div><dt>{t('Độ dốc địa hình', 'DEM path slope')}</dt><dd>{grade === undefined ? t('Không có dữ liệu', 'No data') : `${grade > 0 ? '+' : ''}${grade.toFixed(1)}%`}</dd></div>
         </dl>
-        <p className="profile-method-note" title={t('Khoảng cách giữa các mẫu độ cao theo lưới DEM', 'Elevation sample spacing from the DEM grid')}>DEM · {Math.round(profile.sampleInterval)} m</p>
+        <p className="profile-method-note" title={t('Khoảng cách giữa các mẫu độ cao theo lưới DEM', 'Elevation sample spacing from the DEM grid')}>{t('Bước lấy mẫu DEM', 'DEM sample spacing')}: {Math.round(profile.sampleInterval)} m</p>
       </div>
     </div>
   </section>;

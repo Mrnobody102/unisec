@@ -20,8 +20,8 @@ export function GeometryVertexEditor({
     if (geometry.type === 'Point' || geometry.type === 'LineString') return String(i + 1);
     const ring = geometry.type === 'MultiPolygon' ? path[1] : path[0];
     const boundary = ring === 0 ? t('Biên ngoài', 'Exterior ring') : `${t('Lỗ', 'Hole')} ${ring}`;
-    const part = geometry.type === 'MultiPolygon' ? `${t('Phần', 'Part')} ${path[0] + 1} · ` : '';
-    return `${part}${boundary} · ${t('Đỉnh', 'Vertex')} ${path.at(-1)! + 1}`;
+    const part = geometry.type === 'MultiPolygon' ? `${t('Phần', 'Part')} ${path[0] + 1}, ` : '';
+    return `${part}${boundary}, ${t('Đỉnh', 'Vertex')} ${path.at(-1)! + 1}`;
   };
   return (
     <section className="geodata-section">

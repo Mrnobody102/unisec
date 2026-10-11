@@ -80,7 +80,7 @@
 .geodata-export .geodata-field { margin-bottom: 8px; }
 .geodata-export .geodata-actions button { flex: 1; }
 .geodata-map { position: relative; isolation: isolate; overflow: hidden; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #dce3dc; }
-[data-theme="dark"] .geodata-map { background: #26332c; }
+[data-theme="dark"] .geodata-map { background: var(--ws-map); }
 .geodata-map-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 46px; padding: 6px 12px; background: var(--map-chrome); border-bottom: 1px solid var(--ws-line); }
 .geodata-map-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .geodata-map-toolbar select { width: auto; padding: 4px 8px; min-height: 30px; }
@@ -131,3 +131,7 @@
 .geodata-drawing-bar { gap: 6px; }
 .geodata-drawing-bar strong { margin-right: auto; }
 }
+
+.geodata-import-limits { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 6px 12px; margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--ws-line); font-size: 11px; }
+.geodata-import-limits dt { color: var(--ws-muted); }
+.geodata-import-limits dd { margin: 0; overflow-wrap: anywhere; }

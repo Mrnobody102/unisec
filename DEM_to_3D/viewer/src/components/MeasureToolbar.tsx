@@ -15,7 +15,7 @@ export function MeasureToolbar({ measuring, hasProfile, profile, onToggle, onCle
         {measuring ? 'Cancel measure' : 'Measure profile'}
       </button>
       {hasProfile && <button type="button" onClick={onClear}>Clear</button>}
-      {profile && <span className="measure-summary">{profile.length.toFixed(1)} m · azimuth {profile.azimuth.toFixed(1)}°</span>}
+      {profile && <span className="measure-summary">{profile.length.toFixed(1)} m, azimuth {profile.azimuth.toFixed(1)}°</span>}
       {measuring && <span className="measure-help">Click two terrain points</span>}
     </div>
   );

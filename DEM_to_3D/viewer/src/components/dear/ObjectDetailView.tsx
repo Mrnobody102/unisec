@@ -106,10 +106,10 @@ export const ObjectDetailView: React.FC<Props> = ({
               {roadRecord && <h3>{evidencePresentation(roadRecord.type, locale).kind}</h3>}
               <p>{roadObservation}</p>
               {roadRecord ? <EvidenceMetadata evidence={roadRecord} locale={locale} className="observation-times" showSource={false}/>
-                : relatedHazard && <p className="observation-meta">{t(...relatedHazard.src)} · {relatedHazard.detected}</p>}
+                : relatedHazard && <p className="observation-meta metadata-line"><span>{t(...relatedHazard.src)}</span><time>{relatedHazard.detected}</time></p>}
             </section>}
             <section className="workflow-section detail-next">
-              {road.status !== 'open' ? <p className={'object-next-action is-' + road.status}><UiIcon name={road.status === 'blocked' ? 'blocked' : 'uncertain'} size={16}/><span>{road.status === 'blocked' ? t('Đoạn bị chặn, không sử dụng để tiếp cận.', 'Blocked section; do not use for access.')
+              {road.status !== 'open' ? <p className={'object-next-action is-' + road.status}><UiIcon name={road.status === 'blocked' ? 'blocked' : 'uncertain'} size={16}/><span>{road.status === 'blocked' ? t('Đoạn bị chặn, không sử dụng để tiếp cận.', 'Blocked section. Do not use for access.')
                 : relatedHazard?.kind === 'bridge' ? t('Cần xác minh mực nước và khả năng qua cầu.', 'Verify water level and bridge passage.')
                 : relatedHazard?.kind === 'crossing' ? t('Cần xác minh khả năng qua khe.', 'Verify passage at the gully crossing.')
                 : t('Khả năng đi qua chưa được xác minh.', 'Passage has not been verified.')}</span></p>

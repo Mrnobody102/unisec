@@ -215,7 +215,7 @@ export function GeometryWorkspace({
         </button>
         <div>
           <h1 id="geodata-title">{t('Dữ liệu GIS', 'GIS data')}</h1>
-          <span>{t('Vùng quan tâm · Lớp · Cảnh ảnh', 'Area of interest · Layers · Imagery')}</span>
+          <span>{t('Vùng quan tâm, lớp dữ liệu và cảnh ảnh', 'Areas of interest, spatial layers and imagery')}</span>
         </div>
         <span className="geodata-local">{t('Workspace cục bộ', 'Local workspace')}</span>
       </header>

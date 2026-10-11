@@ -116,7 +116,7 @@ export function GeometryMap(props: Props): JSX.Element {
       if (!frame)
         frame = requestAnimationFrame(() => {
           frame = 0;
-          setCursor(`φ ${event.latlng.lat.toFixed(5)}° · λ ${event.latlng.lng.toFixed(5)}°`);
+          setCursor(`φ ${event.latlng.lat.toFixed(5)}°, λ ${event.latlng.lng.toFixed(5)}°`);
         });
       const { editor } = live.current,
         last = editor.draft.vertices.at(-1),
@@ -478,7 +478,7 @@ export function GeometryMap(props: Props): JSX.Element {
       <div className="geodata-map-footer">
         <span>{cursor || 'WGS84'}</span>
         <span>
-          EPSG:3857 · <span aria-label={t('Bắc', 'North')}>N ↑</span>
+          EPSG:3857 <span>{t('Bắc ở trên', 'North up')}</span>
         </span>
       </div>
       <MapAttribution

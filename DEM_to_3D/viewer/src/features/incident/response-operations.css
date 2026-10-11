@@ -60,3 +60,5 @@
   .work-selection-empty { display: none; }
   .response-work-dialog .work-back { display: inline-flex; }
 }
+
+.journal-review-status { display: inline-block; margin-top: 6px; padding: 2px 6px; border: 1px solid var(--ws-line); border-radius: var(--radius-control); color: var(--ws-text); font-size: 11px; }

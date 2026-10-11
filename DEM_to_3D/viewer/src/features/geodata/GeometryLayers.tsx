@@ -224,7 +224,7 @@ export function GeometryLayers({
                 </div>
                 <div>
                   <dt>CRS</dt>
-                  <dd>WGS84 · OGC:CRS84</dd>
+                  <dd>WGS84 (OGC:CRS84)</dd>
                 </div>
                 {(kmlAltitudeMode(selected.feature.properties) || geometryPositions(selected.feature.geometry).some((point) => point.length === 3)) && (
                   <div>

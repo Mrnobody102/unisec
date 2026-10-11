@@ -76,8 +76,8 @@ export function ResponseWorkDialog({
         </header>
         <div className="response-work-context">
           {t(
-            'Ghi nhận tại trình duyệt · không đồng bộ với đơn vị hiện trường',
-            'Browser records · not shared with field teams'
+            'Ghi nhận lưu tại trình duyệt, chưa đồng bộ với đơn vị hiện trường.',
+            'Records are stored in this browser, without field-team synchronization.'
           )}
         </div>
         {(readOnly || storageError) && <div className="response-work-notices">
