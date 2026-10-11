@@ -84,6 +84,10 @@
 .geodata-map-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 46px; padding: 6px 12px; background: var(--map-chrome); border-bottom: 1px solid var(--ws-line); }
 .geodata-map-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .geodata-map-toolbar select { width: auto; padding: 4px 8px; min-height: 30px; }
+.geodata-map-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0; padding: 0; list-style: none; font-size: 11px; color: var(--ws-muted); }
+.geodata-map-legend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.geodata-legend-symbol { width: 10px; height: 10px; border: 1.5px solid currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+.geodata-legend-symbol.is-footprint { border-style: dashed; }
 .geodata-map-buttons { display: flex; margin-left: auto; }
 .geodata-map-surface { position: relative; overflow: hidden; isolation: isolate; flex: 1; min-height: 0; background: transparent; }
 .geodata-map-surface.is-drawing { cursor: crosshair; }

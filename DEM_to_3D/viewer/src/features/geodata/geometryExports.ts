@@ -1,6 +1,7 @@
 import type { Position } from 'geojson';
-import { isPolygon, type GeometryRecord, type VectorGeometry } from '../../geo/vector/types';
+import { GeometryError, isPolygon, type GeometryRecord, type VectorGeometry } from '../../geo/vector/types';
 import { coverageMethod, polygonCoverage } from '../../geo/vector/polygonCoverage';
+import { kmlAltitudeMode, kmlAltitudeModeKey, type KmlAltitudeMode } from './kmlMetadata';
 
 const escape = (value: string) => value.replace(/[<>&"']/g,char=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[char]!)).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'');
 function orientRing(ring: Position[], outer: boolean): Position[] {
@@ -34,20 +35,39 @@ export function exportGeometryWkt(geometry: VectorGeometry): string {
   }
 }
 
-function kmlGeometry(raw: VectorGeometry): string {
+function kmlGeometry(raw: VectorGeometry, mode: KmlAltitudeMode | undefined): string {
   const geometry=oriented(raw), coords=(points:Position[])=>`<coordinates>${points.map(p=>p.join(',')).join(' ')}</coordinates>`;
-  const polygon=(rings:Position[][])=>`<Polygon>${rings.map((ring,i)=>{
+  // Unknown WKT/GeoJSON Z is kept as a value without inventing a vertical reference.
+  const tag = mode?.includes('SeaFloor') ? 'gx:altitudeMode' : 'altitudeMode';
+  const altitude = `<${tag}>${mode ?? 'clampToGround'}</${tag}>`;
+  const polygon=(rings:Position[][])=>`<Polygon>${altitude}${rings.map((ring,i)=>{
     const boundary=i === 0 ? 'outerBoundaryIs' : 'innerBoundaryIs';
     return `<${boundary}><LinearRing>${coords(ring)}</LinearRing></${boundary}>`;
   }).join('')}</Polygon>`;
   switch (geometry.type) {
-    case 'Point': return `<Point>${coords([geometry.coordinates])}</Point>`;
-    case 'LineString': return `<LineString>${coords(geometry.coordinates)}</LineString>`;
+    case 'Point': return `<Point>${altitude}${coords([geometry.coordinates])}</Point>`;
+    case 'LineString': return `<LineString>${altitude}${coords(geometry.coordinates)}</LineString>`;
     case 'Polygon': return polygon(geometry.coordinates);
     case 'MultiPolygon': return `<MultiGeometry>${geometry.coordinates.map(polygon).join('')}</MultiGeometry>`;
   }
 }
+function kmlPlacemark(record: GeometryRecord): string {
+  const mode = kmlAltitudeMode(record.feature.properties);
+  if (record.feature.properties[kmlAltitudeModeKey] != null && !mode) throw new GeometryError('kml-altitude');
+  const properties = { ...record.feature.properties, geometryRole: record.role, source: record.source.name };
+  const extended = Object.entries(properties)
+    .filter(([key, value]) => !['name', 'description', kmlAltitudeModeKey, '__proto__', 'prototype', 'constructor'].includes(key) && value != null)
+    .map(([key, value]) => {
+      const text = typeof value === 'string' ? value : JSON.stringify(value);
+      return `<Data name="${escape(key)}"><value>${escape(text ?? '')}</value></Data>`;
+    }).join('');
+  const description = record.feature.properties.description;
+  return `<Placemark><name>${escape(record.name)}</name>` +
+    (description != null ? `<description>${escape(String(description))}</description>` : '') +
+    `<ExtendedData>${extended}</ExtendedData>${kmlGeometry(record.feature.geometry, mode)}</Placemark>`;
+}
+
 export function exportGeometryKml(records: GeometryRecord[]): string {
-  return '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>'+
-    records.map(record=>`<Placemark><name>${escape(record.name)}</name><ExtendedData><Data name="geometryRole"><value>${record.role}</value></Data><Data name="source"><value>${escape(record.source.name)}</value></Data></ExtendedData>${kmlGeometry(record.feature.geometry)}</Placemark>`).join('')+'</Document></kml>';
+  return '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2"><Document>' +
+    records.map(kmlPlacemark).join('') + '</Document></kml>';
 }

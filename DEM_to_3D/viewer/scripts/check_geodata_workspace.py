@@ -2,6 +2,7 @@
 import argparse
 import json
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
@@ -114,6 +115,83 @@ def check_large_import(browser, url, root):
     context.close()
 
 
+def check_point_and_kml_semantics(browser, url, root, captures):
+    """Inspect actual Leaflet paint, then round trip mixed KML altitude references and attributes."""
+    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
+    page = context.new_page()
+    errors = []
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.goto(url + '/?workspace=geodata&offline=1')
+    modes = ['absolute', 'relativeToGround', 'clampToGround', 'relativeToSeaFloor', 'clampToSeaFloor']
+    # The first two points coincide: their geometry must not be displaced or connected.
+    geometries = ''.join(
+        f'<Point><{"gx:altitudeMode" if "SeaFloor" in mode else "altitudeMode"}>{mode}</{"gx:altitudeMode" if "SeaFloor" in mode else "altitudeMode"}><coordinates>{104.053554 if i < 2 else 104.053554 + i / 1000},21.782919,{20 + i}</coordinates></Point>'
+        for i, mode in enumerate(modes)
+    )
+    kml = ('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2"><Document><Placemark>'
+           '<name>Khảo sát &amp; tham chiếu</name><description>&lt;script&gt;untrusted()&lt;/script&gt;</description>'
+           '<ExtendedData><Data name="survey &amp; class"><value>A &lt; B</value></Data>'
+           '<Data name="kmlAltitudeMode"><value>absolute</value></Data></ExtendedData>'
+           '<MultiGeometry>' + geometries + '</MultiGeometry></Placemark></Document></kml>')
+    path = root / 'altitude-survey.kml'
+    path.write_text(kml, encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(path)
+    expect(page.locator('.geodata-layers li')).to_have_count(5)
+    original = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    assert [record['feature']['properties']['kmlAltitudeMode'] for record in original] == modes
+    assert all(record['role'] == 'reference' and record['feature']['geometry']['type'] == 'Point' for record in original)
+    assert original[0]['feature']['geometry']['coordinates'][:2] == original[1]['feature']['geometry']['coordinates'][:2]
+    expect(page.get_by_role('list', name='Chú giải dữ liệu')).to_contain_text('Tham chiếu')
+    for selected_index in [0, 4]:
+        page.locator('.geodata-feature').nth(selected_index).click()
+        paths = page.locator('.leaflet-points-pane path')
+        expect(paths).to_have_count(5)
+        paint = paths.evaluate_all("nodes => nodes.map(n => ({stroke:n.getAttribute('stroke'), fill:n.getAttribute('fill'), alpha:n.getAttribute('fill-opacity')}))")
+        assert all(item['stroke'] == '#ffffff' and item['fill'] == '#b7791f' and item['alpha'] == '1' for item in paint), paint
+        page.get_by_role('button', name='Phóng to GIS', exact=True).click()
+        assert page.evaluate("JSON.parse(localStorage.getItem('dear.geodata.v1')).map(r => r.feature.geometry)") == [record['feature']['geometry'] for record in original]
+    expect(page.locator('.geodata-coordinate').first).to_have_text('21.782919°')
+    page.get_by_role('button', name='Nguồn và tọa độ', exact=True).click()
+    expect(page.locator('.geodata-metadata')).to_contain_text('Bám đáy biển; không dùng Z')
+    assert page.locator('.geodata-metadata script').count() == 0
+    with page.expect_download() as download:
+        page.locator('.geodata-export').get_by_role('button', name='KML', exact=True).click()
+    exported_path = root / 'altitude-export.kml'
+    download.value.save_as(exported_path)
+    xml = ET.parse(exported_path)
+    ns = {'k': 'http://www.opengis.net/kml/2.2', 'gx': 'http://www.google.com/kml/ext/2.2'}
+    placemarks = xml.findall('.//k:Placemark', ns)
+    assert len(placemarks) == 5
+    for placemark, mode, record in zip(placemarks, modes, original):
+        point = placemark.find('k:Point', ns)
+        mode_node = point.find('gx:altitudeMode' if 'SeaFloor' in mode else 'k:altitudeMode', ns)
+        assert mode_node.text == mode
+        assert [float(part) for part in point.find('k:coordinates', ns).text.split(',')] == record['feature']['geometry']['coordinates']
+        assert placemark.find('k:description', ns).text == '<script>untrusted()</script>'
+        attrs = {item.attrib['name']: item.find('k:value', ns).text for item in placemark.findall('k:ExtendedData/k:Data', ns)}
+        assert attrs['survey & class'] == 'A < B'
+    if captures:
+        page.screenshot(path=str(captures / 'gis-reference-points.png'), animations='disabled')
+    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.reload()
+    page.locator('input[type=file]').set_input_files(exported_path)
+    expect(page.locator('.geodata-layers li')).to_have_count(5)
+    restored = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    for before, after in zip(original, restored):
+        assert before['feature']['geometry'] == after['feature']['geometry']
+        for key in ['name', 'description', 'survey & class', 'kmlAltitudeMode']:
+            assert before['feature']['properties'][key] == after['feature']['properties'][key]
+    # Invalid altitude references must fail atomically instead of becoming ground or absolute.
+    before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
+    path.write_text(kml.replace('<altitudeMode>absolute</altitudeMode>', '<altitudeMode>invalid</altitudeMode>', 1), encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(path)
+    expect(page.get_by_role('alert')).to_contain_text('altitudeMode')
+    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    assert not errors, errors
+    context.close()
+
+
 def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temporary, sync_playwright() as p:
         root = Path(temporary)
@@ -132,7 +210,8 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-layers')).to_contain_text('Strix-2')
         paste(page, '21.782919° N, 104.053554° E')
         expect(page.locator('.geodata-layers li')).to_have_count(4)
-        expect(page.locator('.geodata-coordinate')).to_contain_text('21.782919°')
+        expect(page.locator('.geodata-coordinate').first).to_have_text('21.782919°')
+        expect(page.locator('.geodata-coordinate').nth(1)).to_have_text('104.053554°')
         expect(page.locator('.geodata-map-label').last).to_be_visible()
         # Standalone GIS has no dependency on the response scenario, API or DEM.
         assert not any('/datasets/' in request or '/assets/che_tao' in request or '/api/' in request for request in requests), requests
@@ -278,8 +357,9 @@ def run(url, chrome, captures):
         drawing_context.close()
         context.close()
         check_large_import(browser, url, root)
+        check_point_and_kml_semantics(browser, url, root, captures)
         browser.close()
-        print('GIS data passed: 1,000-feature / >2 MB KML, limit rollback, DMS batch, WKT/point, KML MultiGeometry/holes, atomic errors, union coverage, visibility, drawing, persistence, export, modal lifecycle and responsive themes.')
+        print('GIS data passed: 1,000-feature / >2 MB KML, limit rollback, DMS batch, WKT/point, KML MultiGeometry/holes, solid point paint, attributes/Z/altitude-mode round trip, atomic errors, union coverage, visibility, drawing, persistence, export, modal lifecycle and responsive themes.')
 
 
 if __name__ == '__main__':

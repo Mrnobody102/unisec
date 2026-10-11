@@ -20,6 +20,7 @@ const messages: Record<string,[string,string]> = {
   geojson:['GeoJSON không hợp lệ. Kiểm tra cú pháp JSON và geometry.','Invalid GeoJSON. Check JSON syntax and geometry.'],
   crs:['Chỉ nhập WGS84. Chuyển dữ liệu sang EPSG:4326 trong QGIS trước khi nhập.','Import WGS84 data. Reproject to EPSG:4326 in QGIS first.'],
   'kml-xml':['KML không phải XML hợp lệ. Không hỗ trợ DTD hoặc entity.','KML is not valid XML. DTD and entities are not supported.'],
+  'kml-altitude':['KML có altitudeMode không hợp lệ hoặc trùng lặp. Kiểm tra tham chiếu độ cao của hình học.','KML altitudeMode is invalid or duplicated. Check the geometry altitude reference.'],
   'kml-network':['KML có NetworkLink. Xuất đối tượng thành KML cục bộ trước khi nhập.','KML contains NetworkLink. Export its features to a local KML file first.'],
   'kml-overlay':['KML chứa lớp ảnh. Công cụ này nhập hình học vector.','KML contains image overlays. This tool imports vector geometry.'],
   'file-limit':[`Mỗi tệp tối đa ${limits.inputBytes / 1_000_000} MB.`, `Each file must be at most ${limits.inputBytes / 1_000_000} MB.`],

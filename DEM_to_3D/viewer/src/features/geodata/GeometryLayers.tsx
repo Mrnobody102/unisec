@@ -11,6 +11,7 @@ import { UiIcon } from '../../shared/ui/UiIcon';
 import { DisclosureTrigger } from '../../shared/ui/DisclosureTrigger';
 import { roleLabel, roleColors, formatArea } from './geometryPresentation';
 import { exportGeometryWkt } from './geometryExports';
+import { kmlAltitudeMode, kmlAltitudeLabel, kmlAltitudeModeKey } from './kmlMetadata';
 
 type Props = {
   records: GeometryRecord[];
@@ -168,13 +169,16 @@ export function GeometryLayers({
               </div>
             )}
             {selected.feature.geometry.type === 'Point' && (
-              <div>
-                <dt>WGS84</dt>
-                <dd className="geodata-coordinate">
-                  {selected.feature.geometry.coordinates[1].toFixed(6)}°,{' '}
-                  {selected.feature.geometry.coordinates[0].toFixed(6)}°
-                </dd>
-              </div>
+              <>
+                <div>
+                  <dt>{t('Vĩ độ', 'Latitude')}</dt>
+                  <dd className="geodata-coordinate">{selected.feature.geometry.coordinates[1].toFixed(6)}°</dd>
+                </div>
+                <div>
+                  <dt>{t('Kinh độ', 'Longitude')}</dt>
+                  <dd className="geodata-coordinate">{selected.feature.geometry.coordinates[0].toFixed(6)}°</dd>
+                </div>
+              </>
             )}
           </dl>
           <div className="geodata-actions">
@@ -222,6 +226,12 @@ export function GeometryLayers({
                   <dt>CRS</dt>
                   <dd>WGS84 · OGC:CRS84</dd>
                 </div>
+                {(kmlAltitudeMode(selected.feature.properties) || geometryPositions(selected.feature.geometry).some((point) => point.length === 3)) && (
+                  <div>
+                    <dt>{t('Tham chiếu Z', 'Z reference')}</dt>
+                    <dd>{kmlAltitudeLabel(kmlAltitudeMode(selected.feature.properties), locale)}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>{t('Đỉnh', 'Vertices')}</dt>
                   <dd>{geometryPositions(selected.feature.geometry).length}</dd>
@@ -237,7 +247,7 @@ export function GeometryLayers({
               </dl>
               <pre tabIndex={0}>{exportGeometryWkt(selected.feature.geometry)}</pre>
               {Object.entries(selected.feature.properties)
-                .filter(([key, value]) => key !== 'name' && value != null && value !== '')
+                .filter(([key, value]) => !['name', kmlAltitudeModeKey].includes(key) && value != null && value !== '')
                 .map(([key, value]) => (
                   <div className="geodata-input-property" key={key}>
                     <strong>{key}</strong>

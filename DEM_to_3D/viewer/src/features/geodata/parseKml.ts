@@ -1,6 +1,7 @@
 import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import type { VectorFeature, VectorGeometry } from '../../geo/vector/types';
 import { GeometryError, geometryPositions } from '../../geo/vector/types';
+import { kmlAltitudeModeKey, kmlAltitudeModes, type KmlAltitudeMode } from './kmlMetadata';
 
 const children = (element: Element, name: string) => [...element.children].filter(child=>child.localName === name);
 const content = (element: Element, name: string) => children(element,name)[0]?.textContent?.trim() ?? '';
@@ -14,23 +15,31 @@ function coordinates(element: Element): number[][] {
     return parts.map(part=>Number(part));
   });
 }
-function geometry(element: Element, budget: { remaining: number }, depth=0): VectorGeometry[] {
+type ParsedGeometry = { geometry: VectorGeometry; altitudeMode: KmlAltitudeMode };
+function altitudeMode(element: Element): KmlAltitudeMode {
+  const modes = [...children(element, 'altitudeMode'), ...children(element, 'seaFloorAltitudeMode')];
+  if (!modes.length) return 'clampToGround';
+  const value = modes[0].textContent?.trim();
+  if (modes.length !== 1 || !kmlAltitudeModes.includes(value as KmlAltitudeMode)) throw new GeometryError('kml-altitude');
+  return value as KmlAltitudeMode;
+}
+function geometry(element: Element, budget: { remaining: number }, depth=0): ParsedGeometry[] {
   if (depth > 8) throw new GeometryError('geometry-type');
   if (element.localName !== 'MultiGeometry' && --budget.remaining < 0) throw new GeometryError('feature-limit');
   if (element.localName === 'Point') {
     const points=coordinates(element);
     if (points.length !== 1) throw new GeometryError('coordinates');
-    return [{type:'Point',coordinates:points[0]}];
+    return [{geometry:{type:'Point',coordinates:points[0]},altitudeMode:altitudeMode(element)}];
   }
-  if (element.localName === 'LineString' || element.localName === 'LinearRing') return [{type:'LineString',coordinates:coordinates(element)}];
+  if (element.localName === 'LineString' || element.localName === 'LinearRing') return [{geometry:{type:'LineString',coordinates:coordinates(element)},altitudeMode:altitudeMode(element)}];
   if (element.localName === 'Polygon') {
     const boundaries=[...children(element,'outerBoundaryIs'),...children(element,'innerBoundaryIs')];
     if (children(element,'outerBoundaryIs').length !== 1) throw new GeometryError('ring-points');
-    return [{type:'Polygon',coordinates:boundaries.map(boundary=>{
+    return [{geometry:{type:'Polygon',coordinates:boundaries.map(boundary=>{
       const ring=children(boundary,'LinearRing');
       if (ring.length !== 1) throw new GeometryError('ring-points');
       return coordinates(ring[0]);
-    })}];
+    })},altitudeMode:altitudeMode(element)}];
   }
   if (element.localName === 'MultiGeometry') return [...element.children].flatMap(child=>geometry(child,budget,depth+1));
   throw new GeometryError('geometry-type', element.localName);
@@ -54,14 +63,15 @@ export function parseKml(text: string): VectorFeature[] {
     const extended=children(placemark,'ExtendedData')[0];
     if (extended) for (const item of [...extended.getElementsByTagNameNS('*','Data'),...extended.getElementsByTagNameNS('*','SimpleData')]) {
       const key=item.getAttribute('name');
-      if (key && !['__proto__','prototype','constructor','name','description'].includes(key)) properties[key]=item.localName === 'Data' ? content(item,'value') : item.textContent?.trim();
+      if (key && !['__proto__','prototype','constructor','name','description',kmlAltitudeModeKey].includes(key)) properties[key]=item.localName === 'Data' ? content(item,'value') : item.textContent?.trim();
     }
     const values=geometries.flatMap(element=>geometry(element,budget));
-    for (const geometry of values) {
+    for (const {geometry} of values) {
       const positions=geometryPositions(geometry);
       if (positions.some(position=>position.length === 3)) positions.forEach(position=>{if(position.length === 2)position.push(0);});
     }
-    return values.map((geometry,index):VectorFeature=>({type:'Feature',geometry,properties:{...properties,
+    return values.map(({geometry,altitudeMode},index):VectorFeature=>({type:'Feature',geometry,properties:{...properties,
+      [kmlAltitudeModeKey]:altitudeMode,
       name:values.length > 1 ? `${properties.name || 'Placemark'} ${index+1}` : properties.name }}));
   });
   if (!features.length) throw new GeometryError('empty');

@@ -8,7 +8,7 @@ import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { MapAttribution } from '../../components/dear/MapAttribution';
 import type { BasemapState } from '../map/mapContracts';
-import { roleColors } from './geometryPresentation';
+import { roleColors, roleLabel } from './geometryPresentation';
 import { vertexHandles } from './geometryEditing';
 import type { useGeometryEditor } from './useGeometryEditor';
 
@@ -116,7 +116,7 @@ export function GeometryMap(props: Props): JSX.Element {
       if (!frame)
         frame = requestAnimationFrame(() => {
           frame = 0;
-          setCursor(`${event.latlng.lat.toFixed(5)}°, ${event.latlng.lng.toFixed(5)}°`);
+          setCursor(`φ ${event.latlng.lat.toFixed(5)}° · λ ${event.latlng.lng.toFixed(5)}°`);
         });
       const { editor } = live.current,
         last = editor.draft.vertices.at(-1),
@@ -219,25 +219,29 @@ export function GeometryMap(props: Props): JSX.Element {
         selected = record.id === props.selectedId;
       const pane =
         record.feature.geometry.type === 'Point' ? 'points' : selected ? 'selected' : record.role;
+      const pointStyle: L.CircleMarkerOptions = {
+        pane: 'points',
+        radius: selected ? 6 : 4,
+        color: '#ffffff',
+        weight: selected ? 2 : 1.5,
+        fillColor: color,
+        fillOpacity: 1,
+        interactive: !props.editor.active
+      };
       const layer = L.geoJSON(record.feature, {
         pane,
-        style: {
-          color,
-          weight: selected ? 3 : 1.5,
-          fillOpacity: selected ? 0.15 : 0.06,
-          dashArray: record.role === 'footprint' ? '7 4' : undefined,
-          interactive: !props.editor.active
-        },
-        pointToLayer: (_, position) =>
-          L.circleMarker(position, {
-            pane: 'points',
-            radius: selected ? 7 : 5,
-            color: '#ffffff',
-            weight: 2,
-            fillColor: color,
-            fillOpacity: 1,
-            interactive: !props.editor.active
-          })
+        // Leaflet applies style after pointToLayer, including to CircleMarker paths.
+        style: (feature) =>
+          feature?.geometry.type === 'Point'
+            ? pointStyle
+            : {
+                color,
+                weight: selected ? 3 : 1.5,
+                fillOpacity: selected ? 0.15 : 0.06,
+                dashArray: record.role === 'footprint' ? '7 4' : undefined,
+                interactive: !props.editor.active
+              },
+        pointToLayer: (_, position) => L.circleMarker(position, pointStyle)
       }).addTo(group);
       const label = document.createElement('span');
       label.textContent = record.name;
@@ -417,6 +421,22 @@ export function GeometryMap(props: Props): JSX.Element {
             />
             {t('Phần giao', 'Intersection')}
           </label>
+        )}
+        {props.records.some((record) => record.visible) && (
+          <ul className="geodata-map-legend" aria-label={t('Chú giải dữ liệu', 'Data legend')}>
+            {(['reference', 'aoi', 'footprint'] as const)
+              .filter((role) => props.records.some((record) => record.visible && record.role === role))
+              .map((role) => (
+                <li key={role}>
+                  <span
+                    className={'geodata-legend-symbol is-' + role}
+                    style={{ color: roleColors[role] }}
+                    aria-hidden="true"
+                  />
+                  {role === 'aoi' ? 'AOI' : roleLabel(role, props.locale)}
+                </li>
+              ))}
+          </ul>
         )}
         <div className="geodata-map-buttons">
           {(

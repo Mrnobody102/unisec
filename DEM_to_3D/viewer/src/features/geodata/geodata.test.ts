@@ -121,3 +121,33 @@ describe('AOI coverage and local session',()=>{
     expect(exportGeometryKml([{...left,name:'Strip <A> & B'}])).toContain('Strip &lt;A&gt; &amp; B');
   });
 });
+
+describe('KML export semantics', () => {
+  const point: GeometryRecord = {
+    id: 'survey', name: 'Khảo sát <A>', role: 'reference', visible: true,
+    feature: { type: 'Feature', geometry: { type: 'Point', coordinates: [104, 21, 120] },
+      properties: { description: '<script>unsafe()</script>', 'survey & class': 'A < B', kmlAltitudeMode: 'absolute' } },
+    source: { format: 'KML', name: 'survey.kml', importedAt: '2026-10-11T00:00:00Z' }
+  };
+  it('keeps Z, description, attributes and the explicit altitude reference with XML escaping', () => {
+    const kml = exportGeometryKml([point]);
+    expect(kml).toContain('<Point><altitudeMode>absolute</altitudeMode><coordinates>104,21,120</coordinates></Point>');
+    expect(kml).toContain('<description>&lt;script&gt;unsafe()&lt;/script&gt;</description>');
+    expect(kml).toContain('<Data name="survey &amp; class"><value>A &lt; B</value></Data>');
+    expect(kml).toContain('<name>Khảo sát &lt;A&gt;</name>');
+    expect(kml).not.toContain('<script>');
+  });
+  it('preserves sea-floor references with the gx namespace and rejects unknown modes', () => {
+    const feature = { ...point.feature, properties: { kmlAltitudeMode: 'relativeToSeaFloor' } };
+    const kml = exportGeometryKml([{ ...point, feature }]);
+    expect(kml).toContain('xmlns:gx="http://www.google.com/kml/ext/2.2"');
+    expect(kml).toContain('<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>');
+    expect(() => exportGeometryKml([{ ...point, feature: { ...feature, properties: { kmlAltitudeMode: 'invalid' } } }])).toThrow('kml-altitude');
+  });
+  it('does not interpret unreferenced WKT Z as absolute elevation', () => {
+    const kml = exportGeometryKml([{ ...point, feature: { ...point.feature, properties: {} }, source: { ...point.source, format: 'WKT' } }]);
+    expect(kml).toContain('<altitudeMode>clampToGround</altitudeMode>');
+    expect(kml).toContain('<coordinates>104,21,120</coordinates>');
+    expect(kml).not.toContain('<altitudeMode>absolute</altitudeMode>');
+  });
+});
