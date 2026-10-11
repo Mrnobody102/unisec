@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import { useEffect, useRef, useState } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -143,7 +144,7 @@ export function GeometryMap(props: Props): JSX.Element {
       }
       if (vertices.length && near(vertices[vertices.length - 1], 3)) return;
       const point = snap(event.latlng);
-      if (vertices.length < 1499) editor.add([point.lng, point.lat]);
+      if (vertices.length < GEOMETRY_LIMITS.verticesPerFeature - 1) editor.add([point.lng, point.lat]);
       if (editor.mode === 'rectangle' && vertices.length === 1) live.current.onFinish();
     };
     const double = () => {

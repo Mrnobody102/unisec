@@ -1,4 +1,5 @@
 import area from '@turf/area';
+import { GEOMETRY_LIMITS } from './limits';
 import intersect from '@turf/intersect';
 import pointInPolygon from '@turf/boolean-point-in-polygon';
 import type { Polygon, Position } from 'geojson';
@@ -57,7 +58,7 @@ export function validateGeometry(value: unknown): VectorGeometry {
   let positions: number[][];
   try { positions = geometryPositions(geometry); } catch { throw new GeometryError('coordinates'); }
   if (!positions.length) throw new GeometryError('empty');
-  if (positions.length > 1500) throw new GeometryError('vertex-limit');
+  if (positions.length > GEOMETRY_LIMITS.verticesPerFeature) throw new GeometryError('vertex-limit');
   for (const p of positions) {
     if (!Array.isArray(p) || p.length < 2 || p.length > 3 || p.some(n => typeof n !== 'number' || !Number.isFinite(n))) throw new GeometryError('coordinates');
     if (p.length !== positions[0].length) throw new GeometryError('coordinates');

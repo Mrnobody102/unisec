@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import type { VectorGeometry } from '../../geo/vector/types';
 import { GeometryError } from '../../geo/vector/types';
 
@@ -11,7 +12,7 @@ function readWkt(text: string): VectorGeometry {
   const spaces = () => { while (/\s/.test(text[offset] ?? '') && offset < text.length) offset++; };
   const expect = (char: string) => { spaces(); if (text[offset++] !== char) throw new GeometryError('wkt'); };
   const position = (): number[] => {
-    if (++count > 1500) throw new GeometryError('vertex-limit');
+    if (++count > GEOMETRY_LIMITS.verticesPerFeature) throw new GeometryError('vertex-limit');
     spaces(); const values: number[] = [];
     for (let i=0; i<(match[2] ? 3 : 2); i++) {
       const token = numberPattern.exec(text.slice(offset));
@@ -57,7 +58,7 @@ export function parseWktBatch(input: string): Array<{ name: string; geometry: Ve
     output.push({ name:start[1]?.trim() ?? '', geometry:readWkt(text.slice(prefixLength,end).trim()) });
     text = text.slice(end).trim();
     if (text.startsWith(';')) text = text.slice(1).trim();
-    if (output.length > 100) throw new GeometryError('feature-limit');
+    if (output.length > GEOMETRY_LIMITS.features) throw new GeometryError('feature-limit');
   }
   if (!output.length) throw new GeometryError('empty');
   return output;

@@ -1,10 +1,11 @@
 import {
   GeometryError,
-  geometryPositions,
   isPolygon,
   type GeometryRecord,
   type GeometryRole
 } from '../../geo/vector/types';
+import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
+import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
 import type { parseSpatialInput } from './parseSpatialInput';
 
@@ -35,23 +36,25 @@ export function createGeometryRecords(
   }));
 }
 
+/** Check each record separately so repeated KML metadata cannot allocate a huge JSON string. */
+export function validateGeometryStorageBudget(records: GeometryRecord[]): void {
+  let bytes = 2; // JSON array brackets.
+  for (const [index, record] of records.entries()) {
+    bytes += textBytes(JSON.stringify(record)) + (index ? 1 : 0);
+    if (bytes > GEOMETRY_LIMITS.storageBytes) throw new GeometryError('workspace-limit');
+  }
+}
+
 export function addGeometryRecords(
   previous: GeometryRecord[],
   additions: GeometryRecord[]
 ): GeometryRecord[] {
   const ids = [...previous, ...additions].map((record) => record.id);
   if (new Set(ids).size !== ids.length) throw new GeometryError('storage');
-  if (previous.length + additions.length > 100) throw new GeometryError('feature-limit');
-  if (
-    [...previous, ...additions].reduce(
-      (sum, record) => sum + geometryPositions(record.feature.geometry).length,
-      0
-    ) > 15000
-  )
-    throw new GeometryError('vertex-limit');
+  validateGeometryBudget([...previous, ...additions].map(record => record.feature.geometry));
   const replacesAoi = additions.some((record) => record.role === 'aoi');
   let aoiFound = false;
-  return [
+  const combined = [
     ...previous.map((record) =>
       replacesAoi && record.role === 'aoi' ? { ...record, role: 'reference' as const } : record
     ),
@@ -62,10 +65,13 @@ export function addGeometryRecords(
     aoiFound = true;
     return record;
   });
+  validateGeometryStorageBudget(combined);
+  return combined;
 }
 
 export function restoreGeometryRecords(raw: unknown): GeometryRecord[] {
-  if (!Array.isArray(raw) || raw.length > 100) throw new GeometryError('storage');
+  if (!Array.isArray(raw) || raw.length > GEOMETRY_LIMITS.features) throw new GeometryError('storage');
+  validateGeometryBudget(raw.map(record => record?.feature?.geometry));
   const ids = new Set<string>();
   let aois = 0;
   const records = raw.map((record) => {
@@ -94,10 +100,5 @@ export function restoreGeometryRecords(raw: unknown): GeometryRecord[] {
       feature: { type: 'Feature' as const, geometry, properties }
     };
   });
-  if (
-    records.reduce((sum, record) => sum + geometryPositions(record.feature.geometry).length, 0) >
-    15000
-  )
-    throw new GeometryError('storage');
   return records;
 }

@@ -2,7 +2,7 @@
 
 Phạm vi: công cụ thử nghiệm trong demo, lưu dữ liệu cục bộ tại trình duyệt. AOI nhập/vẽ ở đây không sửa AOI sự kiện hoặc kết quả tuyến/ưu tiên của DEAR. Luồng có project, quyền, xử lý và công bố được xây tại [Workbench của platform](../../../vsp-eo-platform/docs/architecture/overview.md#workspace).
 
-Cập nhật: 08/10/2026. Mở **Lớp bản đồ → Dữ liệu GIS**, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
+Cập nhật: 11/10/2026. Mở **Lớp bản đồ → Dữ liệu GIS**, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
 
 ```mermaid
 flowchart LR
@@ -18,7 +18,7 @@ flowchart LR
 | Tác vụ | Cách dùng |
 |---|---|
 | Nhập tệp | Tab Lớp: chọn một/nhiều KML, GeoJSON hoặc WKT. Giữ tên và thuộc tính; bỏ Placemark chỉ chứa ghi chú. KML MultiGeometry được tách thành đối tượng. Lỗi chỉ rõ tệp |
-| Nhập văn bản | Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ `21.782919° N, 104.053554° E` tạo một điểm |
+| Nhập văn bản | Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ DD (`21.782919° N, 104.053554° E`) hoặc DMS (`21°45'26.80"N 104°02'48.44"E`), mỗi dòng một điểm |
 | Vai trò | Tham chiếu: nâu. AOI: xanh lá. Phạm vi ảnh: xanh dương nét đứt. Điểm/đường chỉ làm tham chiếu |
 | Chọn đối tượng | Giữ vùng nhìn; nút Xem trên bản đồ đưa hình vào map. Đổi tên/vai trò, xem tọa độ và thuộc tính. Một AOI mỗi workspace, gán AOI mới chuyển AOI cũ thành tham chiếu |
 | Vẽ AOI | Thanh công cụ: polygon hoặc hình chữ nhật qua hai góc đối diện. Polygon kết thúc bằng Enter, nút Kết thúc, nhấp đúp hoặc đỉnh đầu. Vẽ lại cập nhật AOI hiện tại. Thanh công cụ không làm map dịch chuyển |
@@ -49,7 +49,7 @@ flowchart LR
 
 | Phần | Giới hạn |
 |---|---|
-| Dung lượng | 2 MB/tệp, 10 tệp/lần, 100 đối tượng, 1.500 tọa độ/đối tượng, 15.000/workspace. Giản lược hoặc tách dữ liệu trong QGIS |
+| Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 1.500 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
 | Lỗi nhập | Một tệp trong lô bị lỗi: không thêm một phần lô, giữ nguyên bộ đang có |
 | Chưa hỗ trợ | KMZ, NetworkLink, lớp ảnh KML, Track/Model, vùng vượt kinh tuyến 180°, vĩ độ ngoài ±85,05112878° |
 | Lưu/chia sẻ | LocalStorage theo origin, kiểm dữ liệu khi mở lại. Xuất tệp để giữ/chia sẻ. Chưa có tài khoản, đồng bộ, checksum tệp gốc hoặc lịch sử nhập |

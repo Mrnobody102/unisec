@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import type { VectorFeature, VectorGeometry } from '../../geo/vector/types';
 import { GeometryError, geometryPositions } from '../../geo/vector/types';
 
@@ -13,8 +14,9 @@ function coordinates(element: Element): number[][] {
     return parts.map(part=>Number(part));
   });
 }
-function geometry(element: Element, depth=0): VectorGeometry[] {
-  if (depth > 8 || element.children.length > 100) throw new GeometryError('feature-limit');
+function geometry(element: Element, budget: { remaining: number }, depth=0): VectorGeometry[] {
+  if (depth > 8) throw new GeometryError('geometry-type');
+  if (element.localName !== 'MultiGeometry' && --budget.remaining < 0) throw new GeometryError('feature-limit');
   if (element.localName === 'Point') {
     const points=coordinates(element);
     if (points.length !== 1) throw new GeometryError('coordinates');
@@ -30,7 +32,7 @@ function geometry(element: Element, depth=0): VectorGeometry[] {
       return coordinates(ring[0]);
     })}];
   }
-  if (element.localName === 'MultiGeometry') return [...element.children].flatMap(child=>geometry(child,depth+1));
+  if (element.localName === 'MultiGeometry') return [...element.children].flatMap(child=>geometry(child,budget,depth+1));
   throw new GeometryError('geometry-type', element.localName);
 }
 
@@ -44,7 +46,7 @@ export function parseKml(text: string): VectorFeature[] {
   if (all('NetworkLink').length) throw new GeometryError('kml-network');
   if (all('GroundOverlay').length || all('ScreenOverlay').length) throw new GeometryError('kml-overlay');
   const placemarks=all('Placemark');
-  if (placemarks.length > 100) throw new GeometryError('feature-limit');
+  const budget = { remaining: GEOMETRY_LIMITS.features };
   const features=placemarks.flatMap(placemark=>{
     const geometries=[...placemark.children].filter(child=>['Point','LineString','Polygon','MultiGeometry','Model','Track','MultiTrack','LinearRing'].includes(child.localName));
     if (!geometries.length) return [];
@@ -54,7 +56,7 @@ export function parseKml(text: string): VectorFeature[] {
       const key=item.getAttribute('name');
       if (key && !['__proto__','prototype','constructor','name','description'].includes(key)) properties[key]=item.localName === 'Data' ? content(item,'value') : item.textContent?.trim();
     }
-    const values=geometries.flatMap(element=>geometry(element));
+    const values=geometries.flatMap(element=>geometry(element,budget));
     for (const geometry of values) {
       const positions=geometryPositions(geometry);
       if (positions.some(position=>position.length === 3)) positions.forEach(position=>{if(position.length === 2)position.push(0);});

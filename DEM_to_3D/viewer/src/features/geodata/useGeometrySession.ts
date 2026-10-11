@@ -1,7 +1,9 @@
+import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
+import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
+import { importGeometryFiles } from './importGeometryFiles';
 import { useEffect, useRef, useState } from 'react';
 import {
   GeometryError,
-  geometryPositions,
   isPolygon,
   type GeometryRecord,
   type VectorGeometry
@@ -12,6 +14,7 @@ import {
   addGeometryRecords,
   createGeometryRecords,
   restoreGeometryRecords,
+  validateGeometryStorageBudget,
   type ImportRole
 } from './geometrySession';
 import { geometryHistory } from './geometryEditing';
@@ -20,7 +23,7 @@ const storageKey = 'dear.geodata.v1';
 function read() {
   try {
     const text = localStorage.getItem(storageKey);
-    if (text && text.length > 2_000_000) throw new GeometryError('storage');
+    if (text && textBytes(text) > GEOMETRY_LIMITS.storageBytes) throw new GeometryError('storage');
     return {
       records: text ? restoreGeometryRecords(JSON.parse(text)) : [],
       error: null as unknown
@@ -76,8 +79,8 @@ export function useGeometrySession() {
   useEffect(() => {
     if (initial.error && records === initial.records) return;
     try {
+      validateGeometryStorageBudget(records);
       const value = JSON.stringify(records);
-      if (value.length > 2_000_000) throw new GeometryError('storage');
       localStorage.setItem(storageKey, value);
     } catch {
       setError(new GeometryError('storage'));
@@ -112,23 +115,7 @@ export function useGeometrySession() {
     setBusy(true);
     setError(null);
     try {
-      if (files.length > 10) throw new GeometryError('feature-limit');
-      const additions = (
-        await Promise.all(
-          files.map(async (file) => {
-            try {
-              if (file.size > 2_000_000) throw new GeometryError('file-limit');
-              if (!/\.(kml|geojson|json|wkt|txt)$/i.test(file.name))
-                throw new GeometryError('file');
-              return createGeometryRecords(parseSpatialInput(await file.text()), file.name, role);
-            } catch (error) {
-              throw error instanceof GeometryError
-                ? new GeometryError(error.code, file.name)
-                : error;
-            }
-          })
-        )
-      ).flat();
+      const additions = await importGeometryFiles(files, role);
       if (alive.current) {
         add(additions);
         return true;
@@ -183,11 +170,8 @@ export function useGeometrySession() {
           }
         : record
     );
-    if (
-      next.reduce((sum, record) => sum + geometryPositions(record.feature.geometry).length, 0) >
-      15000
-    )
-      throw new GeometryError('vertex-limit');
+    validateGeometryBudget(next.map(record => record.feature.geometry));
+    validateGeometryStorageBudget(next);
     commit(next);
     setError(null);
   };

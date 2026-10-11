@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import { describe, expect, it } from 'vitest';
 import type { Polygon } from 'geojson';
 import area from '@turf/area';
@@ -45,8 +46,8 @@ describe('Spatial import',()=>{
   });
   it('rejects empty, unsupported and oversized input',()=>{
     for (const input of ['', 'POINT EMPTY', 'MULTIPOINT((104 21))', 'POINT(104 NaN)']) expect(()=>parseSpatialInput(input)).toThrow();
-    expect(()=>parseSpatialInput(' '.repeat(2_000_001))).toThrow();
-    expect(()=>parseSpatialInput(Array.from({length:101},()=> 'POINT(104 21)').join('\n'))).toThrow();
+    expect(()=>parseSpatialInput(' '.repeat(GEOMETRY_LIMITS.inputBytes + 1))).toThrow();
+    expect(()=>parseSpatialInput(Array.from({length:GEOMETRY_LIMITS.features + 1},()=> 'POINT(104 21)').join('\n'))).toThrow();
   });
 });
 

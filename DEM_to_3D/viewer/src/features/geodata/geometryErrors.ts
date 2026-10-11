@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS as limits } from '../../geo/vector/limits';
 import { GeometryError } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 
@@ -21,10 +22,13 @@ const messages: Record<string,[string,string]> = {
   'kml-xml':['KML không phải XML hợp lệ. Không hỗ trợ DTD hoặc entity.','KML is not valid XML. DTD and entities are not supported.'],
   'kml-network':['KML có NetworkLink. Xuất đối tượng thành KML cục bộ trước khi nhập.','KML contains NetworkLink. Export its features to a local KML file first.'],
   'kml-overlay':['KML chứa lớp ảnh. Công cụ này nhập hình học vector.','KML contains image overlays. This tool imports vector geometry.'],
-  'file-limit':['Mỗi tệp tối đa 2 MB.','Each file must be at most 2 MB.'],
-  'feature-limit':['Tối đa 100 đối tượng trong workspace.','The workspace supports at most 100 features.'],
-  'vertex-limit':['Tối đa 1.500 đỉnh/đối tượng và 15.000 đỉnh/workspace. Giản lược hình học trong QGIS trước khi nhập.','Limits: 1,500 vertices/feature and 15,000/workspace. Simplify in QGIS before importing.'],
-  file:['Không đọc được tệp. Chọn KML, GeoJSON hoặc WKT dạng văn bản.','Could not read the file. Choose a text KML, GeoJSON or WKT file.'],
+  'file-limit':[`Mỗi tệp tối đa ${limits.inputBytes / 1_000_000} MB.`, `Each file must be at most ${limits.inputBytes / 1_000_000} MB.`],
+  'batch-files':[`Mỗi lần chọn tối đa ${limits.filesPerBatch} tệp.`, `Choose at most ${limits.filesPerBatch} files per batch.`],
+  'batch-bytes':[`Tổng dung lượng mỗi lần nhập tối đa ${limits.batchBytes / 1_000_000} MB.`, `Each import batch must be at most ${limits.batchBytes / 1_000_000} MB.`],
+  'workspace-limit':[`Dữ liệu lưu trong phiên tối đa ${limits.storageBytes / 1_000_000} MB. Giảm thuộc tính hoặc chia nhỏ dữ liệu trước khi nhập.`, `Saved workspace data must be at most ${limits.storageBytes / 1_000_000} MB. Reduce attributes or split the data before importing.`],
+  'feature-limit':[`Phiên làm việc hỗ trợ tối đa ${limits.features.toLocaleString('vi-VN')} đối tượng.`, `The workspace supports at most ${limits.features.toLocaleString('en-US')} features.`],
+  'vertex-limit':[`Tối đa ${limits.verticesPerFeature.toLocaleString('vi-VN')} đỉnh/đối tượng và ${limits.verticesPerWorkspace.toLocaleString('vi-VN')} đỉnh/phiên. Giản lược hình học trong QGIS trước khi nhập.`, `Limits: ${limits.verticesPerFeature.toLocaleString('en-US')} vertices/feature and ${limits.verticesPerWorkspace.toLocaleString('en-US')}/workspace. Simplify in QGIS before importing.`],
+  file:['Không đọc được tệp. Chọn KML, GeoJSON hoặc WKT dạng UTF-8.','Could not read the file. Choose a UTF-8 KML, GeoJSON or WKT file.'],
   storage:['Không lưu được tại trình duyệt. Có thể xuất GeoJSON cho phiên hiện tại.','Browser storage is unavailable. Export GeoJSON to keep the current session.'],
   analysis:['Không tính được phần giao. Kiểm tra lại hình học đầu vào.','Could not calculate the intersection. Check the input geometry.']
 };

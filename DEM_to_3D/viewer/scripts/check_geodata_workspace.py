@@ -58,6 +58,62 @@ def paste(page, text, role='reference'):
     panel.get_by_role('button', name='Nhập', exact=True).click()
 
 
+def check_large_import(browser, url, root):
+    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
+    page = context.new_page()
+    errors = []
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.goto(url + '/?workspace=geodata&offline=1')
+    geometries = ''.join(f'<Point><coordinates>{104 + i / 100000},21.78</coordinates></Point>' for i in range(1000))
+    notes = '<Placemark><name>Note only</name></Placemark>' * 1001
+    # More than 2 MB, more than 100 geometries, and note-only placemarks must all work.
+    kml = '<kml xmlns="http://www.opengis.net/kml/2.2"><Document><!--' + 'x' * 2_000_000 + '-->' + notes + '<Placemark><name>Khảo sát</name><MultiGeometry>' + geometries + '</MultiGeometry></Placemark></Document></kml>'
+    path = root / 'large-survey.kml'
+    path.write_text(kml, encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(path)
+    expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
+    expect(page.get_by_role('alert')).to_have_count(0)
+    records = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    assert all(record['role'] == 'reference' and record['source']['name'] == path.name for record in records)
+    page.reload()
+    expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
+    page.locator('.geodata-feature').last.click()
+    expect(page.locator('.geodata-map-label')).to_have_count(1)
+    expect(page.locator('.geodata-map-label')).to_contain_text('Khảo sát 1000')
+    before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
+    (root / 'extra.wkt').write_text('POINT(104 21)', encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(root / 'extra.wkt')
+    expect(page.get_by_role('alert')).to_contain_text('1.000')
+    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    # An over-budget MultiGeometry must fail at 1,001, without replacing the active project.
+    path.write_text(kml.replace('</MultiGeometry>', '<Point><coordinates>104,21</coordinates></Point></MultiGeometry>'), encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(path)
+    expect(page.get_by_role('alert')).to_contain_text('large-survey.kml')
+    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    # A single batch is one undo/redo operation after clearing only this test context.
+    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.reload()
+    path.write_text(kml, encoding='utf-8')
+    page.locator('input[type=file]').set_input_files(path)
+    expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
+    page.get_by_role('button', name='Hoàn tác GIS', exact=True).click()
+    expect(page.locator('.geodata-layers li')).to_have_count(0)
+    page.get_by_role('button', name='Làm lại GIS', exact=True).click()
+    expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
+    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.reload()
+    paste(page, '''21°45'26.80"N 104°02'48.44"E
+21°45'48.01"N 104°02'43.99"E
+21°47'01.34"N 104°02'39.83"E''')
+    expect(page.locator('.geodata-layers li')).to_have_count(3)
+    first = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))[0]['feature']['geometry']['coordinates']
+    assert abs(first[0] - (104 + 2 / 60 + 48.44 / 3600)) < 1e-10
+    assert abs(first[1] - (21 + 45 / 60 + 26.80 / 3600)) < 1e-10
+    assert not errors, errors
+    context.close()
+
+
 def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temporary, sync_playwright() as p:
         root = Path(temporary)
@@ -220,8 +276,10 @@ def run(url, chrome, captures):
         expect(drawing_page.locator('.geodata-layers li')).to_have_count(1)
         assert not any(record['visible'] is False for record in json.loads(drawing_page.evaluate("localStorage.getItem('dear.geodata.v1')")))
         drawing_context.close()
-        context.close();browser.close()
-        print('GIS data passed: screenshot WKT/point, KML MultiGeometry/holes, atomic errors, union coverage, visibility, drawing, persistence, export, modal lifecycle and responsive themes.')
+        context.close()
+        check_large_import(browser, url, root)
+        browser.close()
+        print('GIS data passed: 1,000-feature / >2 MB KML, limit rollback, DMS batch, WKT/point, KML MultiGeometry/holes, atomic errors, union coverage, visibility, drawing, persistence, export, modal lifecycle and responsive themes.')
 
 
 if __name__ == '__main__':

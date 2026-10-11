@@ -1,5 +1,8 @@
 import { GeometryError, type ImportFormat, type VectorFeature } from '../../geo/vector/types';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
+import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
+import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
+import { parseCoordinates } from './parseCoordinates';
 import { parseKml } from './parseKml';
 import { parseWktBatch } from './parseWkt';
 
@@ -12,7 +15,7 @@ function jsonFeatures(value: unknown, depth=0): VectorFeature[] {
     if (!name || !['EPSG:4326','urn:ogc:def:crs:OGC:1.3:CRS84','urn:ogc:def:crs:EPSG::4326','OGC:CRS84'].includes(name)) throw new GeometryError('crs');
   }
   if (raw.type === 'FeatureCollection') {
-    if (!Array.isArray(raw.features) || raw.features.length > 100) throw new GeometryError('feature-limit');
+    if (!Array.isArray(raw.features) || raw.features.length > GEOMETRY_LIMITS.features) throw new GeometryError('feature-limit');
     return raw.features.flatMap(feature=>jsonFeatures(feature,depth+1));
   }
   if (raw.type === 'Feature') {
@@ -21,14 +24,14 @@ function jsonFeatures(value: unknown, depth=0): VectorFeature[] {
     return features.map(feature=>({...feature,properties}));
   }
   if (raw.type === 'GeometryCollection') {
-    if (!Array.isArray(raw.geometries) || raw.geometries.length > 100) throw new GeometryError('feature-limit');
+    if (!Array.isArray(raw.geometries) || raw.geometries.length > GEOMETRY_LIMITS.features) throw new GeometryError('feature-limit');
     return raw.geometries.flatMap(geometry=>jsonFeatures(geometry,depth+1));
   }
-  return [{type:'Feature',geometry:validateGeometry(raw),properties:{}}];
+  return [{type:'Feature',geometry:raw as unknown as VectorFeature['geometry'],properties:{}}];
 }
 
 export function parseSpatialInput(input: string): { format: ImportFormat; features: VectorFeature[] } {
-  if (input.length > 2_000_000) throw new GeometryError('file-limit');
+  if (textBytes(input) > GEOMETRY_LIMITS.inputBytes) throw new GeometryError('file-limit');
   const text=input.trim();
   if (!text) throw new GeometryError('empty');
   let features: VectorFeature[], format: ImportFormat;
@@ -38,21 +41,13 @@ export function parseSpatialInput(input: string): { format: ImportFormat; featur
     try { raw=JSON.parse(text); } catch { throw new GeometryError('geojson'); }
     features=jsonFeatures(raw); format='GeoJSON';
   } else {
-    const coordinate=/^([+-]?(?:\d+\.?\d*|\.\d+))\s*°?\s*([NSEW])\s*[,;]?\s+([+-]?(?:\d+\.?\d*|\.\d+))\s*°?\s*([NSEW])$/i.exec(text);
-    if (coordinate) {
-      const values=new Map<number|string,number>();
-      for (const index of [1,3]) {
-        const axis=coordinate[index+1].toUpperCase(), number=Number(coordinate[index]);
-        if (number < 0) throw new GeometryError('coordinates');
-        values.set(/[NS]/.test(axis) ? 'lat' : 'lon', /[SW]/.test(axis) ? -number : number);
-      }
-      if (!values.has('lat') || !values.has('lon')) throw new GeometryError('coordinates');
-      features=[{type:'Feature',geometry:{type:'Point',coordinates:[values.get('lon')!,values.get('lat')!]},properties:{}}]; format='coordinate';
+    const coordinates = parseCoordinates(text);
+    if (coordinates) { features=coordinates; format='coordinate';
     } else {
       features=parseWktBatch(text).map(item=>({type:'Feature',geometry:item.geometry,properties:{name:item.name}})); format='WKT';
     }
   }
   if (!features.length) throw new GeometryError('empty');
-  if (features.length > 100) throw new GeometryError('feature-limit');
+  validateGeometryBudget(features.map(feature => feature.geometry));
   return {format,features:features.map(feature=>({...feature,geometry:validateGeometry(feature.geometry)}))};
 }

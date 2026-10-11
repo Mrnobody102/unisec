@@ -1,3 +1,4 @@
+import { GEOMETRY_LIMITS as limits } from '../../geo/vector/limits';
 import { useRef, useState } from 'react';
 import type { ImportRole } from './geometrySession';
 import type { Locale } from '../../types/dear';
@@ -106,13 +107,13 @@ export function GeometryImport({
                 disabled={disabled || busy}
                 rows={5}
                 placeholder={
-                  '21.782919° N, 104.053554° E\nPOLYGON((104 21, 105 21, 105 22, 104 21))'
+                  '21°45\'26.80"N 104°02\'48.44"E\n21.782919° N, 104.053554° E'
                 }
                 onChange={(event) => setText(event.target.value)}
               />
             </label>
             <p className="geodata-hint">
-              {t('WGS84 · WKT/GeoJSON: kinh độ, vĩ độ', 'WGS84 · WKT/GeoJSON: longitude, latitude')}
+              {t('WGS84 · Điểm: DD hoặc DMS, mỗi dòng một điểm. WKT/GeoJSON: kinh độ, vĩ độ.', 'WGS84 · Points: DD or DMS, one point per line. WKT/GeoJSON: longitude, latitude.')}
             </p>
             <button
               className="button primary"
@@ -123,7 +124,11 @@ export function GeometryImport({
             </button>
           </form>
         )}
-        <p className="geodata-hint">KML · GeoJSON · WKT · {t('2 MB/tệp', '2 MB/file')}</p>
+        <p className="geodata-hint">
+          KML · GeoJSON · WKT · UTF-8 · {limits.inputBytes / 1_000_000} MB/{t('tệp', 'file')}
+          <br />
+          {t(`Tối đa ${limits.filesPerBatch} tệp/lần · ${limits.batchBytes / 1_000_000} MB/lần · ${limits.features.toLocaleString('vi-VN')} đối tượng/phiên`, `Up to ${limits.filesPerBatch} files/batch · ${limits.batchBytes / 1_000_000} MB/batch · ${limits.features.toLocaleString('en-US')} features/workspace`)}
+        </p>
       </div>
     </section>
   );
