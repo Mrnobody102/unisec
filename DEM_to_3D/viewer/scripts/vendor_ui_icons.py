@@ -9,7 +9,7 @@ BASE = 'https://raw.githubusercontent.com/lucide-icons/lucide/main/'
 ICONS = {
     'copy': 'copy',
     'zoomIn': 'zoom-in', 'zoomOut': 'zoom-out',
-    'plus': 'plus', 'minus': 'minus', 'close': 'x', 'back': 'arrow-left',
+    'plus': 'plus', 'minus': 'minus', 'close': 'x', 'back': 'chevron-left', 'next': 'chevron-right',
     'help': 'circle-question-mark', 'info': 'info', 'expand': 'chevron-down',
     'collapse': 'chevron-up', 'fit': 'maximize', 'search': 'search',
     'download': 'download', 'layers': 'layers', 'settings': 'sliders-horizontal',

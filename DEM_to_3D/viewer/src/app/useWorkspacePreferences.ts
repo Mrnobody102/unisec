@@ -10,8 +10,8 @@ export function useWorkspacePreferences() {
   const [fontChoice, setFontChoice] = useState<FontChoice>(() => {
     try {
       const saved = window.localStorage.getItem('dear.font-choice');
-      return saved === 'classic' || saved === 'plex' || saved === 'modern' ? saved : 'classic';
-    } catch { return 'classic'; }
+      return saved === 'classic' || saved === 'plex' || saved === 'modern' ? saved : 'plex';
+    } catch { return 'plex'; }
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

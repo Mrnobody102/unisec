@@ -22,8 +22,8 @@ const paths = {
   'zoomOut': <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/></>,
   'close': <><path d="M18 6 6 18" />
   <path d="m6 6 12 12" /></>,
-  'back': <><path d="m12 19-7-7 7-7" />
-  <path d="M19 12H5" /></>,
+  'back': <><path d="m15 18-6-6 6-6" /></>,
+  'next': <><path d="m9 18 6-6-6-6" /></>,
   'help': <><circle cx="12" cy="12" r="10" />
   <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
   <path d="M12 17h.01" /></>,
