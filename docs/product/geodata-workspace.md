@@ -19,14 +19,14 @@ flowchart LR
 |---|---|
 | Nhập tệp | Tab Lớp: chọn một/nhiều KML, GeoJSON hoặc WKT. Giữ tên và thuộc tính; bỏ Placemark chỉ chứa ghi chú. KML MultiGeometry được tách thành đối tượng. Lỗi chỉ rõ tệp |
 | Nhập văn bản | Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ DD (`21.782919° N, 104.053554° E`) hoặc DMS (`21°45'26.80"N 104°02'48.44"E`), mỗi dòng một điểm |
-| Vai trò | Tham chiếu: nâu. AOI: xanh lá. Phạm vi ảnh: xanh dương nét đứt. Điểm/đường chỉ làm tham chiếu |
+| Vai trò | Tham chiếu: nâu. AOI: xanh lá. Phạm vi ảnh: xanh dương nét đứt. Chú giải theo vai trò đang hiện. Điểm có lõi đặc và viền trắng; màu tham chiếu không biểu thị mức tác động |
 | Chọn đối tượng | Giữ vùng nhìn; nút Xem trên bản đồ đưa hình vào map. Đổi tên/vai trò, xem tọa độ và thuộc tính. Một AOI mỗi workspace, gán AOI mới chuyển AOI cũ thành tham chiếu |
 | Vẽ AOI | Thanh công cụ: polygon hoặc hình chữ nhật qua hai góc đối diện. Polygon kết thúc bằng Enter, nút Kết thúc, nhấp đúp hoặc đỉnh đầu. Vẽ lại cập nhật AOI hiện tại. Thanh công cụ không làm map dịch chuyển |
 | Chỉnh hình | Kéo đỉnh hoặc nhập kinh/vĩ độ tại tab AOI. Áp dụng mới cập nhật bản lưu; hình lỗi giữ nguyên bản cũ. Hủy/Esc bỏ bản nháp. Bắt đỉnh trong 12 pixel tới các đối tượng đang hiện |
 | Hoàn tác | Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z hoặc các nút Hoàn tác/Làm lại. Trong lúc chỉnh chỉ tác động bản nháp; ngoài lúc chỉnh tác động lớp. Lịch sử 25 bước, trong phiên |
 | Bật/tắt | Chỉ đổi hiển thị, không bỏ footprint khỏi phép tính |
-| Nguồn | Định dạng, đầu vào, thời điểm nhập, thuộc tính và WKT. Thời điểm nhập không phải ngày chụp |
-| Xuất | GeoJSON/KML cho cả bộ hoặc riêng AOI, copy WKT đối tượng chọn. GeoJSON kèm vai trò, nguồn và phương pháp tính |
+| Nguồn | Định dạng, đầu vào, thời điểm nhập, thuộc tính, WKT và tham chiếu Z nếu có. Vĩ độ/kinh độ ghi riêng. Thời điểm nhập không phải ngày chụp hoặc khảo sát |
+| Xuất | GeoJSON/KML cho cả bộ hoặc riêng AOI, copy WKT đối tượng chọn. KML giữ mô tả, thuộc tính dạng văn bản và altitudeMode. GeoJSON kèm vai trò, nguồn và phương pháp tính |
 
 Đối tượng nhập là dữ liệu làm việc tại trình duyệt, chưa phải lớp tác động được công bố trong tình huống ứng phó.
 
@@ -39,7 +39,7 @@ flowchart LR
 | Hình học | Kiểm khép vòng, đỉnh, tự cắt, cạnh chồng, lỗ ngoài biên/chạm biên/chồng nhau, MultiPolygon chồng diện tích |
 | Độ phủ | Diện tích giao của AOI với **hợp** các footprint / diện tích AOI. Không đếm trùng vùng chồng. Chưa có footprint: chưa xác định, không ghi 0% |
 | Phương pháp | Giao/hợp polygon trong kinh/vĩ độ. Diện tích xấp xỉ mặt cầu R = 6.371.008,8 m, m²/km², `polygon-coverage-v1`. Không phải diện tích ellipsoid phục vụ địa chính hoặc diện tích bề mặt địa hình |
-| Z | Giữ nếu có, không tham gia phép tính độ phủ. KML thiếu Z trong hình có Z nhận mặc định 0. Chưa kiểm hệ quy chiếu đứng hoặc lấy độ cao DEM cho dữ liệu nhập |
+| Z | Giữ giá trị và KML altitudeMode riêng từng hình học, kể cả mode sea-floor; thiếu mode dùng clampToGround. KML thiếu Z trong hình có Z nhận 0. Z không tham gia độ phủ/vị trí 2D. WKT/GeoJSON chưa rõ tham chiếu Z: ghi chưa xác định, xuất KML bám đất, không suy cao độ tuyệt đối hoặc DEM |
 | Footprint | Chỉ là biên hình học. Chưa xác nhận ảnh đã chụp, yêu cầu đặt chụp thành công, không mây hoặc đủ chất lượng phân tích |
 | Nền ảnh | EOX Sentinel-2 cloudless 2016, giữ attribution/giấy phép. Không dùng làm bằng chứng hiện trạng |
 
@@ -52,6 +52,8 @@ flowchart LR
 | Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 1.500 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
 | Lỗi nhập | Một tệp trong lô bị lỗi: không thêm một phần lô, giữ nguyên bộ đang có |
 | Chưa hỗ trợ | KMZ, NetworkLink, lớp ảnh KML, Track/Model, vùng vượt kinh tuyến 180°, vĩ độ ngoài ±85,05112878° |
+| Trình bày KML | Dùng ký hiệu theo vai trò làm việc; không giữ Style/StyleMap, cây Folder, extrude/tessellate hoặc cảnh 3D gốc. Không phải trình xem KML đầy đủ như Google Earth |
+| Điểm trùng/gần nhau | Giữ nguyên tọa độ, không tự nối đường hoặc dịch điểm. Chọn từng đối tượng qua danh sách khi map bị chồng; chưa có bộ chọn cụm hoặc tìm theo thuộc tính |
 | Lưu/chia sẻ | LocalStorage theo origin, kiểm dữ liệu khi mở lại. Xuất tệp để giữ/chia sẻ. Chưa có tài khoản, đồng bộ, checksum tệp gốc hoặc lịch sử nhập |
 | Nhập lại bản xuất | Lựa chọn Theo tệp giữ `geometryRole` từ GeoJSON/KML của công cụ; tệp không có vai trò dùng Tham chiếu. Chọn vai trò khác để ghi đè khi nhập |
 

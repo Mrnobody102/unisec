@@ -10,13 +10,13 @@ Tiếng Anh: “This prepared incident demonstrates how an operator reviews impa
 |---|---|---|
 | 00:00–00:40 | Mở Sự kiện, xem thời điểm và AOI | This is the assessment area and the information available at 09:31. |
 | 00:40–01:30 | Chọn Nậm Khắt | A blocked road and lost contact make Nậm Khắt a priority for follow-up. |
-| 01:30–02:30 | Trong Tiếp cận, mở **So sánh tuyến**, so đường chính với đường vòng | The main road is blocked. The bypass needs a crossing check. Its travel estimate assumes the crossing is passable. |
+| 01:30–02:30 | Trong Tiếp cận, chọn từng **Phương án tiếp cận** để so đường chính với đường vòng | The main road is blocked. The bypass needs a crossing check. Its travel estimate assumes the crossing is passable. |
 | 02:30–03:20 | Chọn đoạn vượt khe, mở bản ghi | Here is the observation behind the road status, including its source and time. |
 | 03:20–04:20 | Chuông, Xem chi tiết, Cập nhật bản đồ | The new report blocks the crossing. Applying it updates roads, access and priorities together. No mapped route is now available, so there is no travel estimate. |
 | 04:20–05:10 | Mở mốc dữ liệu, xem bản ban đầu rồi trở về bản mới | We can compare the situation before and after the report without losing the update. |
 | 05:10–06:00 | Lưu đánh giá, xuất PNG hoặc in/lưu PDF | The output records the map, assessment, sources and data time for coordination. |
 
-Người xem cần nắm được: **địa bàn nào cần xử lý, đường nào cản trở, cần kiểm tra gì, tin mới làm thay đổi phương án thế nào**. Giữ Tiếp cận làm màn hình chính. Mở So sánh tuyến tại chỗ, Căn cứ khi cần đối chiếu nguồn.
+Người xem cần nắm được: **địa bàn nào cần xử lý, đường nào cản trở, cần kiểm tra gì, tin mới làm thay đổi phương án thế nào**. Giữ Tiếp cận làm màn hình chính. Chọn tuyến và mở đoạn cần kiểm tra ngay trong Tiếp cận; dùng Căn cứ để đối chiếu nguồn.
 
 ## Đối chiếu proposal
 

@@ -1,6 +1,6 @@
 # Kiểm tra workspace
 
-Mốc đối chiếu: batch GIS/catalog prepared ngày 08/10/2026, dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
+Mốc đối chiếu: 11/10/2026; GIS/catalog prepared và dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
 
 ## Phạm vi đã kiểm
 
@@ -13,6 +13,21 @@ Mốc đối chiếu: batch GIS/catalog prepared ngày 08/10/2026, dữ liệu �
 | Phát hành | Cài sạch, unit/Python/browser tests, audit, build và đóng gói đạt trên Linux/Node 22 |
 
 Lệnh và môi trường kiểm tra lấy từ [workflow](../../.github/workflows/dear-web.yml), không chép số lượng test hoặc phiên bản dependency vào tài liệu. Kết quả GitHub nằm ở [Actions](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml); chạy cục bộ không thay xác nhận trên GitHub.
+
+## Đối chiếu viễn thám và proposal
+
+Đọc lại S01 (proposal, tr. 1–5), S02 (phạm vi phần mềm) và S03 (WebApp direction, tr. 1–12) tại [nguồn gốc](../sources.md#tài-liệu-gốc). Chuỗi nghiệp vụ được đối chiếu tại [walkthrough](../operations/walkthrough.md#đối-chiếu-proposal); không đưa toàn bộ mục tiêu nghiên cứu của S01 vào phạm vi demo SIC.
+
+| Phần | Kết luận |
+|---|---|
+| Điểm nhập | Hiển thị vị trí tham chiếu là phù hợp; chưa có căn cứ để gọi là sạt lở, đường bị chặn hay điểm đã khảo sát. Đã sửa polygon style ghi đè CircleMarker gây vòng rỗng, thêm chú giải và nhãn trục tọa độ |
+| KML | Đã sửa mất mô tả/thuộc tính khi xuất và mất altitudeMode khi nhập. Giữ mode riêng từng hình học, kể cả MultiGeometry có nhiều mode. Map là 2D; giới hạn Style/Folder và điểm chồng ở [GIS](../product/geodata-workspace.md#giới-hạn) |
+| AOI/cảnh ảnh | Hợp footprint trước khi tính giao, không đếm trùng. Ghi rõ độ phủ hình học; footprint, mây toàn cảnh và ảnh nền cũ không chứng minh chất lượng ảnh trong AOI hoặc hiện trạng thiên tai |
+| Ứng phó | Giữ địa bàn–tuyến–đoạn–căn cứ trong cùng snapshot; tin mới chỉ áp dụng khi người dùng chọn. Không suy đường đi được từ trạng thái chưa có báo cáo hoặc từ KML giao với đường |
+| Phân tích tự động | Chưa có chuỗi SAR trước/sau → QA → phát hiện → duyệt sản phẩm; chưa có GPM/DMC, CIS hoặc GeoPackage. Không tuyên bố đạt xử lý 3–6 giờ |
+| Kiểm chứng | Unit/build và E2E GIS, AOI/catalog, ứng phó, công việc đạt cục bộ trên Windows/Node 22. Kiểm tra trực tiếp SVG và vòng KML có thuộc tính/Z/mode. Chưa có tệp 081026.kml gốc để đối chiếu từng điểm với nguồn |
+
+Ưu tiên cho SIC là duyệt bộ dữ liệu, bằng chứng và hai tuyến theo [G3](../tasks/sic-2026.md), rồi tập toàn luồng trên máy trình chiếu. Những phần xử lý EO và quản lý sản phẩm tiếp tục ở platform. Khi hiệu chỉnh proposal, giữ riêng pixel spacing và độ phân giải SAR; mốc 3–6 giờ phải tách chờ thu nhận/cấp ảnh, xử lý, kiểm tra và công bố theo [đối chiếu nguồn kỹ thuật](../sources.md#đối-chiếu-nguồn-kỹ-thuật).
 
 ## Giới hạn còn lại
 
