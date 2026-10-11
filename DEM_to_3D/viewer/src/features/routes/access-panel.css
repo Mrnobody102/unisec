@@ -1,6 +1,6 @@
 .decision-overview { margin: 0 0 16px; padding-left: 10px; border-left: 2px solid var(--warning); color: var(--ws-text); font-size: 13px; line-height: 1.55; }
 .access-route-choice h3 { margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--ws-line); background: var(--map-chrome); font-size: 12px; }
-.route-options { border-bottom: 1px solid var(--ws-line); overflow: hidden; }
+.route-options { overflow: hidden; }
 .route-card { width: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 8px; padding: 10px 12px; border: 0; border-left: 2px solid transparent; border-radius: 0; background: var(--ws-surface); color: var(--ws-text); text-align: left; }
 .route-card + .route-card { border-top: 1px solid var(--ws-line); }
 .route-card:hover strong { color: var(--select-ink); }
@@ -16,8 +16,10 @@
 .access-route-label { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; padding: 8px 12px; border-bottom: 1px solid var(--ws-line); background: var(--map-chrome); font-size: 12px; }
 .access-route-label .status-text { font-size: 12px; }
 .decision-route h2 { margin: 12px 12px 0; font-size: 16px; line-height: 1.45; }
-.route-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 12px; }
+.route-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 0; padding: 12px; border-top: 1px solid var(--ws-line); }
 .route-metrics > div { display: grid; align-content: start; gap: 4px; }
+.route-metrics > .route-travel-estimate:only-child { grid-column: 1 / -1; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; }
+.route-travel-estimate:only-child > span { grid-column: 1 / -1; }
 .route-metrics dt, .route-metrics span { font-size: 11px; font-weight: 400; line-height: 1.5; color: var(--ws-muted); }
 .route-metrics dd { margin: 0; font-size: 16px; font-weight: 600; color: var(--ws-text); }
 .route-metrics dd small { font-size: 12px; font-weight: 400; }
@@ -46,10 +48,11 @@
 .route-section-meta .status-text { font-size: 11px; line-height: 1.5; }
 .route-section-row > svg { grid-column: 3; grid-row: 1 / span 2; align-self: center; color: var(--ws-muted); }
 .route-section-detail { padding: 12px; border-top: 1px solid var(--ws-line); font-size: 12px; }
+.route-section-detail > p { margin: 0 0 12px; line-height: 1.6; }
+.route-section-empty { color: var(--ws-muted); }
 .route-section-detail .evidence-metadata { margin: 12px 0; gap: 6px; font-size: 11px; }
 .route-section-detail .evidence-metadata > div { grid-template-columns: 72px minmax(0,1fr); gap: 8px; }
 .route-section-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.route-section-tools .button { padding: 5px 8px; min-height: 32px; font-size: 11px; }
-.route-section-tools .text-button { margin-left: auto; font-size: 11px; }
+.route-section-tools .button { padding: 6px 10px; min-height: 34px; font-size: 12px; }
 .access-tools { flex-wrap: wrap; }
 .access-tools .button { flex: 1; min-width: 0; gap: 6px; justify-content: center; font-size: 12px; }

@@ -63,6 +63,9 @@ def run(url, chrome, captures):
         expect(page.locator('.map-chooser-expand')).to_have_text('Xem khu vực này')
         page.keyboard.press('Escape')
         check_symbols(page)
+        page.evaluate('document.fonts.ready')
+        assert page.locator('html').get_attribute('data-font') == 'plex'
+        assert page.locator('.sidebar').evaluate("node => getComputedStyle(node).fontFamily.startsWith('\"IBM Plex Sans\"')")
         for width in [1366, 1024, 390, 320]:
             page.set_viewport_size({'width': width, 'height': 768})
             if width < 900:
@@ -113,6 +116,20 @@ def run(url, chrome, captures):
                 route = page.locator('.route-metrics').bounding_box()
                 assert route['y'] + route['height'] <= action['y'], 'Route context must appear before its action'
             expect(page.locator('.route-section-row')).to_have_count(3)
+            page.locator('.route-section-row').first.click()
+            expect(page.locator('.route-section-empty')).to_have_text('Chưa có báo cáo hiện trường.')
+            expect(page.get_by_role('button', name='Chi tiết đoạn', exact=True)).to_have_count(0)
+            assert page.locator('.route-section-detail').evaluate("""node => {
+                const text = node.querySelector('p').getBoundingClientRect();
+                const tools = node.querySelector('.route-section-tools').getBoundingClientRect();
+                return tools.top - text.bottom >= 11;
+            }""")
+            if captures and width == 1366:
+                page.screenshot(path=str(captures / 'workspace-route-unreported-vi.png'), animations='disabled')
+            metric = page.locator('.route-travel-estimate')
+            if metric.count():
+                assert metric.evaluate("node => node.getBoundingClientRect().width > node.parentElement.getBoundingClientRect().width * .8"), 'Single travel metric leaves an empty column'
+
             expect(page.locator('.route-sections')).to_contain_text('vượt khe')
             expect(page.locator('.route-sections')).not_to_contain_text(re.compile('đoạn sạt lở', re.I))
             expect(page.locator('.assessment-action')).to_contain_text('Kiểm tra điểm vượt khe')
@@ -254,7 +271,8 @@ def run(url, chrome, captures):
         search.press('Enter')
         expect(page.locator('.detail-priority .status-text')).to_have_text('Chưa ghi nhận đường bị chặn')
         expect(page.locator('.object-observation')).to_have_count(0)
-        expect(page.locator('.object-next-action')).to_contain_text('Kiểm tra khả năng đi qua')
+        expect(page.locator('.object-next-action')).to_have_count(0)
+        expect(page.locator('.road-verification-note')).to_contain_text('Chưa có xác nhận khả năng đi qua')
         # Contact time is metadata rather than repeated in the finding sentence.
         search.fill('Nậm Khắt')
         search.press('Enter')
@@ -297,6 +315,11 @@ def run(url, chrome, captures):
         expect(panel.locator('.sidebar-intro')).to_have_count(0)
         check_panel(page)
         assert not errors, errors
+        page.get_by_role('button', name='Display settings', exact=True).click()
+        page.get_by_role('button', name='Inter', exact=True).click()
+        page.reload()
+        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        assert page.locator('html').get_attribute('data-font') == 'classic'
         check_themes(browser, url, captures)
         check_control_surfaces(browser, url, captures)
         check_workspace_context(browser, url)

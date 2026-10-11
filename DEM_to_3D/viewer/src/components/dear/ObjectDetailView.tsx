@@ -109,20 +109,22 @@ export const ObjectDetailView: React.FC<Props> = ({
                 : relatedHazard && <p className="observation-meta">{t(...relatedHazard.src)} · {relatedHazard.detected}</p>}
             </section>}
             <section className="workflow-section detail-next">
-              <p className={'object-next-action is-' + road.status}><UiIcon name={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : 'info'} size={18}/><span>{road.status === 'blocked' ? t('Tìm tuyến tránh đoạn bị chặn.', 'Find a route avoiding the blocked section.')
-                : relatedHazard?.kind === 'bridge' ? t('Kiểm tra mực nước, mặt cầu và khả năng qua cầu.', 'Check water level, bridge deck and passage conditions.')
-                : t('Kiểm tra khả năng đi qua trước khi sử dụng tuyến.', 'Check passage conditions before using this route.')}</span></p>
+              {road.status !== 'open' ? <p className={'object-next-action is-' + road.status}><UiIcon name={road.status === 'blocked' ? 'blocked' : 'uncertain'} size={16}/><span>{road.status === 'blocked' ? t('Đoạn bị chặn, không sử dụng để tiếp cận.', 'Blocked section; do not use for access.')
+                : relatedHazard?.kind === 'bridge' ? t('Cần xác minh mực nước và khả năng qua cầu.', 'Verify water level and bridge passage.')
+                : relatedHazard?.kind === 'crossing' ? t('Cần xác minh khả năng qua khe.', 'Verify passage at the gully crossing.')
+                : t('Khả năng đi qua chưa được xác minh.', 'Passage has not been verified.')}</span></p>
+                : <p className="road-verification-note">{t('Chưa có xác nhận khả năng đi qua tại hiện trường.', 'Passage has not been confirmed in the field.')}</p>}
               <div className="detail-actions">
                 {road.hz && <button className="button" onClick={() => onOpenEvidence(road.hz!)}><UiIcon name="info" size={16}/>{roadRecord ? evidencePresentation(roadRecord.type, locale).action : t('Xem chi tiết', 'View details')}</button>}
                 <button className="button road-profile-action" disabled={!hasTerrainProfile} aria-pressed={profileOpen} onClick={onToggleProfile} title={!hasTerrainProfile ? t('Chưa có DEM cho đoạn đường này', 'DEM unavailable for this road section') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>
               </div>
             </section>
             {affectedCommunities.length > 0 && <section className="workflow-section">
-              <h3>{t('Tuyến sử dụng đoạn này', 'Routes using this section')}</h3>
+              <h3>{t('Thuộc tuyến', 'Related routes')}</h3>
               {affectedCommunities.flatMap(community => {
                 const pair = routes.get(community.id);
                 return [pair?.candidate, pair?.direct].filter(route => route?.segs.some(segment => segment.id === road.id)).map(route => route && <button key={community.id + route.type} className="object-row linked-row" onClick={() => onSelectCommunity(community.id, route.type, road.id)}>
-                  <span><strong>{community.name}</strong><small>{t(...route.name)}</small></span>
+                  <span><strong>{t(...route.name)}</strong><small>{t('Đến', 'To')} {community.name}</small></span><UiIcon name="next" size={16}/>
                 </button>);
               })}
             </section>}

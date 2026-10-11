@@ -13,13 +13,13 @@ type Props = {
   candidate: ScenarioRoute | null; direct: ScenarioRoute | null;
   selected: 'candidate' | 'direct'; onSelectRoute: (type: 'candidate' | 'direct') => void;
   sectionId: string | null; onSelectSection: (id: string | null) => void;
-  hasProfile: boolean; onProfile: () => void; onInspect: (id: string) => void;
+  hasProfile: boolean; onProfile: () => void;
   onEvidence: (id: string) => void; onFindings: () => void; onExport: () => void;
 };
 
 /** Route choice and its ordered sections stay in one review. Details do not replace it. */
 export function AccessPanel({ locale, hazards, evidence, candidate, direct, selected, onSelectRoute,
-  sectionId, onSelectSection, hasProfile, onProfile, onInspect, onEvidence, onFindings, onExport }: Props): JSX.Element {
+  sectionId, onSelectSection, hasProfile, onProfile, onEvidence, onFindings, onExport }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const active = selectAccessRoute({ candidate, direct }, selected);
   const blocked = active?.status === 'blocked';
@@ -50,10 +50,10 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
         <StatusText tone={blocked ? 'critical' : 'warning'}>{blocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}</StatusText>
       </div>}
       {!(candidate && direct) && <h2>{t(...active.name)}</h2>}
-      <dl className="route-metrics">
+      {(!(candidate && direct) || active.eta) && <dl className="route-metrics">
         {!(candidate && direct) && <div><dt>{t('Từ điểm tập kết', 'From staging point')}</dt><dd>{active.lengthKm} <small>km</small></dd></div>}
         {active.eta && <div className="route-travel-estimate"><dt>{t('Ước tính di chuyển', 'Estimated travel')}</dt><dd>{active.eta.minMinutes}–{active.eta.maxMinutes} <small>{t('phút', 'min')}</small></dd><span>{active.eta.mode === 'foot' ? t('Đi bộ, nếu thông tuyến', 'On foot, assuming passage') : t('Xe 4x4, nếu thông tuyến', '4WD, assuming passage')}</span><span>{t('Chưa gồm kiểm tra hoặc dọn đường.', 'Excludes inspection and clearance.')}</span></div>}
-      </dl>
+      </dl>}
       <div className={'next-action ' + (blocked ? 'is-blocked' : 'is-uncertain')}>
         <p id="route-next-action" className="assessment-action route-action"><UiIcon name={blocked ? 'blocked' : 'uncertain'} size={16}/><span>{action}</span></p>
         <button className="button access-primary" aria-describedby="route-next-action" onClick={primaryAction}>
@@ -61,7 +61,7 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
         </button>
       </div>
       <RouteSections route={active} evidence={evidence} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
-        onInspect={onInspect} onEvidence={onEvidence} onProfile={onProfile} hasProfile={hasProfile}/>
+        onEvidence={onEvidence} onProfile={onProfile} hasProfile={hasProfile}/>
       <RouteVerification route={active} evidence={evidence} locale={locale}/>
     </section> : <div className="next-action"><p className="assessment-action route-action">{action}</p><button className="button" onClick={onFindings}>{t('Xem thông tin địa bàn', 'Review community findings')}</button></div>}
     <div className="route-tools access-tools">

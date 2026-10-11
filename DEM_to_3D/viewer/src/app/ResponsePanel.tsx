@@ -88,7 +88,6 @@ export function ResponsePanel({ locale, navigation, onNavigate, snapshot, aoi, u
       hasTerrainProfile={hasTerrainProfile}
       onToggleProfile={onToggleProfile}
       onOpenSources={() => onOpenDialog('data')}
-      onSelectObject={onInspectObject}
       onOpenEvidence={onOpenEvidence}
       onExport={onExport}
     />;

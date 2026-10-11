@@ -32,7 +32,6 @@ type Props = {
   hasTerrainProfile: boolean;
   onToggleProfile: () => void;
   onOpenSources: () => void;
-  onSelectObject: (obj: string) => void;
   onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
 };
@@ -56,7 +55,6 @@ export const CommunityDetailView: React.FC<Props> = ({
   hasTerrainProfile,
   onToggleProfile,
   onOpenSources,
-  onSelectObject,
   onOpenEvidence,
   onExport
 }) => {
@@ -97,7 +95,7 @@ export const CommunityDetailView: React.FC<Props> = ({
           locale={locale} candidate={candidateRoute} direct={directRoute} hazards={hazards} evidence={evidence}
           selected={selectedRouteType} onSelectRoute={onChangeRouteType}
           sectionId={sectionId} onSelectSection={onSelectSection} onEvidence={onOpenEvidence}
-          hasProfile={hasTerrainProfile} onProfile={onToggleProfile} onInspect={onSelectObject}
+          hasProfile={hasTerrainProfile} onProfile={onToggleProfile}
           onFindings={() => onChangeDetailTab('evidence')} onExport={onExport}/>}
 
         {detailTab === 'evidence' && (

@@ -520,13 +520,15 @@
 .observation-times dd { margin: 0; color: var(--ws-text); }
 .object-observation .observation-times time { color: inherit; }
 .observation-meta { color: var(--ws-muted); font-size: 12px; line-height: 1.5; }
-.detail-next .object-next-action { display: flex; align-items: flex-start; gap: 10px; margin: 0; font-size: 14px; line-height: 1.5; }
+.detail-next .object-next-action { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 13px; line-height: 1.5; }
 .detail-next .object-next-action svg { flex: none; margin-top: 2px; color: var(--ws-muted); }
 .detail-next .object-next-action.is-blocked svg { color: var(--critical-ink); }
 .detail-next .object-next-action.is-uncertain svg { color: var(--warning-ink); }
+.road-verification-note { margin: 0; color: var(--ws-muted); font-size: 12px; line-height: 1.6; }
 .linked-row { justify-content: space-between; }
-.linked-row::before { content: ''; order: 2; flex: none; width: 6px; height: 6px; margin-right: 4px; border: solid var(--ws-muted); border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); opacity: 0.7; }
-.linked-row strong { font-size: 14px; }
+.linked-row > svg { flex: none; color: var(--ws-muted); }
+.linked-row strong { font-size: 13px; }
+.linked-row small { display: block; margin-top: 4px; color: var(--ws-muted); font-size: 12px; }
 .hazard-detail .detail-meta { margin-top: 0; }
 .hazard-detail .hazard-observation { margin: 16px 0 4px; color: var(--ws-text); font-size: 14px; line-height: 1.55; }
 
