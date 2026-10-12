@@ -47,7 +47,7 @@ export function ProfileDrawer({ locale, name, profile, onHoverDistance, onClose 
         <dl className="profile-readout">
           <div><dt>{t('Khoảng cách', 'Distance')}</dt><dd>{(current.distance / 1000).toFixed(2)} km</dd></div>
           <div><dt>{t('Độ cao', 'Elevation')}</dt><dd>{value(current.elevation, 'm')}</dd></div>
-          <div><dt>{t('Độ dốc địa hình', 'DEM path slope')}</dt><dd>{grade === undefined ? t('Không có dữ liệu', 'No data') : `${grade > 0 ? '+' : ''}${grade.toFixed(1)}%`}</dd></div>
+          <div><dt>{t('Độ dốc dọc mặt cắt', 'Profile grade')}</dt><dd>{grade === undefined ? t('Không có dữ liệu', 'No data') : `${grade > 0 ? '+' : ''}${grade.toFixed(1)}%`}</dd></div>
         </dl>
         <p className="profile-method-note" title={t('Khoảng cách giữa các mẫu độ cao theo lưới DEM', 'Elevation sample spacing from the DEM grid')}>{t('Bước lấy mẫu DEM', 'DEM sample spacing')}: {Math.round(profile.sampleInterval)} m</p>
       </div>
