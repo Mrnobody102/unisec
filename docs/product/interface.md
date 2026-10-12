@@ -40,11 +40,12 @@ Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và
 | Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ, lịch sử thông báo |
 | Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình, đặt lại phiên |
 | Thời điểm dữ liệu trên header | Mốc bản đồ đang xem | Nhật ký sự kiện và chọn bản dữ liệu trước/sau tin đã áp dụng |
-| Lớp bản đồ | Nền và nhóm lớp nghiệp vụ | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
+| GIS | Nhập lớp, điểm tọa độ, ghi nhận và ảnh thực địa | Hồ sơ điểm, AOI và danh mục cảnh; [quy tắc liên kết bản đồ](geodata-workspace.md#quan-hệ-với-bản-đồ-ứng-phó) |
+| Lớp bản đồ | Nền và nhóm lớp nghiệp vụ; bật/tắt GIS đã nhập | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
 
 Panel bên trái chỉnh độ rộng hoặc thu gọn bằng nút đầu toolbar. Giữ tab, đối tượng và tuyến khi thu gọn. Chọn đối tượng sẽ mở lại panel. Ba tab **Sự kiện / Đường sá / Địa bàn** nằm trên panel, cùng hàng với thanh công cụ bản đồ. Mobile chuyển giữa **Thông tin** và **Bản đồ**.
 
-Toolbar cố định: tìm kiếm và **Lớp / Đo / Vị trí** bên trái, điều hướng và **2D / 3D** bên phải. Khi vùng bản đồ hẹp còn 600 px, hai nhóm chuyển thành hai hàng. Canvas và cửa sổ công cụ ở bên dưới. Nút panel trung tính ở đầu toolbar, giữ vị trí khi thu/mở panel. Thông báo và cài đặt nằm trên toolbar khi mở.
+Toolbar cố định: tìm kiếm và **Lớp / GIS / Đo / Vị trí** bên trái, điều hướng và **2D / 3D** bên phải. Khi vùng bản đồ hẹp còn 600 px, hai nhóm chuyển thành hai hàng. Canvas và cửa sổ công cụ ở bên dưới. Nút panel trung tính ở đầu toolbar, giữ vị trí khi thu/mở panel. Thông báo và cài đặt nằm trên toolbar khi mở.
 
 ## Hành vi
 

@@ -34,6 +34,7 @@ Demo chứng minh luồng ứng phó trên web. Chưa chứng minh pipeline vệ
 | Nội dung | Thao tác |
 |---|---|
 | Địa hình | Chọn đường hoặc địa bàn, mở mặt cắt, đọc độ cao/dốc tại vị trí rồi chuyển 3D/2D. Đây là độ dốc DEM, không phải khảo sát mặt đường |
+| Điểm và ảnh khảo sát | Mở GIS trên toolbar. Thêm tọa độ hoặc chọn điểm KML, lưu Ghi nhận thực địa và ảnh, rồi Xem trên bản đồ ứng phó. Điểm hiện ở 2D với nhãn Chưa xác minh, không tự cập nhật trạng thái tuyến |
 | Nguồn dữ liệu | Trong Lớp bản đồ, mở thông tin của lớp. Phân biệt ngày ảnh với thời điểm tổng hợp |
 | So ảnh | Chỉ trình diễn với cặp trước/sau đã được RS duyệt. Bỏ bước này nếu chưa có ảnh phù hợp |
 | Bãi đáp | Tìm “bãi đáp”, mở H. Đây là vị trí đề xuất, chưa khảo sát |

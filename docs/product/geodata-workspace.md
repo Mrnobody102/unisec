@@ -1,8 +1,8 @@
-# Vùng quan tâm và phạm vi ảnh
+# Dữ liệu GIS và ghi nhận thực địa
 
 Phạm vi: công cụ thử nghiệm trong demo, lưu dữ liệu cục bộ tại trình duyệt. AOI nhập/vẽ ở đây không sửa AOI sự kiện hoặc kết quả tuyến/ưu tiên của DEAR. Luồng có project, quyền, xử lý và công bố được xây tại [Workbench của platform](../../../vsp-eo-platform/docs/architecture/overview.md#workspace).
 
-Cập nhật: 11/10/2026. Mở **Lớp bản đồ → Dữ liệu GIS**, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
+Mở **GIS** trên thanh công cụ bản đồ, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
 
 ```mermaid
 flowchart LR
@@ -21,6 +21,7 @@ flowchart LR
 | Nhập văn bản | Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ DD (`21.782919° N, 104.053554° E`) hoặc DMS (`21°45'26.80"N 104°02'48.44"E`), mỗi dòng một điểm |
 | Vai trò | Tham chiếu: nâu. AOI: xanh lá. Phạm vi ảnh: xanh dương nét đứt. Chú giải theo vai trò đang hiện. Điểm có lõi đặc và viền trắng; màu tham chiếu không biểu thị mức tác động |
 | Chọn đối tượng | Giữ vùng nhìn; nút Xem trên bản đồ đưa hình vào map. Đổi tên/vai trò, xem tọa độ và thuộc tính. Một AOI mỗi workspace, gán AOI mới chuyển AOI cũ thành tham chiếu |
+| Điểm thực địa | Thêm điểm tọa độ hoặc chọn điểm đã nhập, mở Ghi nhận thực địa. Chọn loại, ghi chú, thời gian, người ghi nhận, sai số vị trí và ảnh. Lưu rồi chọn Xem trên bản đồ ứng phó |
 | Vẽ AOI | Thanh công cụ: polygon hoặc hình chữ nhật qua hai góc đối diện. Polygon kết thúc bằng Enter, nút Kết thúc, nhấp đúp hoặc đỉnh đầu. Vẽ lại cập nhật AOI hiện tại. Thanh công cụ không làm map dịch chuyển |
 | Chỉnh hình | Kéo đỉnh hoặc nhập kinh/vĩ độ tại tab AOI. Áp dụng mới cập nhật bản lưu; hình lỗi giữ nguyên bản cũ. Hủy/Esc bỏ bản nháp. Bắt đỉnh trong 12 pixel tới các đối tượng đang hiện |
 | Hoàn tác | Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z hoặc các nút Hoàn tác/Làm lại. Trong lúc chỉnh chỉ tác động bản nháp; ngoài lúc chỉnh tác động lớp. Lịch sử 25 bước, trong phiên |
@@ -28,7 +29,25 @@ flowchart LR
 | Nguồn | Định dạng, đầu vào, thời điểm nhập, thuộc tính, WKT và tham chiếu Z nếu có. Vĩ độ/kinh độ ghi riêng. Thời điểm nhập không phải ngày chụp hoặc khảo sát |
 | Xuất | GeoJSON/KML cho cả bộ hoặc riêng AOI, copy WKT đối tượng chọn. KML giữ mô tả, thuộc tính dạng văn bản và altitudeMode. GeoJSON kèm vai trò, nguồn và phương pháp tính |
 
-Đối tượng nhập là dữ liệu làm việc tại trình duyệt, chưa phải lớp tác động được công bố trong tình huống ứng phó.
+## Quan hệ với bản đồ ứng phó
+
+| Phần | Cách liên kết |
+|---|---|
+| Đối tượng GIS | Một phiên dữ liệu dùng chung trong ứng dụng, giữ ID, hình học, thuộc tính và lựa chọn khi đóng/mở GIS. Tab Lớp quản lý dữ liệu; bảng Lớp bản đồ bật/tắt lớp GIS đã nhập |
+| Vị trí | Hiện các hình WGS84 trên bản đồ ứng phó 2D, kể cả ngoài phạm vi DEM chuẩn bị. Chỉ hành động Xem trên bản đồ ứng phó đổi vùng nhìn. Chưa hiển thị lớp nhập trên 3D |
+| Ghi nhận | Điểm có loại nghi sạt lở, hư hỏng đường, nước/ngập hoặc khảo sát. Ký hiệu cảnh báo và nhãn Chưa xác minh cho ghi nhận mới; chọn điểm mở ghi chú và ảnh |
+| Đánh giá tình huống | Ghi nhận mới không tự sửa vùng thiên tai, mức ưu tiên, trạng thái tuyến hoặc nhật ký phân tích. AOI làm việc không thay AOI sự kiện |
+| Lưu/chia sẻ | Bản mở độc lập cùng origin đọc cùng bộ lưu. GeoJSON/KML giữ dữ liệu ghi nhận và bản xem trước ảnh. Không gửi báo cáo hoặc đồng bộ người dùng |
+
+## Ảnh hiện trường và hướng mở rộng
+
+Mỗi điểm tối đa ba ảnh JPEG/PNG/WebP, mỗi ảnh tối đa 8 MB và 40 megapixel. Demo lưu bản JPEG xem trước cạnh dài tối đa 1.280 pixel, thông số EXIF đọc được và SHA-256 của **tệp gốc**. Toàn phiên vẫn chịu giới hạn lưu 4 MB; lưu lỗi giữ nguyên hồ sơ cũ. Tệp gốc không được lưu trong demo, cần giữ riêng để phân tích.
+
+GPS EXIF là vị trí máy ảnh, có thể khác vị trí hiện tượng. Không tự đổi tọa độ điểm theo ảnh. Thời gian nhập, thời gian người khảo sát khai báo và giờ EXIF là các mốc riêng; giờ EXIF có thể thiếu múi giờ. Thiếu EXIF không đồng nghĩa ảnh không hợp lệ. Demo chưa phân loại sạt lở từ ảnh hoặc kiểm chứng độ tin cậy EXIF.
+
+Luồng ứng dụng người dân nên có ba bước: tiếp nhận ghi nhận và ảnh gốc, người có trách nhiệm xác minh, công bố lớp phục vụ ứng phó. Hợp đồng dữ liệu cần ID ổn định, vị trí hiện tượng và vị trí chụp riêng, độ chính xác và nguồn tọa độ, thời điểm kèm múi giờ, người gửi, tệp gốc và checksum, kết quả xác minh. Platform quản lý tệp, quyền và đồng bộ; DEAR đọc dữ liệu đã công bố. Đây là hướng mở rộng, chưa phải chức năng backend của demo.
+
+Tham khảo mô hình đối tượng có vị trí, biểu mẫu và ảnh của [ArcGIS Field Maps](https://doc.arcgis.com/en/field-maps/ios/use-maps/capture.htm) và thông số ảnh của [Survey123](https://doc.arcgis.com/en/survey123/create/main/xlsformmedia.htm).
 
 ## Quy tắc khoa học
 
