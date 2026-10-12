@@ -1,0 +1,211 @@
+.field-observation {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ws-line);
+  display: grid;
+  gap: 12px;
+}
+.field-observation > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.field-status {
+  color: var(--warning-ink);
+  border: 1px solid var(--ws-line);
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+}
+.field-observation fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.field-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.field-metadata {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.field-metadata > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+}
+.field-metadata dt {
+  color: var(--ws-muted);
+}
+.field-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.field-photo-gallery {
+  display: grid;
+  gap: 16px;
+}
+.field-photo-gallery figure {
+  margin: 0;
+  border: 1px solid var(--ws-line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.field-photo-gallery img {
+  width: 100%;
+  max-height: 260px;
+  display: block;
+  object-fit: contain;
+  background: var(--ws-bg);
+}
+.field-photo-gallery figcaption {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  font-size: 12px;
+}
+.field-photo-gallery figcaption strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.field-photo-gallery figcaption span,
+.field-hint {
+  color: var(--ws-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.field-photo-gallery details {
+  padding: 8px 10px;
+  border-top: 1px solid var(--ws-line);
+  font-size: 12px;
+}
+.field-photo-gallery summary {
+  cursor: pointer;
+  color: var(--select-ink);
+  padding: 4px 0;
+}
+.field-hash {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.field-photo-picker {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--ws-line);
+  margin: 12px 0;
+}
+.field-photo-picker input {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+.field-error {
+  color: var(--critical-ink);
+  font-size: 12px;
+}
+.field-map-marker {
+  display: grid;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  color: white;
+  background: #b87919;
+  box-shadow: 0 1px 3px #0006;
+  font: 600 14px var(--font-sans);
+}
+.field-map-marker.is-survey {
+  background: #3186bc;
+}
+.field-map-marker.is-selected {
+  outline: 2px solid var(--select);
+  outline-offset: 2px;
+}
+.field-map-card {
+  position: absolute;
+  z-index: 12;
+  top: calc(var(--map-toolbar-height, 48px) + 12px);
+  right: 16px;
+  width: min(336px, calc(100% - 32px));
+  max-height: calc(100% - var(--map-toolbar-height, 48px) - 72px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--map-chrome-line);
+  border-radius: 3px;
+  background: var(--ws-surface);
+  box-shadow: var(--shadow-float);
+}
+.field-map-card > header {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.field-map-card > header h2 {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+.field-map-card .field-note {
+  margin: 12px 0;
+  font-size: 13px;
+}
+.field-map-card > .button {
+  margin-top: 12px;
+}
+@media (max-width: 480px) {
+  .field-map-card {
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+}
+
+.field-map-tooltip.leaflet-tooltip {
+  background: var(--ws-raised);
+  color: var(--ws-text);
+  border: 1px solid var(--control-border);
+  border-radius: 3px;
+  box-shadow: var(--shadow-float);
+  font: 12px/1.5 var(--font-sans);
+}
+.field-map-tooltip.leaflet-tooltip-top::before {
+  border-top-color: var(--control-border);
+}
+.field-map-card > header .icon-button {
+  background: var(--ws-surface);
+  color: var(--ws-muted);
+}
+.field-map-card > header .icon-button:hover {
+  color: var(--ws-text);
+}
+
+.field-point-entry fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.field-legend-symbol {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid white;
+  background: #b87919;
+  color: white;
+  font: 600 11px var(--font-sans);
+  font-style: normal;
+}
+.field-legend-symbol.is-survey {
+  background: #3186bc;
+}

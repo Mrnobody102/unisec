@@ -20,11 +20,13 @@
   display: flex;
   align-items: start;
   gap: 10px;
-  padding: 12px 6px;
+  padding: 12px 10px;
+  border-left: 2px solid transparent;
   border-bottom: 1px solid var(--ws-line);
 }
 .catalog-results li.is-selected {
   background: var(--ws-tint);
+  border-left-color: var(--select);
 }
 .catalog-results input {
   flex: none;

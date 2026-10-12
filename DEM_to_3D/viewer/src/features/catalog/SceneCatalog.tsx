@@ -280,7 +280,7 @@ export function SceneCatalog({
       </section>
       <section className="geodata-section catalog-selection">
         <h2>
-          {t('Ảnh đã chọn', 'Selected imagery')}
+          {t('Cảnh đã chọn', 'Selected scenes')}
           <span>{scenes.length}</span>
         </h2>
         <p className="geodata-hint" data-pair-review={pair}>
@@ -311,7 +311,7 @@ export function SceneCatalog({
         </ul>
         <div className="geodata-actions">
           <button className="button" disabled={!scenes.length || stale} onClick={onAdd}>
-            {t('Thêm phạm vi ảnh', 'Add footprints')}
+            {t('Lưu phạm vi vào lớp', 'Save footprints to layers')}
           </button>
           <button
             className="icon-button"

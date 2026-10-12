@@ -19,6 +19,8 @@ import {
 } from './geometrySession';
 import { geometryHistory } from './geometryEditing';
 
+import { annotateRecord, type FieldObservation } from '../observations/model';
+
 const storageKey = 'dear.geodata.v1';
 function read() {
   try {
@@ -179,7 +181,20 @@ export function useGeometrySession() {
     commit(latest.current.filter((record) => record.id !== id));
     if (selectedId === id) setSelectedId(null);
   };
+  const annotate = (id: string, observation: FieldObservation): boolean => {
+    try {
+      const target = latest.current.find(record => record.id === id);
+      if (!target) return false;
+      const edited = annotateRecord(target, observation);
+      const next = latest.current.map(record => record.id === id ? edited : record);
+      validateGeometryStorageBudget(next);
+      // Fail before changing the map if storage cannot retain the observation and photo previews.
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      commit(next); setError(null); return true;
+    } catch { setError(new GeometryError('storage')); return false; }
+  };
   return {
+    annotate,
     records,
     selectedId,
     viewRequest,

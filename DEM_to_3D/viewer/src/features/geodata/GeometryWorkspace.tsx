@@ -5,7 +5,11 @@ import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { PanelResizeHandle } from '../../shared/ui/PanelResizeHandle';
 import { downloadBlob } from '../../shared/downloadBlob';
-import { SceneCatalog, SceneDetails, type SceneResult } from '../catalog/SceneCatalog';
+import {
+  SceneCatalog,
+  SceneDetails,
+  type SceneResult
+} from '../catalog/SceneCatalog';
 import { useImageryCatalog } from '../catalog/useImageryCatalog';
 import { sceneRecord, reviewScenePair } from '../catalog/imageryCatalog';
 import { GeometryImport } from './GeometryImport';
@@ -19,6 +23,7 @@ import { createGeometryRecords } from './geometrySession';
 import { GeometryToolbar } from './GeometryToolbar';
 import { GeometryExport } from './GeometryExport';
 import { geometryErrorText } from './geometryErrors';
+import { PointEntry } from '../observations/PointEntry';
 import './geodata.css';
 
 type Props = {
@@ -26,12 +31,16 @@ type Props = {
   onClose: () => void;
   offline?: boolean;
   standalone?: boolean;
+  session?: ReturnType<typeof useGeometrySession>;
+  onResponse?: (id: string) => void;
 };
 type Tab = 'layers' | 'aoi' | 'scenes';
 const selectionKey = 'dear.imagery-selection.v1';
 function readSelection(): string[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(selectionKey) ?? '[]');
+    const value: unknown = JSON.parse(
+      localStorage.getItem(selectionKey) ?? '[]'
+    );
     return Array.isArray(value)
       ? value.filter((id): id is string => typeof id === 'string').slice(0, 100)
       : [];
@@ -41,15 +50,27 @@ function readSelection(): string[] {
 }
 
 /** Composition only: geometry drafts, published response data and catalog selections are separate. */
-export function GeometryWorkspace({
+export function GeometryWorkspace(props: Props): JSX.Element {
+  return props.session ? (
+    <GeometryWorkspaceView {...props} session={props.session} />
+  ) : (
+    <LocalGeometryWorkspace {...props} />
+  );
+}
+function LocalGeometryWorkspace(props: Props): JSX.Element {
+  const session = useGeometrySession();
+  return <GeometryWorkspaceView {...props} session={session} />;
+}
+function GeometryWorkspaceView({
   locale,
   onClose,
   offline = false,
-  standalone = false
-}: Props): JSX.Element {
+  standalone = false,
+  session,
+  onResponse
+}: Props & { session: ReturnType<typeof useGeometrySession> }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
-  const session = useGeometrySession(),
-    editor = useGeometryEditor(),
+  const editor = useGeometryEditor(),
     repository = useImageryCatalog();
   const [tab, setTab] = useState<Tab>('layers'),
     [mobileTab, setMobileTab] = useState<'data' | 'map'>('data');
@@ -65,8 +86,12 @@ export function GeometryWorkspace({
       id: string | null;
     } | null>(null);
   const aoi = session.records.find((record) => record.role === 'aoi');
-  const selected = session.records.find((record) => record.id === session.selectedId);
-  const scene = repository.catalog?.scenes.find((record) => record.id === sceneId);
+  const selected = session.records.find(
+    (record) => record.id === session.selectedId
+  );
+  const scene = repository.catalog?.scenes.find(
+    (record) => record.id === sceneId
+  );
   const analysis = useMemo(() => {
     try {
       return { result: polygonCoverage(session.records), error: null };
@@ -79,7 +104,10 @@ export function GeometryWorkspace({
     const existing = new Set(session.records.map((record) => record.id));
     const candidates = results.map((row) => row.scene);
     const focused =
-      scene ?? repository.catalog.scenes.find((item) => `scene:${item.id}` === sceneView?.id);
+      scene ??
+      repository.catalog.scenes.find(
+        (item) => `scene:${item.id}` === sceneView?.id
+      );
     if (focused && !candidates.some((candidate) => candidate.id === focused.id))
       candidates.push(focused);
     return [
@@ -91,7 +119,14 @@ export function GeometryWorkspace({
         }))
         .filter((record) => !existing.has(record.id))
     ];
-  }, [session.records, results, scene, sceneView, showScenes, repository.catalog]);
+  }, [
+    session.records,
+    results,
+    scene,
+    sceneView,
+    showScenes,
+    repository.catalog
+  ]);
   useEffect(() => {
     try {
       localStorage.setItem(selectionKey, JSON.stringify(selectedScenes));
@@ -112,7 +147,9 @@ export function GeometryWorkspace({
       if (
         (event.ctrlKey || event.metaKey) &&
         ['z', 'y'].includes(key) &&
-        !(event.target as HTMLElement)?.closest('input,textarea,select,[contenteditable]')
+        !(event.target as HTMLElement)?.closest(
+          'input,textarea,select,[contenteditable]'
+        )
       ) {
         event.preventDefault();
         if (key === 'y' || event.shiftKey) session.redo();
@@ -124,7 +161,9 @@ export function GeometryWorkspace({
   });
   const select = (id: string) => {
     if (editor.active) return;
-    const candidate = repository.catalog?.scenes.find((item) => `scene:${item.id}` === id);
+    const candidate = repository.catalog?.scenes.find(
+      (item) => `scene:${item.id}` === id
+    );
     if (candidate) {
       setSceneId(candidate.id);
       return;
@@ -155,7 +194,9 @@ export function GeometryWorkspace({
         session.add(
           createGeometryRecords(
             {
-              features: [{ type: 'Feature', properties: { name: 'AOI' }, geometry }],
+              features: [
+                { type: 'Feature', properties: { name: 'AOI' }, geometry }
+              ],
               format: 'drawing'
             },
             t('Vẽ trên bản đồ', 'Map drawing'),
@@ -178,8 +219,12 @@ export function GeometryWorkspace({
   const addScenes = () => {
     try {
       const additions = (
-        repository.catalog?.scenes.filter((item) => selectedScenes.includes(item.id)) ?? []
-      ).map((item) => sceneRecord(item, repository.catalog!.source.retrievedAt));
+        repository.catalog?.scenes.filter((item) =>
+          selectedScenes.includes(item.id)
+        ) ?? []
+      ).map((item) =>
+        sceneRecord(item, repository.catalog!.source.retrievedAt)
+      );
       const existing = new Set(session.records.map((record) => record.id));
       const fresh = additions.filter((record) => !existing.has(record.id));
       if (fresh.length) session.add(fresh);
@@ -215,9 +260,16 @@ export function GeometryWorkspace({
         </button>
         <div>
           <h1 id="geodata-title">{t('Dữ liệu GIS', 'GIS data')}</h1>
-          <span>{t('Vùng quan tâm, lớp dữ liệu và cảnh ảnh', 'Areas of interest, spatial layers and imagery')}</span>
+          <span>
+            {t(
+              'Vùng quan tâm, lớp dữ liệu và cảnh ảnh',
+              'Areas of interest, spatial layers and imagery'
+            )}
+          </span>
         </div>
-        <span className="geodata-local">{t('Workspace cục bộ', 'Local workspace')}</span>
+        <span className="geodata-local">
+          {t('Workspace cục bộ', 'Local workspace')}
+        </span>
       </header>
       <GeometryToolbar
         locale={locale}
@@ -242,7 +294,10 @@ export function GeometryWorkspace({
         className="geodata-mobile-tabs"
         aria-label={t('Không gian dữ liệu GIS', 'GIS workspace')}
       >
-        <button aria-pressed={mobileTab === 'data'} onClick={() => setMobileTab('data')}>
+        <button
+          aria-pressed={mobileTab === 'data'}
+          onClick={() => setMobileTab('data')}
+        >
           {t('Dữ liệu', 'Data')}
         </button>
         <button
@@ -273,7 +328,11 @@ export function GeometryWorkspace({
           className="geodata-sidebar"
           aria-label={t('Quản lý dữ liệu GIS', 'GIS data controls')}
         >
-          <nav className="geodata-tabs" role="tablist" aria-label={t('Công việc GIS', 'GIS tasks')}>
+          <nav
+            className="geodata-tabs"
+            role="tablist"
+            aria-label={t('Công việc GIS', 'GIS tasks')}
+          >
             {(['layers', 'aoi', 'scenes'] as const).map((id, index) => (
               <button
                 key={id}
@@ -309,6 +368,11 @@ export function GeometryWorkspace({
               aria-labelledby="geo-tab-layers"
               hidden={tab !== 'layers'}
             >
+              <PointEntry
+                locale={locale}
+                session={session}
+                disabled={working}
+              />
               <GeometryImport
                 locale={locale}
                 busy={session.busy}
@@ -333,6 +397,10 @@ export function GeometryWorkspace({
                   setSceneId(null);
                 }}
                 onUpdate={session.update}
+                onAnnotate={session.annotate}
+                onResponse={
+                  onResponse ?? (standalone ? () => onClose() : undefined)
+                }
                 onRemove={session.remove}
                 onFit={(id) => {
                   setSceneView(null);
@@ -400,7 +468,11 @@ export function GeometryWorkspace({
                   onMove={editor.move}
                 />
               )}
-              <GeometryCoverage locale={locale} coverage={analysis.result} onSelect={select} />
+              <GeometryCoverage
+                locale={locale}
+                coverage={analysis.result}
+                onSelect={select}
+              />
             </div>
             <div
               id="geo-panel-scenes"
@@ -454,16 +526,21 @@ export function GeometryWorkspace({
               />
             </div>
           </div>
-          <GeometryExport
-            locale={locale}
-            exportRecords={exportRecords}
-            exportScope={exportScope}
-            onScope={setExportScope}
-            disabled={working}
-            onError={session.setError}
-          />
+          {tab !== 'scenes' && (
+            <GeometryExport
+              locale={locale}
+              exportRecords={exportRecords}
+              exportScope={exportScope}
+              onScope={setExportScope}
+              disabled={working}
+              onError={session.setError}
+            />
+          )}
         </aside>
-        <PanelResizeHandle locale={locale} storageKey="dear.geodata.panel-width" />
+        <PanelResizeHandle
+          locale={locale}
+          storageKey="dear.geodata.panel-width"
+        />
         <GeometryMap
           records={mapRecords}
           selectedId={scene ? `scene:${scene.id}` : session.selectedId}
@@ -492,7 +569,8 @@ export function GeometryWorkspace({
               }));
               setShowScenes(true);
               setMobileTab('map');
-              if (window.matchMedia('(max-width:1100px)').matches) setSceneId(null);
+              if (window.matchMedia('(max-width:1100px)').matches)
+                setSceneId(null);
             }}
           />
         )}

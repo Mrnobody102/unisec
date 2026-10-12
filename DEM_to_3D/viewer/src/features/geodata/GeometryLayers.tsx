@@ -1,3 +1,7 @@
+import { ObservationEditor } from '../observations/ObservationEditor';
+import { observationOf } from '../observations/model';
+import { observationLabel } from '../observations/labels';
+import type { FieldObservation } from '../observations/model';
 import { useState } from 'react';
 import area from '@turf/area';
 import {
@@ -11,7 +15,11 @@ import { UiIcon } from '../../shared/ui/UiIcon';
 import { DisclosureTrigger } from '../../shared/ui/DisclosureTrigger';
 import { roleLabel, roleColors, formatArea } from './geometryPresentation';
 import { exportGeometryWkt } from './geometryExports';
-import { kmlAltitudeMode, kmlAltitudeLabel, kmlAltitudeModeKey } from './kmlMetadata';
+import {
+  kmlAltitudeMode,
+  kmlAltitudeLabel,
+  kmlAltitudeModeKey
+} from './kmlMetadata';
 
 type Props = {
   records: GeometryRecord[];
@@ -19,9 +27,14 @@ type Props = {
   locale: Locale;
   disabled: boolean;
   onSelect: (id: string) => void;
+  onAnnotate?: (id: string, value: FieldObservation) => boolean;
+  onResponse?: (id: string) => void;
   onRemove: (id: string) => void;
   onFit: (id: string) => void;
-  onUpdate: (id: string, patch: Partial<Pick<GeometryRecord, 'name' | 'visible' | 'role'>>) => void;
+  onUpdate: (
+    id: string,
+    patch: Partial<Pick<GeometryRecord, 'name' | 'visible' | 'role'>>
+  ) => void;
 };
 
 export function GeometryLayers({
@@ -32,7 +45,9 @@ export function GeometryLayers({
   onSelect,
   onRemove,
   onUpdate,
-  onFit
+  onFit,
+  onAnnotate,
+  onResponse
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const [metadata, setMetadata] = useState(false),
@@ -42,7 +57,9 @@ export function GeometryLayers({
   const copy = async () => {
     if (!selected) return;
     try {
-      await navigator.clipboard.writeText(exportGeometryWkt(selected.feature.geometry));
+      await navigator.clipboard.writeText(
+        exportGeometryWkt(selected.feature.geometry)
+      );
       setCopied(selected.id);
       setCopyError(false);
     } catch {
@@ -58,7 +75,10 @@ export function GeometryLayers({
         </h2>
         {!records.length && (
           <p className="geodata-empty">
-            {t('Nhập tệp hoặc vẽ vùng để bắt đầu.', 'Import a file or draw an area to start.')}
+            {t(
+              'Nhập tệp hoặc vẽ vùng để bắt đầu.',
+              'Import a file or draw an area to start.'
+            )}
           </p>
         )}
         <ul>
@@ -73,7 +93,9 @@ export function GeometryLayers({
                 disabled={disabled}
                 checked={record.visible}
                 aria-label={t('Hiện ', 'Show ') + record.name}
-                onChange={(event) => onUpdate(record.id, { visible: event.target.checked })}
+                onChange={(event) =>
+                  onUpdate(record.id, { visible: event.target.checked })
+                }
               />
               <button
                 className="geodata-feature"
@@ -83,7 +105,10 @@ export function GeometryLayers({
                   setCopied(null);
                 }}
               >
-                <span className="geodata-symbol" style={{ color: roleColors[record.role] }}>
+                <span
+                  className="geodata-symbol"
+                  style={{ color: roleColors[record.role] }}
+                >
                   <UiIcon
                     name={
                       record.feature.geometry.type === 'Point'
@@ -97,7 +122,11 @@ export function GeometryLayers({
                 </span>
                 <span>
                   <strong>{record.name}</strong>
-                  <small>{roleLabel(record.role, locale)}</small>
+                  <small>
+                    {observationOf(record)
+                      ? observationLabel(observationOf(record)!.kind, locale)
+                      : roleLabel(record.role, locale)}
+                  </small>
                 </span>
               </button>
             </li>
@@ -135,28 +164,32 @@ export function GeometryLayers({
               aria-label={t('Tên đối tượng', 'Feature name')}
               value={selected.name}
               disabled={disabled}
-              onChange={(event) => onUpdate(selected.id, { name: event.target.value })}
+              onChange={(event) =>
+                onUpdate(selected.id, { name: event.target.value })
+              }
             />
           </label>
-          <label className="geodata-field">
-            {t('Sử dụng làm', 'Use as')}
-            <select
-              value={selected.role}
-              disabled={disabled || !isPolygon(selected.feature.geometry)}
-              aria-label={t('Vai trò đối tượng', 'Feature role')}
-              onChange={(event) =>
-                onUpdate(selected.id, {
-                  role: event.target.value as GeometryRole
-                })
-              }
-            >
-              {(['reference', 'aoi', 'footprint'] as const).map((role) => (
-                <option key={role} value={role}>
-                  {roleLabel(role, locale)}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isPolygon(selected.feature.geometry) && (
+            <label className="geodata-field">
+              {t('Sử dụng làm', 'Use as')}
+              <select
+                value={selected.role}
+                disabled={disabled || !isPolygon(selected.feature.geometry)}
+                aria-label={t('Vai trò đối tượng', 'Feature role')}
+                onChange={(event) =>
+                  onUpdate(selected.id, {
+                    role: event.target.value as GeometryRole
+                  })
+                }
+              >
+                {(['reference', 'aoi', 'footprint'] as const).map((role) => (
+                  <option key={role} value={role}>
+                    {roleLabel(role, locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <dl className="geodata-properties">
             <div>
               <dt>{t('Hình học', 'Geometry')}</dt>
@@ -172,15 +205,31 @@ export function GeometryLayers({
               <>
                 <div>
                   <dt>{t('Vĩ độ', 'Latitude')}</dt>
-                  <dd className="geodata-coordinate">{selected.feature.geometry.coordinates[1].toFixed(6)}°</dd>
+                  <dd className="geodata-coordinate">
+                    {selected.feature.geometry.coordinates[1].toFixed(6)}°
+                  </dd>
                 </div>
                 <div>
                   <dt>{t('Kinh độ', 'Longitude')}</dt>
-                  <dd className="geodata-coordinate">{selected.feature.geometry.coordinates[0].toFixed(6)}°</dd>
+                  <dd className="geodata-coordinate">
+                    {selected.feature.geometry.coordinates[0].toFixed(6)}°
+                  </dd>
                 </div>
               </>
             )}
           </dl>
+          {selected.feature.geometry.type === 'Point' && onAnnotate && (
+            <ObservationEditor
+              key={selected.id + (observationOf(selected)?.updatedAt ?? '')}
+              record={selected}
+              locale={locale}
+              disabled={disabled}
+              onSave={(value) => onAnnotate(selected.id, value)}
+              onResponse={
+                onResponse ? () => onResponse(selected.id) : undefined
+              }
+            />
+          )}
           <div className="geodata-actions">
             <DisclosureTrigger
               expanded={metadata}
@@ -226,10 +275,18 @@ export function GeometryLayers({
                   <dt>CRS</dt>
                   <dd>WGS84 (OGC:CRS84)</dd>
                 </div>
-                {(kmlAltitudeMode(selected.feature.properties) || geometryPositions(selected.feature.geometry).some((point) => point.length === 3)) && (
+                {(kmlAltitudeMode(selected.feature.properties) ||
+                  geometryPositions(selected.feature.geometry).some(
+                    (point) => point.length === 3
+                  )) && (
                   <div>
                     <dt>{t('Tham chiếu Z', 'Z reference')}</dt>
-                    <dd>{kmlAltitudeLabel(kmlAltitudeMode(selected.feature.properties), locale)}</dd>
+                    <dd>
+                      {kmlAltitudeLabel(
+                        kmlAltitudeMode(selected.feature.properties),
+                        locale
+                      )}
+                    </dd>
                   </div>
                 )}
                 <div>
@@ -245,13 +302,26 @@ export function GeometryLayers({
                   </dd>
                 </div>
               </dl>
-              <pre tabIndex={0}>{exportGeometryWkt(selected.feature.geometry)}</pre>
+              <pre tabIndex={0}>
+                {exportGeometryWkt(selected.feature.geometry)}
+              </pre>
               {Object.entries(selected.feature.properties)
-                .filter(([key, value]) => !['name', kmlAltitudeModeKey].includes(key) && value != null && value !== '')
+                .filter(
+                  ([key, value]) =>
+                    !['name', kmlAltitudeModeKey, 'dearObservation'].includes(
+                      key
+                    ) &&
+                    value != null &&
+                    value !== ''
+                )
                 .map(([key, value]) => (
                   <div className="geodata-input-property" key={key}>
                     <strong>{key}</strong>
-                    <span>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                    <span>
+                      {typeof value === 'object'
+                        ? JSON.stringify(value)
+                        : String(value)}
+                    </span>
                   </div>
                 ))}
             </div>

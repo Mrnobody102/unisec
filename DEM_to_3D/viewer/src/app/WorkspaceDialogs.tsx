@@ -13,12 +13,14 @@ import type { ComparisonPair } from '../features/comparison/comparison';
 import { DecisionExportDialog } from '../features/briefing/DecisionExportDialog';
 import type { DecisionSnapshot } from '../features/briefing/decisionSnapshot';
 import { TerrainUploadDialog } from '../features/terrain/TerrainUploadDialog';
+import type { useGeometrySession } from '../features/geodata/useGeometrySession';
 import { GeometryWorkspace } from '../features/geodata/GeometryWorkspace';
 import type { Locale } from '../types/dear';
 import type { TerrainData, TerrainMetadata } from '../types/terrain';
 import type { WorkspaceDialog } from './workspaceInteraction';
 
 type Props = {
+  gisSession: ReturnType<typeof useGeometrySession>; onGisResponse:(id:string)=>void;
   dialog: WorkspaceDialog;
   locale: Locale;
   offline: boolean;
@@ -45,7 +47,7 @@ type Props = {
 };
 
 /** Global dialogs share the workspace's focus boundary; Layers stays attached to the map. */
-export function WorkspaceDialogs({ dialog, locale, offline, packet, snapshot, updated, reportApplied,
+export function WorkspaceDialogs({ gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
   historical, workTasks,workTaskId,workEntries,workStorageError,onRecordWork,appliedAt,comparisonPair, onComparisonPair, decisionSnapshot, evidenceId, terrain,
   terrainMetadata, manifest, upload, onClose, onOpenReport, onApplyReport, onRevision,
   onInspectObject }: Props): JSX.Element | null {
@@ -57,7 +59,7 @@ export function WorkspaceDialogs({ dialog, locale, offline, packet, snapshot, up
     case 'comparison':
       return <ImageCompareDialog pair={comparisonPair} onPair={onComparisonPair} triggeredAt={incident.triggeredAt} locale={locale} onClose={onClose} />;
     case 'geodata':
-      return <GeometryWorkspace locale={locale} offline={offline} onClose={onClose}/>;
+      return <GeometryWorkspace locale={locale} offline={offline} onClose={onClose} session={gisSession} onResponse={onGisResponse}/>;
     case 'exportDecision':
       return decisionSnapshot ? <DecisionExportDialog snapshot={decisionSnapshot} terrain={terrain} imageUrl={manifest?.terrain.image?.url} locale={locale} onClose={onClose} /> : null;
     case 'alerts':

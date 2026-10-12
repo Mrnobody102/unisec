@@ -8,6 +8,9 @@ import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { MapAttribution } from '../../components/dear/MapAttribution';
 import type { BasemapState } from '../map/mapContracts';
+import { observationOf } from '../observations/model';
+import { observationMarker } from '../observations/mapMarker';
+import { observationColor } from '../observations/labels';
 import { roleColors, roleLabel } from './geometryPresentation';
 import { vertexHandles } from './geometryEditing';
 import type { useGeometryEditor } from './useGeometryEditor';
@@ -215,7 +218,8 @@ export function GeometryMap(props: Props): JSX.Element {
       (record) =>
         record.visible && !(props.editor.mode === 'edit' && record.id === props.editor.recordId)
     )) {
-      const color = roleColors[record.role],
+      const observation = observationOf(record);
+      const color = observation ? observationColor(observation.kind) : roleColors[record.role],
         selected = record.id === props.selectedId;
       const pane =
         record.feature.geometry.type === 'Point' ? 'points' : selected ? 'selected' : record.role;
@@ -241,7 +245,7 @@ export function GeometryMap(props: Props): JSX.Element {
                 dashArray: record.role === 'footprint' ? '7 4' : undefined,
                 interactive: !props.editor.active
               },
-        pointToLayer: (_, position) => L.circleMarker(position, pointStyle)
+        pointToLayer: (_, position) => observation ? observationMarker(position, record, observation, {pane:'points',selected,interactive:!props.editor.active}) : L.circleMarker(position, pointStyle)
       }).addTo(group);
       const label = document.createElement('span');
       label.textContent = record.name;
@@ -425,7 +429,7 @@ export function GeometryMap(props: Props): JSX.Element {
         {props.records.some((record) => record.visible) && (
           <ul className="geodata-map-legend" aria-label={t('Chú giải dữ liệu', 'Data legend')}>
             {(['reference', 'aoi', 'footprint'] as const)
-              .filter((role) => props.records.some((record) => record.visible && record.role === role))
+              .filter((role) => props.records.some((record) => record.visible && record.role === role && !observationOf(record)))
               .map((role) => (
                 <li key={role}>
                   <span
@@ -436,6 +440,8 @@ export function GeometryMap(props: Props): JSX.Element {
                   {role === 'aoi' ? 'AOI' : roleLabel(role, props.locale)}
                 </li>
               ))}
+            {props.records.some(record=>record.visible && observationOf(record) && observationOf(record)?.kind !== 'survey') && <li><span className="field-legend-symbol" aria-hidden="true">!</span>{t('Ghi nhận chưa xác minh','Unreviewed observations')}</li>}
+            {props.records.some(record=>record.visible && observationOf(record)?.kind==='survey') && <li><span className="field-legend-symbol is-survey" aria-hidden="true">i</span>{t('Điểm khảo sát','Survey points')}</li>}
           </ul>
         )}
         <div className="geodata-map-buttons">

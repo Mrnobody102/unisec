@@ -7,6 +7,9 @@ import '../features/incident/incident-tools.css';
 import '../features/search/search.css';
 import '../features/briefing/briefing.css';
 
+import { observationOf } from '../features/observations/model';
+import { useGeometrySession } from '../features/geodata/useGeometrySession';
+import { ResponseObservationCard } from '../features/observations/ResponseObservationCard';
 import { ResponsePanel } from './ResponsePanel';
 import { WorkspaceDialogs } from './WorkspaceDialogs';
 import { AppHeader } from '../components/dear/AppHeader';
@@ -49,7 +52,7 @@ import { useWorkspaceNavigation } from './useWorkspaceNavigation';
 import type { useWorkspaceInteraction } from './useWorkspaceInteraction';
 
 const TerrainViewer = React.lazy(() => import('../components/TerrainViewer').then(module => ({ default: module.TerrainViewer })));
-const defaultLayers = { aoi: true, imagery: true, context: true, hillshade: true, landslide: true, flood: true, roads: true, status: true, communities: true, staging: true, hlz: true, route: true };
+const defaultLayers = { gis:true, aoi: true, imagery: true, context: true, hillshade: true, landslide: true, flood: true, roads: true, status: true, communities: true, staging: true, hlz: true, route: true };
 
 type Props = {
   preferences: ReturnType<typeof useWorkspacePreferences>;
@@ -60,7 +63,30 @@ type Props = {
 export function ResponseWorkspace({ preferences, interaction, runtime }: Props): JSX.Element {
   const { locale, setLocale, theme, setTheme, fontChoice, setFontChoice } = preferences;
   const navigation = useWorkspaceNavigation();
+  const gis = useGeometrySession();
+  const [gisCardId, setGisCardId] = useState<string | null>(() => new URLSearchParams(location.search).get('gisPoint'));
+  const [gisResponseView, setGisResponseView] = useState({ version: 0, id: null as string | null });
+  const gisCard = gis.records.find(record => record.id === gisCardId && record.visible);
+  const showGisOnResponse = (id: string) => {
+    gis.select(id);
+    setGisCardId(id);
+    setGisResponseView(previous => ({ version: previous.version + 1, id }));
+    setLayers(previous => ({ ...previous, gis: true }));
+    setMapMode('2d');
+    setMobileView('map');
+    setActiveDialog(null);
+  };
   const { view, selectedCommunityId, selectedRouteType, selectedObjectId } = navigation;
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('gisPoint');
+    if (id && gis.records.some(record => record.id === id)) {
+      gis.select(id);
+      gis.fit(id);
+      setGisResponseView({ version: 1, id });
+      setMapMode('2d');
+      setMobileView('map');
+    }
+  }, []);
   const [mapQuery, setMapQuery] = useState('');
   const [decisionSnapshot, setDecisionSnapshot] = useState<DecisionSnapshot | null>(null);
   const [comparisonPair, setComparisonPair] = useState<ComparisonPair | null>(null);
@@ -293,6 +319,8 @@ export function ResponseWorkspace({ preferences, interaction, runtime }: Props):
           {historical && reportApplied && <RevisionNotice locale={locale} timestamp={incident.asOf} onLatest={() => setHistorical(false)}/>}
           <div className="map-canvas">
           {mapMode === '2d' ? <Map2D
+            gisEnabled={layers.gis} gisRecords={gis.records} gisSelectedId={gisCardId} gisRequest={gisResponseView}
+            onGisSelect={id=>{gis.select(id);setGisCardId(id);}}
             terrain={mapTerrain}
             profileOpen={showProfile}
             profilePoints={showProfile ? profileTarget?.points : undefined}
@@ -366,6 +394,8 @@ export function ResponseWorkspace({ preferences, interaction, runtime }: Props):
             onZoomIn={() => viewControlRef.current?.zoomIn()}
             onZoomOut={() => viewControlRef.current?.zoomOut()}
             onResetView={() => viewControlRef.current?.resetView()}
+            onOpenGis={()=>setActiveDialog('geodata')}
+            gisObservations={mapMode==='2d' && layers.gis ? gis.records.filter(record=>record.visible).flatMap(record=>{const observation=observationOf(record);return observation ? [observation.kind] : [];}) : []}
             onOpenLayers={() => setActiveDialog(activeDialog === 'layers' ? null : 'layers')}
             layersOpen={activeDialog === 'layers'}
             layers={scenarioTerrainCompatible ? layers : {}}
@@ -393,6 +423,7 @@ export function ResponseWorkspace({ preferences, interaction, runtime }: Props):
             }}/>
           </MapControls>
           <MapAttribution locale={locale} state={basemapState} onRetry={() => viewControlRef.current?.retryBasemap()} localSource={mapTerrain ? defaultTerrainData ? ['Ảnh nền và địa hình', 'Imagery and terrain'] : ['Lưới độ cao từ mô hình đã tải lên', 'Elevation grid from the uploaded model'] : undefined}/>
+          {mapMode === '2d' && layers.gis && gisCard && !locationOpen && !measurementOpen && <ResponseObservationCard record={gisCard} locale={locale} onClose={()=>setGisCardId(null)} onEdit={()=>{gis.select(gisCard.id);setActiveDialog('geodata');}}/>}
           {locationOpen && <MapLocationPanel locale={locale} point={locationPoint} onClose={closeLocation}/>}
 
           {activeDialog === 'layers' && (
@@ -404,7 +435,6 @@ export function ResponseWorkspace({ preferences, interaction, runtime }: Props):
               mapMode={mapMode}
               onAppearance={setLayerAppearance}
               onCompare={() => setActiveDialog('comparison')}
-              onImportGeometry={() => setActiveDialog('geodata')}
               renderInfo={id => <LayerDetails id={id} locale={locale} packet={packet} updated={updated} evidence={evidence} terrain={mapTerrain?.metadata} route={activeRoute} imagery={layers.imagery}/>}
               hasFloodData={hazards.some(hazard => hazard.kind === 'flood')}
               hasHLZData={responseSites.some(site => site.kind === 'hlz')}
@@ -435,6 +465,7 @@ export function ResponseWorkspace({ preferences, interaction, runtime }: Props):
       </nav>
 
       <WorkspaceDialogs
+        gisSession={gis} onGisResponse={showGisOnResponse}
         dialog={interaction.dialog}
         offline={offlineMode}
         locale={locale}

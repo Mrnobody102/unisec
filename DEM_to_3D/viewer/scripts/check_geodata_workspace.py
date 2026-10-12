@@ -237,7 +237,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Nguồn và tọa độ').click()
         expect(page.locator('.geodata-metadata')).to_contain_text('<img src=x')
         assert page.locator('.geodata-metadata img').count() == 0
-        expect(page.locator('.geodata-detail select')).to_be_disabled()
+        expect(page.get_by_role('combobox', name='Vai trò đối tượng', exact=True)).to_have_count(0)
         # A fresh project with overlapping footprints has 100%, not 150%, coverage.
         page.evaluate("localStorage.removeItem('dear.geodata.v1')")
         page.reload()
@@ -317,12 +317,11 @@ def run(url, chrome, captures):
                 if captures and width in [1366,320]:
                     page.screenshot(path=str(captures / f'gis-{theme}-{width}.png'), animations='disabled')
         assert not errors, errors
-        # The tool also opens from Layers and returns keyboard focus on close.
+        # GIS opens directly from the map toolbar and returns keyboard focus on close.
         page.set_viewport_size({'width':1366,'height':768})
         page.goto(url)
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         for iteration in range(3):
-            page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
             page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
             expect(page.locator('.geodata-workspace')).to_have_attribute('aria-modal','true')
             expect(page.locator('.geodata-layers li')).to_have_count(6)
@@ -334,7 +333,7 @@ def run(url, chrome, captures):
                 expect(page.locator('.geodata-workspace')).to_be_visible()
             page.keyboard.press('Escape')
             expect(page.locator('.geodata-workspace')).to_have_count(0)
-            expect(page.get_by_role('button', name='Lớp bản đồ', exact=True)).to_be_focused()
+            expect(page.get_by_role('button', name='Dữ liệu GIS', exact=True)).to_be_focused()
         assert not errors, errors
         # Complete drawings by double click or by clicking their first vertex.
         drawing_context = browser.new_context(viewport={'width':1366,'height':768})

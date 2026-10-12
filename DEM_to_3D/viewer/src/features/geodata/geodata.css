@@ -135,3 +135,7 @@
 .geodata-import-limits { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 6px 12px; margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--ws-line); font-size: 11px; }
 .geodata-import-limits dt { color: var(--ws-muted); }
 .geodata-import-limits dd { margin: 0; overflow-wrap: anywhere; }
+
+.field-point-entry .button { width: 100%; }
+.field-point-entry form { margin-top: 16px; }
+.geodata-map-footer > span:last-child { display: flex; gap: 12px; }

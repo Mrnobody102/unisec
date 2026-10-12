@@ -8,6 +8,8 @@ import { mapLayerOrder, mapPane, type MapPane } from './mapLayerOrder';
 import type { TerrainData } from '../../types/terrain';
 import type { MapDisplayProps } from './mapContracts';
 import { createRaster2d, type Raster2D } from './raster2d';
+import { ResponseGisLayer } from '../observations/ResponseGisLayer';
+import type { GeometryRecord } from '../../geo/vector/types';
 import { MapOverview } from './MapOverview';
 import { MapMeasurement } from '../measurement/MapMeasurement';
 import { measurementGeometry } from '../measurement/measurementGeometry';
@@ -16,6 +18,7 @@ import { showRoad, defaultLayerAppearance } from './layerAppearance';
 import { readMapLocation, type MapLocation } from './mapLocation';
 
 type Props = MapDisplayProps & {
+  gisEnabled?: boolean; gisRecords?: GeometryRecord[]; gisSelectedId?:string|null; gisRequest?:{version:number;id:string|null}; onGisSelect?:(id:string)=>void;
   terrain: TerrainData | null; imageUrl?: string; viewportRef: React.MutableRefObject<{ center: [number, number]; zoom: number } | null>;
   profileOpen: boolean;
   profilePoints?: Array<{ x: number; y: number }>;
@@ -226,6 +229,7 @@ export function Map2D(props: Props): JSX.Element {
     return () => { map.off('click', pick); marker?.remove(); };
   }, [mapReady, props.locationOpen, props.locationPoint]);
   return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+    {mapReady && props.gisRecords && props.onGisSelect && <ResponseGisLayer mapRef={mapRef} records={props.gisRecords} selectedId={props.gisSelectedId ?? null} request={props.gisRequest ?? {version:0,id:null}} enabled={props.gisEnabled !== false} interactive={!props.measurementOpen && !props.locationOpen} onSelect={props.onGisSelect}/>}
     <MapOverview mapRef={mapRef} raster={overviewRaster} area={overviewArea} locale={props.locale ?? 'vi'}
       enabled={mapReady && !props.measurementOpen && !props.locationOpen && !props.profileOpen}/>
     {mapReady && <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}
