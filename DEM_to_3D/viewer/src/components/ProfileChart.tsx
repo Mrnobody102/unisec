@@ -55,7 +55,7 @@ export function ProfileChart({ profile, vertices = [], extrema = [], smoothed = 
   if (smoothPath) smoothedSegments.push(smoothPath);
   return (
     <section className="profile-card" aria-label={t('Mặt cắt địa hình', 'Terrain section')}>
-      {!compact && <div className="profile-heading"><div><span className="eyebrow">Profile</span><h2>Surface elevation</h2></div><span className="profile-axis-label">distance (m) · elevation (m)</span></div>}
+      {!compact && <div className="profile-heading"><div><span className="eyebrow">Profile</span><h2>Surface elevation</h2></div><span className="profile-axis-label">distance (m), elevation (m)</span></div>}
       <svg className="profile-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Biểu đồ độ cao', 'Elevation chart')} onMouseLeave={() => onHoverDistance?.(null)}>
         <line x1="0" y1={height - 12} x2={width} y2={height - 12} className="chart-axis" />
         <path d={path} className="profile-line" fill="none" />

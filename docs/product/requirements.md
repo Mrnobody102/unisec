@@ -13,7 +13,7 @@ DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh g
 | Địa bàn | Nơi nào cần chú ý trước, vì sao? | Lý do ưu tiên, dân số tham chiếu và khả năng tiếp cận |
 | Tuyến trong chi tiết địa bàn | Đường chính và đường vòng khác nhau thế nào? | Tình trạng từng đoạn, điểm cần xác minh và nguồn khi cần |
 
-Định hướng theo [proposal, trang 1–3](../../references/SIC2026/VinSpace_SIC2026_proposal.pdf). QTT là đối tác/nhà tài trợ tiềm năng; vai trò cụ thể nằm trong [kế hoạch sau SIC](../plans/pilot.md).
+Định hướng theo [proposal, trang 1–3](../../../references/SIC2026/VinSpace_SIC2026_proposal.pdf). QTT là đối tác/nhà tài trợ tiềm năng; vai trò cụ thể nằm trong [kế hoạch sau SIC](../../../vsp-eo-platform/docs/plans/dear-pilot.md).
 
 ## Chức năng cần bàn giao
 
@@ -27,18 +27,18 @@ DEAR hỗ trợ cán bộ ứng phó và chính quyền địa phương đánh g
 | P06 | So hai tuyến | Xem cùng điểm đầu/cuối; so chiều dài, ETA, tình trạng đường và biểu đồ độ cao |
 | P07 | Xuất bản tóm tắt | Xem trước và lưu PNG cùng dữ liệu JSON khớp bản đồ, tuyến chọn, bằng chứng, nguồn/ngày và điểm chưa xác minh |
 
-Phạm vi theo [S02](../../references/SIC2026/DEAR_SIC2026.docx) và [S03](../../references/SIC2026/DEAR_SIC2026_WebApp.pdf). Cách kiểm tra từng chức năng: [A01–A10](../quality/acceptance.md). Bố cục màn hình: [thiết kế giao diện](interface.md).
+Phạm vi theo [S02](../../../references/SIC2026/DEAR_SIC2026.docx) và [S03](../../../references/SIC2026/DEAR_SIC2026_WebApp.pdf). Cách kiểm tra từng chức năng: [A01–A10](../quality/acceptance.md). Bố cục màn hình: [thiết kế giao diện](interface.md).
 
 **Bản chạy 05/10:** có bản đồ 2D/3D, tuyến/ưu tiên theo quy tắc, ETA có điều kiện, bản ghi nguồn, cập nhật tin và xem dữ liệu cũ. Có xem trước và xuất PNG, JSON, GeoJSON, in/lưu PDF. Công cụ so GeoTIFF đã có, chưa có cặp ảnh thiên tai được duyệt. API hiện chỉ đọc snapshot, chưa phải backend vận hành.
 
 ## Chức năng nhập và phân tích
 
-Phạm vi mở rộng để nghiên cứu, chưa triển khai trong đợt demo hiện tại. Các chức năng xem đã có không thay cho tiếp nhận, lưu và công bố dữ liệu.
+Nhập KML/GeoJSON/WKT và AOI/footprint đã có trong [công cụ dữ liệu GIS](geodata-workspace.md), chạy tại trình duyệt. Tiếp nhận, lưu và công bố dữ liệu dùng chung vẫn là phần cần xây.
 
 | Chức năng | Hiện tại | Phần cần xây |
 |---|---|---|
 | Vẽ đo trên bản đồ | Hình đo tạm trong phiên | Giữ là công cụ đo, không tự đưa vào lớp nghiệp vụ |
-| Chọn/vẽ vùng phân tích | AOI cố định trong gói | Tạo AOI bản nháp, kiểm nguồn phủ vùng, gửi yêu cầu và mở kết quả |
+| Chọn/vẽ vùng phân tích | AOI bản nháp, nhập polygon và tính độ phủ footprint. AOI ứng phó vẫn theo gói | Catalog ảnh theo AOI, yêu cầu phân tích và kết quả có phiên bản |
 | Nhập tin tại vị trí/đoạn đường | Tin cố định trong kịch bản | Form hiện trường, lưu server, kiểm tra và công bố |
 | Nhập lớp của admin/chuyên viên | Chuẩn bị file trong repo | Quản lý dữ liệu theo sự kiện, upload/metadata, xem trước và lỗi kiểm tra |
 | Nạp địa hình / cặp ảnh | Nạp để xem trong phiên | Nhập vào kho dữ liệu có phiên bản khi cần dùng chung hoặc phân tích |
@@ -46,7 +46,7 @@ Phạm vi mở rộng để nghiên cứu, chưa triển khai trong đợt demo 
 | Nhập kết quả AI/viễn thám | Chưa có pipeline | Nhập sản phẩm có nguồn/phương pháp, kiểm tra rồi đưa vào đánh giá |
 | Duyệt và lịch sử | Hai mốc mô phỏng | Bản nháp, người duyệt, revision bất biến, lịch sử và nhiều người dùng |
 
-Luồng và dữ liệu dự kiến: [tiếp nhận và công bố dữ liệu](../architecture/data-ingestion.md). Thứ tự triển khai và lựa chọn công nghệ: [kế hoạch backend](../plans/backend.md).
+Luồng và dữ liệu dự kiến: [tiếp nhận và công bố dữ liệu](../../../vsp-eo-platform/docs/architecture/response-publication.md). Thứ tự triển khai và lựa chọn công nghệ: [kế hoạch backend](../../../vsp-eo-platform/docs/plans/roadmap.md#backend-và-worker).
 
 ## Phạm vi SIC
 

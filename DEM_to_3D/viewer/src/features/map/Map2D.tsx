@@ -6,7 +6,7 @@ import { createScreenMarkers } from '../../terrain/screenMarkers';
 import { addRoadLayers } from './addRoadLayers';
 import { mapLayerOrder, mapPane, type MapPane } from './mapLayerOrder';
 import type { TerrainData } from '../../types/terrain';
-import type { TerrainViewerProps } from '../../components/TerrainViewer';
+import type { MapDisplayProps } from './mapContracts';
 import { createRaster2d, type Raster2D } from './raster2d';
 import { MapOverview } from './MapOverview';
 import { MapMeasurement } from '../measurement/MapMeasurement';
@@ -15,7 +15,7 @@ import type { MeasureAction, MeasurementSession } from '../measurement/measureme
 import { showRoad, defaultLayerAppearance } from './layerAppearance';
 import { readMapLocation, type MapLocation } from './mapLocation';
 
-type Props = Pick<TerrainViewerProps, 'locale' | 'scenarioProps' | 'onSelectOverlayHit' | 'viewControlRef' | 'onBasemapState' | 'focusPoint' | 'profileMetadata'> & {
+type Props = MapDisplayProps & {
   terrain: TerrainData | null; imageUrl?: string; viewportRef: React.MutableRefObject<{ center: [number, number]; zoom: number } | null>;
   profileOpen: boolean;
   profilePoints?: Array<{ x: number; y: number }>;
@@ -172,8 +172,9 @@ export function Map2D(props: Props): JSX.Element {
     };
     const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); schedule(); }); resize.observe(host);
     const ui = new MutationObserver(schedule);
-    if (host.parentElement) ui.observe(host.parentElement, { childList: true, subtree: true });
-    const area = host.closest('.map-area'); area?.addEventListener('dear:map-layout', schedule);
+    const area = host.closest('.map-area');
+    if (area) ui.observe(area, { childList: true, subtree: true });
+    area?.addEventListener('dear:map-layout', schedule);
     map.on('move zoom resize viewreset', schedule);
     return () => {
       disposed = true; rasterAbort?.abort(); cancelAnimationFrame(frame); resize.disconnect(); ui.disconnect(); markers?.dispose();

@@ -19,6 +19,7 @@ export type IncidentSource = {
 
 export type IncidentModel = {
   id: string;
+  title?: [vi: string, en: string];
   mode: string;
   schemaVersion: string;
   triggeredAt: string;
@@ -141,8 +142,10 @@ export type ActiveDialog =
   | 'timeline'
   | 'data'
   | 'layers'
+  | 'geodata'
   | 'alerts'
   | 'notificationCenter'
+  | 'responseWork'
   | 'comparison'
   | 'evidence'
   | 'exportDecision';

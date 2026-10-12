@@ -3,6 +3,7 @@ import type { Locale } from '../../types/dear';
 import type { TerrainData } from '../../types/terrain';
 import { createRaster2d } from '../map/raster2d';
 import { roadColors } from '../../terrain/roadStyle';
+import { roadStatusLabels } from '../routes/roadStatus';
 import { mapSymbolPaths, type MapSymbolName } from '../../terrain/mapSymbols';
 import { localClock } from '../incident/sourceTime';
 import type { DecisionSnapshot } from './decisionSnapshot';
@@ -49,7 +50,7 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   text('DEAR', 24, 48, 26, '#166553', true);
   text(t('Đánh giá tiếp cận', 'Access assessment') + ': ' + snapshot.community.name, 146, 48, 26, '#223238', true);
   const date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(snapshot.asOf));
-  text(`${snapshot.incidentId}   ${t('Dữ liệu đến', 'Data as of')} ${localClock(snapshot.asOf)} ${date} UTC+7`, 24, 83, 16, '#617177');
+  text(`${snapshot.incidentId}   ${t('Tổng hợp lúc', 'Data as of')} ${localClock(snapshot.asOf)} ${date} UTC+7`, 24, 83, 16, '#617177');
   ctx.fillStyle = '#e7eeef'; ctx.fillRect(frame.x, frame.y, frame.w, frame.h);
   ctx.save(); ctx.beginPath(); ctx.rect(frame.x, frame.y, frame.w, frame.h); ctx.clip();
   const [sw, ne] = raster.bounds;
@@ -113,10 +114,10 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   const constraints = snapshot.route?.segs.filter(s => s.status !== 'open') ?? [];
   for (const road of constraints.slice(0, 3)) {
     y = wrap(t(...road.name), sx, y, width, 15);
-    y = wrap(road.status === 'blocked' ? t('Bị chặn', 'Blocked') : t('Chưa rõ khả năng đi qua', 'Passability unknown'), sx, y, width, 14, road.status === 'blocked' ? '#b91c1c' : '#92400e'); y += 12;
+    y = wrap(road.status === 'blocked' ? t('Bị chặn', 'Blocked') : t('Chưa xác minh khả năng đi qua', 'Passability unknown'), sx, y, width, 14, road.status === 'blocked' ? '#b91c1c' : '#92400e'); y += 12;
   }
   if (constraints.length > 3) text(`${constraints.length - 3} ${t('đoạn khác: xem dữ liệu JSON', 'more sections: see JSON')}`, sx, y, 14, '#617177');
-  const legend = [[roadColors.blocked, t('Đường bị chặn', 'Blocked road')], [roadColors.uncertain, t('Đường cần xác minh', 'Road to verify')], [roadColors.selected, t('Tuyến đang xem', 'Selected route')], [roadColors.networkImagery, t('Chưa ghi nhận chặn', 'No blockage reported')]];
+  const legend = [[roadColors.blocked, t('Đường bị chặn', 'Blocked road')], [roadColors.uncertain, t('Đường cần xác minh', 'Road to verify')], [roadColors.selected, t('Tuyến đang xem', 'Selected route')], [roadColors.networkImagery, t(...roadStatusLabels.open)]];
   legend.forEach(([color, label], i) => { const x = 32 + i % 2 * 550, y = 830 + Math.floor(i / 2) * 32; ctx.strokeStyle = '#243f45'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x + 28, y - 5); ctx.stroke(); ctx.strokeStyle = color; ctx.lineWidth = 3; if (i === 1) ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]); text(label, x + 40, y, 14); });
   const symbolLegend: Array<[MapSymbolName, string, string]> = [
     ['community', t('Thôn, bản', 'Community'), '#237ba9'], ['community', t('Ưu tiên cao', 'High priority'), '#a6630b'],

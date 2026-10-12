@@ -1,117 +1,49 @@
-# Rà soát giao diện và luồng ứng phó
+# Kiểm tra workspace
 
-Cập nhật: 2026-10-05. Phạm vi: web React, gói Chế Tạo v0.2 và API snapshot cục bộ. Chưa thử với người trực thực tế.
+Mốc đối chiếu: 11/10/2026; GIS/catalog prepared và dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
 
-## Sửa sau phản hồi sử dụng
+## Phạm vi đã kiểm
 
-| Vấn đề | Thay đổi |
+| Nhóm | Phạm vi |
 |---|---|
-| Mô tả dính nút, diện tích xuống dòng | Khoảng cách tối thiểu 12 px, diện tích/đơn vị cùng dòng. Metadata bãi đáp dùng hàng nhãn/giá trị |
-| Panel vùng đánh giá dài và chung chung | Giữ diện tích, số thôn/bản, mở danh sách. Nguồn ranh giới thu gọn |
-| Lẫn tiếp cận chung với tuyến đang chọn | Chung một cách tổng hợp tại sự kiện, danh sách và chi tiết. Tuyến chọn có trạng thái riêng |
-| Mô tả cũ sau tin mới | Danh sách địa bàn dùng trạng thái tuyến của snapshot đang xem |
-| Không rõ căn cứ ưu tiên | Tab Căn cứ ghi lý do cụ thể, tiếp cận và đường dẫn phương pháp/nguồn |
-| Mất tên địa bàn ưu tiên khi gom điểm | Giữ tên/ký hiệu địa bàn và dấu nhóm. Không gọi điểm gần nhau là cùng vị trí |
-| Số tổng đường không khớp danh sách do giữ từ khóa cũ | Chọn số tổng sẽ xóa tìm kiếm và mở đúng nhóm đường. Không đánh dấu bộ lọc đường khi đang xem điểm ảnh hưởng |
-| Tìm không dấu không nhất quán | Tìm đường/địa bàn trong panel và bản đồ dùng cùng phép chuẩn hóa |
-| Enter chọn kết quả sau khi đã đóng tìm kiếm | Chỉ chọn khi danh sách mở. Phím xuống mở lại ở kết quả đầu tiên, phím lên ở kết quả cuối |
-| Thiếu tuyến được nhắc lại ở nhiều khối | Tiếp cận giữ một kết luận, việc cần bổ sung và nút mở thông tin địa bàn. Không tạo tab Tuyến trống |
-| Khó biết cần kiểm tra đoạn nào | Tiếp cận chỉ liệt kê đoạn cản trở trên tuyến đang xem. So tuyến và toàn bộ các đoạn mở khi cần |
-| Dữ kiện và nguồn dính thành nhiều câu | Ghi nhận có chủ đề, nguồn và thời gian riêng. Tách thiếu dữ liệu khỏi báo cáo. Bỏ liên hệ cầu với địa bàn chưa xác định tuyến |
-| Cảnh báo và bước xử lý còn chung chung | Hướng dẫn theo tuyến chọn, nêu cầu/điểm vượt khe. Tuyến bị chặn không được gọi là gợi ý, không có ETA. Nút xử lý đặt trước phần hỗ trợ |
-| Lý do không khớp tuyến bị chặn khi thiếu báo cáo ảnh hưởng | Đọc trạng thái tuyến độc lập với bản ghi hazard. Giữ mất liên lạc trong căn cứ ưu tiên khi đường còn chưa rõ |
-| CI đọc ảnh trước khi tải xong | Chờ ảnh giải mã thành công có timeout. Kiểm tra với request ảnh bị giữ lại, rồi cho tải tiếp. Chờ HTTP sẵn sàng trước khi chạy browser |
-| Ký hiệu còn nhận tương tác khi vừa bật đo/tọa độ | Khóa trước khi vẽ khung hình và trước khi gắn lớp mới vào DOM. Kiểm tra đổi chế độ, tạo lại lớp và mở khóa khi đóng công cụ |
-| Panel nhảy khi mở tùy chọn hoặc có kết quả | Giữ header tại vị trí đã chọn, cuộn nội dung bên trong. Kiểm tra sát đáy: không dịch vị trí khi đổi nội dung |
-| Vẽ và kết thúc đo thiếu rõ ràng | Tách vẽ/xem/chỉnh sửa. Nhấp đúp điểm cuối, Enter hoặc nút Kết thúc. Đóng tạm dừng bản vẽ; Hủy chỉnh sửa khôi phục kết quả cũ |
-| Mục mở rộng và hàng lớp bị lệch | Chevron nét mảnh ở cuối hàng. Căn giữa checkbox, tên lớp và nút nguồn |
-| Không chọn được kiểu đo khi chỉnh sửa | Bỏ khóa bộ chọn. Đổi kiểu giữ kết quả hợp lệ trước khi bắt đầu phép đo mới. Kiểm tra bằng click thật và bàn phím |
-| Hàng địa bàn sát nền hover/chọn | Khoảng đệm 12/16 px, giữ nguyên vị trí chữ khi chọn. Tên và trạng thái xuống hàng khi thiếu chiều rộng |
-| Bề mặt và điều khiển chưa đồng bộ | Nền đặc, viền mảnh, giảm bóng/bo góc. Giữ màu tương tác xanh lá, tách khỏi màu tình trạng bản đồ |
-| Đổi công cụ khi đang sửa hình đo | Đóng công cụ trả về hình đã áp dụng. Bản vẽ chưa kết thúc vẫn còn khi mở lại. Nút 3D dùng được và tự đóng đo trên 2D |
-| Gỡ mô hình để bản đồ trống hoặc còn ảnh cũ | Khôi phục địa hình Chế Tạo; dọn raster và điểm của mô hình vừa gỡ. Danh sách tệp chỉ ghi mô hình do người dùng nạp |
-| Thiếu định hướng khi xem gần | Tổng quan 2D thu gọn được, đồng bộ khung nhìn, click và bàn phím. Không tải thêm tile |
-| Ảnh nền tối và bậc màu khi đổi hệ tọa độ | Giảm bóng trên ảnh, lấy mẫu màu song tuyến tính, giữ nodata. Texture 3D dùng anisotropic filtering theo GPU |
+| Nghiệp vụ | Sự kiện → địa bàn → tuyến/căn cứ → áp dụng tin → bản xuất; cùng snapshot giữa map, panel và file |
+| Công cụ | Đo, tọa độ, mặt cắt, lớp/nguồn, tổng quan, so ảnh; nhập/xuất GIS, vẽ/chỉnh AOI theo bản nháp, bắt đỉnh/hoàn tác; catalog prepared, metadata, bộ chọn và độ phủ |
+| Giao diện | Sáng/tối, Việt/Anh, các bộ chữ, desktop/mobile, bàn phím, giữ lựa chọn và vị trí panel |
+| Khi lỗi | Thiếu dữ liệu, API/file/GPU lỗi, khôi phục 2D, gói offline giải nén sạch |
+| Phát hành | Cài sạch, unit/Python/browser tests, audit, build và đóng gói đạt trên Linux/Node 22 |
 
-Ảnh tham chiếu giữ ba màn: tiếp cận, mặt cắt và công cụ đo. Ảnh kiểm thử phát sinh nằm trong thư mục review đã ignore. Bộ kiểm tra CI gồm panel trên 1366, 1024, 390, 320 px, các địa bàn thiếu tuyến và tiếng Anh.
+Lệnh và môi trường kiểm tra lấy từ [workflow](../../.github/workflows/dear-web.yml), không chép số lượng test hoặc phiên bản dependency vào tài liệu. Kết quả GitHub nằm ở [Actions](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml); chạy cục bộ không thay xác nhận trên GitHub.
 
-## Kết quả nghiệp vụ
+## Đối chiếu viễn thám và proposal
 
-| Người dùng cần biết | Đã có | Cần bổ sung |
-|---|---|---|
-| Sự kiện và phạm vi đánh giá | Trigger, snapshot, AOI và số địa bàn trong vùng | AOI và nguồn sự kiện được duyệt |
-| Địa bàn cần ưu tiên | Quy tắc từ ảnh hưởng, liên lạc, nhu cầu khẩn cấp. Có lý do và việc cần xử lý | Duyệt chính sách, Community Isolation Score |
-| Đường cản trở tiếp cận | Trạng thái đoạn, bản ghi nguồn, giờ quan sát và nhận tin | Bằng chứng gốc, kiểm tra hiện trường |
-| Phương án tiếp cận | Dijkstra trên mạng đường, khoảng cách, ETA có điều kiện | Mạng đường đủ vùng, tốc độ và phương tiện được kiểm chứng |
-| Tin mới thay đổi gì | Đọc không đổi dữ liệu. Áp dụng tin tạo lại đường, tuyến và ưu tiên. Có lịch sử tin và xem bản dữ liệu cũ | Feed, duyệt công bố, lưu lịch sử trên server |
-| Địa hình dọc tuyến | Mặt cắt theo hình tuyến, vị trí nối bản đồ, độ dốc DEM, khoảng thiếu | Nguồn DEM, vertical datum, kiểm chứng độ cao |
-| Ký hiệu theo proposal | Địa bàn, đường, điểm ảnh hưởng, tập kết, H đề xuất | Polygon sạt lở/ngập, xác nhận đi được hoặc cô lập |
-| Chia sẻ nhận định | Xem trước, PNG, in/lưu PDF, JSON và GeoJSON cùng snapshot | GeoPackage theo proposal, duyệt dữ liệu/nguồn, thử trên máy trình chiếu |
-| So ảnh trước/sau | Đọc GeoTIFF hiển thị, kiểm ngày/nguồn/CRS/vùng chung, so bằng thanh trượt | Cặp ảnh RS duyệt, mask mây và chất lượng phân tích |
+Đọc lại S01 (proposal, tr. 1–5), S02 (phạm vi phần mềm) và S03 (WebApp direction, tr. 1–12) tại [nguồn gốc](../sources.md#tài-liệu-gốc). Chuỗi nghiệp vụ được đối chiếu tại [walkthrough](../operations/walkthrough.md#đối-chiếu-proposal); không đưa toàn bộ mục tiêu nghiên cứu của S01 vào phạm vi demo SIC.
 
-Ưu tiên cứu hộ không đồng nghĩa cô lập. Chưa ghi nhận chặn không đồng nghĩa đã xác nhận đi được. H là vị trí mô phỏng chưa khảo sát. Quy tắc và giả định ở [phân tích ứng phó](../architecture/response-analysis.md).
-
-[Đánh giá GIS và viễn thám](gis-review.md) nêu ưu tiên cải thiện, căn cứ UI và các skill đã khảo sát.
-
-## Thiết kế hiện hành
-
-| Thành phần | Cách tổ chức |
+| Phần | Kết luận |
 |---|---|
-| Panel | Bên trái, rộng 320–560 px. Nút đầu thanh tìm kiếm thu gọn và giữ lựa chọn. Khung lớp/đo/tọa độ kéo bằng tiêu đề, nhấp đúp hoặc Home để đặt lại |
-| Địa bàn | Hai phần Tiếp cận và Căn cứ. Màn chính giữ trạng thái chung, tuyến đang xem, thời gian có điều kiện và đoạn cần kiểm tra |
-| Đoạn đường | Tình trạng, chiều dài, quan sát, việc cần kiểm tra và địa bàn liên quan. Bỏ phần tham chiếu chỉ có mã |
-| Nguồn | Nhận định, nguồn, giờ quan sát/nhận tin, ảnh hưởng và giới hạn. Đoạn liên quan mở được từ bản ghi |
-| Bản đồ | 2D mặc định, 3D tải khi cần. Nhóm cùng loại mới có số đếm trên 2D. Nhóm khác loại/3D mở chọn đối tượng. Nhãn tránh chồng, chú giải tách lớp. 2D chỉ Bắc thật, 3D chỉ Bắc lưới |
-| Tổng quan | Dùng lại raster, khung nhìn thật của 2D. Thu gọn mặc định, không tạo thêm thông tin nghiệp vụ. Chưa có footprint camera 3D |
-| Công cụ đo | 6 kiểu đo ngang UTM trên 2D. Xem trước, bắt điểm, kết thúc, chỉnh sửa có áp dụng/hủy, hoàn tác/làm lại và giữ hình trong phiên. Tùy chọn và danh sách kết quả thay nội dung trong bảng |
-| Tọa độ | Nút tâm ngắm mở bảng vị trí trên 2D/3D. Có WGS84, hệ tọa độ mô hình, độ cao và sao chép. Không hiển thị độ cao ngoài DEM trên 2D |
-| Attribution | Nút thông tin mở nguồn và giấy phép. Giữ dòng credit tối thiểu khi dùng nền ngoài |
-| Nguồn lớp | Nút thông tin cạnh từng lớp, mở một lớp mỗi lần. Tách ngày thu nhận, quan sát và tổng hợp. Metadata thiếu được ghi rõ |
-| Tìm kiếm | Tên/mã hoặc tiếng Việt không dấu, chọn kết quả bằng bàn phím, mở chi tiết và đưa vào vùng nhìn |
-| Chọn đường | Vùng bấm rộng hơn nét vẽ, viền sáng giữ màu tình trạng. Mặt cắt mở trực tiếp theo đoạn đường được chọn |
-| Bản xuất | Snapshot được sao chép khi mở xem trước. PNG không phụ thuộc GPU hoặc Internet |
+| Điểm nhập | Hiển thị vị trí tham chiếu là phù hợp; chưa có căn cứ để gọi là sạt lở, đường bị chặn hay điểm đã khảo sát. Đã sửa polygon style ghi đè CircleMarker gây vòng rỗng, thêm chú giải và nhãn trục tọa độ |
+| KML | Đã sửa mất mô tả/thuộc tính khi xuất và mất altitudeMode khi nhập. Giữ mode riêng từng hình học, kể cả MultiGeometry có nhiều mode. Map là 2D; giới hạn Style/Folder và điểm chồng ở [GIS](../product/geodata-workspace.md#giới-hạn) |
+| AOI/cảnh ảnh | Hợp footprint trước khi tính giao, không đếm trùng. Ghi rõ độ phủ hình học; footprint, mây toàn cảnh và ảnh nền cũ không chứng minh chất lượng ảnh trong AOI hoặc hiện trạng thiên tai |
+| Ứng phó | Giữ địa bàn–tuyến–đoạn–căn cứ trong cùng snapshot; tin mới chỉ áp dụng khi người dùng chọn. Không suy đường đi được từ trạng thái chưa có báo cáo hoặc từ KML giao với đường |
+| Phân tích tự động | Chưa có chuỗi SAR trước/sau → QA → phát hiện → duyệt sản phẩm; chưa có GPM/DMC, CIS hoặc GeoPackage. Không tuyên bố đạt xử lý 3–6 giờ |
+| Kiểm chứng | Unit/build và E2E GIS, AOI/catalog, ứng phó, công việc đạt cục bộ trên Windows/Node 22. Kiểm tra trực tiếp SVG và vòng KML có thuộc tính/Z/mode. Chưa có tệp 081026.kml gốc để đối chiếu từng điểm với nguồn |
 
-![Tiếp cận Nậm Khắt](assets/workspace-summary.png)
+Ưu tiên cho SIC là duyệt bộ dữ liệu, bằng chứng và hai tuyến theo [G3](../tasks/sic-2026.md), rồi tập toàn luồng trên máy trình chiếu. Những phần xử lý EO và quản lý sản phẩm tiếp tục ở platform. Khi hiệu chỉnh proposal, giữ riêng pixel spacing và độ phân giải SAR; mốc 3–6 giờ phải tách chờ thu nhận/cấp ảnh, xử lý, kiểm tra và công bố theo [đối chiếu nguồn kỹ thuật](../sources.md#đối-chiếu-nguồn-kỹ-thuật).
 
-![Mặt cắt địa hình](assets/workspace-profile.png)
+## Giới hạn còn lại
 
-[Xem bản xuất PNG](assets/decision-map.png). Ảnh có cùng tuyến, thời điểm và nhận định với bản xem trước trong ứng dụng.
-
-[Công cụ đo bản đồ](assets/workspace-measurement.png). Hình đo tạm giữ lớp tình huống để người trực đối chiếu.
-
-Ảnh từ bản build khi chặn Internet. Khoảng trống ngoài ảnh địa hình là vùng thiếu nền cục bộ, không phải vùng đã xác nhận không có thiên tai.
-
-## Kiểm tra kỹ thuật
-
-| Kiểm tra | Kết quả |
+| Nội dung | Chưa xác nhận |
 |---|---|
-| TypeScript và build | Đạt. JavaScript đầu vào khoảng 809 KB, 254 KB gzip. Chunk app khoảng 383 KB, React/Leaflet/validation riêng. 2D không tải Three.js/GLB, 3D còn chunk lớn hơn 500 KB |
-| TypeScript unit tests | 168 kiểm thử đạt, gồm nguồn/thời gian ghi nhận, snapshot cập nhật, chỉ dẫn theo tuyến chọn, tương thích gói cũ, tuyến/ưu tiên, đo, tọa độ, so ảnh, GeoJSON, timeout/hủy tải và manifest |
-| Python | 8 kiểm thử dữ liệu, 3 API, 2 đóng gói và 3 kiểm tra chờ HTTP sẵn sàng đạt |
-| Chrome: prepared và API | Sự kiện, AOI, địa bàn, tuyến, nguồn, đọc/áp dụng tin và mặt cắt đạt |
-| Chrome: lỗi dữ liệu và GPU | Chặn Internet, lỗi GLB, không có WebGL, mất context 3D: 2D tiếp tục dùng được. API lỗi không hiện dữ liệu mô phỏng thay thế |
-| Chrome: thao tác và bố cục | Kéo/đổi độ rộng bằng bàn phím, khôi phục độ rộng, nhóm điểm, nhãn. Tổng quan theo pan/zoom, click, bàn phím và mở/đóng không tạo bản đồ trùng. Khoảng đệm hàng địa bàn đạt, hover không dịch chữ. Desktop 1440/1366/1024 px và mobile 390/320 px không tràn ngang |
-| Chrome: đường và mặt cắt | Bấm lệch tâm nét đường 6 px vẫn chọn được. Nút mở mặt cắt trực tiếp, tên đúng đoạn đường. Kiểm thứ tự nền/đường/tuyến/cảnh báo, ảnh xem trước và thao tác đo/lấy tọa độ |
-| Chrome: tìm kiếm và bản xuất | Tìm không dấu và mã đường, xem trước, tải PNG/JSON, thời điểm và tuyến khớp trước/sau tin mới |
-| Chrome: công cụ và biến thể | 6 kiểu đo, xem trước, kéo đỉnh, hoàn tác/làm lại, đơn vị, sao chép, giữ/ẩn/xóa hình, đo trực tiếp tuyến/AOI, thu gọn và 12 vòng đóng/mở. Đổi tối/Anh/font và qua 3D về 2D giữ phép đo. Mobile 390/320 px không tràn hoặc đè hướng Bắc |
-| Chrome: công cụ phụ | Thông báo, xem dữ liệu cũ/về bản mới, độ rõ/lọc/nhãn, so GeoTIFF có tọa độ, mở lại cặp ảnh, GeoJSON, bản in và đặt lại phiên |
-| Chrome: static delivery | Luồng chính và công cụ phụ đạt qua server tĩnh, không cần API. Lỗi CRS khi so ảnh cho phép chọn lại và thử tiếp |
-| Chrome: nguồn lớp | Đạt: nguồn/ngày theo bản dữ liệu cũ/mới, ngày ảnh chưa có, giới hạn H, nguồn riêng cho Imagery/Terrain Light, bàn phím và chiều rộng 320–1366 px |
-| Vòng đời 3D | Sửa gỡ listener trước khi React tháo canvas. Giải phóng tài nguyên GPU của renderer cũ, giữ dữ liệu để mở lại. 25 vòng thử nhanh không tăng DOM/listener |
-| Phiên 30 phút | Đạt: 58 vòng chọn địa bàn/tuyến, mặt cắt, 3D/2D, áp dụng tin và đặt lại. 20 PNG, không lỗi JavaScript. Sau vòng 10: DOM/listener không tăng, JS heap tăng 0,70 MB |
-| Lặp phiên trên build cuối | Linux: 4 vòng trong 38,3 giây, DOM/listener giữ nguyên, JS heap tăng 0,53 MB từ vòng đầu. Thử dài 30 phút ở hàng trên là kết quả của build trước |
-| CI Linux | Toàn bộ workflow đạt trên Ubuntu 24.04, Node 22.23.2, Python 3.12.3, Playwright 1.63.0: cài sạch, unit/dữ liệu/audit/build/gói và sáu bộ kiểm tra trình duyệt |
-| GitHub Actions | Đã sửa ảnh xem trước tải chậm và khoảng trễ khóa ký hiệu. Browser kiểm tra trạng thái ngay khi đổi chế độ/tạo lớp, trước khung hình tiếp theo. [Theo dõi workflow](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml) |
-| Source dùng khi deploy | Import kiểm đúng chữ hoa/thường. Thư mục sạch với file được Git theo dõi chuẩn bị đủ dữ liệu, kiểm checksum đạt |
-| Dependency audit | Vite 7.3.6, plugin React 5.2.0, Vitest 4.1.11. `npm audit`: 0 cảnh báo, gồm cả công cụ phát triển |
-| Chrome: gói offline | Kiểm checksum, giải nén vào thư mục mới, khởi động prepared, không gọi Internet, áp dụng tin, xuất PNG, 3D/2D và đặt lại |
+| Dữ liệu và phương pháp | Nguồn/quyền dùng ảnh và DEM, bằng chứng gốc, tuyến và chính sách được duyệt |
+| Phạm vi GIS | Fixture thứ hai dùng lại địa hình Chế Tạo; chưa kiểm khu vực thực hoặc nhiều CRS |
+| Vận hành | Feed, xử lý SAR/AI, công bố dùng chung và backend mới ở mức kế hoạch |
+| Bàn giao | URL Vercel, tốc độ/GPU, bản in PDF và thao tác trên máy trình chiếu |
 
-CI chạy `check_workspace.py`, `check_measurement_tools.py`, `check_map_workspace.py`, `check_layer_sources.py`, `check_panel_usability.py` và `check_session.py`. Bộ công cụ phụ/ảnh/offline có script riêng trong `scripts/`. Cài Playwright từ `scripts/requirements-browser.txt`, dùng Chromium hoặc `--chrome` trỏ đến Chrome đã cài.
+Việc còn làm ở [công việc SIC](../tasks/sic-2026.md), điều kiện bàn giao ở [nghiệm thu](acceptance.md). Thiết kế và cách sử dụng ở [giao diện](../product/interface.md), [design system](../product/design-system.md), [công cụ GIS](../product/geodata-workspace.md).
 
-Bước in PDF trong kiểm tra Chrome tự động có một lần timeout. Hai lần chạy lại đạt, chưa xác định nguyên nhân. Cần kiểm tra bản in trên máy trình chiếu.
+## Tham chiếu
 
-Đã kiểm tra trên Windows và Linux. Cấu hình và [hướng dẫn Vercel](../operations/vercel.md) đã có. Chưa xác nhận bản deploy Vercel.
+[Tiếp cận](assets/workspace-summary.png), [mặt cắt](assets/workspace-profile.png), [đo](assets/workspace-measurement.png) và [PNG xuất](assets/decision-map.png) là ảnh của bản trước, không phải bộ ảnh cần cập nhật sau mỗi lần sửa UI.
 
-[Log phiên 30 phút](assets/session-30min.json): Chrome 154 headless, 1366×768, localhost và chặn Internet. Mở 2D đến khi ảnh hiện: 0,67 giây. Mở canvas/marker 3D lần đầu: 0,44 giây. Xuất PNG: 0,49–1,41 giây. Hash bản build nằm trong log; sửa nội dung nguồn nền sau phiên đã được kiểm tra riêng trên build cuối. Chưa đo FPS/GPU hoặc tốc độ trên máy trình chiếu.
+[Log phiên 30 phút](assets/session-30min.json) giữ browser, hash build, lỗi và số liệu của lần đo đó. Cách chạy lại ở [nghiệm thu](acceptance.md).
 
-Đã đối chiếu bốn giai đoạn tại proposal trang 2–3. Luồng web đạt trên dữ liệu mô phỏng; còn GPM/DMC, xử lý SAR/AI, Community Isolation Score, điểm số rủi ro/ưu tiên và GeoPackage. Chưa nghiệm thu dữ liệu, đo mục tiêu 3–6 giờ hoặc thử trên máy trình chiếu. Backend hiện chỉ có kế hoạch. PDF dùng bản in của trình duyệt. Xem [luồng demo sáu phút](../operations/walkthrough.md), [công việc SIC](../tasks/sic-2026.md), [gói offline](../operations/offline.md).
+Chỉ cập nhật mốc kiểm tra khi chốt bản demo/phát hành hoặc có thay đổi đáng kể về phạm vi kiểm chứng. Lịch sử sửa lỗi và log từng lần chạy nằm trong Git/CI.

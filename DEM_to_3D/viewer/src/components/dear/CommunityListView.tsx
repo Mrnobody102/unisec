@@ -47,7 +47,7 @@ export const CommunityListView: React.FC<Props> = ({
   return (
     <>
       <div className="sidebar-top">
-        <h1>{t('Địa bàn cần chú ý', 'Communities to review')}</h1>
+        <h1>{t('Địa bàn', 'Communities')}</h1>
 
         <div className="search-box">
           <UiIcon name="search" size={18}/>
@@ -94,7 +94,7 @@ export const CommunityListView: React.FC<Props> = ({
 
         {filtered.length === 0 ? (
           <p className="small" style={{ padding: '20px 0', color: 'var(--ws-muted)' }}>
-            {t('Không tìm thấy địa điểm phù hợp.', 'No matching communities found.')}
+            {t('Không tìm thấy địa bàn.', 'No matching communities found.')}
           </p>
         ) : (
           filtered.map((c) => (
@@ -105,7 +105,7 @@ export const CommunityListView: React.FC<Props> = ({
             >
               <span className="community-heading">
                 <strong>{c.name}</strong>
-                <StatusText tone={c.prio === 1 ? 'critical' : 'neutral'} icon={c.prio === 1 ? 'priority' : undefined}>
+                <StatusText tone={c.prio === 1 ? 'priority' : 'neutral'} icon={c.prio === 1 ? 'priority' : undefined}>
                   {c.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
                 </StatusText>
               </span>

@@ -2,6 +2,7 @@
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
+from workspace_layout_checks import check_workspace_layout
 
 
 def run(url, chrome, captures):
@@ -68,6 +69,18 @@ def run(url, chrome, captures):
         expect(page.locator('.profile-panel')).to_be_visible()
         expect(page.locator('.profile-target-name')).to_have_text(road_name)
         expect(page.locator('.profile-chart-container svg')).to_be_visible()
+        # Canvas excludes both the toolbar and profile, also at mobile heights.
+        for width in [1366, 390, 320]:
+            page.set_viewport_size({'width': width, 'height': 768 if width > 900 else 740})
+            page.wait_for_function("""() => {
+                const canvas = document.querySelector('.map-canvas').getBoundingClientRect();
+                const terrain = document.querySelector('.terrain-viewer').getBoundingClientRect();
+                const profile = document.querySelector('.profile-panel').getBoundingClientRect();
+                const controls = document.querySelector('.map-tools').getBoundingClientRect();
+                return Math.abs(canvas.bottom - profile.top) < 1 && Math.abs(terrain.bottom - canvas.bottom) < 1 && controls.bottom <= canvas.top;
+            }""")
+            if captures: page.screenshot(path=str(captures / f'workspace-profile-{width}.png'))
+        page.set_viewport_size({'width': 1366, 'height': 768})
         if captures: page.screenshot(path=str(captures / 'workspace-road-profile.png'))
         page.get_by_role('button', name='Close profile', exact=True).click()
         assert page.locator('.map-road-target').evaluate_all("nodes => nodes.every(n => Number(n.getAttribute('stroke-width')) >= 16)")
@@ -78,17 +91,25 @@ def run(url, chrome, captures):
         toolbar = page.locator('.map-toolbar')
         toggle = toolbar.get_by_role('button', name='Hide information panel', exact=True)
         expect(toggle).to_be_visible()
-        assert toggle.bounding_box()['y'] == toolbar.bounding_box()['y'] + 1
+        tools, canvas = page.locator('.map-tools').bounding_box(), page.locator('.map-canvas').bounding_box()
+        toggle_box, toolbar_box = toggle.bounding_box(), toolbar.bounding_box()
+        assert toggle_box['y'] >= toolbar_box['y'] and toggle_box['y'] + toggle_box['height'] <= toolbar_box['y'] + toolbar_box['height']
+        assert toolbar_box['y'] + toolbar_box['height'] <= canvas['y'] and tools['y'] + tools['height'] <= canvas['y']
+        expect(page.get_by_role('button', name='Switch to 2D', exact=True)).to_have_attribute('aria-pressed', 'true')
+        expect(page.get_by_role('button', name='Switch to 3D', exact=True)).to_have_attribute('aria-pressed', 'false')
         toggle.click()
         expect(page.locator('.sidebar')).to_be_hidden()
         toolbar.get_by_role('button', name='Show information panel', exact=True).click()
         expect(page.locator('.sidebar')).to_be_visible()
         legend = page.locator('.map-bottom-bar')
+        assert legend.bounding_box()['width'] <= 342, 'Compact legend should not stretch across the map'
+        assert legend.evaluate('node => node.scrollWidth <= node.clientWidth')
         legend.get_by_role('button', name='Minimize legend', exact=True).click()
         expect(legend.locator('.legend-item')).to_have_count(0)
         assert legend.bounding_box()['height'] <= 42
         legend.get_by_role('button', name='Legend', exact=True).click()
         assert legend.locator('.legend-item').count() >= 5
+        assert legend.evaluate('node => node.scrollWidth <= node.clientWidth')
 
         def drag(handle, dx, dy):
             box = handle.bounding_box()
@@ -260,11 +281,14 @@ def run(url, chrome, captures):
             assert box['x'] >= area['x'] and box['x'] + box['width'] <= area['x'] + area['width']
             assert measure.evaluate('(node) => !node.style.left && !node.style.top')
             north = page.locator('.map-north').bounding_box()
-            assert toolbar.bounding_box()['x'] + toolbar.bounding_box()['width'] <= north['x'] - 6
+            tools = page.locator('.map-tools').bounding_box()
+            assert toolbar.bounding_box()['y'] + toolbar.bounding_box()['height'] <= north['y'] - 6
+            assert tools['y'] + tools['height'] <= north['y'] - 6
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             if captures: page.screenshot(path=str(captures / f'workspace-mobile-{width}.png'))
             measure.get_by_role('button', name='Close measurement', exact=True).click()
         assert not errors, errors
+        check_workspace_layout(browser, url, captures)
         browser.close()
         print('Map workspace passed: overview bounds, mouse/keyboard navigation and lifecycle; toolbar, panels, legend, layers, 2D/3D coordinates, copy and mobile.')
 

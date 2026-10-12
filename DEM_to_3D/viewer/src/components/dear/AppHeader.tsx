@@ -8,6 +8,7 @@ import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover'
 type Props = {
   locale: Locale;
   incident: IncidentModel;
+  areaName: [vi: string, en: string];
   report: IncidentPacket['report'];
   reportRoad?: RoadSegment;
   dataAvailable: boolean;
@@ -30,6 +31,7 @@ type Props = {
 export const AppHeader: React.FC<Props> = ({
   locale,
   incident,
+  areaName,
   report,
   reportRoad,
   dataAvailable,
@@ -72,21 +74,21 @@ export const AppHeader: React.FC<Props> = ({
   return (
     <header className="app-header">
       <div className="brand">
-        <span className="brand-symbol"><UiIcon name="layers"/></span>
+        <span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M3 25 13 7l6 10 4-6 6 14H3Z" fill="currentColor" fillOpacity=".12"/><path d="m3 25 10-18 6 10 4-6 6 14M8 25l5-9 6 9M3 29h26" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg></span>
         <span className="brand-word">DEAR</span>
       </div>
 
       <div className="incident-badge-group">
         <strong>{t('Bản đồ ứng phó', 'Response map')}</strong>
         <div className="incident-meta">
-          <span>{t('Thung lũng Nậm Kha (Chế Tạo)', 'Nậm Kha Valley (Chế Tạo)')}</span>
+          <span>{t(...areaName)}</span>
         </div>
       </div>
 
       <div className="header-actions">
         <div className="header-data">
           <button className="update-label header-revision" disabled={!dataAvailable} onClick={onOpenTimeline} title={t('Xem bản đồ theo thời điểm dữ liệu', 'View map revisions')}>
-            {t('Dữ liệu đến', 'Data as of')}{' '}
+            {t('Tổng hợp lúc', 'Data as of')}{' '}
             {dataAvailable && <strong><time dateTime={snapshot}>
               {new Date(snapshot).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </time></strong>}
@@ -107,7 +109,7 @@ export const AppHeader: React.FC<Props> = ({
           <UiIcon name="bell"/>
           {!alertRead && <span className="unread-indicator" />}
         </button>
-        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} road={reportRoad} updated={reportApplied} onOpenAll={() => { setNotificationsOpen(false); onOpenNotifications(); }} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
+        {notificationsOpen && <NotificationPopover locale={locale} incident={incident} report={report} road={reportRoad} updated={reportApplied} onClose={() => setNotificationsOpen(false)} onOpenAll={() => { setNotificationsOpen(false); onOpenNotifications(); }} onOpenIncident={() => { setNotificationsOpen(false); onOpenIncident(); }} onOpenDetails={() => { notificationsRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); setNotificationsOpen(false); onOpenAlerts(); }} />}
         </div>
 
         <button
@@ -135,6 +137,10 @@ export const AppHeader: React.FC<Props> = ({
 
           {prefOpen && (
             <div className="settings-menu" aria-label={t('Tùy chọn hiển thị', 'Display options')}>
+              <div className="settings-heading">
+                <h2>{t('Cài đặt hiển thị', 'Display settings')}</h2>
+                <button className="icon-button" aria-label={t('Đóng cài đặt', 'Close settings')} onClick={() => { setPrefOpen(false); prefRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); }}><UiIcon name="close" /></button>
+              </div>
               <div className="settings-group">
                 <strong className="settings-label">
                   {t('Giao diện', 'Appearance')}
@@ -192,14 +198,17 @@ export const AppHeader: React.FC<Props> = ({
                   <button className="font-option" aria-pressed={fontChoice === 'classic'} onClick={() => onChangeFontChoice('classic')}>
                     <span className="font-sample font-sample-classic" aria-hidden="true">Aa</span>
                     <span className="font-option-copy"><strong>Inter</strong></span>
+                    {fontChoice === 'classic' && <UiIcon name="check" />}
                   </button>
                   <button className="font-option" aria-pressed={fontChoice === 'plex'} onClick={() => onChangeFontChoice('plex')}>
                     <span className="font-sample font-sample-plex" aria-hidden="true">Aa</span>
                     <span className="font-option-copy"><strong>IBM Plex Sans</strong></span>
+                    {fontChoice === 'plex' && <UiIcon name="check" />}
                   </button>
                   <button className="font-option" aria-pressed={fontChoice === 'modern'} onClick={() => onChangeFontChoice('modern')}>
                     <span className="font-sample font-sample-modern" aria-hidden="true">Aa</span>
                     <span className="font-option-copy"><strong>Space Grotesk</strong><small>Be Vietnam Pro</small></span>
+                    {fontChoice === 'modern' && <UiIcon name="check" />}
                   </button>
                 </div>
               </div>

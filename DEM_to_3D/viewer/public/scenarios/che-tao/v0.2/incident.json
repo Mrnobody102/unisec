@@ -6,6 +6,7 @@
   "crs": "EPSG:32648",
   "incident": {
     "id": "INC-2026-0412",
+    "title": ["Sạt lở, nguy cơ lũ quét", "Landslide and flash-flood risk"],
     "mode": "prepared",
     "schemaVersion": "0.1",
     "triggeredAt": "2026-09-29T03:40:00+07:00",
@@ -64,8 +65,8 @@
         ],
         "observedAt": "2026-09-29T06:12:00+07:00",
         "note": [
-          "Thu nhận ảnh vệ tinh",
-          "Satellite acquisition"
+          "Thu nhận ảnh",
+          "Image acquisition"
         ]
       },
       {
@@ -76,8 +77,8 @@
         ],
         "observedAt": "2026-09-29T07:05:00+07:00",
         "note": [
-          "Kết quả phân tích trong bộ dữ liệu",
-          "Analysis result in the dataset"
+          "Phân tích ảnh radar Sentinel-1",
+          "Sentinel-1 radar image analysis"
         ]
       },
       {
@@ -89,8 +90,8 @@
         "observedAt": "2026-09-29T08:58:00+07:00",
         "observedAtUpdated": "2026-09-29T09:40:00+07:00",
         "note": [
-          "Thời điểm quan sát hiện trường",
-          "Field observation timestamp"
+          "Ghi nhận tại điểm vượt khe",
+          "Observation at the gully crossing"
         ]
       },
       {
@@ -101,8 +102,8 @@
         ],
         "observedAt": "2026-09-29T09:31:00+07:00",
         "note": [
-          "Phương án trong bộ dữ liệu mô phỏng",
-          "Option in the simulated dataset"
+          "Tổng hợp phương án tiếp cận",
+          "Access-route calculation"
         ],
         "observedAtUpdated": "2026-09-29T09:45:00+07:00"
       }
@@ -139,8 +140,8 @@
             "Communications"
           ],
           "value": [
-            "Mất liên lạc với bản từ 04:10.",
-            "Contact with the village lost since 04:10."
+            "Mất liên lạc với bản.",
+            "Contact with the village lost."
           ],
           "source": [
             "Tin từ xã",
@@ -225,7 +226,7 @@
             "Flood extent"
           ],
           "value": [
-            "Chưa có vùng ngập được khoanh.",
+            "Chưa khoanh vùng ngập.",
             "No mapped flood extent."
           ]
         },
@@ -236,7 +237,7 @@
             "Affected households"
           ],
           "value": [
-            "Chưa có thống kê.",
+            "Chưa thống kê.",
             "No count available."
           ]
         },
@@ -308,7 +309,7 @@
       "pop": 380,
       "hh": 82,
       "desc": [
-        "Chưa đủ dữ liệu đường vào và tin hiện trường",
+        "Chưa đủ dữ liệu đường vào và báo cáo tại địa bàn",
         "Access road and field information are insufficient"
       ],
       "facts": [
@@ -646,8 +647,8 @@
       "observation": "reported",
       "area": 7.2,
       "src": [
-        "Hiện trường 07:40, SAR 06:12",
-        "Field 07:40, SAR 06:12"
+        "Báo cáo hiện trường và ảnh radar Sentinel-1",
+        "Field report and Sentinel-1 radar imagery"
       ],
       "detected": "07:40 29/09/2026",
       "projected": {
@@ -665,8 +666,8 @@
       "observation": "suspected",
       "area": 3.1,
       "src": [
-        "Phân tích SAR, 07:05",
-        "SAR analysis, 07:05"
+        "Phân tích ảnh radar Sentinel-1",
+        "Sentinel-1 radar image analysis"
       ],
       "detected": "07:05 29/09/2026",
       "projected": {
@@ -683,8 +684,8 @@
       "kind": "crossing",
       "observation": "reported",
       "src": [
-        "Tin hiện trường, 08:58",
-        "Field report, 08:58"
+        "Báo cáo tại điểm vượt khe",
+        "Gully crossing report"
       ],
       "detected": "08:58 29/09/2026",
       "projected": {
@@ -701,8 +702,8 @@
       "kind": "bridge",
       "observation": "reported",
       "src": [
-        "Tin hiện trường, 03:55",
-        "Field report, 03:55"
+        "Báo cáo tại cầu vào Khau Mang",
+        "Khau Mang access bridge report"
       ],
       "detected": "03:55 29/09/2026",
       "projected": {
@@ -829,8 +830,8 @@
         "Field report at the Khau Mang access bridge"
       ],
       "finding": [
-        "Mặt cầu được báo ngập khoảng 0,6 m. Chưa có cập nhật khả năng đi qua.",
-        "Water reported approximately 0.6 m above the bridge deck. Passage has not been updated."
+        "Có báo cáo nước ngập mặt cầu khoảng 0,6 m. Khả năng qua cầu chưa được xác minh.",
+        "Water reported approximately 0.6 m above the bridge deck. Bridge passage is unverified."
       ],
       "limitation": [
         "Mực nước có thể đã thay đổi. Cần kiểm tra lại mặt cầu và đường dẫn.",
@@ -848,8 +849,8 @@
         "SAR analysis result in the dataset"
       ],
       "finding": [
-        "Đánh dấu một điểm nghi sạt lở gần Lao Mải.",
-        "A suspected landslide site is marked near Lao Mải."
+        "Điểm nghi sạt lở gần Lao Mải.",
+        "Suspected landslide near Lao Mải."
       ],
       "limitation": [
         "Chưa kiểm chứng thực địa. Chưa xác nhận ảnh hưởng đến đường.",
@@ -867,8 +868,8 @@
         "SAR analysis result in the dataset"
       ],
       "finding": [
-        "Đánh dấu một điểm nghi sạt lở gần đường vào Khau Mang.",
-        "A suspected landslide site is marked near the Khau Mang access road."
+        "Điểm nghi sạt lở gần đường vào Khau Mang.",
+        "Suspected landslide near the Khau Mang access road."
       ],
       "limitation": [
         "Chưa kiểm chứng thực địa. Chưa có phạm vi sạt lở được đo hoặc khoanh.",
@@ -888,8 +889,8 @@
       "kind": "landslide",
       "observation": "reported",
       "src": [
-        "Tin hiện trường, 09:40",
-        "Field report, 09:40"
+        "Báo cáo tại điểm vượt khe",
+        "Gully crossing report"
       ],
       "detected": "09:40 29/09/2026",
       "projected": {

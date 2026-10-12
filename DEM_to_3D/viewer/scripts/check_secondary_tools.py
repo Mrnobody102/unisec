@@ -50,12 +50,13 @@ def run(url, chrome, captures):
         page.locator('.incident-priority-row').first.click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Tất cả thông báo', exact=True).click()
-        expect(page.locator('.notification-history > li')).to_have_count(7)
+        expect(page.locator('.notification-history > li')).to_have_count(6)
+        assert page.locator('.journal-list > li').evaluate_all("nodes=>nodes.every(node=>node.dataset.journalKind === 'report')")
         page.locator('.notification-history summary').first.click()
-        expect(page.locator('.notification-record').first).to_contain_text('Quan sát')
+        expect(page.locator('.notification-record').first).to_contain_text('Ghi nhận')
         if captures:
             page.screenshot(path=str(captures / 'workspace-notification-history.png'))
-        page.get_by_role('button', name='Mở tin hiện trường', exact=True).click()
+        page.get_by_role('button', name='Xem báo cáo', exact=True).click()
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
         expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
         page.locator('.header-revision').click()
@@ -91,6 +92,13 @@ def run(url, chrome, captures):
         page.locator('.comparison-form input[type=file]').nth(1).set_input_files(fixture_dir / 'after.tif')
         page.get_by_role('button', name='Mở so ảnh', exact=True).click()
         expect(page.locator('.comparison-map .leaflet-image-layer')).to_have_count(2, timeout=25000)
+        for width in [1366, 390, 320]:
+            page.set_viewport_size({'width': width, 'height': 768})
+            assert page.locator('.comparison-captions').evaluate('''node => {
+              const [left, right] = [...node.children].map(child => child.getBoundingClientRect());
+              return left.right + 7 <= right.left && node.scrollWidth <= node.clientWidth;
+            }'''), ('Comparison dates overlap', width)
+        page.set_viewport_size({'width': 1366, 'height': 768})
         before = page.locator('.comparison-map .leaflet-image-layer').nth(1)
         page.wait_for_function("!!document.querySelector('.comparison-map .leaflet-image-layer:nth-child(2)')?.style.clipPath")
         clip = before.evaluate('(element) => element.style.clipPath')
@@ -143,7 +151,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='http://127.0.0.1:5212')
-    parser.add_argument('--chrome', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
+    parser.add_argument('--chrome')
     parser.add_argument('--captures', type=Path)
     args = parser.parse_args()
     if args.captures:

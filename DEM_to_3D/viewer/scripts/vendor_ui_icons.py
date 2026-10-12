@@ -8,7 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = 'https://raw.githubusercontent.com/lucide-icons/lucide/main/'
 ICONS = {
     'copy': 'copy',
-    'plus': 'plus', 'minus': 'minus', 'close': 'x', 'back': 'arrow-left',
+    'zoomIn': 'zoom-in', 'zoomOut': 'zoom-out',
+    'plus': 'plus', 'minus': 'minus', 'close': 'x', 'back': 'chevron-left', 'next': 'chevron-right',
     'help': 'circle-question-mark', 'info': 'info', 'expand': 'chevron-down',
     'collapse': 'chevron-up', 'fit': 'maximize', 'search': 'search',
     'download': 'download', 'layers': 'layers', 'settings': 'sliders-horizontal',
@@ -18,6 +19,8 @@ ICONS = {
     'priority': 'flag',
     'panelOpen': 'panel-left-open', 'panelClose': 'panel-left-close',
     'location': 'locate-fixed',
+    'pointer': 'mouse-pointer-2', 'polygon': 'pentagon', 'rectangle': 'rectangle-horizontal',
+    'edit': 'square-pen', 'redo': 'redo-2', 'image': 'image',
 }
 
 def fetch(item):

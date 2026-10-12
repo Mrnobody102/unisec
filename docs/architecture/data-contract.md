@@ -1,6 +1,6 @@
 # Hợp đồng dữ liệu
 
-Cập nhật: 2026-10-05. Gói hiện hành: [Chế Tạo v0.2](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.2/manifest.json), dữ liệu mô phỏng ở trạng thái `draft`.
+Cập nhật: 2026-10-07. Gói mặc định: [Chế Tạo v0.2](../../DEM_to_3D/viewer/public/scenarios/che-tao/v0.2/manifest.json), dữ liệu mô phỏng ở trạng thái `draft`.
 
 ## Gói hiện hành
 
@@ -26,6 +26,26 @@ Cập nhật: 2026-10-05. Gói hiện hành: [Chế Tạo v0.2](../../DEM_to_3D/
 
 Ưu tiên, tuyến và ETA được tính từ gói, không lưu sẵn như kết luận cố định trong JSON. Phương pháp tại [phân tích ứng phó](response-analysis.md).
 
+## Chọn bộ dữ liệu
+
+`public/workspace-config.json` chọn manifest trước khi build. Bản tĩnh trên Vercel không cần API:
+
+```json
+{
+  "dataSource": "prepared",
+  "manifestUrl": "/scenarios/che-tao/v0.2/manifest.json"
+}
+```
+
+| Trường | Quy tắc |
+|---|---|
+| `dataSource` | `prepared` đọc packet từ manifest; `api` đọc endpoint theo ID sự kiện trong manifest |
+| `manifestUrl` | Đường dẫn cục bộ `/scenarios/.../manifest.json`. Không nhận URL ngoài, query hoặc đường dẫn vượt thư mục. Bỏ trường chỉ để tương thích bản cấu hình cũ |
+| `offline` | Boolean tùy chọn. Gói offline đặt `true` và tắt nền mạng mặc định |
+| `incident.title` | Tên sự kiện tùy chọn `[vi, en]`. Thiếu thì dùng “Sự kiện”/“Incident”; không lấy tên sự kiện mẫu |
+
+Loader, kiểm dữ liệu trước build, server thử và đóng gói đều đọc cùng lựa chọn. Khi sửa JSON phải cập nhật kích thước/SHA-256 trong manifest. Cấu hình chọn bộ hợp lệ trong contract v1, chưa phải catalog nhiều CRS hoặc lịch sử công bố. Bộ được chọn lỗi phải báo lỗi, không tự đổi về Chế Tạo.
+
 ## Kiểm tra và tham chiếu
 
 | Kiểm tra | Điều kiện |
@@ -50,10 +70,10 @@ Liên hệ cần truy được: **địa bàn, tuyến, đoạn đường, đi�
 
 Chạy bằng `npm run serve:workspace` sau build. Đây là dịch vụ cục bộ chỉ đọc. Chưa có tiếp nhận tin, xử lý ảnh, phân quyền hoặc lưu thay đổi. `workspace-config.json` chọn nguồn `prepared` hoặc `api`; API lỗi phải báo lỗi, không lấy bộ mô phỏng thay thế.
 
-Luồng ghi cần hợp đồng v2 cho nhiều báo cáo và revision công bố, xem [tiếp nhận dữ liệu](data-ingestion.md). Đây là thiết kế dự kiến, thuộc [kế hoạch nghiên cứu backend](../plans/backend.md), không triển khai trong đợt demo hiện tại. Không thêm báo cáo tùy ý vào packet v1 hoặc đổi cờ `updated` rồi coi là đã lưu backend.
+Luồng ghi sản phẩm cần contract riêng cho nhiều báo cáo và assessment có phiên bản, xem [tiếp nhận dữ liệu](../../../vsp-eo-platform/docs/architecture/response-publication.md). Đây là thiết kế dự kiến, thuộc [kế hoạch nghiên cứu backend](../../../vsp-eo-platform/docs/plans/roadmap.md#backend-và-worker), không triển khai trong đợt demo hiện tại. Không thêm báo cáo tùy ý vào packet v1 hoặc đổi cờ `updated` rồi coi là đã lưu backend.
 
 ## Mở rộng cho dữ liệu thực
 
-[Danh mục trường dự kiến](data-fields.md) bổ sung GeoJSON WGS84, sensor/ngày ảnh, footprint, mây/nodata, provenance DEM và hệ độ cao, quyền dùng, trạng thái duyệt, người kiểm tra và điều kiện phương tiện. Đường được xác nhận đi được cần nguồn, thời điểm và loại phương tiện. AOI, vùng quan sát và vùng ảnh hưởng là ba hình học khác nhau.
+[Danh mục trường dự kiến](../../../vsp-eo-platform/docs/architecture/response-publication.md#trường-dữ-liệu) bổ sung GeoJSON WGS84, sensor/ngày ảnh, footprint, mây/nodata, provenance DEM và hệ độ cao, quyền dùng, trạng thái duyệt, người kiểm tra và điều kiện phương tiện. Đường được xác nhận đi được cần nguồn, thời điểm và loại phương tiện. AOI, vùng quan sát và vùng ảnh hưởng là ba hình học khác nhau.
 
 RS/PO duyệt nội dung trước công bố. Kiểm tra schema không thay cho kiểm chứng dữ liệu hoặc nghiệm thu nghiệp vụ.
