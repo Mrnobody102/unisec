@@ -316,7 +316,7 @@ def run(url, chrome, captures):
         check_panel(page)
         assert not errors, errors
         page.get_by_role('button', name='Display settings', exact=True).click()
-        page.get_by_role('button', name='Inter', exact=True).click()
+        page.get_by_role('combobox', name='Typography', exact=True).select_option('classic')
         page.reload()
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         assert page.locator('html').get_attribute('data-font') == 'classic'

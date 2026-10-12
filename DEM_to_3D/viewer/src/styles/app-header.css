@@ -101,7 +101,7 @@
   position: absolute;
   top: 46px;
   right: 0;
-  width: 276px;
+  width: 296px;
   max-width: calc(100vw - 24px);
   max-height: calc(100dvh - 76px);
   overflow-y: auto;
@@ -118,29 +118,26 @@
 .settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 16px; border-bottom: 1px solid var(--map-chrome-line); background: var(--map-chrome); }
 .settings-heading h2 { font-size: 13px; }
 .settings-heading .icon-button { width: 28px; height: 28px; min-height: 28px; border: 0; background: transparent; }
-.settings-group { padding: 12px 16px; }
+.settings-group { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 16px; }
 .settings-group + .settings-group { border-top: 1px solid var(--ws-line); }
-.settings-menu .model-settings { margin: 0; padding: 12px 16px; }
-.settings-label { display: block; margin-bottom: 8px; color: var(--ws-muted); font-size: 11px; font-weight: 600; }
+.settings-label { display: block; margin: 0; color: var(--ws-muted); font-size: 11px; font-weight: 600; }
 .settings-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--ws-line); border-radius: var(--radius-control); overflow: hidden; background: var(--ws-bg); }
 .settings-option { min-width: 0; min-height: 32px; padding: 5px 7px; border: 0; border-radius: 0; background: transparent; color: var(--ws-muted); font-size: 12px; }
 .settings-option + .settings-option { border-left: 1px solid var(--ws-line); }
-.settings-options button:focus-visible, .font-options button:focus-visible { outline-offset: -3px; }
+.settings-options button:focus-visible { outline-offset: -3px; }
 .settings-option:hover { color: var(--ws-text); }
 .settings-option[aria-pressed="true"] { color: var(--select-ink); background: var(--ws-tint); font-weight: 600; }
-.font-options { display: grid; border: 1px solid var(--ws-line); border-radius: var(--radius-control); overflow: hidden; }
-.font-option { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 6px 10px; border: 0; border-radius: 0; background: transparent; text-align: left; }
-.font-option + .font-option { border-top: 1px solid var(--ws-line); }
-.font-option:hover { background: var(--ws-bg); }
-.font-option[aria-pressed="true"] { background: var(--select-soft); }
-.font-option > svg { flex: none; width: 16px; height: 16px; margin-left: auto; color: var(--select-ink); }
-.font-sample { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; color: var(--ws-text); font-size: 17px; font-weight: 600; }
-.font-sample-modern { font-family: 'Space Grotesk', sans-serif; }
-.font-sample-plex { font-family: 'IBM Plex Sans', sans-serif; }
-.font-sample-classic { font-family: Inter, sans-serif; }
-.font-option-copy { display: grid; gap: 1px; min-width: 0; }
-.font-option-copy strong { font-size: 12px; font-weight: 600; }
-.font-option-copy small { color: var(--ws-muted); font-size: 11px; }
+.settings-typeface { display: block; }
+.settings-font { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; }
+.settings-font select { width: 100%; min-width: 0; min-height: 32px; font-size: 12px; }
+.settings-workspace { border-top: 1px solid var(--ws-line); }
+.settings-workspace summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 10px 16px; list-style: none; cursor: pointer; color: var(--ws-muted); font-size: 12px; font-weight: 500; }
+.settings-workspace summary::-webkit-details-marker { display: none; }
+.settings-workspace summary::after { content: ''; flex: none; width: 6px; height: 6px; margin-right: 3px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); }
+.settings-workspace[open] summary::after { transform: rotate(225deg) translate(-1px, -1px); }
+.settings-workspace summary:hover { color: var(--ws-text); }
+.settings-workspace-actions { display: grid; gap: 6px; padding: 0 16px 12px; }
+.settings-workspace-actions small { display: block; overflow-wrap: anywhere; color: var(--ws-muted); font-size: 11px; }
 .settings-link { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: var(--select-ink); font-size: 12px; text-align: left; }
 .settings-link:hover { text-decoration: underline; }
 

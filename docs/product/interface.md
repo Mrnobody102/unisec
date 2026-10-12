@@ -38,7 +38,7 @@ Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và
 | Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Thanh tìm/lớp/đo trên trái, chú giải dưới trái, nguồn sau nút thông tin |
 | Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | PNG; PDF, GeoJSON và JSON trong Định dạng khác |
 | Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ, lịch sử thông báo |
-| Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình, đặt lại phiên |
+| Cài đặt | Ngôn ngữ, sáng/tối, font trong dropdown gọn; giữ lựa chọn khi mở lại | Nhóm Phiên làm việc thu gọn: mô hình địa hình và đặt lại phiên |
 | Thời điểm dữ liệu trên header | Mốc bản đồ đang xem | Nhật ký sự kiện và chọn bản dữ liệu trước/sau tin đã áp dụng |
 | GIS | Nhập lớp, điểm tọa độ, ghi nhận và ảnh thực địa | Hồ sơ điểm, AOI và danh mục cảnh; [quy tắc liên kết bản đồ](geodata-workspace.md#quan-hệ-với-bản-đồ-ứng-phó) |
 | Lớp bản đồ | Nền và nhóm lớp nghiệp vụ; bật/tắt GIS đã nhập | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |

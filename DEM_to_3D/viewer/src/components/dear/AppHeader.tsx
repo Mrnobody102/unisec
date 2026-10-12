@@ -1,8 +1,9 @@
 import { UiIcon } from './UiIcon';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { FontChoice, IncidentModel, Locale, RoadSegment } from '../../types/dear';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { NotificationPopover } from './NotificationPopover';
+import { FontSelector } from './FontSelector';
 import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 
 type Props = {
@@ -55,18 +56,7 @@ export const AppHeader: React.FC<Props> = ({
   const notificationsRef = useRef<HTMLDivElement>(null);
   useDismissiblePopover(notificationsRef, notificationsOpen, () => setNotificationsOpen(false));
   const prefRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!prefOpen) return;
-    const closeOutside = (event: PointerEvent) => {
-      if (!prefRef.current?.contains(event.target as Node)) setPrefOpen(false);
-    };
-    const closeEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setPrefOpen(false); prefRef.current?.querySelector('button')?.focus(); }
-    };
-    document.addEventListener('pointerdown', closeOutside, true);
-    document.addEventListener('keydown', closeEscape);
-    return () => { document.removeEventListener('pointerdown', closeOutside, true); document.removeEventListener('keydown', closeEscape); };
-  }, [prefOpen]);
+  useDismissiblePopover(prefRef, prefOpen, () => setPrefOpen(false));
 
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
   const snapshot = updated ? incident.asOfUpdated : incident.asOf;
@@ -130,22 +120,24 @@ export const AppHeader: React.FC<Props> = ({
             onClick={() => { setNotificationsOpen(false); setPrefOpen(!prefOpen); }}
             aria-label={t('Cài đặt hiển thị', 'Display settings')}
             aria-expanded={prefOpen}
+            aria-haspopup="dialog"
+            aria-controls="display-settings"
             title={t('Cài đặt hiển thị', 'Display settings')}
           >
             <UiIcon name="settings"/>
           </button>
 
           {prefOpen && (
-            <div className="settings-menu" aria-label={t('Tùy chọn hiển thị', 'Display options')}>
+            <div className="settings-menu" id="display-settings" role="dialog" aria-labelledby="display-settings-title" data-popover>
               <div className="settings-heading">
-                <h2>{t('Cài đặt hiển thị', 'Display settings')}</h2>
+                <h2 id="display-settings-title">{t('Cài đặt hiển thị', 'Display settings')}</h2>
                 <button className="icon-button" aria-label={t('Đóng cài đặt', 'Close settings')} onClick={() => { setPrefOpen(false); prefRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); }}><UiIcon name="close" /></button>
               </div>
               <div className="settings-group">
                 <strong className="settings-label">
                   {t('Giao diện', 'Appearance')}
                 </strong>
-                <div className="settings-options">
+                <div className="settings-options" role="group" aria-label={t('Giao diện', 'Appearance')}>
                   <button
                     className="settings-option"
                     aria-pressed={theme === 'light'}
@@ -171,7 +163,7 @@ export const AppHeader: React.FC<Props> = ({
                 <strong className="settings-label">
                   {t('Ngôn ngữ', 'Language')}
                 </strong>
-                <div className="settings-options">
+                <div className="settings-options" role="group" aria-label={t('Ngôn ngữ', 'Language')}>
                   <button
                     className="settings-option"
                     aria-pressed={locale === 'vi'}
@@ -192,31 +184,17 @@ export const AppHeader: React.FC<Props> = ({
                   </button>
                 </div>
               </div>
-              <div className="settings-group">
-                <strong className="settings-label">{t('Kiểu chữ', 'Typography')}</strong>
-                <div className="font-options" role="group" aria-label={t('Kiểu chữ', 'Typography')}>
-                  <button className="font-option" aria-pressed={fontChoice === 'classic'} onClick={() => onChangeFontChoice('classic')}>
-                    <span className="font-sample font-sample-classic" aria-hidden="true">Aa</span>
-                    <span className="font-option-copy"><strong>Inter</strong></span>
-                    {fontChoice === 'classic' && <UiIcon name="check" />}
-                  </button>
-                  <button className="font-option" aria-pressed={fontChoice === 'plex'} onClick={() => onChangeFontChoice('plex')}>
-                    <span className="font-sample font-sample-plex" aria-hidden="true">Aa</span>
-                    <span className="font-option-copy"><strong>IBM Plex Sans</strong></span>
-                    {fontChoice === 'plex' && <UiIcon name="check" />}
-                  </button>
-                  <button className="font-option" aria-pressed={fontChoice === 'modern'} onClick={() => onChangeFontChoice('modern')}>
-                    <span className="font-sample font-sample-modern" aria-hidden="true">Aa</span>
-                    <span className="font-option-copy"><strong>Space Grotesk</strong><small>Be Vietnam Pro</small></span>
-                    {fontChoice === 'modern' && <UiIcon name="check" />}
-                  </button>
+              <div className="settings-group settings-typeface">
+                <FontSelector locale={locale} value={fontChoice} onChange={onChangeFontChoice} />
+              </div>
+              <details className="settings-workspace">
+                <summary>{t('Phiên làm việc', 'Workspace session')}</summary>
+                <div className="settings-workspace-actions">
+                  <button className="settings-link" onClick={() => { setPrefOpen(false); onOpenUpload(); }}>{t('Mô hình địa hình', 'Terrain model')}</button>
+                  <button className="settings-link" onClick={() => { setPrefOpen(false); onReset(); }}>{t('Đặt lại phiên làm việc', 'Reset workspace')}</button>
+                  {activeModelName && <small>{activeModelName}</small>}
                 </div>
-              </div>
-              <div className="model-settings">
-                <button className="settings-link" onClick={() => { setPrefOpen(false); onOpenUpload(); }}>{t('Mô hình địa hình', 'Terrain model')}</button>
-                <button className="settings-link" onClick={() => { setPrefOpen(false); onReset(); }}>{t('Đặt lại phiên làm việc', 'Reset workspace')}</button>
-                {activeModelName && <small>{activeModelName}</small>}
-              </div>
+              </details>
             </div>
           )}
         </div>

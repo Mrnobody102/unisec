@@ -39,7 +39,7 @@ Demo chứng minh luồng ứng phó trên web. Chưa chứng minh pipeline vệ
 | So ảnh | Chỉ trình diễn với cặp trước/sau đã được RS duyệt. Bỏ bước này nếu chưa có ảnh phù hợp |
 | Bãi đáp | Tìm “bãi đáp”, mở H. Đây là vị trí đề xuất, chưa khảo sát |
 | Dự phòng | Nếu 3D lỗi, dùng 2D. Nếu mất mạng, dùng gói offline |
-| Lặp lại | Trong Cài đặt, chọn Đặt lại phiên làm việc |
+| Lặp lại | Trong Cài đặt, mở Phiên làm việc rồi chọn Đặt lại phiên làm việc |
 
 Trước buổi demo: duyệt nội dung với RS/PO, thử đúng máy trình chiếu và URL Vercel, chuẩn bị gói offline/video. Xem [cách chạy offline](offline.md), [cách tính tuyến và ưu tiên](../architecture/response-analysis.md).
 

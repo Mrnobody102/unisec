@@ -140,6 +140,7 @@ def run(url, chrome, captures):
         page.evaluate("document.querySelector('iframe').contentWindow.dispatchEvent(new Event('afterprint'))")
         page.keyboard.press('Escape')
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.locator('.settings-workspace summary').click()
         page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
         expect(page.locator('.incident-priority-row').first).to_be_visible()
         expect(page.locator('.header-data')).to_contain_text('09:31')

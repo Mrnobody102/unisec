@@ -52,6 +52,7 @@ def run(archive, chrome):
                 page.get_by_role('button', name='Chuyển sang 2D', exact=True).click()
                 expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
                 page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+                page.locator('.settings-workspace summary').click()
                 page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
                 expect(page.locator('.header-data')).to_contain_text('09:31')
                 assert not errors, errors

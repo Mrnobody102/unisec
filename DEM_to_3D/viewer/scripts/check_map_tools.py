@@ -33,7 +33,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
-        page.get_by_role('button', name='IBM Plex Sans', exact=True).click()
+        page.get_by_role('combobox', name='Typography', exact=True).select_option('plex')
         page.keyboard.press('Escape')
         expect(panel).to_be_visible()
         panel.get_by_role('button', name='Measurement settings', exact=True).click()

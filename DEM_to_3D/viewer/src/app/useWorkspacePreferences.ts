@@ -2,10 +2,13 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import type { FontChoice, Locale } from '../types/dear';
 
 export function useWorkspacePreferences() {
-  const [locale, setLocale] = useState<Locale>('vi');
+  const [locale, setLocale] = useState<Locale>(() => {
+    try { return window.localStorage.getItem('dear.locale') === 'en' ? 'en' : 'vi'; }
+    catch { return 'vi'; }
+  });
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    try { return window.localStorage.getItem('dear.theme') === 'light' ? 'light' : 'dark'; }
-    catch { return 'dark'; }
+    try { return window.localStorage.getItem('dear.theme') === 'dark' ? 'dark' : 'light'; }
+    catch { return 'light'; }
   });
   const [fontChoice, setFontChoice] = useState<FontChoice>(() => {
     try {
@@ -24,6 +27,7 @@ export function useWorkspacePreferences() {
   }, [fontChoice]);
   useEffect(() => {
     document.documentElement.lang = locale;
+    try { window.localStorage.setItem('dear.locale', locale); } catch { /* Session preference remains available. */ }
     const geodata = new URLSearchParams(window.location.search).get('workspace') === 'geodata';
     document.title = geodata ? (locale === 'vi' ? 'DEAR | Dữ liệu GIS' : 'DEAR | GIS data')
       : (locale === 'vi' ? 'DEAR | Bản đồ ứng phó' : 'DEAR | Response map');

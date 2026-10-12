@@ -45,6 +45,7 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
 
             def reset():
                 page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+                page.locator('.settings-workspace summary').click()
                 page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
                 expect(page.locator('.incident-priority-row').first).to_be_visible()
 
