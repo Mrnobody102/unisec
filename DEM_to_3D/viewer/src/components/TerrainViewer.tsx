@@ -111,7 +111,14 @@ export function TerrainViewer({
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1_000_000);
     camera.aspect = Math.max(host.clientWidth, 1) / Math.max(host.clientHeight, 1);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    } catch (error) {
+      if (!propsUnavailableRef.current) throw error;
+      propsUnavailableRef.current();
+      return undefined;
+    }
     const onContextLost = (event: Event): void => { event.preventDefault(); propsUnavailableRef.current?.(); };
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));

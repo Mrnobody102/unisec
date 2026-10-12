@@ -33,7 +33,7 @@ def check_symbols(page):
 
 def run(url, chrome, captures, prepared=False):
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
+        browser = playwright.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'], **({'executable_path': chrome} if chrome else {}))
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         context.add_init_script("""const original = HTMLCanvasElement.prototype.getContext;
