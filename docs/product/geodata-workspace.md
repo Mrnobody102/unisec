@@ -17,11 +17,12 @@ flowchart LR
 
 | Tác vụ | Cách dùng |
 |---|---|
-| Nhập tệp | Tab Lớp: chọn một/nhiều KML, GeoJSON hoặc WKT. Giữ tên và thuộc tính; bỏ Placemark chỉ chứa ghi chú. KML MultiGeometry được tách thành đối tượng. Lỗi chỉ rõ tệp |
-| Nhập văn bản | Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ DD (`21.782919° N, 104.053554° E`) hoặc DMS (`21°45'26.80"N 104°02'48.44"E`), mỗi dòng một điểm |
+| Nhập tệp | Tab Lớp: bấm **Nhập dữ liệu** để mở hộp thoại, chọn một/nhiều KML, GeoJSON hoặc WKT. Escape đóng biểu mẫu và trả focus về nút mở. Giữ tên và thuộc tính; bỏ Placemark chỉ chứa ghi chú. KML MultiGeometry được tách thành đối tượng. Lỗi chỉ rõ tệp |
+| Nhập văn bản | Trong hộp thoại Nhập dữ liệu, chọn **Dán tọa độ / WKT**. Nhiều WKT có tên như `Strix-2: POLYGON((…))`. Tọa độ DD (`21.782919° N, 104.053554° E`) hoặc DMS (`21°45'26.80"N 104°02'48.44"E`), mỗi dòng một điểm |
 | Vai trò | Tham chiếu: nâu. AOI: xanh lá. Phạm vi ảnh: xanh dương nét đứt. Chú giải theo vai trò đang hiện. Điểm có lõi đặc và viền trắng; màu tham chiếu không biểu thị mức tác động |
-| Chọn đối tượng | Giữ vùng nhìn; nút Xem trên bản đồ đưa hình vào map. Đổi tên/vai trò, xem tọa độ và thuộc tính. Một AOI mỗi workspace, gán AOI mới chuyển AOI cũ thành tham chiếu |
-| Điểm thực địa | Thêm điểm tọa độ hoặc chọn điểm đã nhập, mở Ghi nhận thực địa. Chọn loại, ghi chú, thời gian, người ghi nhận, sai số vị trí và ảnh. Lưu rồi chọn Xem trên bản đồ ứng phó |
+| Chọn đối tượng | Danh sách ở trái; chọn đối tượng mở hồ sơ ở phải trên màn rộng, thay danh sách trên màn nhỏ. Đóng hồ sơ trở lại danh sách. Giữ vùng nhìn; nút Xem trên bản đồ đưa hình vào map. Đổi tên/vai trò, xem tọa độ và thuộc tính. Điểm có **Sửa tọa độ**; tọa độ mới cập nhật cùng bản ghi, giữ ID, nguồn và độ cao nếu có. Một AOI mỗi workspace, gán AOI mới chuyển AOI cũ thành tham chiếu |
+| Điểm thực địa | Bấm **Thêm điểm tọa độ** để mở hộp thoại ngắn, hoặc chọn điểm đã nhập. Có thể xem điểm tham chiếu ngay trên bản đồ ứng phó. Khi thêm ghi nhận, ảnh/giờ/GPS được điền theo metadata có sẵn; loại, ghi chú và người ghi nhận là bổ sung, không bắt nhập sai số vị trí |
+| Vùng nghi ảnh hưởng | Trong hồ sơ điểm, chọn **Vẽ vùng nghi ảnh hưởng**. Một điểm có nhiều polygon tham chiếu, màu hổ phách, chưa xác minh; không thay AOI. Có xem vùng, sửa đỉnh, xóa và hoàn tác. Xóa điểm bỏ các vùng liên kết trong cùng một bước; hoàn tác khôi phục cả bộ |
 | Vẽ AOI | Thanh công cụ: polygon hoặc hình chữ nhật qua hai góc đối diện. Polygon kết thúc bằng Enter, nút Kết thúc, nhấp đúp hoặc đỉnh đầu. Vẽ lại cập nhật AOI hiện tại. Thanh công cụ không làm map dịch chuyển |
 | Chỉnh hình | Kéo đỉnh hoặc nhập kinh/vĩ độ tại tab AOI. Áp dụng mới cập nhật bản lưu; hình lỗi giữ nguyên bản cũ. Hủy/Esc bỏ bản nháp. Bắt đỉnh trong 12 pixel tới các đối tượng đang hiện |
 | Hoàn tác | Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z hoặc các nút Hoàn tác/Làm lại. Trong lúc chỉnh chỉ tác động bản nháp; ngoài lúc chỉnh tác động lớp. Lịch sử 25 bước, trong phiên |
@@ -37,7 +38,25 @@ flowchart LR
 | Vị trí | Hiện các hình WGS84 trên bản đồ ứng phó 2D, kể cả ngoài phạm vi DEM chuẩn bị. Chỉ hành động Xem trên bản đồ ứng phó đổi vùng nhìn. Chưa hiển thị lớp nhập trên 3D |
 | Ghi nhận | Điểm có loại nghi sạt lở, hư hỏng đường, nước/ngập hoặc khảo sát. Ký hiệu cảnh báo và nhãn Chưa xác minh cho ghi nhận mới; chọn điểm mở ghi chú và ảnh |
 | Đánh giá tình huống | Ghi nhận mới không tự sửa vùng thiên tai, mức ưu tiên, trạng thái tuyến hoặc nhật ký phân tích. AOI làm việc không thay AOI sự kiện |
-| Lưu/chia sẻ | Bản mở độc lập cùng origin đọc cùng bộ lưu. GeoJSON/KML giữ dữ liệu ghi nhận và bản xem trước ảnh. Không gửi báo cáo hoặc đồng bộ người dùng |
+| Lưu/chia sẻ | GeoJSON/KML giữ ID nguồn để khi nhập lại tạo ID mới và nối vùng với đúng điểm trong bộ nhập, không nối nhầm với bản cũ. Vùng nhập thiếu điểm vẫn là tham chiếu chưa liên kết. Bản mở độc lập cùng origin đọc cùng bộ lưu. GeoJSON/KML giữ dữ liệu ghi nhận và bản xem trước ảnh. Không gửi báo cáo hoặc đồng bộ người dùng |
+
+## Chỉnh dữ liệu tình huống
+
+Khi mở từ DEAR với vai trò điều phối viên, GIS hiển thị cùng các thôn/bản, tuyến và sự cố của bản đồ ứng phó. Hai màn dùng chung bộ ký hiệu và cách gom các đối tượng chồng nhau; bấm nhóm để chọn từng đối tượng. Hover giữ nguyên vị trí. Bấm **Di chuyển trên bản đồ**, kéo điểm rồi ghi lý do/lưu vị trí; thay đổi đi qua nhật ký dùng chung. Tên thôn/bản và đường có thể đổi trong hồ sơ GIS bằng cùng thao tác đổi tên của màn ứng phó. Thay đổi hiện lại trên bản đồ chính và được lưu trong trình duyệt.
+
+Điểm tham chiếu nhập từ KML/GeoJSON vẫn thuộc bộ dữ liệu GIS. Sửa tên/tọa độ hoặc khoanh vùng không tự xác nhận một sự cố hay cập nhật trạng thái đường. Nguồn ảnh, tọa độ GPS gốc và vị trí hiển thị được giữ riêng để đối chiếu. Workspace độc lập không có gói tình huống vẫn chỉ quản lý dữ liệu nhập.
+
+Backend dùng chung với EO là bước tiếp theo: [thiết kế lát cắt đầu tiên](../../../vsp-eo-platform/docs/plans/backend-first-slice.md). Hiện hai repo chưa đồng bộ qua server; liên kết GIS/ứng phó nêu trên là trong cùng DEAR và cùng trình duyệt.
+
+## Hồ sơ điểm và ảnh
+
+Chọn điểm trên bản đồ hoặc danh sách để mở hồ sơ. Nhập tệp nhiều điểm giữ danh sách làm màn tổng quan; không mở hàng trăm khối thuộc tính. Trên desktop, hồ sơ đặt bên phải và cuộn riêng; trên màn hẹp, đóng hồ sơ để trở lại danh sách. Chọn **Xem trên bản đồ** khi cần định vị; lựa chọn đơn thuần giữ vùng nhìn.
+
+Ảnh vừa thêm hiện bản xem trước, giờ chụp, máy ảnh và GPS đọc được. Chọn ảnh để mở lớn; Escape đóng ảnh, giữ nguyên màn GIS. Thông số máy ảnh khác và checksum nằm trong phần mở rộng. Thời gian EXIF hoặc TimeStamp KML/thuộc tính thời gian hợp lệ được điền khi trường còn trống, không ghi đè thao tác nhập tay. Giờ máy ảnh thiếu offset được lưu là `observedLocalTime` với múi giờ chưa xác định, không tự gán UTC; giờ có offset được lưu là `observedAt`. Không dùng ngày sửa tệp hay ngày nhập làm thời điểm hiện trường.
+
+**Vẽ vùng nghi ảnh hưởng** là khoanh vùng thủ công trên bản đồ dựa vào căn cứ đang xem, không suy polygon từ ảnh chụp mặt đất. Dữ liệu `dearFieldArea` gắn polygon tham chiếu với ID điểm, giữ trạng thái chưa xác minh. Bản nháp ảnh và ghi chú không mất khi chuyển sang vẽ vùng. AOI tìm ảnh, vùng khoanh vẽ và vùng thiên tai của tình huống là các đối tượng có mục đích riêng.
+
+Hướng dẫn sử dụng nằm ở nút **?** trên header ứng phó; chủ đề **Điểm và ảnh thực địa** mô tả luồng này.
 
 ## Ảnh hiện trường và hướng mở rộng
 

@@ -12,6 +12,7 @@ Demo SIC và công cụ thử nghiệm nằm tại repo này. Kiến trúc EO Pl
 | Mốc, trạng thái, phụ trách và điều kiện bàn giao | [Kế hoạch SIC](tasks/sic-2026.md) |
 | Nghiệm thu và giới hạn kiểm chứng | [Acceptance](quality/acceptance.md), [workspace review](quality/workspace-review.md) |
 | Luồng UI, component, câu chữ và bản đồ | [Interface](product/interface.md), [design system](product/design-system.md), [thuật ngữ](product/terminology.md), [cartography](product/cartography.md) |
+| Người dân, ảnh thực địa, xét duyệt và tên điểm | [Ghi nhận hiện trường](product/community-reporting.md) |
 | KML/AOI/catalog thử nghiệm | [Workspace GIS](product/geodata-workspace.md) |
 | Kiến trúc/source đang chạy | [Overview](architecture/overview.md), [source](architecture/source-structure.md) |
 | Dữ liệu, phương pháp và bản xuất | [Contract](architecture/data-contract.md), [response analysis](architecture/response-analysis.md), [decision export](architecture/decision-export.md) |
