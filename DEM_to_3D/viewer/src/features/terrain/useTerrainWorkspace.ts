@@ -6,6 +6,7 @@ import { createGeographicPlacements } from '../../terrain/geographic';
 import { loadModelFiles, loadTerrain3D, releaseModels } from '../../terrain/modelRuntime';
 import type { LoadedModel, TerrainData } from '../../types/terrain';
 import { loadWorkspaceDataset } from '../incident/loadWorkspaceDataset';
+import { readBinary } from '../../shared/http/readResponse';
 
 type Props = { mapMode: '2d' | '3d'; on3DUnavailable: () => void };
 
@@ -25,6 +26,27 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading3D, setLoading3D] = useState(false);
+  /** Download progress of the 3D terrain mesh (0–1), or null when nothing is downloading. */
+  const [progress3D, setProgress3D] = useState<number | null>(null);
+  const mapModeRef = useRef(mapMode);
+  mapModeRef.current = mapMode;
+  // The mesh dominates 3D start-up (≈16 MB). It starts as soon as the workspace is usable,
+  // runs alongside the Three.js chunk, and survives a 3D→2D switch so returning is instant.
+  const meshDownload = useRef<{ url: string; promise: Promise<ArrayBuffer>; controller: AbortController } | null>(null);
+  const startMesh = useCallback((asset: { url: string; byteLength: number }) => {
+    if (meshDownload.current?.url === asset.url) return meshDownload.current.promise;
+    meshDownload.current?.controller.abort();
+    const controller = new AbortController();
+    setProgress3D(0);
+    const promise = readBinary(asset.url, {
+      signal: controller.signal,
+      expectedBytes: asset.byteLength,
+      onProgress: fraction => { if (meshDownload.current?.promise === promise) setProgress3D(fraction); }
+    });
+    promise.catch(() => undefined);
+    meshDownload.current = { url: asset.url, promise, controller };
+    return promise;
+  }, []);
   const preparedTerrain = useRef<TerrainData | null>(null);
   const modelsRef = useRef<LoadedModel[]>([]);
   const importGeneration = useRef(0);
@@ -43,6 +65,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
       mounted.current = false;
       importGeneration.current++;
       releaseModels(modelsRef.current);
+      meshDownload.current?.controller.abort();
     };
   }, []);
 
@@ -51,10 +74,12 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     importGeneration.current++;
     setBusy(true); setStartupError(false); setSnapshotReady(false);
     void loadWorkspaceDataset(controller.signal, import.meta.env.VITE_DEAR_API_BASE).then(dataset => {
+      // The packet and grid make the workspace usable; the mesh follows without competing.
+      if (mapModeRef.current === '3d') startMesh(dataset.manifest.terrain.glb);
       if (controller.signal.aborted) return;
       preparedTerrain.current = dataset.terrain;
       setPacket(dataset.packet); setManifest(dataset.manifest); setDefaultTerrain(dataset.terrain);
-      setOffline(dataset.offline); setSnapshotReady(true);
+      setOffline(dataset.offline || new URLSearchParams(location.search).get('offline') === '1'); setSnapshotReady(true);
     }).catch(reason => {
       if (!controller.signal.aborted) {
         console.warn('Workspace dataset unavailable', reason);
@@ -68,16 +93,18 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     if (mapMode !== '3d' || models.length || !defaultTerrain || !manifest) return;
     const controller = new AbortController();
     setLoading3D(true);
+    const download = startMesh(manifest.terrain.glb);
+    const finish = () => { meshDownload.current = null; setProgress3D(null); };
     void loadTerrain3D({
       glb: manifest.terrain.glb.url, metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url
-    }, defaultTerrain, controller.signal).then(terrain => {
+    }, defaultTerrain, controller.signal, download).then(terrain => {
       const model: LoadedModel = { id: manifest.datasetVersion, name: manifest.terrain.glb.url.split('/').pop()!, ...terrain, objectUrls: [] };
       if (controller.signal.aborted) releaseModels([model]);
-      else replaceModels([model]);
-    }).catch(() => { if (!controller.signal.aborted) on3DUnavailable(); })
+      else { replaceModels([model]); finish(); }
+    }).catch(() => { if (!controller.signal.aborted) { finish(); on3DUnavailable(); } })
       .finally(() => { if (!controller.signal.aborted) setLoading3D(false); });
     return () => { controller.abort(); setLoading3D(false); };
-  }, [mapMode, models.length, defaultTerrain, manifest, replaceModels, on3DUnavailable]);
+  }, [mapMode, models.length, defaultTerrain, manifest, replaceModels, on3DUnavailable, startMesh]);
 
   const clear = useCallback(() => {
     importGeneration.current++;
@@ -130,6 +157,6 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   }, [mode, geographicMerge, models]);
 
   return { packet, manifest, defaultTerrain, snapshotReady, startupError, offline, models,
-    mode, geographicMerge, fileNames, busy, error, loading3D, placements,
+    mode, geographicMerge, fileNames, busy, error, loading3D, progress3D, placements,
     retry, reload, clear, upload, changeMode, changeGeographicMerge };
 }

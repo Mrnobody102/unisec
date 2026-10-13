@@ -1,6 +1,7 @@
 import type { LoadedModel, TerrainData } from '../types/terrain';
 import type { TerrainAssetUrls } from './loadTerrain';
 import { loadTerrain } from './loadTerrain';
+import { readBinary } from '../shared/http/readResponse';
 
 // Load Three.js and upload decoders only when an operator opens a 3D model.
 let runtime: typeof import('./upload') | undefined;
@@ -14,9 +15,12 @@ export async function loadModelFiles(files: File[], mode: 'single' | 'merge') {
   return { models: await tools.loadUploadedModels(selected), names: selected.map(file => file.name) };
 }
 
-export async function loadTerrain3D(urls: TerrainAssetUrls, data: TerrainData, signal?: AbortSignal) {
+export async function loadTerrain3D(urls: TerrainAssetUrls, data: TerrainData, signal?: AbortSignal, mesh?: Promise<ArrayBuffer>) {
+  // Download the mesh while the Three.js runtime chunk loads, not after it.
+  const buffer = mesh ?? readBinary(urls.glb, { signal });
+  buffer.catch(() => undefined);
   await modelRuntime();
-  return loadTerrain(urls, data, signal);
+  return loadTerrain(urls, data, signal, buffer);
 }
 
 export function releaseModels(models: readonly LoadedModel[]): void {

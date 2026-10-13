@@ -1,7 +1,7 @@
 import type { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedTerrain, MeshMetadata, TerrainData } from '../types/terrain';
 import { TerrainAssetError, validateGridBuffer, validateMetadata } from './validation';
-import { readResponse } from '../shared/http/readResponse';
+import { readBinary, readResponse } from '../shared/http/readResponse';
 
 export type TerrainAssetUrls = { glb: string; metadata: string; grid: string };
 
@@ -64,12 +64,18 @@ export async function loadTerrainData(urls: Pick<TerrainAssetUrls, 'metadata' | 
   return { metadata, grid, gridBuffer };
 }
 
-export async function loadTerrain(urls: TerrainAssetUrls, data?: TerrainData, signal?: AbortSignal): Promise<LoadedTerrain> {
+/** `mesh` lets a caller start the GLB download early (e.g. as soon as the manifest is known). */
+export async function loadTerrain(
+  urls: TerrainAssetUrls,
+  data?: TerrainData,
+  signal?: AbortSignal,
+  mesh?: Promise<ArrayBuffer>
+): Promise<LoadedTerrain> {
   const { metadata, grid, gridBuffer } = data ?? await loadTerrainData(urls, signal);
   if (metadata.mesh?.file && !assetUrlMatchesFilename(urls.glb, metadata.mesh.file)) {
     throw new TerrainAssetError(`GLB URL does not match metadata mesh.file (${metadata.mesh.file})`);
   }
-  const glbBuffer = await (await readResponse(urls.glb, signal, 60000)).arrayBuffer();
+  const glbBuffer = await (mesh ?? readBinary(urls.glb, { signal }));
   const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
   signal?.throwIfAborted();
   const gltf = await parseGltf(new GLTFLoader(), glbBuffer, urls.glb);

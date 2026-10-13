@@ -6,11 +6,13 @@ export type WorkspaceInteraction = {
   tool: MapTool;
   dialog: WorkspaceDialog;
   mapMode: '2d' | '3d';
+  /** The mode the workspace opens and resets to; 2D after 3D proved unavailable. */
+  homeMapMode: '2d' | '3d';
   focusDistance: number | null;
   fallbackVersion: number;
 };
 export const initialWorkspaceInteraction: WorkspaceInteraction = {
-  tool: 'browse', dialog: null, mapMode: '2d', focusDistance: null, fallbackVersion: 0
+  tool: 'browse', dialog: null, mapMode: '3d', homeMapMode: '3d', focusDistance: null, fallbackVersion: 0
 };
 export type InteractionAction =
   | { type: 'toggle-tool'; tool: Exclude<MapTool, 'browse'> }
@@ -33,7 +35,8 @@ export function workspaceInteractionReducer(state: WorkspaceInteraction, action:
     case 'map-mode': return { ...state, mapMode: action.mode,
       tool: action.mode === '3d' && state.tool === 'measure' ? 'browse' : state.tool };
     case 'focus-distance': return state.tool === 'profile' ? { ...state, focusDistance: action.distance } : state;
-    case 'fallback-2d': return { ...state, mapMode: '2d', fallbackVersion: state.fallbackVersion + 1 };
-    case 'reset': return { ...initialWorkspaceInteraction, fallbackVersion: state.fallbackVersion };
+    case 'fallback-2d': return { ...state, mapMode: '2d', homeMapMode: '2d', fallbackVersion: state.fallbackVersion + 1 };
+    case 'reset': return { ...initialWorkspaceInteraction, mapMode: state.homeMapMode, homeMapMode: state.homeMapMode,
+      fallbackVersion: state.fallbackVersion };
   }
 }
