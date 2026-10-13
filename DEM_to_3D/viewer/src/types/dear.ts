@@ -1,5 +1,5 @@
 export type Locale = 'vi' | 'en';
-export type FontChoice = 'modern' | 'plex' | 'classic';
+export type FontChoice = 'modern' | 'plex' | 'classic' | 'source';
 
 export type IncidentTimelineItem = [
   time: string,

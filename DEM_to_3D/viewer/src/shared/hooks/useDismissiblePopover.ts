@@ -1,3 +1,4 @@
+import { isSelectPickerEvent } from '../ui/selectKeyboard';
 import { useEffect, useRef, type RefObject } from 'react';
 
 /** Dismiss a small non-modal surface without blocking the workspace. */
@@ -12,7 +13,12 @@ export function useDismissiblePopover(anchor: RefObject<HTMLElement>, open: bool
     surface?.querySelector<HTMLElement>('button, a[href], [tabindex="0"]')?.focus();
     const pointer = (event: PointerEvent) => { if (!root?.contains(event.target as Node)) closeRef.current(); };
     const keyboard = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && root?.contains(document.activeElement)) {
+      if (
+        event.key === 'Escape' &&
+        !event.defaultPrevented &&
+        !isSelectPickerEvent(event) &&
+        root?.contains(document.activeElement)
+      ) {
         event.preventDefault(); event.stopPropagation(); closeRef.current(); trigger?.focus();
       }
     };

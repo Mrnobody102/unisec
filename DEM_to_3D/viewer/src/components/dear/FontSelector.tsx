@@ -13,6 +13,7 @@ export function FontSelector({ locale, value, onChange }: Props): JSX.Element {
     <label className="settings-font">
       <span className="settings-label">{label}</span>
       <select value={value} onChange={event => onChange(event.target.value as FontChoice)}>
+        <option value="source">Source Sans 3</option>
         <option value="classic">Inter</option>
         <option value="plex">IBM Plex Sans</option>
         <option value="modern">{locale === 'vi' ? 'Be Vietnam Pro' : 'Space Grotesk'}</option>

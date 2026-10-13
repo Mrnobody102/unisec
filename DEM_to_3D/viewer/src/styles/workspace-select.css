@@ -1,46 +1,50 @@
 /* Keep native semantics and the OS picker on touch, small screens and forced colors. */
 @supports (appearance: base-select) {
   @media (min-width: 761px) and (pointer: fine) and (forced-colors: none) {
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select:not([multiple]),
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select:not([multiple])::picker(select) {
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select:not([multiple]),
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select:not([multiple])::picker(select) {
       appearance: base-select;
     }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select::picker-icon { display: none; }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select::picker(select) {
+    /* base-select uses flex layout; center its value when the control has spare height. */
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select:not([multiple]) {
+      align-items: center;
+    }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select::picker-icon { display: none; }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select::picker(select) {
       margin-block: 4px;
       padding: 4px;
       min-width: anchor-size(width);
       max-width: min(360px, calc(100vw - 16px));
       max-height: min(320px, 50dvh);
       overflow: auto;
-      border: 1px solid var(--control-border);
+      border: 1px solid var(--ws-line);
       border-radius: var(--radius-control);
       background: var(--ws-surface);
       color: var(--ws-text);
-      font: 13px/1.5 var(--font-sans);
+      font: inherit;
       box-shadow: var(--shadow-float);
     }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option {
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option {
       min-height: 36px;
       padding: 6px 10px;
-      border-radius: 2px;
+      border-radius: 3px;
       color: var(--ws-text);
       background: var(--ws-surface);
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option:checked {
-      color: var(--select-ink);
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option:checked {
+      color: var(--ws-text);
       background: var(--ws-tint);
-      box-shadow: inset 2px 0 var(--select);
-      font-weight: 600;
+      box-shadow: none;
+      font-weight: 500;
     }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option:hover:not(:disabled) { background: var(--hover); }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option::checkmark { display: none; }
-    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select option:disabled { opacity: 0.5; }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option:hover:not(:disabled) { background: var(--hover); }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option::checkmark { display: none; }
+    :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select option:disabled { opacity: 0.5; }
   }
 }
 @media (forced-colors: active) {
-  :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace) select:not([multiple]) { appearance: auto; background-image: none; }
+  :root :is(.workspace, .modal-overlay, dialog, .geodata-workspace, .citizen-workspace, .demo-signin) select:not([multiple]) { appearance: auto; background-image: none; }
 }
