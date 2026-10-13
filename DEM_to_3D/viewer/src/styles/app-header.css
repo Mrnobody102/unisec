@@ -4,7 +4,7 @@
   margin: 0;
   flex-direction: row;
   display: flex;
-  gap: 20px;
+  gap: 16px;
   align-items: center;
   padding: 0 16px 0 20px;
   border-bottom: 1px solid var(--header-line);
@@ -19,7 +19,7 @@
   gap: 10px;
   font-size: 17px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.075em;
   flex-shrink: 0;
 }
 
@@ -42,58 +42,40 @@
 
 .brand-symbol svg { width: 30px; height: 30px; }
 
-.incident-badge-group {
-  padding-left: 20px;
-  border-left: 1px solid var(--header-stroke);
-  line-height: 1.4;
-}
-
-.incident-badge-group strong {
-  display: block;
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.incident-meta {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--header-muted);
-}
-
-.header-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.header-data {
-  text-align: right;
-  margin-right: 8px;
-}
-
-/* A revision timestamp is metadata, not an indication of live data. */
-.app-header .header-data .header-revision {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--header-muted);
-  font-size: 12px;
-  text-decoration: none;
-}
-.app-header .header-data .header-revision:hover { background: var(--header-hover); text-decoration: none; }
-.header-data strong { color: var(--header-ink); font-weight: 500; font-variant-numeric: tabular-nums; }
-.app-header :is(.header-actions, .notification-anchor, .settings-anchor) > :is(.button, .icon-button) { min-height: 36px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--header-ink); }
-.app-header :is(.header-actions, .notification-anchor, .settings-anchor) > :is(.button, .icon-button):hover { background: var(--header-hover); border-color: transparent; }
-.app-header :is(.header-actions, .notification-anchor, .settings-anchor) > [aria-expanded="true"] { background: var(--header-hover); border-color: var(--header-stroke); }
-.app-header .header-data-button { padding: 0 10px; }
+/* Area and revision form one context control; actions share one baseline. */
+.incident-context { position: relative; min-width: 0; padding-left: 16px; border-left: 1px solid var(--header-stroke); }
+.incident-context-trigger { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 440px; min-height: 44px; padding: 3px 8px; border: 0; border-radius: var(--radius-control); background: transparent; color: inherit; text-align: left; }
+.incident-context-trigger:hover, .incident-context-trigger[aria-expanded="true"] { background: var(--header-hover); }
+.incident-context-copy { display: grid; gap: 1px; min-width: 0; }
+.incident-context-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.incident-context-revision { display: block; color: var(--header-muted); white-space: nowrap; font-size: 11px; line-height: 1.4; }
+.incident-context-chevron { flex: none; color: var(--header-muted); transform: rotate(90deg); }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; flex: none; }
+.account-anchor { position: relative; }
+.header-context-popover, .header-account-popover { position: absolute; top: calc(100% + 8px); z-index: 50; width: 320px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 76px); overflow: auto; border: 1px solid var(--ws-line); border-radius: var(--radius-popover); background: var(--ws-surface); color: var(--ws-text); box-shadow: var(--shadow-overlay); }
+.header-context-popover { left: 16px; padding: 12px 16px; }
+.header-context-popover > header { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.header-context-popover > header strong { font-size: 14px; line-height: 1.4; }
+.header-context-popover > header .icon-button { flex: none; width: 28px; height: 28px; min-height: 28px; border: 0; background: transparent; }
+.header-context-popover > p { color: var(--ws-muted); margin: 4px 0 12px; font-size: 12px; }
+.header-context-popover dl { display: grid; gap: 6px; margin: 0 0 12px; font-size: 12px; }
+.header-context-popover dl > div { display: grid; grid-template-columns: 80px minmax(0,1fr); gap: 8px; }
+.header-context-popover dt { color: var(--ws-muted); }
+.header-context-popover dd { margin: 0; overflow-wrap: anywhere; }
+.header-context-links { display: grid; padding-top: 8px; border-top: 1px solid var(--ws-line); }
+/* Rows bleed into the popover padding so icons align with the text column above. */
+.header-context-links > button { display: flex; align-items: center; gap: 10px; width: calc(100% + 16px); min-height: 36px; margin: 0 -8px; padding: 7px 8px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ws-text); text-align: left; font-size: 13px; text-decoration: none; }
+.header-context-links > button:hover { background: var(--hover); text-decoration: none; }
+.header-context-links > button > span { flex: 1; }
+.header-context-links > button > svg { flex: none; width: 18px; height: 18px; color: var(--ws-muted); }
+.header-context-links > button > svg:last-child { width: 14px; height: 14px; }
+.header-account-popover { right: 0; width: 240px; padding: 16px; }
+.header-account-popover > strong { display: block; overflow-wrap: anywhere; font-size: 14px; }
+.header-account-popover > p { margin: 2px 0 12px; color: var(--ws-muted); font-size: 12px; }
+.header-account-popover > .button { width: 100%; }
+.app-header :is(.header-actions, .notification-anchor, .settings-anchor, .account-anchor) > :is(.button, .icon-button) { min-height: 36px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--header-ink); }
+.app-header :is(.header-actions, .notification-anchor, .settings-anchor, .account-anchor) > :is(.button, .icon-button):hover { background: var(--header-hover); border-color: transparent; }
+.app-header :is(.header-actions, .notification-anchor, .settings-anchor, .account-anchor) > [aria-expanded="true"] { background: var(--header-hover); border-color: var(--header-stroke); }
 .app-header .unread-indicator { top: 7px; right: 7px; border-color: var(--header-bg); }
 .app-header .settings-menu { color: var(--ws-text); }
 .settings-anchor { position: relative; }
@@ -110,23 +92,23 @@
   gap: 0;
   padding: 0;
   overscroll-behavior: contain;
-  border: 1px solid var(--map-chrome-line);
+  border: 1px solid var(--ws-line);
   border-radius: var(--radius-popover);
-  background: var(--ws-raised);
+  background: var(--ws-surface);
   box-shadow: var(--shadow-overlay);
 }
-.settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 16px; border-bottom: 1px solid var(--map-chrome-line); background: var(--map-chrome); }
+.settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--ws-line); background: var(--ws-surface); }
 .settings-heading h2 { font-size: 13px; }
 .settings-heading .icon-button { width: 28px; height: 28px; min-height: 28px; border: 0; background: transparent; }
 .settings-group { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 16px; }
 .settings-group + .settings-group { border-top: 1px solid var(--ws-line); }
 .settings-label { display: block; margin: 0; color: var(--ws-muted); font-size: 11px; font-weight: 600; }
-.settings-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--ws-line); border-radius: var(--radius-control); overflow: hidden; background: var(--ws-bg); }
-.settings-option { min-width: 0; min-height: 32px; padding: 5px 7px; border: 0; border-radius: 0; background: transparent; color: var(--ws-muted); font-size: 12px; }
-.settings-option + .settings-option { border-left: 1px solid var(--ws-line); }
+.settings-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 2px; border: 0; border-radius: var(--radius-control); overflow: hidden; background: var(--ws-raised); }
+.settings-option { min-width: 0; min-height: 32px; padding: 5px 7px; border: 0; border-radius: 3px; background: transparent; color: var(--ws-muted); font-size: 12px; }
+.settings-option + .settings-option { border-left: 0; }
 .settings-options button:focus-visible { outline-offset: -3px; }
 .settings-option:hover { color: var(--ws-text); }
-.settings-option[aria-pressed="true"] { color: var(--select-ink); background: var(--ws-tint); font-weight: 600; }
+.settings-option[aria-pressed="true"] { color: var(--select-ink); background: var(--ws-surface); box-shadow: 0 1px 3px rgb(0 0 0 / 8%); font-weight: 600; }
 .settings-typeface { display: block; }
 .settings-font { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; }
 .settings-font select { width: 100%; min-width: 0; min-height: 32px; font-size: 12px; }
@@ -141,9 +123,17 @@
 .settings-link { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: var(--select-ink); font-size: 12px; text-align: left; }
 .settings-link:hover { text-decoration: underline; }
 
-.header-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--header-stroke);
-  margin: 0 6px;
+@media(max-width:900px) {
+  .incident-context { flex: 1; border: 0; padding-left: 0; }
+  .incident-context-trigger { width: 100%; padding-inline: 4px; gap: 6px; }
+  .incident-context-revision { display: none; }
+  .header-context-popover { position: fixed; top: 64px; left: 12px; }
+  .header-account-popover { position: fixed; top: 64px; right: 12px; }
+}
+@media(max-width:600px) {
+  .workspace .app-header .header-actions { gap: 2px; }
+  .workspace .app-header .header-actions > :is(.button,.icon-button),
+  .workspace .app-header :is(.notification-anchor,.settings-anchor,.account-anchor) > .icon-button { width: 32px; height: 32px; min-height: 32px; padding: 5px; flex: none; }
+  .workspace .app-header .header-report-button > span { display: none; }
+  .workspace .app-header .brand-symbol, .workspace .app-header .brand-symbol svg { width: 24px; height: 24px; }
 }

@@ -1,5 +1,3 @@
-.header-revision { background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer; font: inherit; }
-.header-revision:hover { text-decoration: underline; text-underline-offset: 3px; }
 .notification-all { width: 100%; padding: 14px 16px; border-top: 1px solid var(--ws-line); text-align: left; }
 .notification-history { list-style: none; margin: 0; padding: 0; }
 .notification-history > li + li { border-top: 1px solid var(--ws-line); }

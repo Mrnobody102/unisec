@@ -11,7 +11,8 @@
 .map-search-icon { display: grid; place-items: center; flex: none; width: 20px; height: 20px; color: var(--ws-muted); }
 .map-search-results button[aria-selected="true"] .map-search-icon { color: var(--select-ink); }
 .map-search-results mark { background: none; color: inherit; font-weight: 650; }
-.map-search-results button[aria-selected="true"] { background: var(--select-soft); }
+.map-search-results button:hover:not([aria-selected="true"]) { background: transparent; }
+.map-search-results button[aria-selected="true"] { background: var(--ws-tint); box-shadow: inset 2px 0 var(--select); color: var(--ws-text); }
 .map-search-results strong { font-size: 13px; font-weight: 400; line-height: 1.45; }
 .map-search-results small, .map-search-results p { color: var(--ws-muted); font-size: 11px; }
 .map-search-results p { padding: 14px; }

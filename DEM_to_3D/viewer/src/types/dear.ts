@@ -138,6 +138,7 @@ export type ImpactTab = 'roads' | 'hazards';
 export type CommunityFilter = 'all' | 'priority' | 'monitor';
 
 export type ActiveDialog =
+  | 'help' | 'fieldReports'
   | null
   | 'timeline'
   | 'data'

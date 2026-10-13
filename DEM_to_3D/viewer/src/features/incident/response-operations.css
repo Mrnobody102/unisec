@@ -62,3 +62,35 @@
 }
 
 .journal-review-status { display: inline-block; margin-top: 6px; padding: 2px 6px; border: 1px solid var(--ws-line); border-radius: var(--radius-control); color: var(--ws-text); font-size: 11px; }
+
+/* Verification tracking: list | detail, one 16px rhythm, actions aligned to the detail header. */
+.response-work-dialog .response-work-body { padding: 0; gap: 0; }
+.response-work-dialog .response-work-body > .operations-filters { margin: 0; padding: 16px 16px 12px 24px; border-bottom: 1px solid var(--ws-line); }
+.response-work-dialog .operations-filters { display: inline-flex; gap: 2px; }
+.response-work-dialog .operations-filters button { min-height: 30px; padding: 4px 12px; }
+.response-work-dialog .response-work-body > .response-work-list { padding: 4px 8px 12px 16px; scrollbar-gutter: stable; }
+.response-work-dialog .response-work-row { align-items: center; padding: 12px 10px; border-radius: var(--radius-control); border-bottom: 0; }
+.response-work-dialog .response-work-list li + li .response-work-row { box-shadow: 0 -1px 0 var(--ws-line); }
+.response-work-dialog .response-work-row[aria-pressed="true"] { box-shadow: inset 3px 0 var(--select); }
+.response-work-dialog .response-work-row:hover:not([aria-pressed="true"]) { background: var(--hover); }
+.response-work-dialog .response-work-body > .response-work-edit,
+.response-work-dialog .work-selection-empty { padding: 20px 24px; }
+.response-work-dialog .response-work-edit { display: grid; align-content: start; gap: 16px; }
+.response-work-dialog .response-work-edit > *,
+.response-work-dialog .response-work-edit form,
+.response-work-dialog .response-work-edit fieldset { margin: 0; }
+.work-detail-head { display: flex; align-items: flex-start; gap: 16px; }
+.work-detail-head > div { flex: 1; min-width: 0; }
+.work-detail-head h3 { margin: 0; font-size: 15px; }
+.work-detail-head .work-subject { margin: 4px 0 0; }
+.work-locate { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 32px; padding: 4px 10px; font-size: 12px; }
+.response-work-dialog .work-basis { margin: 0; padding: 12px 14px; border: 0; border-radius: var(--radius-control); background: var(--ws-raised); }
+.response-work-dialog .work-basis p { margin: 0; line-height: 1.6; }
+.response-work-dialog .response-work-edit fieldset { display: grid; gap: 16px; }
+.response-work-dialog .response-work-edit fieldset > * { margin: 0; }
+.response-work-dialog .work-fields label,
+.response-work-dialog .response-work-edit fieldset > label { margin: 0; }
+.response-work-dialog .response-work-edit fieldset > .button { justify-self: start; }
+.response-work-dialog .response-work-edit select { width: 100%; min-height: 38px; }
+.response-work-dialog .response-work-edit :is(input, textarea) { min-height: 38px; }
+.response-work-dialog .response-work-edit textarea::placeholder { color: var(--ws-muted); }

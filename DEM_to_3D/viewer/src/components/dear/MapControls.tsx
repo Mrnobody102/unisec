@@ -1,12 +1,11 @@
 import type { ObservationKind } from '../../features/observations/model';
 import type { Hazard, Locale } from '../../types/dear';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { UiIcon } from './UiIcon';
 import { roadColors } from '../../terrain/roadStyle';
 import { roadStatusLabels } from '../../features/routes/roadStatus';
 import { MapSymbol } from '../../shared/ui/MapSymbol';
 import type { MapSymbolName } from '../../terrain/mapSymbols';
-import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 import '../../styles/map-controls.css';
 import '../../features/map/map-legend.css';
 
@@ -27,10 +26,6 @@ type Props = {
 export function MapControls({ locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
   const [legendMinimized, setLegendMinimized] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  useEffect(() => { if (measuring || layersOpen) setHelpOpen(false); }, [measuring, layersOpen]);
-  const helpRef = useRef<HTMLDivElement>(null);
-  useDismissiblePopover(helpRef, helpOpen, () => setHelpOpen(false));
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const routeVisible = hasSelectedRoute && layers.route;
   const legend: Array<{ kind: string; label: string; symbol?: MapSymbolName; uiSymbol?: 'layers'; fieldSymbol?: boolean }> = [];
@@ -72,10 +67,6 @@ export function MapControls({ locale, mapMode, onChangeMapMode, onZoomIn, onZoom
       </button>
       <div className="map-mode-group" role="group" aria-label={t('Góc nhìn bản đồ', 'Map view')}>
         {(['2d', '3d'] as const).map(mode => <button key={mode} className="icon-button map-mode" aria-pressed={mapMode === mode} onClick={() => onChangeMapMode(mode)} aria-label={t('Chuyển sang ', 'Switch to ') + mode.toUpperCase()} title={mode === '3d' ? t('Ctrl + kéo để nghiêng và xoay', 'Ctrl + drag to tilt and rotate') : t('Bản đồ 2D', '2D map')}>{mode.toUpperCase()}</button>)}
-      </div>
-      <div className="map-help" ref={helpRef}>
-        <button className="icon-button" aria-label={t('Thao tác bản đồ', 'Map gestures')} title={t('Thao tác bản đồ', 'Map gestures')} aria-expanded={helpOpen} aria-controls="map-gesture-help" onClick={() => setHelpOpen(open => !open)}><UiIcon name="help"/></button>
-        {helpOpen && <div id="map-gesture-help" data-popover><strong>{t('Thao tác bản đồ', 'Map gestures')}</strong><dl><dt>{t('Di chuyển', 'Pan')}</dt><dd>{t('Kéo chuột trái', 'Left-drag')}</dd><dt>{t('Phóng to / thu nhỏ', 'Zoom')}</dt><dd>{t('Cuộn chuột', 'Mouse wheel')}</dd>{mapMode === '3d' && <><dt>{t('Nghiêng và xoay', 'Tilt and rotate')}</dt><dd>{t('Ctrl + kéo hoặc kéo chuột phải', 'Ctrl + drag or right-drag')}</dd></>}</dl></div>}
       </div>
     </div>
     <div className="map-bottom-bar" hidden={layersOpen || measuring || locating || !legend.length} data-expanded={legendExpanded} data-minimized={legendMinimized}>

@@ -1,4 +1,10 @@
+import type { ScenarioEdits } from '../features/access/scenarioEdits';
+import { ReportInbox } from '../features/access/ReportInbox';
+import type { RenameScenario } from '../features/access/ScenarioLabels';
+import type { DemoIdentity } from '../features/access/demoSession';
+import { submissionOf,submissionKey,newSubmission } from '../features/access/submissions';
 import type { ComponentProps } from 'react';
+import { UserGuide } from '../features/help/UserGuide';
 import { NotificationDialog } from '../components/dear/NotificationDialog';
 import { DataDialog } from '../components/dear/DataDialog';
 import { EvidenceDialog } from '../components/dear/EvidenceDialog';
@@ -20,6 +26,7 @@ import type { TerrainData, TerrainMetadata } from '../types/terrain';
 import type { WorkspaceDialog } from './workspaceInteraction';
 
 type Props = {
+  identity: DemoIdentity; onRename: RenameScenario; scenarioEdits?: ScenarioEdits; onEditGis: (id:string)=>void;
   gisSession: ReturnType<typeof useGeometrySession>; onGisResponse:(id:string)=>void;
   dialog: WorkspaceDialog;
   locale: Locale;
@@ -47,7 +54,7 @@ type Props = {
 };
 
 /** Global dialogs share the workspace's focus boundary; Layers stays attached to the map. */
-export function WorkspaceDialogs({ gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
+export function WorkspaceDialogs({ identity,onRename,scenarioEdits,onEditGis,gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
   historical, workTasks,workTaskId,workEntries,workStorageError,onRecordWork,appliedAt,comparisonPair, onComparisonPair, decisionSnapshot, evidenceId, terrain,
   terrainMetadata, manifest, upload, onClose, onOpenReport, onApplyReport, onRevision,
   onInspectObject }: Props): JSX.Element | null {
@@ -56,10 +63,14 @@ export function WorkspaceDialogs({ gisSession,onGisResponse,dialog, locale, offl
     case null:
     case 'layers':
       return null;
+    case 'fieldReports':
+      return <ReportInbox locale={locale} identity={identity} session={gisSession} onClose={onClose} onShow={onGisResponse} onEdit={onEditGis}/>;
+    case 'help':
+      return <UserGuide locale={locale} onClose={onClose}/>;
     case 'comparison':
       return <ImageCompareDialog pair={comparisonPair} onPair={onComparisonPair} triggeredAt={incident.triggeredAt} locale={locale} onClose={onClose} />;
     case 'geodata':
-      return <GeometryWorkspace locale={locale} offline={offline} onClose={onClose} session={gisSession} onResponse={onGisResponse}/>;
+      return <GeometryWorkspace locale={locale} offline={offline} onClose={onClose} session={{...gisSession,annotate:(id,value)=>{const record=gisSession.records.find(r=>r.id===id);return gisSession.annotate(id,value,{[submissionKey]:record&&submissionOf(record) || newSubmission(identity,'manual')});}}} onResponse={onGisResponse} scenario={{ communities: snapshot.communities, responseSites: snapshot.responseSites, hazards, roads }} scenarioEdits={scenarioEdits} onRenameScenario={onRename}/>;
     case 'exportDecision':
       return decisionSnapshot ? <DecisionExportDialog snapshot={decisionSnapshot} terrain={terrain} imageUrl={manifest?.terrain.image?.url} locale={locale} onClose={onClose} /> : null;
     case 'alerts':

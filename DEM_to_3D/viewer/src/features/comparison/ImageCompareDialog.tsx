@@ -1,3 +1,5 @@
+import { removeLeafletMap } from '../map/removeLeafletMap';
+import { FileDropZone } from '../../shared/ui/FileDropZone';
 import { useEffect, useRef, useState } from 'react';
 import * as L from 'leaflet';
 import type { Locale } from '../../types/dear';
@@ -27,7 +29,7 @@ function ComparisonMap({ pair, locale }: { pair: ComparisonPair; locale: Locale 
     before.on('load', clip.current); map.on('move zoom zoomend resize', clip.current);
     const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); clip.current(); }); resize.observe(container);
     clip.current();
-    return () => { resize.disconnect(); map.remove(); clip.current = () => {}; };
+    return () => { resize.disconnect(); removeLeafletMap(map); clip.current = () => {}; };
   }, [pair]);
   useEffect(() => clip.current(), [position]);
   return <div className="comparison-stage">
@@ -57,7 +59,7 @@ export function ImageCompareDialog({ pair, onPair, triggeredAt, locale, onClose 
     georef: ['Ảnh thiếu hoặc sai thông tin định vị.', 'The image has invalid georeferencing.']
   };
   const load = async () => {
-    if (!files[0] || !files[1]) return;
+    if (!files[0] || !files[1]) { setError(t('Chọn đủ hai tệp GeoTIFF trước và sau sự kiện.', 'Choose both the pre- and post-event GeoTIFF.')); return; }
     if (!sources.every(source => source.trim())) { setError(t(...errors.source)); return; }
     const times = dates.map(value => value + ':00+07:00');
     if (Date.parse(times[0]) >= Date.parse(times[1])) { setError(t(...errors.dates)); return; }
@@ -80,7 +82,8 @@ export function ImageCompareDialog({ pair, onPair, triggeredAt, locale, onClose 
     <header className="modal-head"><h2 id="comparison-title">{t('So ảnh trước và sau sự kiện', 'Pre/post imagery comparison')}</h2><button className="icon-button" aria-label={t('Đóng', 'Close')} onClick={onClose}><UiIcon name="close"/></button></header>
     {pair ? <><ComparisonMap pair={pair} locale={locale}/><footer className="comparison-sources"><span>{t('Trước', 'Before')}: {pair.before.source}</span><span>{t('Sau', 'After')}: {pair.after.source}</span><button className="text-button" onClick={() => onPair(null)}>{t('Chọn cặp ảnh khác', 'Choose another pair')}</button><small>{t('Vùng thiếu ảnh để trống. So ảnh không tự xác nhận sạt lở hoặc khả năng đi qua.', 'No-data areas remain blank. Image comparison does not confirm landslides or passability.')}</small></footer></> : <form className="modal-body comparison-form" onSubmit={event => { event.preventDefault(); void load(); }}>
       {[0, 1].map(index => <fieldset key={index}><legend>{index === 0 ? t('Ảnh trước sự kiện', 'Pre-event imagery') : t('Ảnh sau sự kiện', 'Post-event imagery')}</legend>
-        <label>{t('GeoTIFF', 'GeoTIFF')}<input type="file" accept=".tif,.tiff" required disabled={busy} onChange={event => setFiles(previous => index === 0 ? [event.target.files?.[0] ?? null, previous[1]] : [previous[0], event.target.files?.[0] ?? null])}/></label>
+        <FileDropZone compact icon="image" accept=".tif,.tiff" disabled={busy} title={t('Chọn hoặc kéo thả GeoTIFF', 'Choose or drop a GeoTIFF')} files={files[index] ? [files[index]!.name] : undefined}
+          onFiles={([file]) => setFiles(previous => index === 0 ? [file, previous[1]] : [previous[0], file])}/>
         <label>{t('Thời gian thu nhận (UTC+7)', 'Acquisition time (UTC+7)')}<input type="datetime-local" required value={dates[index]} disabled={busy} onChange={event => setDates(previous => previous.map((value, i) => i === index ? event.target.value : value))}/></label>
         <label>{t('Nguồn ảnh', 'Image source')}<input required maxLength={120} value={sources[index]} disabled={busy} onChange={event => setSources(previous => previous.map((value, i) => i === index ? event.target.value : value))}/></label>
       </fieldset>)}
