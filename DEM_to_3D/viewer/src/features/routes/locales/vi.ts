@@ -1,0 +1,33 @@
+export const vi = {
+  journeyBetweenTwoPoints: 'Hành trình giữa hai điểm',
+  closeJourney: 'Đóng hành trình',
+  start: 'Điểm đầu',
+  end: 'Điểm cuối',
+  chooseStart: 'Chọn điểm đầu',
+  chooseEnd: 'Chọn điểm cuối',
+  chooseOnMap: 'Chọn trên bản đồ',
+  chooseOnMapEllipsis: 'Chọn trên bản đồ…',
+  pickedOnMap: 'Vị trí đã chọn trên bản đồ',
+  presetStart: 'Điểm đầu',
+  presetEnd: 'Điểm cuối',
+  responseSites: 'Điểm ứng phó',
+  areas: 'Địa bàn',
+  gisData: 'Dữ liệu GIS',
+  swap: 'Đổi điểm đầu và điểm cuối',
+  accessDistance: 'cách đường {d}',
+  clickMapStart: 'Bấm lên bản đồ để đặt điểm A. Esc để hủy',
+  clickMapEnd: 'Bấm lên bản đồ để đặt điểm B. Esc để hủy',
+  avoidBlockedSections: 'Tránh đoạn bị chặn',
+  tooFarFromRoads: 'Điểm cách mạng đường hơn 5 km, không thể nối tuyến.',
+  statusBlocked: 'Có đoạn bị chặn',
+  statusUncertain: 'Có đoạn cần xác minh',
+  statusOpen: 'Chưa ghi nhận chặn',
+  alongRoads: 'Theo đường',
+  offRoadAccess: 'Khoảng cách thẳng tới đường',
+  networkNote:
+    'Khoảng cách tính trên mạng đường đã có. Chưa xác nhận khả năng đi qua.',
+  journeyElevationProfile: 'Mặt cắt địa hình',
+  samePoint: 'Điểm A và B trùng nhau.',
+  theseLocationsCannotBeConnectedUnderThe:
+    'Không nối được hai điểm với điều kiện đã chọn.'
+};

@@ -35,9 +35,9 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
           <button className="route-section-row" aria-expanded={expanded} aria-controls={`section-${road.id}`} onClick={() => onSelect(expanded ? null : road.id)}>
             <span className="route-section-number" aria-hidden="true">{index + 1}</span>
             <strong className="route-section-name" title={name}>{title}</strong>
-            <span className="route-section-meta"><small>{road.len} km</small><StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>
+            <span className="route-section-meta"><small>{road.len} km</small>{road.status !== 'open' && <StatusText tone={road.status === 'blocked' ? 'critical' : 'warning'} icon={road.status === 'blocked' ? 'blocked' : 'uncertain'}>
               {t(...roadStatusLabels[road.status])}
-            </StatusText></span>
+            </StatusText>}</span>
             <UiIcon name={expanded ? 'collapse' : 'expand'} size={14}/>
           </button>
           {expanded && <div id={`section-${road.id}`} className="route-section-detail">

@@ -8,7 +8,7 @@ export const routingPolicy = { algorithm: 'dijkstra', version: 'network-v1', unc
 
 /** Prepared graph: endpoints are explicitly connected. Do not snap unknown roads
  * or connect line crossings without a surveyed network junction. */
-function findPath(roads: RoadSegment[], start: Point, destination: Point,
+export function findPreparedNetworkPath(roads: RoadSegment[], start: Point, destination: Point,
   ignoreStatus: boolean, excluded = new Set<string>()): Step[] | null {
   const adjacency = new Map<string, Array<Step & { to: string; cost: number }>>();
   for (const road of [...roads].sort((a, b) => a.id.localeCompare(b.id))) {
@@ -68,14 +68,14 @@ function route(steps: Step[], community: Community, type: 'direct' | 'candidate'
 export function buildNetworkRoutes(roads: RoadSegment[], communities: Community[], staging: Point): Map<string, ScenarioRoutePair> {
   const routes = new Map<string, ScenarioRoutePair>();
   for (const community of communities) {
-    const baseline = findPath(roads, staging, community.projected, true);
+    const baseline = findPreparedNetworkPath(roads, staging, community.projected, true);
     if (!baseline) { routes.set(community.id, { direct: null, candidate: null }); continue; }
-    const preferred = findPath(roads, staging, community.projected, false);
+    const preferred = findPreparedNetworkPath(roads, staging, community.projected, false);
     let alternative: Step[] | null = null, alternativeLength = Infinity;
     // A distinct path can be found by excluding each edge of the baseline.
     // Retain the shortest known alternative for comparison even if blocked.
     for (const step of baseline) {
-      const path = findPath(roads, staging, community.projected, true, new Set([step.road.id]));
+      const path = findPreparedNetworkPath(roads, staging, community.projected, true, new Set([step.road.id]));
       const length = path?.reduce((sum, item) => sum + projectedPathLength(item.road.points), 0) ?? Infinity;
       if (length < alternativeLength) { alternative = path; alternativeLength = length; }
     }
