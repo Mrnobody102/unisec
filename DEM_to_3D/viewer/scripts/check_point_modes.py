@@ -8,6 +8,9 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 from field_photo_fixture import create_field_photo
 
+# Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
+LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+
 
 def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as pw:
@@ -91,7 +94,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:5174')
-    parser.add_argument('--chrome', default=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
+    parser.add_argument('--chrome', default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None)
     parser.add_argument('--captures', type=Path)
     args = parser.parse_args()
     run(args.url.rstrip('/'), args.chrome, args.captures)
