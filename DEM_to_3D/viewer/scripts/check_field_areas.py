@@ -2,6 +2,7 @@
 import argparse, json, tempfile, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from map_wait import settled_box
 
 def run(url, chrome, captures):
     pid, aid = str(uuid.uuid4()), str(uuid.uuid4())
@@ -54,9 +55,7 @@ def run(url, chrome, captures):
         expect(inspector.locator('[data-field-area-id]')).to_have_count(2)
         inspector.get_by_role('button',name='Sửa Vùng nghi ảnh hưởng 1',exact=True).click()
         expect(page.locator('.geodata-vertex').first).to_be_visible()
-        # Editing zooms to the area; drag only once Leaflet's zoom animation ended and the handle is still.
-        page.wait_for_function("()=>{const v=document.querySelector('.geodata-vertex');if(!v||document.querySelector('.geodata-map .leaflet-zoom-anim'))return false;const r=v.getBoundingClientRect(),k=[r.x,r.y,r.width].join();const still=window.__vertexBox===k;window.__vertexBox=k;return still&&r.width>0}")
-        v=page.locator('.geodata-vertex').first.bounding_box();page.mouse.move(v['x']+v['width']/2,v['y']+v['height']/2);page.mouse.down();page.mouse.move(v['x']+20,v['y']+20,steps=8);page.mouse.up()
+        v=settled_box(page,'.geodata-vertex');page.mouse.move(v['x']+v['width']/2,v['y']+v['height']/2);page.mouse.down();page.mouse.move(v['x']+20,v['y']+20,steps=8);page.mouse.up()
         page.get_by_role('button',name='Áp dụng',exact=True).click()
         expect(inspector).to_be_visible()
         changed=next(r for r in records() if r['id']==areas[0]['id'])

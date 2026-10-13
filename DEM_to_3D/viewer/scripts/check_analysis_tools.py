@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 from check_geodata_workspace import paste
+from map_wait import settled_box
 
 AOI='Chế Tạo: POLYGON((103.94 21.62,104.15 21.62,104.15 21.95,103.94 21.95,103.94 21.62))'
 
@@ -187,7 +188,7 @@ def run(url, chrome, captures):
         page.get_by_role('tab',name='AOI',exact=True).click()
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
         target=page.locator('.leaflet-points-pane path').bounding_box()
-        box=page.locator('.geodata-vertex').first.bounding_box()
+        box=settled_box(page,'.geodata-vertex')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down()
         page.mouse.move(target['x']+target['width']/2+5,target['y']+target['height']/2,steps=8)
         page.mouse.up()

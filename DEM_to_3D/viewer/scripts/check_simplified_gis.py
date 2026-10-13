@@ -2,6 +2,7 @@
 import argparse, base64, hashlib, json, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from map_wait import settled_box
 
 def run(url, chrome, heic, captures):
     source={'name':'field.kml','format':'KML','importedAt':'2026-10-12T00:00:00Z'}
@@ -36,14 +37,14 @@ def run(url, chrome, heic, captures):
         page.get_by_label('Tên vùng',exact=True).fill('Ranh giới khảo sát mới');page.get_by_label('Tên vùng',exact=True).press('Enter')
         assert next(r for r in read() if r['id']==aoi['id'])['name']=='Ranh giới khảo sát mới'
         page.locator('#geo-panel-aoi').get_by_role('button',name='Sửa ranh giới',exact=True).click()
-        handle=page.locator('.geodata-vertex').first;box=handle.bounding_box()
+        box=settled_box(page,'.geodata-vertex')
         path=page.locator('.leaflet-drawing-pane path[stroke-width="3"]').first;before=path.get_attribute('d')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down();page.mouse.move(box['x']+30,box['y']+20,steps=5)
         expect(path).not_to_have_attribute('d',before)
         page.mouse.up();page.get_by_role('button',name='Áp dụng',exact=True).click()
         edited=next(r for r in read() if r['id']==aoi['id'])['feature']['geometry'];assert edited!=aoi['feature']['geometry']
         page.locator('#geo-panel-aoi').get_by_role('button',name='Sửa ranh giới',exact=True).click()
-        box=page.locator('.geodata-move-handle').bounding_box();page.mouse.move(box['x']+13,box['y']+13);page.mouse.down();page.mouse.move(box['x']+45,box['y']+33,steps=5);page.mouse.up()
+        box=settled_box(page,'.geodata-move-handle');page.mouse.move(box['x']+13,box['y']+13);page.mouse.down();page.mouse.move(box['x']+45,box['y']+33,steps=5);page.mouse.up()
         page.get_by_role('button',name='Áp dụng',exact=True).click()
         moved=next(r for r in read() if r['id']==aoi['id'])['feature']['geometry']['coordinates'][0]
         old=edited['coordinates'][0];dx=moved[0][0]-old[0][0];dy=moved[0][1]-old[0][1]
