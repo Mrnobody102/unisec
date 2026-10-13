@@ -64,8 +64,7 @@ def run(url, chrome, captures):
         page.get_by_role('button',name='Hủy',exact=True).click()
         # Dragging a vertex changes only the draft; draft undo restores it.
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
-        vertex=page.locator('.geodata-vertex').first
-        box=vertex.bounding_box()
+        box=settled_box(page,'.geodata-vertex')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down()
         page.mouse.move(box['x']+30,box['y']+25,steps=8);page.mouse.up()
         expect(page.get_by_role('button',name='Hoàn tác GIS',exact=True)).to_be_enabled()
