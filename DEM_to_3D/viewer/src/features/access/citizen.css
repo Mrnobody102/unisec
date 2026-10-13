@@ -1,0 +1,336 @@
+@import './review-status.css';
+
+.citizen-workspace {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.citizen-header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ws-line);
+  background: var(--ws-surface);
+}
+.citizen-header > div {
+  display: grid;
+  gap: 4px;
+  margin-right: auto;
+}
+.citizen-header > div span,
+.citizen-demo-label {
+  font-size: 12px;
+  color: var(--ws-muted);
+}
+.citizen-body {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+}
+.citizen-panel {
+  flex: none;
+  width: 384px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ws-line);
+  background: var(--ws-surface);
+}
+.citizen-panel > nav {
+  display: flex;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--ws-line);
+}
+.citizen-panel > nav button {
+  flex: 1;
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: 13px;
+}
+.citizen-panel > nav button[aria-pressed='true'] {
+  color: var(--ws-brand);
+  border-bottom-color: var(--ws-brand);
+}
+.citizen-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+.citizen-panel h1 {
+  font-size: 21px;
+  margin: 0 0 20px;
+}
+.citizen-panel h2 {
+  font-size: 14px;
+  margin: 16px 0 10px;
+}
+.citizen-panel input:not([type='file']),
+.citizen-panel textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--radius-control);
+  font: inherit;
+  background: var(--ws-raised);
+  color: var(--ws-text);
+}
+.citizen-panel select:not([multiple]) {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+.citizen-panel .catalog-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.citizen-position {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+}
+.citizen-position legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.citizen-position .geodata-actions {
+  margin-bottom: 16px;
+}
+.citizen-feedback {
+  margin: 0 0 20px;
+  padding: 12px;
+  border-left: 2px solid var(--ws-brand);
+  background: var(--ws-tint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.citizen-empty {
+  padding: 32px 0;
+  color: var(--ws-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.citizen-submissions {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.citizen-submission {
+  overflow: hidden;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--radius-control);
+  background: var(--ws-surface);
+}
+.citizen-submission[data-open] {
+  border-color: var(--ws-line);
+  background: var(--ws-tint);
+}
+.citizen-submission-head {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.citizen-submission-head:hover {
+  background: var(--hover);
+}
+.citizen-submission-head > img,
+.citizen-submission-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+.citizen-submission-thumb {
+  display: grid;
+  place-items: center;
+  background: var(--ws-raised);
+  color: var(--ws-muted);
+}
+.citizen-submission-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.citizen-submission-text strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.citizen-submission-text small {
+  color: var(--ws-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.citizen-submission-body {
+  padding: 4px 12px 14px;
+  border-top: 1px solid var(--ws-line);
+}
+.citizen-submission-body .field-observation {
+  margin-top: 0;
+  padding-top: 8px;
+  border-top: 0;
+}
+.citizen-review-note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--select);
+  background: var(--ws-tint);
+  font-size: 13px;
+}
+.citizen-road-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.citizen-road-list li {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ws-line);
+  font-size: 13px;
+}
+.citizen-road-list span {
+  color: var(--ws-muted);
+  font-size: 12px;
+}
+.citizen-map {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+/* No toolbar strip here: the map fills the area and controls float on it. */
+.map-area.citizen-map {
+  --map-toolbar-height: 0px;
+}
+.citizen-map-tools {
+  position: absolute;
+  z-index: 650;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--map-chrome-line, var(--ws-line));
+  border-radius: var(--radius-control);
+  background: var(--ws-surface);
+  box-shadow: var(--shadow-float);
+}
+.citizen-map-tools .icon-button {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ws-text);
+}
+.citizen-map-tools .icon-button + .icon-button {
+  border-left: 1px solid var(--ws-line);
+}
+.citizen-map-tools .icon-button:hover {
+  background: var(--hover);
+}
+.citizen-pick-hint {
+  position: absolute;
+  z-index: 650;
+  top: 58px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--ws-line);
+  background: var(--ws-surface);
+  font-size: 13px;
+}
+.citizen-pick-hint button {
+  margin-left: auto;
+}
+.citizen-mobile-switch {
+  display: none;
+}
+@media (max-width: 760px) {
+  .citizen-header {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .citizen-demo-label {
+    display: none;
+  }
+  .citizen-panel {
+    width: 100%;
+  }
+  .citizen-map {
+    display: none;
+  }
+  [data-citizen-map='true'] .citizen-panel {
+    display: none;
+  }
+  [data-citizen-map='true'] .citizen-map {
+    display: block;
+  }
+  .citizen-mobile-switch {
+    display: flex;
+    border-top: 1px solid var(--ws-line);
+    background: var(--ws-surface);
+  }
+  .citizen-mobile-switch button {
+    flex: 1;
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+  }
+  .citizen-mobile-switch button[aria-pressed='true'] {
+    color: var(--ws-brand);
+    font-weight: 600;
+  }
+}
+
+.citizen-submission-text small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.citizen-panel .field-form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 12px 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--ws-line);
+  background: var(--ws-surface);
+}
+
+/* Legend floated so it lays out like a normal block inside the grid. */
+.citizen-position {
+  display: grid;
+  gap: 10px;
+}
+.field-observation .citizen-position > * {
+  margin: 0;
+}
+.citizen-position > legend {
+  float: left;
+  width: 100%;
+  margin: 0;
+}
