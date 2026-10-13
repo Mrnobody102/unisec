@@ -1,0 +1,293 @@
+/* Group panel opened from a point cluster: photo strip first, then one entry per point. */
+.point-group-card {
+  width: min(380px, calc(100% - 32px));
+  padding: 0;
+}
+.point-group-card > header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 14px 12px 10px 16px;
+  background: var(--ws-surface);
+  border-bottom: 1px solid var(--ws-line);
+}
+.point-group-card > header > div {
+  flex: 1;
+  min-width: 0;
+}
+.point-group-card > header h2 {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.point-group-meta {
+  margin: 2px 0 0;
+  color: var(--ws-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.point-group-hero {
+  display: grid;
+  gap: 2px;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 88px 88px;
+  background: var(--ws-line);
+}
+.point-group-hero[data-count='1'] {
+  grid-template-columns: 1fr;
+  grid-template-rows: 200px;
+}
+.point-group-hero[data-count='2'] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 160px;
+}
+.point-group-hero[data-count='3'] {
+  grid-template-columns: 2fr 1fr;
+}
+.point-group-hero:not([data-count='1']):not([data-count='2'])
+  > button:first-child {
+  grid-row: span 2;
+}
+.point-group-hero[data-count='4'] > button:last-child {
+  grid-column: span 2;
+}
+.point-group-hero > button {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--ws-bg);
+  cursor: zoom-in;
+}
+.point-group-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 160ms ease;
+}
+.point-group-hero > button:hover img {
+  transform: scale(1.03);
+}
+.point-group-hero > button:focus-visible {
+  outline: 2px solid var(--select);
+  outline-offset: -2px;
+}
+.point-group-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  padding: 14px 6px 4px;
+  background: linear-gradient(transparent, #000a);
+  color: #fff;
+  font-size: 11px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.point-group-more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0008;
+  color: #fff;
+  font: 600 16px var(--font-sans);
+}
+
+.point-group-list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+.point-group-list > li {
+  display: block;
+  padding: 0;
+  border-bottom: 1px solid var(--ws-line);
+}
+.point-group-list > li:last-child {
+  border-bottom: 0;
+}
+.point-group-list > li[aria-current='true'] {
+  background: var(--ws-tint);
+  box-shadow: inset 3px 0 var(--select);
+}
+.point-group-list strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.point-group-list small {
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+.point-group-marker {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #0003;
+  color: #fff;
+  font: 600 11px var(--font-sans);
+}
+/* Paged photo viewer. Reuses the .field-photo-preview dialog frame. */
+.photo-lightbox header p {
+  margin: 2px 0 0;
+  color: var(--ws-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.photo-lightbox-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+.photo-lightbox-stage img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 260px);
+  object-fit: contain;
+}
+.photo-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #000a;
+  color: #fff;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.photo-lightbox-nav:hover,
+.photo-lightbox-nav:focus-visible {
+  background: #000d;
+  outline: 2px solid var(--select);
+}
+.photo-lightbox-nav.is-prev {
+  left: 12px;
+}
+.photo-lightbox-nav.is-next {
+  right: 12px;
+}
+.photo-lightbox-strip {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+}
+.photo-lightbox-strip button {
+  width: 64px;
+  height: 48px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  background: var(--ws-bg);
+  opacity: 0.6;
+  cursor: pointer;
+}
+.photo-lightbox-strip button[aria-current='true'],
+.photo-lightbox-strip button:hover,
+.photo-lightbox-strip button:focus-visible {
+  border-color: var(--select);
+  opacity: 1;
+  outline: none;
+}
+.photo-lightbox-strip img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The GIS workspace map has its own toolbar above the surface. */
+.geodata-map .point-group-card {
+  grid-row: 2;
+  top: 12px;
+  right: 12px;
+  max-height: calc(100% - 24px);
+}
+@media (max-width: 480px) {
+  .point-group-card,
+  .geodata-map .point-group-card {
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+}
+
+.point-group-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.point-group-list small {
+  display: grid;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+.point-group-card .photo-lightbox > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.photo-lightbox-count {
+  margin-left: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Photos appear once in the montage; each report opens from a compact row. */
+.point-group-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 16px;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.point-group-row:hover {
+  background: var(--hover);
+}
+.point-group-row:focus-visible {
+  background: var(--hover);
+  outline: 2px solid var(--select);
+  outline-offset: -2px;
+}
+.point-group-row > svg {
+  margin-top: 2px;
+  color: var(--ws-muted);
+}
+.point-group-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.point-group-text small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+

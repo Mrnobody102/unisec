@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import type { RenameScenario } from '../access/ScenarioLabels';
+import { isSelectPickerEvent } from '../../shared/ui/selectKeyboard';
+import type { ScenarioEdits } from '../access/scenarioEdits';
+import type { ScenarioOverlay } from './scenarioOverlay';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GeometryError } from '../../geo/vector/types';
 import { polygonCoverage } from '../../geo/vector/polygonCoverage';
 import type { Locale } from '../../types/dear';
@@ -13,6 +17,12 @@ import {
 import { useImageryCatalog } from '../catalog/useImageryCatalog';
 import { sceneRecord, reviewScenePair } from '../catalog/imageryCatalog';
 import { GeometryImport } from './GeometryImport';
+import { GeometryInspector } from './GeometryInspector';
+import {
+  createFieldArea,
+  fieldAreaOwner,
+  linkedFieldAreas
+} from '../observations/fieldAreas';
 import { GeometryLayers } from './GeometryLayers';
 import { GeometryCoverage } from './GeometryCoverage';
 import { GeometryMap } from './GeometryMap';
@@ -25,6 +35,7 @@ import { GeometryExport } from './GeometryExport';
 import { geometryErrorText } from './geometryErrors';
 import { PointEntry } from '../observations/PointEntry';
 import './geodata.css';
+import './geometry-inspector.css';
 
 type Props = {
   locale: Locale;
@@ -33,6 +44,9 @@ type Props = {
   standalone?: boolean;
   session?: ReturnType<typeof useGeometrySession>;
   onResponse?: (id: string) => void;
+  scenario?: ScenarioOverlay;
+  scenarioEdits?: ScenarioEdits;
+  onRenameScenario?: RenameScenario;
 };
 type Tab = 'layers' | 'aoi' | 'scenes';
 const selectionKey = 'dear.imagery-selection.v1';
@@ -62,6 +76,9 @@ function LocalGeometryWorkspace(props: Props): JSX.Element {
   return <GeometryWorkspaceView {...props} session={session} />;
 }
 function GeometryWorkspaceView({
+  scenario,
+  scenarioEdits,
+  onRenameScenario,
   locale,
   onClose,
   offline = false,
@@ -70,8 +87,19 @@ function GeometryWorkspaceView({
   onResponse
 }: Props & { session: ReturnType<typeof useGeometrySession> }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
+  const workspaceRoot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    workspaceRoot.current
+      ?.querySelector<HTMLButtonElement>('.geodata-title button')
+      ?.focus();
+    return () => {
+      if (previous?.isConnected) previous.focus();
+    };
+  }, []);
   const editor = useGeometryEditor(),
     repository = useImageryCatalog();
+  const [inputTask, setInputTask] = useState<'point' | 'import' | null>(null);
   const [tab, setTab] = useState<Tab>('layers'),
     [mobileTab, setMobileTab] = useState<'data' | 'map'>('data');
   const [snapping, setSnapping] = useState(false),
@@ -85,6 +113,8 @@ function GeometryWorkspaceView({
       version: number;
       id: string | null;
     } | null>(null);
+  const [inspecting, setInspecting] = useState(!!session.selectedId);
+  const [areaPointId, setAreaPointId] = useState<string | null>(null);
   const aoi = session.records.find((record) => record.role === 'aoi');
   const selected = session.records.find(
     (record) => record.id === session.selectedId
@@ -136,7 +166,12 @@ function GeometryWorkspaceView({
   }, [selectedScenes]);
   useEffect(() => {
     const keys = (event: KeyboardEvent) => {
-      if (editor.active) return;
+      if (
+        editor.active ||
+        isSelectPickerEvent(event) ||
+        (event.target as HTMLElement)?.closest('dialog[open]')
+      )
+        return;
       const key = event.key.toLowerCase();
       if (event.key === 'Escape' && sceneId) {
         event.preventDefault();
@@ -159,20 +194,42 @@ function GeometryWorkspaceView({
     document.addEventListener('keydown', keys, true);
     return () => document.removeEventListener('keydown', keys, true);
   });
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        editor.active ||
+        isSelectPickerEvent(event) ||
+        (event.target as HTMLElement)?.closest('dialog[open]')
+      )
+        return;
+      event.preventDefault();
+      onClose();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [editor.active, onClose]);
   const select = (id: string) => {
     if (editor.active) return;
     const candidate = repository.catalog?.scenes.find(
       (item) => `scene:${item.id}` === id
     );
-    if (candidate) {
+    if (candidate && !session.records.some((record) => record.id === id)) {
       setSceneId(candidate.id);
       return;
     }
-    session.select(id);
+    const record = session.records.find((r) => r.id === id);
+    const owner = record && fieldAreaOwner(record, session.records);
+    session.select(owner?.id ?? id);
+    setInspecting(true);
+    setMobileTab('data');
     setSceneId(null);
     setTab('layers');
   };
   const start = (mode: GeometryMode) => {
+    setAreaPointId(null);
+    setInspecting(false);
     session.setError(null);
     setSceneId(null);
     setSceneView(null);
@@ -185,7 +242,22 @@ function GeometryWorkspaceView({
   const finish = () => {
     try {
       const geometry = editor.result();
-      if (editor.mode === 'edit' && editor.recordId)
+      const fieldOwner =
+        areaPointId && session.records.find((r) => r.id === areaPointId);
+      if (fieldOwner) {
+        if (editor.mode === 'edit' && editor.recordId)
+          session.replaceGeometry(editor.recordId, geometry);
+        else
+          session.add([
+            createFieldArea(
+              fieldOwner,
+              geometry,
+              t('Vùng nghi ảnh hưởng ', 'Suspected affected area ') +
+                (linkedFieldAreas(session.records, fieldOwner.id).length + 1)
+            )
+          ]);
+        session.select(fieldOwner.id);
+      } else if (editor.mode === 'edit' && editor.recordId)
         session.replaceGeometry(editor.recordId, geometry);
       else if (aoi) {
         session.replaceGeometry(aoi.id, geometry, true);
@@ -205,7 +277,10 @@ function GeometryWorkspaceView({
         );
       editor.cancel();
       session.setError(null);
-      setTab('aoi');
+      setTab(fieldOwner ? 'layers' : 'aoi');
+      setInspecting(!!fieldOwner);
+      setAreaPointId(null);
+      if (fieldOwner) setMobileTab('data');
     } catch (error) {
       session.setError(error);
     }
@@ -239,40 +314,32 @@ function GeometryWorkspaceView({
   const working = editor.active || session.busy;
   return (
     <div
+      ref={workspaceRoot}
       className="geodata-workspace"
-      role={standalone ? undefined : 'dialog'}
-      aria-modal={standalone ? undefined : true}
+      data-standalone={standalone}
+      role={standalone ? undefined : 'region'}
       aria-labelledby="geodata-title"
       data-mobile-tab={mobileTab}
     >
-      <header className="geodata-header">
-        <button
-          className="icon-button"
-          onClick={onClose}
-          aria-label={
-            standalone
-              ? t('Về bản đồ ứng phó', 'Back to response map')
-              : t('Đóng dữ liệu GIS', 'Close GIS data')
-          }
-          title={t('Về bản đồ ứng phó', 'Back to response map')}
-        >
-          <UiIcon name="back" />
-        </button>
-        <div>
-          <h1 id="geodata-title">{t('Dữ liệu GIS', 'GIS data')}</h1>
-          <span>
-            {t(
-              'Vùng quan tâm, lớp dữ liệu và cảnh ảnh',
-              'Areas of interest, spatial layers and imagery'
-            )}
-          </span>
-        </div>
-        <span className="geodata-local">
-          {t('Workspace cục bộ', 'Local workspace')}
-        </span>
-      </header>
       <GeometryToolbar
         locale={locale}
+        leading={
+          <div className="geodata-title">
+            <button
+              className="icon-button"
+              onClick={onClose}
+              aria-label={
+                standalone
+                  ? t('Về bản đồ ứng phó', 'Back to response map')
+                  : t('Đóng dữ liệu GIS', 'Close GIS data')
+              }
+              title={t('Về bản đồ ứng phó', 'Back to response map')}
+            >
+              <UiIcon name="back" />
+            </button>
+            <h1 id="geodata-title">{t('Dữ liệu GIS', 'GIS data')}</h1>
+          </div>
+        }
         editor={editor}
         busy={session.busy}
         canUndo={session.canUndo}
@@ -281,6 +348,11 @@ function GeometryWorkspaceView({
         onRedo={session.redo}
         hasSelection={Boolean(selected)}
         aoiName={aoi?.name}
+        fieldAreaName={
+          areaPointId
+            ? session.records.find((r) => r.id === areaPointId)?.name
+            : undefined
+        }
         snapping={snapping}
         onSnap={setSnapping}
         onStart={start}
@@ -310,7 +382,7 @@ function GeometryWorkspaceView({
           {t('Bản đồ', 'Map')}
         </button>
       </nav>
-      {error && (
+      {error && inputTask !== 'import' && (
         <div className="geodata-error" role="alert">
           <UiIcon name="uncertain" />
           <span>{geometryErrorText(error, locale)}</span>
@@ -326,6 +398,11 @@ function GeometryWorkspaceView({
       <div className="geodata-body">
         <aside
           className="geodata-sidebar"
+          data-inspecting={
+            inspecting && !!selected && tab === 'layers' && !editor.active
+              ? 'true'
+              : undefined
+          }
           aria-label={t('Quản lý dữ liệu GIS', 'GIS data controls')}
         >
           <nav
@@ -357,7 +434,7 @@ function GeometryWorkspaceView({
                   ? t('Lớp', 'Layers')
                   : id === 'aoi'
                     ? 'AOI'
-                    : t('Cảnh ảnh', 'Imagery')}
+                    : t('Ảnh vệ tinh', 'Imagery')}
               </button>
             ))}
           </nav>
@@ -368,45 +445,47 @@ function GeometryWorkspaceView({
               aria-labelledby="geo-tab-layers"
               hidden={tab !== 'layers'}
             >
-              <PointEntry
-                locale={locale}
-                session={session}
-                disabled={working}
-              />
-              <GeometryImport
-                locale={locale}
-                busy={session.busy}
-                disabled={editor.active}
-                count={session.records.length}
-                onFiles={async (files, role) => {
-                  setSceneView(null);
-                  return session.importFiles(files, role);
-                }}
-                onText={(text, role) => {
-                  setSceneView(null);
-                  return session.importText(text, role);
-                }}
-              />
+              <div className="geodata-add-actions">
+                <PointEntry
+                  open={inputTask === 'point'}
+                  onOpenChange={(open) => setInputTask(open ? 'point' : null)}
+                  locale={locale}
+                  session={session}
+                  disabled={working}
+                  onAdded={select}
+                />
+                <GeometryImport
+                  open={inputTask === 'import'}
+                  onOpenChange={(open) => setInputTask(open ? 'import' : null)}
+                  locale={locale}
+                  busy={session.busy}
+                  disabled={editor.active}
+                  onDismissError={() => session.setError(null)}
+                  error={
+                    session.error
+                      ? geometryErrorText(session.error, locale)
+                      : undefined
+                  }
+                  onFiles={async (files, role) => {
+                    setSceneView(null);
+                    return session.importFiles(files, role);
+                  }}
+                  onText={(text, role) => {
+                    setSceneView(null);
+                    return session.importText(text, role);
+                  }}
+                />
+              </div>
               <GeometryLayers
                 records={session.records}
                 selectedId={session.selectedId}
                 locale={locale}
                 disabled={working}
-                onSelect={(id) => {
-                  session.select(id);
-                  setSceneId(null);
-                }}
+                onSelect={select}
                 onUpdate={session.update}
-                onAnnotate={session.annotate}
-                onResponse={
-                  onResponse ?? (standalone ? () => onClose() : undefined)
-                }
-                onRemove={session.remove}
-                onFit={(id) => {
-                  setSceneView(null);
-                  session.fit(id);
-                }}
+                onBatch={session.batch}
               />
+
               {results.length > 0 && (
                 <label className="geodata-section geodata-scene-visibility">
                   <input
@@ -414,7 +493,7 @@ function GeometryWorkspaceView({
                     checked={showScenes}
                     onChange={(event) => setShowScenes(event.target.checked)}
                   />
-                  {t('Phạm vi cảnh tìm được', 'Search result footprints')}
+                  {t('Phạm vi ảnh tìm được', 'Search result footprints')}
                 </label>
               )}
             </div>
@@ -428,8 +507,25 @@ function GeometryWorkspaceView({
                 <h2>{t('Vùng quan tâm', 'Area of interest')}</h2>
                 {aoi ? (
                   <>
-                    <p>{aoi.name}</p>
-                    <div className="geodata-actions">
+                    <label className="geodata-field">
+                      {t('Tên vùng', 'Area name')}
+                      <input
+                        aria-label={t('Tên vùng', 'Area name')}
+                        key={aoi.id}
+                        defaultValue={aoi.name}
+                        maxLength={160}
+                        disabled={working}
+                        onBlur={(e) => {
+                          const name = e.target.value.trim();
+                          if (name) session.update(aoi.id, { name });
+                          else e.target.value = aoi.name;
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                      />
+                    </label>
+                    <div className="geodata-actions geodata-aoi-actions">
                       <button
                         className="button"
                         disabled={working}
@@ -440,23 +536,22 @@ function GeometryWorkspaceView({
                         }}
                       >
                         <UiIcon name="edit" />
-                        {t('Chỉnh đỉnh AOI', 'Edit AOI vertices')}
+                        {t('Sửa ranh giới', 'Edit boundary')}
                       </button>
                       <button
-                        className="button"
+                        className="button soft"
                         disabled={working}
                         onClick={() => setTab('scenes')}
                       >
-                        <UiIcon name="search" />
-                        {t('Tìm cảnh ảnh', 'Find imagery')}
+                        {t('Tìm ảnh vệ tinh', 'Find imagery')}
                       </button>
                     </div>
                   </>
                 ) : (
                   <p className="geodata-empty">
                     {t(
-                      'Vẽ vùng hoặc gán một polygon làm AOI trong tab Lớp.',
-                      'Draw an area or assign a polygon as AOI in Layers.'
+                      'Vẽ vùng mới hoặc chọn một vùng có sẵn trong tab Lớp.',
+                      'Draw a new area or choose an existing area in Layers.'
                     )}
                   </p>
                 )}
@@ -542,21 +637,88 @@ function GeometryWorkspaceView({
           storageKey="dear.geodata.panel-width"
         />
         <GeometryMap
+          scenario={scenario}
+          scenarioEdits={scenarioEdits}
+          onRenameScenario={onRenameScenario}
           records={mapRecords}
           selectedId={scene ? `scene:${scene.id}` : session.selectedId}
           locale={locale}
           offline={offline}
-          viewRequest={sceneView ?? session.viewRequest}
+          viewRequest={
+            sceneView && sceneView.version > session.viewRequest.version
+              ? sceneView
+              : session.viewRequest
+          }
           onSelect={select}
+          onGroupOpen={() => setInspecting(false)}
           editor={editor}
           snapping={snapping}
+          drawingColor={areaPointId ? '#b87919' : undefined}
           onFinish={finish}
           onCancel={() => {
             editor.cancel();
+            if (areaPointId) {
+              setInspecting(true);
+              setMobileTab('data');
+            }
+            setAreaPointId(null);
             session.setError(null);
           }}
           intersection={analysis.result?.intersection ?? null}
         />
+        {inspecting && selected && tab === 'layers' && !scene && (
+          <aside
+            className="geodata-inspector"
+            hidden={editor.active}
+            aria-label={t('Hồ sơ đối tượng', 'Feature record')}
+          >
+            <header className="geodata-inspector-header">
+              <h2>{selected.name}</h2>
+              <button
+                className="icon-button"
+                aria-label={t('Đóng hồ sơ đối tượng', 'Close feature record')}
+                onClick={() => setInspecting(false)}
+              >
+                <UiIcon name="close" />
+              </button>
+            </header>
+            <div className="geodata-inspector-scroll">
+              <GeometryInspector
+                records={session.records}
+                selectedId={session.selectedId}
+                locale={locale}
+                disabled={working}
+                onUpdate={session.update}
+                onCoordinates={(id, coordinates) =>
+                  session.replaceGeometry(id, { type: 'Point', coordinates })
+                }
+                onAnnotate={session.annotate}
+                onResponse={onResponse}
+                onRemove={session.remove}
+                onFit={(id) => {
+                  session.fit(id);
+                  setMobileTab('map');
+                }}
+                onDrawArea={(id) => {
+                  session.setError(null);
+                  setAreaPointId(id);
+                  setMobileTab('map');
+                  editor.start('polygon');
+                }}
+                onEditArea={(id) => {
+                  const region = session.records.find((r) => r.id === id);
+                  const owner =
+                    region && fieldAreaOwner(region, session.records);
+                  if (region && owner) {
+                    setAreaPointId(owner.id);
+                    setMobileTab('map');
+                    editor.start('edit', id, region.feature.geometry);
+                  }
+                }}
+              />
+            </div>
+          </aside>
+        )}
         {scene && (
           <SceneDetails
             scene={scene}
@@ -564,7 +726,11 @@ function GeometryWorkspaceView({
             onClose={() => setSceneId(null)}
             onFit={() => {
               setSceneView((previous) => ({
-                version: (previous?.version ?? session.viewRequest.version) + 1,
+                version:
+                  Math.max(
+                    previous?.version ?? 0,
+                    session.viewRequest.version
+                  ) + 1,
                 id: `scene:${scene.id}`
               }));
               setShowScenes(true);

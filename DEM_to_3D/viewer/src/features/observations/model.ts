@@ -1,3 +1,4 @@
+import { captureTime } from './captureMetadata';
 import type { GeometryRecord } from '../../geo/vector/types';
 
 export const observationKey = 'dearObservation';
@@ -5,7 +6,8 @@ export const observationKinds = [
   'suspected-landslide',
   'road-damage',
   'water',
-  'survey'
+  'survey',
+  'other'
 ] as const;
 export type ObservationKind = (typeof observationKinds)[number];
 export type FieldPhoto = {
@@ -25,6 +27,7 @@ export type FieldObservation = {
   kind: ObservationKind;
   note: string;
   observedAt: string;
+  observedLocalTime?: string;
   observer: string;
   accuracyM: number | null;
   status: 'unreviewed';
@@ -45,7 +48,7 @@ export function validPhoto(raw: unknown): raw is FieldPhoto {
     p.id.length <= 160 &&
     typeof p.name === 'string' &&
     p.name.length <= 200 &&
-    ['image/jpeg', 'image/png', 'image/webp'].includes(p.mime) &&
+    ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif'].includes(p.mime) &&
     Number.isSafeInteger(p.bytes) &&
     p.bytes > 0 &&
     p.bytes <= photoLimits.bytes &&
@@ -83,7 +86,11 @@ export function validateObservation(raw: unknown): FieldObservation {
     typeof o.observer !== 'string' ||
     o.observer.length > 160 ||
     typeof o.observedAt !== 'string' ||
-    (o.observedAt !== '' && !Number.isFinite(Date.parse(o.observedAt))) ||
+    (o.observedAt !== '' && !captureTime(o.observedAt)?.instant) ||
+    (o.observedLocalTime !== undefined &&
+      (captureTime(o.observedLocalTime)?.local !== o.observedLocalTime ||
+        !!captureTime(o.observedLocalTime)?.instant ||
+        !!o.observedAt)) ||
     (o.accuracyM !== null &&
       (typeof o.accuracyM !== 'number' ||
         !Number.isFinite(o.accuracyM) ||

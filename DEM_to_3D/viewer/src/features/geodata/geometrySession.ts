@@ -4,6 +4,7 @@ import {
   type GeometryRecord,
   type GeometryRole
 } from '../../geo/vector/types';
+import { remapFieldAreas } from '../observations/fieldAreas';
 import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
@@ -18,7 +19,7 @@ export function createGeometryRecords(
 ): GeometryRecord[] {
   const importedAt = new Date().toISOString();
   const firstPolygon = parsed.features.findIndex((feature) => isPolygon(feature.geometry));
-  return parsed.features.map((feature, index) => ({
+  return remapFieldAreas(parsed.features.map((feature, index) => ({
     id: crypto.randomUUID(),
     name: String(feature.properties.name || `${sourceName} ${index + 1}`).slice(0, 160),
     feature,
@@ -33,7 +34,7 @@ export function createGeometryRecords(
           : role,
     visible: true,
     source: { name: sourceName, format: parsed.format, importedAt }
-  }));
+  })));
 }
 
 /** Check each record separately so repeated KML metadata cannot allocate a huge JSON string. */

@@ -20,6 +20,8 @@ export type ImageryScene = {
   pass: string | null;
   polarizations: string[];
   instrumentMode: string | null;
+  /** HTTPS quicklook from the STAC `thumbnail` asset, when the provider publishes one. */
+  thumbnail: string | null;
 };
 export type ImageryCatalog = {
   scenes: ImageryScene[];
@@ -72,6 +74,16 @@ export function parseImageryCatalog(raw: unknown): ImageryCatalog {
     )
       throw new Error('Invalid scene extent/date');
     const links = Array.isArray(feature.links) ? feature.links.map(object) : [];
+    const thumbnailAsset =
+      feature.assets && typeof feature.assets === 'object' && !Array.isArray(feature.assets)
+        ? Object.values(feature.assets as Record<string, unknown>)
+            .map((asset) => (asset && typeof asset === 'object' ? (asset as Record<string, unknown>) : {}))
+            .find((asset) => Array.isArray(asset.roles) && asset.roles.includes('thumbnail'))
+        : undefined;
+    const thumbnail =
+      typeof thumbnailAsset?.href === 'string' && /^https:\/\//.test(thumbnailAsset.href)
+        ? thumbnailAsset.href
+        : null;
     const cloud = number(p['eo:cloud_cover']);
     if (cloud !== null && cloud > 100) throw new Error('Invalid cloud cover');
     return {
@@ -90,6 +102,7 @@ export function parseImageryCatalog(raw: unknown): ImageryCatalog {
       pass: typeof p['sat:orbit_state'] === 'string' ? p['sat:orbit_state'] : null,
       instrumentMode:
         typeof p['sar:instrument_mode'] === 'string' ? p['sar:instrument_mode'] : null,
+      thumbnail,
       polarizations: Array.isArray(p['sar:polarizations'])
         ? p['sar:polarizations'].filter((value): value is string => typeof value === 'string')
         : []

@@ -1,10 +1,14 @@
+import { usePointRendering } from '../map/usePointRendering';
+import { fieldAreaOwner } from './fieldAreas';
 import { useEffect, useRef } from 'react';
 import * as L from 'leaflet';
 import type { GeometryRecord } from '../../geo/vector/types';
+import type { Locale } from '../../types/dear';
 import { observationOf } from './model';
 import { observationColor } from './labels';
 import { observationMarker } from './mapMarker';
 import { mapPane } from '../map/mapLayerOrder';
+import { attachPointClusters, type ClusterablePoint } from '../map/pointClusterLayer';
 import './observations.css';
 
 /** WGS84 reference overlays keep their IDs. They never enter the incident hazard/road assessment. */
@@ -15,7 +19,10 @@ export function ResponseGisLayer({
   request,
   enabled,
   interactive,
-  onSelect
+  locale = 'vi',
+  groupIds = [],
+  onSelect,
+  onGroup
 }: {
   mapRef: React.MutableRefObject<L.Map | null>;
   records: GeometryRecord[];
@@ -23,17 +30,27 @@ export function ResponseGisLayer({
   request: { version: number; id: string | null };
   enabled: boolean;
   interactive: boolean;
+  locale?: Locale;
+  /** Members of the point group open in the side panel. */
+  groupIds?: string[];
   onSelect: (id: string) => void;
+  onGroup?: (ids: string[]) => void;
 }): null {
+  const { mode: pointMode } = usePointRendering();
   const action = useRef(onSelect);
   action.current = onSelect;
+  const openGroup = useRef(onGroup);
+  openGroup.current = onGroup;
+  const groupKey = groupIds.join('|');
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !enabled) return;
     const group = L.layerGroup().addTo(map);
+    const clustered: ClusterablePoint[] = [];
     for (const record of records.filter((r) => r.visible)) {
+      const owner = fieldAreaOwner(record, records);
       const observation = observationOf(record),
-        selected = record.id === selectedId;
+        selected = record.id === selectedId || owner?.id === selectedId;
       const color = observation
         ? observationColor(observation.kind)
         : record.role === 'aoi'
@@ -41,50 +58,85 @@ export function ResponseGisLayer({
           : record.role === 'footprint'
             ? '#3186bc'
             : '#b87919';
-      const layer = L.geoJSON(record.feature, {
-        pane: mapPane('boundary'),
-        interactive,
-        style: {
-          color,
-          weight: selected ? 3 : 1.5,
-          fillOpacity: 0.03,
-          dashArray: record.role === 'footprint' ? '7 4' : undefined
-        },
-        pointToLayer: (_, position) => {
-          if (!observation)
-            return L.circleMarker(position, {
+      const render = () => {
+        const layer = L.geoJSON(record.feature, {
+          pane: mapPane('boundary'),
+          interactive,
+          // Leaflet applies style after pointToLayer; a static style would repaint point markers.
+          style: (feature) =>
+            feature?.geometry.type === 'Point'
+              ? {}
+              : {
+                  color,
+                  weight: selected ? 3 : 1.5,
+                  fillOpacity: owner ? 0.18 : 0.03,
+                  dashArray: record.role === 'footprint' ? '7 4' : undefined
+                },
+          pointToLayer: (_, position) => {
+            if (!observation)
+              return L.circleMarker(position, {
+                pane: mapPane('selection'),
+                radius: selected ? 6 : 4,
+                color: '#fff',
+                weight: selected ? 2 : 1.5,
+                fillColor: color,
+                fillOpacity: 1,
+                interactive
+              });
+            return observationMarker(position, record, observation, {
               pane: mapPane('selection'),
-              radius: selected ? 6 : 4,
-              color: '#fff',
-              weight: 1.5,
-              fillColor: color,
-              fillOpacity: 1,
+              selected,
               interactive
             });
-          return observationMarker(position, record, observation, {
-            pane: mapPane('selection'),
-            selected,
-            interactive
-          });
-        }
-      }).addTo(group);
-      const label = document.createElement('span');
-      label.textContent = record.name;
-      layer.bindTooltip(label, {
-        direction: 'top',
-        permanent: selected,
-        className: 'field-map-tooltip'
-      });
-      if (interactive)
-        layer.on('click', (event) => {
-          L.DomEvent.stopPropagation(event.originalEvent);
-          action.current(record.id);
+          }
         });
+        const label = document.createElement('span');
+        label.textContent = record.name;
+        layer.bindTooltip(label, {
+          direction: 'top',
+          permanent: record.id === selectedId,
+          className: 'field-map-tooltip'
+        });
+        if (interactive)
+          layer.on('click', (event) => {
+            L.DomEvent.stopPropagation(event.originalEvent);
+            action.current(owner?.id ?? record.id);
+          });
+        return layer;
+      };
+      if (record.feature.geometry.type === 'Point') {
+        const [lng, lat] = record.feature.geometry.coordinates;
+        clustered.push({
+          id: owner?.id ?? record.id,
+          name: record.name,
+          latlng: L.latLng(lat, lng),
+          color,
+          selected,
+          active: groupIds.includes(record.id),
+          render
+        });
+        continue;
+      }
+      render().addTo(group);
     }
+    const disposeClusters = attachPointClusters(map, group, clustered, {
+      pane: mapPane('selection'),
+      interactive,
+      locale,
+      tooltipClass: 'field-map-tooltip',
+      mode: pointMode,
+      // Without a group panel, fall back to opening the first member.
+      onOpenGroup: (ids) => (openGroup.current ? openGroup.current(ids) : action.current(ids[0]))
+    });
     return () => {
+      disposeClusters();
       group.remove();
     };
-  }, [mapRef, records, selectedId, enabled, interactive]);
+    // groupKey stands in for groupIds so a new array with the same members does not redraw.
+  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode]);
+  useEffect(() => {
+    if (pointMode === 'individual' && groupKey) openGroup.current?.([]);
+  }, [pointMode, groupKey]);
   const last = useRef(0);
   useEffect(() => {
     const map = mapRef.current;

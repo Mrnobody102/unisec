@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { VectorGeometry } from '../../geo/vector/types';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
-import { drawnPolygon, geometryHistory, moveVertex } from './geometryEditing';
+import { drawnPolygon, geometryHistory, moveVertex, translateGeometry } from './geometryEditing';
 
 export type GeometryMode = 'browse' | 'polygon' | 'rectangle' | 'edit';
 type Draft = { vertices: number[][]; geometry: VectorGeometry | null };
@@ -74,6 +74,7 @@ export function useGeometryEditor() {
           geometry: moveVertex(current.geometry, path, point)
         });
     },
+    translate: (dx: number, dy: number) => { const current=latest.current.present; if(current.geometry) change({...current,geometry:translateGeometry(current.geometry,dx,dy)}); },
     result: () =>
       mode === 'edit'
         ? validateGeometry(latest.current.present.geometry)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { GeometryRecord } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 import {
@@ -12,41 +12,77 @@ import {
 import { observationLabel } from './labels';
 import { readFieldPhoto } from './photo';
 import { PhotoGallery } from './PhotoGallery';
+import { FileDropZone } from '../../shared/ui/FileDropZone';
+import {
+  deviceLocal,
+  recordCaptureTime,
+  photoCaptureTime,
+  observationTimeLabel
+} from './captureMetadata';
 
 export function ObservationEditor({
   record,
   locale,
   onSave,
   onResponse,
+  initialEditing = false,
+  compact = false,
+  positionAccuracy,
+  locationControl,
+  submitLabel,
+  onPhotosRead,
   disabled = false
 }: {
   record: GeometryRecord;
   locale: Locale;
   disabled?: boolean;
+  initialEditing?: boolean;
+  compact?: boolean;
+  positionAccuracy?: number | null;
+  locationControl?: ReactNode;
+  submitLabel?: string;
+  onPhotosRead?: (photos: FieldPhoto[]) => void;
   onSave: (value: FieldObservation) => boolean;
   onResponse?: () => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const current = observationOf(record);
-  const [editing, setEditing] = useState(false),
-    [kind, setKind] = useState<ObservationKind>(
-      current?.kind ?? 'suspected-landslide'
+  const [editing, setEditing] = useState(initialEditing),
+    [kind, setKind] = useState<ObservationKind>(current?.kind ?? 'other');
+  const [note, setNote] = useState(
+      current?.note ??
+        String(
+          record.feature.properties.note ??
+            record.feature.properties.description ??
+            ''
+        ).slice(0, 2000)
+    ),
+    [observer, setObserver] = useState(
+      current?.observer ??
+        String(record.feature.properties.observer ?? '').slice(0, 160)
     );
-  const [note, setNote] = useState(current?.note ?? ''),
-    [observer, setObserver] = useState(current?.observer ?? '');
-  const initialDate = current?.observedAt ? new Date(current.observedAt) : null;
-  const [observed, setObserved] = useState(
-    initialDate
-      ? new Date(
-          initialDate.getTime() - initialDate.getTimezoneOffset() * 60_000
-        )
-          .toISOString()
-          .slice(0, 16)
-      : ''
+  const seed = recordCaptureTime(record);
+  const initialObserved = current?.observedAt
+    ? deviceLocal(current.observedAt)
+    : current
+      ? (current.observedLocalTime ?? '')
+      : seed?.instant
+        ? deviceLocal(seed.instant)
+        : (seed?.local ?? '');
+  const initialZone = current
+    ? current.observedLocalTime
+      ? 'unknown'
+      : 'device'
+    : seed && !seed.instant
+      ? 'unknown'
+      : 'device';
+  const [observed, setObserved] = useState(initialObserved);
+  const [timeZone, setTimeZone] = useState(initialZone);
+  const timeTouched = useRef(false);
+  const [timeSource, setTimeSource] = useState(
+    current ? '' : (seed?.source ?? '')
   );
-  const [accuracy, setAccuracy] = useState(
-    current?.accuracyM == null ? '' : String(current.accuracyM)
-  );
+
   const [photos, setPhotos] = useState<FieldPhoto[]>(current?.photos ?? []),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -70,13 +106,26 @@ export function ObservationEditor({
     try {
       const additions: FieldPhoto[] = [];
       for (const file of files) additions.push(await readFieldPhoto(file));
-      if (alive.current) setPhotos((previous) => [...previous, ...additions]);
+      if (alive.current) {
+        setPhotos((previous) => [...previous, ...additions]);
+        onPhotosRead?.(additions);
+        if (!observed && !timeTouched.current) {
+          const capture = additions.map(photoCaptureTime).find(Boolean);
+          if (capture) {
+            setObserved(
+              capture.instant ? deviceLocal(capture.instant) : capture.local
+            );
+            setTimeZone(capture.instant ? 'device' : 'unknown');
+            setTimeSource(capture.source);
+          }
+        }
+      }
     } catch {
       if (alive.current)
         setError(
           t(
-            'Không đọc được ảnh. Chọn JPEG, PNG hoặc WebP, tối đa 8 MB và 40 megapixel.',
-            'Could not read photo. Choose JPEG, PNG or WebP up to 8 MB and 40 megapixels.'
+            'Không đọc được ảnh. Chọn JPEG, PNG, WebP, AVIF hoặc HEIC, tối đa 8 MB và 40 megapixel.',
+            'Could not read photo. Choose JPEG, PNG, WebP, AVIF or HEIC up to 8 MB and 40 megapixels.'
           )
         );
     } finally {
@@ -89,41 +138,40 @@ export function ObservationEditor({
       className="field-observation"
       aria-label={t('Ghi nhận thực địa', 'Field observation')}
     >
-      <header>
-        <h3>{t('Ghi nhận thực địa', 'Field observation')}</h3>
-        {(current || editing) && (
-          <span className="field-status">
-            {t('Chưa xác minh', 'Unreviewed')}
-          </span>
-        )}
-      </header>
+      {!compact && (
+        <header>
+          <h3>{t('Ghi nhận thực địa', 'Field observation')}</h3>
+        </header>
+      )}
       {!editing && current ? (
         <>
-          <strong>{observationLabel(current.kind, locale)}</strong>
-          <p className="field-note">{current.note}</p>
+          {!compact && (
+            <strong>{observationLabel(current.kind, locale)}</strong>
+          )}
+          {current.note && <p className="field-note">{current.note}</p>}
           <dl className="field-metadata">
             <div>
               <dt>{t('Ghi nhận lúc', 'Observed at')}</dt>
-              <dd>
-                {current.observedAt
-                  ? new Date(current.observedAt).toLocaleString(
-                      locale === 'vi' ? 'vi-VN' : 'en-GB'
-                    )
-                  : t('Chưa ghi nhận', 'Not recorded')}
-              </dd>
+              <dd>{observationTimeLabel(current, locale)}</dd>
             </div>
-            <div>
-              <dt>{t('Người ghi nhận', 'Observer')}</dt>
-              <dd>{current.observer || t('Chưa ghi nhận', 'Not recorded')}</dd>
-            </div>
-            <div>
-              <dt>{t('Sai số vị trí', 'Location accuracy')}</dt>
-              <dd>
-                {current.accuracyM == null
-                  ? t('Chưa có thông tin', 'Not available')
-                  : `${current.accuracyM} m`}
-              </dd>
-            </div>
+            {current.observer && (
+              <div>
+                <dt>{t('Người ghi nhận', 'Observer')}</dt>
+                <dd>
+                  {current.observer || t('Chưa ghi nhận', 'Not recorded')}
+                </dd>
+              </div>
+            )}
+            {current.accuracyM != null && (
+              <div>
+                <dt>{t('Sai số vị trí', 'Location accuracy')}</dt>
+                <dd>
+                  {current.accuracyM == null
+                    ? t('Chưa có thông tin', 'Not available')
+                    : `${current.accuracyM} m`}
+                </dd>
+              </div>
+            )}
           </dl>
           <PhotoGallery photos={current.photos} locale={locale} />
           <div className="geodata-actions">
@@ -154,6 +202,15 @@ export function ObservationEditor({
           onSubmit={(event) => {
             event.preventDefault();
             if (busy || disabled) return;
+            if (!photos.length && !note.trim()) {
+              setError(
+                t(
+                  'Thêm ảnh hoặc mô tả điều bạn thấy.',
+                  'Add a photo or describe what you saw.'
+                )
+              );
+              return;
+            }
             const date = observed ? new Date(observed) : null;
             if (date && !Number.isFinite(date.getTime())) {
               setError(
@@ -166,8 +223,15 @@ export function ObservationEditor({
               kind,
               note: note.trim(),
               observer: observer.trim(),
-              observedAt: date?.toISOString() ?? '',
-              accuracyM: accuracy === '' ? null : Number(accuracy),
+              observedAt:
+                timeZone === 'device' ? (date?.toISOString() ?? '') : '',
+              ...(observed && timeZone === 'unknown'
+                ? {
+                    observedLocalTime:
+                      observed.length === 16 ? observed + ':00' : observed
+                  }
+                : {}),
+              accuracyM: positionAccuracy ?? current?.accuracyM ?? null,
               status: 'unreviewed',
               photos,
               updatedAt: new Date().toISOString()
@@ -185,73 +249,24 @@ export function ObservationEditor({
           }}
         >
           <fieldset disabled={busy || disabled}>
-            <label className="geodata-field">
-              {t('Loại ghi nhận', 'Observation type')}
-              <select
-                aria-label={t('Loại ghi nhận', 'Observation type')}
-                value={kind}
-                onChange={(e) => setKind(e.target.value as ObservationKind)}
-              >
-                {observationKinds.map((value) => (
-                  <option value={value} key={value}>
-                    {observationLabel(value, locale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="geodata-field">
-              {t('Ghi chú hiện trường', 'Field note')}
-              <textarea
-                aria-label={t('Ghi chú hiện trường', 'Field note')}
-                maxLength={2000}
-                rows={3}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </label>
-            <label className="geodata-field">
-              {t(
-                'Thời gian ghi nhận (giờ máy)',
-                'Observation time (device time)'
-              )}
-              <input
-                type="datetime-local"
-                value={observed}
-                onChange={(e) => setObserved(e.target.value)}
-              />
-            </label>
-            <label className="geodata-field">
-              {t('Người ghi nhận', 'Observer')}
-              <input
-                maxLength={160}
-                value={observer}
-                onChange={(e) => setObserver(e.target.value)}
-              />
-            </label>
-            <label className="geodata-field">
-              {t('Sai số vị trí (m)', 'Location accuracy (m)')}
-              <input
-                type="number"
-                min={0}
-                step="any"
-                value={accuracy}
-                onChange={(e) => setAccuracy(e.target.value)}
-              />
-            </label>
-            <label className="field-photo-picker">
-              {t('Thêm ảnh hiện trường', 'Attach field photo')}
-              <input
-                aria-label={t('Ảnh hiện trường', 'Field photos')}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  e.target.value = '';
-                  void attach(files);
-                }}
-              />
-            </label>
+            <FileDropZone
+              icon="image"
+              title={t('Thêm ảnh hiện trường', 'Add field photos')}
+              inputLabel={t('Ảnh hiện trường', 'Field photos')}
+              hint={photos.length ? `${photos.length}/${photoLimits.count} ${t('ảnh', 'photos')}` : t(`Tối đa ${photoLimits.count} ảnh`, `Up to ${photoLimits.count} photos`)}
+              accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif"
+              multiple
+              disabled={busy || disabled || photos.length >= photoLimits.count}
+              onFiles={(files) => void attach(files)}
+              onRejected={() =>
+                setError(
+                  t(
+                    'Chọn ảnh JPG, PNG, WebP, AVIF hoặc HEIC/HEIF.',
+                    'Choose JPG, PNG, WebP, AVIF or HEIC/HEIF photos.'
+                  )
+                )
+              }
+            />
             <PhotoGallery
               photos={photos}
               locale={locale}
@@ -259,6 +274,81 @@ export function ObservationEditor({
                 setPhotos((value) => value.filter((p) => p.id !== id))
               }
             />
+            {locationControl}
+            <details className="field-extra">
+              <summary>{t('Thông tin bổ sung', 'More information')}</summary>
+              <label className="geodata-field">
+                {t('Loại ghi nhận', 'Observation type')}
+                <select
+                  aria-label={t('Loại ghi nhận', 'Observation type')}
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as ObservationKind)}
+                >
+                  {observationKinds.map((value) => (
+                    <option value={value} key={value}>
+                      {observationLabel(value, locale)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="geodata-field">
+                {t('Ghi chú hiện trường', 'Field note')}
+                <textarea
+                  aria-label={t('Ghi chú hiện trường', 'Field note')}
+                  maxLength={2000}
+                  rows={3}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </label>
+              <label className="geodata-field">
+                {t('Thời gian ghi nhận', 'Observation time')}
+                <input
+                  type="datetime-local"
+                  step="0.001"
+                  value={observed}
+                  onChange={(e) => {
+                    timeTouched.current = true;
+                    setTimeSource('');
+                    setObserved(e.target.value);
+                  }}
+                />
+              </label>
+              <label className="geodata-field">
+                {t('Múi giờ', 'Time zone')}
+                <select
+                  value={timeZone}
+                  onChange={(e) => {
+                    timeTouched.current = true;
+                    setTimeZone(e.target.value);
+                  }}
+                >
+                  <option value="device">
+                    {t('Theo thiết bị', 'Device time zone')}
+                  </option>
+                  <option value="unknown">
+                    {t('Chưa xác định', 'Unknown')}
+                  </option>
+                </select>
+              </label>
+              {timeSource && (
+                <p className="field-hint" role="status">
+                  {t('Thời gian lấy từ ', 'Time from ') + timeSource}
+                </p>
+              )}
+              {!compact && (
+                <>
+                  <label className="geodata-field">
+                    {t('Người ghi nhận', 'Observer')}
+                    <input
+                      maxLength={160}
+                      value={observer}
+                      onChange={(e) => setObserver(e.target.value)}
+                    />
+                  </label>
+                </>
+              )}
+            </details>
           </fieldset>
           {busy && <p role="status">{t('Đang đọc ảnh…', 'Reading photos…')}</p>}
           {error && (
@@ -266,42 +356,28 @@ export function ObservationEditor({
               {error}
             </p>
           )}
-          <p className="field-hint">
-            {t(
-              'Lưu bản xem trước và thông số ảnh tại trình duyệt. Giữ tệp gốc để phân tích.',
-              'Photo previews and metadata are stored in this browser. Keep originals for analysis.'
-            )}
-          </p>
-          <div className="geodata-actions">
+          <div className="geodata-actions field-form-actions">
             <button
               className="button primary"
               type="submit"
               disabled={busy || disabled}
             >
-              {t('Lưu ghi nhận', 'Save observation')}
+              {submitLabel ?? t('Lưu ghi nhận', 'Save observation')}
             </button>
             <button
               type="button"
               className="button"
               disabled={busy || disabled}
               onClick={() => {
-                setKind(current?.kind ?? 'suspected-landslide');
+                setKind(current?.kind ?? 'other');
                 setNote(current?.note ?? '');
                 setObserver(current?.observer ?? '');
-                setAccuracy(
-                  current?.accuracyM == null ? '' : String(current.accuracyM)
-                );
+
                 setPhotos(current?.photos ?? []);
-                setObserved(
-                  initialDate
-                    ? new Date(
-                        initialDate.getTime() -
-                          initialDate.getTimezoneOffset() * 60_000
-                      )
-                        .toISOString()
-                        .slice(0, 16)
-                    : ''
-                );
+                setObserved(initialObserved);
+                setTimeZone(initialZone);
+                timeTouched.current = false;
+                setTimeSource(current ? '' : (seed?.source ?? ''));
                 setEditing(false);
                 setError('');
               }}

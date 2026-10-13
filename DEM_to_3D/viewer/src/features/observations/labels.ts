@@ -4,7 +4,8 @@ const labels: Record<ObservationKind, [string, string]> = {
   'suspected-landslide': ['Nghi sạt lở', 'Suspected landslide'],
   'road-damage': ['Hư hỏng đường', 'Road damage'],
   water: ['Nước / ngập', 'Water / flooding'],
-  survey: ['Điểm khảo sát', 'Survey point']
+  survey: ['Điểm khảo sát', 'Survey point'],
+  other: ['Ghi nhận khác', 'Other observation']
 };
 export function observationLabel(
   kind: ObservationKind,

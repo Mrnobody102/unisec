@@ -80,3 +80,12 @@ export function geometryHistory<T>(past: T[], present: T, future: T[], action: '
     };
   return { past, present, future };
 }
+
+/** Translate every coordinate, preserving rings and any elevation ordinates. */
+export function translateGeometry(original: VectorGeometry, dx: number, dy: number): VectorGeometry {
+  const result = structuredClone(original);
+  const walk = (value: unknown): unknown => Array.isArray(value) && typeof value[0] === 'number'
+    ? [value[0] + dx, value[1] + dy, ...value.slice(2)] : (value as unknown[]).map(walk);
+  result.coordinates = walk(result.coordinates) as typeof result.coordinates;
+  return result;
+}

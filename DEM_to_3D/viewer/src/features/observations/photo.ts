@@ -2,21 +2,25 @@ import { photoLimits, type FieldPhoto } from './model';
 
 /** Read only uploaded bytes. EXIF is provenance, never an automatic change to the observed location. */
 export async function readFieldPhoto(file: File): Promise<FieldPhoto> {
-  if (
-    !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
-    file.size <= 0 ||
-    file.size > photoLimits.bytes
-  )
+  if (file.size <= 0 || file.size > photoLimits.bytes)
     throw new Error('photo-file');
   const raw = new Uint8Array(await file.arrayBuffer());
-  const signature = String.fromCharCode(...raw.slice(0, 12));
-  const valid =
-    file.type === 'image/jpeg'
-      ? raw[0] === 255 && raw[1] === 216 && raw[2] === 255
-      : file.type === 'image/png'
-        ? raw[0] === 137 && signature.slice(1, 4) === 'PNG'
-        : signature.slice(0, 4) === 'RIFF' && signature.slice(8, 12) === 'WEBP';
-  if (!valid) throw new Error('photo-file');
+  // Detect bytes, because phone file pickers can omit or misreport MIME types.
+  const signature = String.fromCharCode(...raw.slice(0, 64));
+  const iso = signature.slice(4, 8) === 'ftyp';
+  const mime =
+    raw[0] === 255 && raw[1] === 216 && raw[2] === 255
+      ? 'image/jpeg'
+      : raw[0] === 137 && signature.slice(1, 4) === 'PNG'
+        ? 'image/png'
+        : signature.slice(0, 4) === 'RIFF' && signature.slice(8, 12) === 'WEBP'
+          ? 'image/webp'
+          : iso && /avif|avis/.test(signature)
+            ? 'image/avif'
+            : iso && /heic|heix|hevc|hevx|mif1|msf1/.test(signature)
+              ? 'image/heic'
+              : '';
+  if (!mime) throw new Error('photo-file');
   const hash = await crypto.subtle.digest('SHA-256', raw);
   const sha256 = Array.from(new Uint8Array(hash), (v) =>
     v.toString(16).padStart(2, '0')
@@ -67,7 +71,15 @@ export async function readFieldPhoto(file: File): Promise<FieldPhoto> {
   } catch {
     /* A displayable photo may have no readable EXIF. */
   }
-  const bitmap = await createImageBitmap(file);
+  const blob = new Blob([file], { type: mime });
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(blob);
+  } catch (error) {
+    if (mime !== 'image/heic') throw error;
+    const { heicTo } = await import('heic-to/csp');
+    bitmap = await heicTo({ blob, type: 'bitmap' });
+  }
   try {
     if (bitmap.width * bitmap.height > 40_000_000)
       throw new Error('photo-dimensions');
@@ -88,7 +100,7 @@ export async function readFieldPhoto(file: File): Promise<FieldPhoto> {
     return {
       id: crypto.randomUUID(),
       name: file.name.slice(0, 200),
-      mime: file.type,
+      mime,
       bytes: file.size,
       width: bitmap.width,
       height: bitmap.height,

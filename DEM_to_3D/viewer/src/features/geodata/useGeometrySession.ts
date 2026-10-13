@@ -21,11 +21,14 @@ import { geometryHistory } from './geometryEditing';
 
 import { annotateRecord, type FieldObservation } from '../observations/model';
 
+import { removeWithFieldAreas, fieldAreaOf } from '../observations/fieldAreas';
+
 const storageKey = 'dear.geodata.v1';
 function read() {
   try {
     const text = localStorage.getItem(storageKey);
-    if (text && textBytes(text) > GEOMETRY_LIMITS.storageBytes) throw new GeometryError('storage');
+    if (text && textBytes(text) > GEOMETRY_LIMITS.storageBytes)
+      throw new GeometryError('storage');
     return {
       records: text ? restoreGeometryRecords(JSON.parse(text)) : [],
       error: null as unknown
@@ -43,7 +46,7 @@ export function useGeometrySession() {
   const [records, setRecords] = useState(initial.records);
   const [error, setError] = useState<unknown>(initial.error);
   const [busy, setBusy] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(initial.records[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewRequest, setViewRequest] = useState({
     version: initial.records.length ? 1 : 0,
     id: null as string | null
@@ -62,12 +65,19 @@ export function useGeometrySession() {
     setHistoryVersion((value) => value + 1);
   };
   const travel = (action: 'undo' | 'redo') => {
-    const next = geometryHistory(past.current, latest.current, future.current, action);
+    const next = geometryHistory(
+      past.current,
+      latest.current,
+      future.current,
+      action
+    );
     past.current = next.past;
     future.current = next.future;
     latest.current = next.present;
     setRecords(next.present);
-    setSelectedId((id) => (next.present.some((record) => record.id === id) ? id : null));
+    setSelectedId((id) =>
+      next.present.some((record) => record.id === id) ? id : null
+    );
     setError(null);
     setHistoryVersion((value) => value + 1);
   };
@@ -92,6 +102,7 @@ export function useGeometrySession() {
     setViewRequest((previous) => ({ version: previous.version + 1, id }));
   const add = (additions: GeometryRecord[]) => {
     const combined = addGeometryRecords(latest.current, additions);
+    localStorage.setItem(storageKey, JSON.stringify(combined));
     commit(combined);
     setSelectedId(additions[0]?.id ?? null);
     setError(null);
@@ -141,7 +152,10 @@ export function useGeometrySession() {
     const target = previous.find((record) => record.id === id);
     if (
       !target ||
-      (patch.role && patch.role !== 'reference' && !isPolygon(target.feature.geometry))
+      (fieldAreaOf(target) && patch.role && patch.role !== 'reference') ||
+      (patch.role &&
+        patch.role !== 'reference' &&
+        !isPolygon(target.feature.geometry))
     )
       return;
     commit(
@@ -166,34 +180,115 @@ export function useGeometrySession() {
               properties: {
                 ...record.feature.properties,
                 editedAt: new Date().toISOString(),
-                editMethod: 'manual-vertices-v1'
+                editMethod: geometry.type === 'Point' ? 'manual-coordinates-v1' : 'manual-vertices-v1'
               }
             }
           }
         : record
     );
-    validateGeometryBudget(next.map(record => record.feature.geometry));
+    validateGeometryBudget(next.map((record) => record.feature.geometry));
     validateGeometryStorageBudget(next);
     commit(next);
     setError(null);
   };
   const remove = (id: string) => {
-    commit(latest.current.filter((record) => record.id !== id));
+    commit(removeWithFieldAreas(latest.current, id));
     if (selectedId === id) setSelectedId(null);
   };
-  const annotate = (id: string, observation: FieldObservation): boolean => {
+  const annotate = (
+    id: string,
+    observation: FieldObservation,
+    properties: Record<string, unknown> = {}
+  ): boolean => {
     try {
-      const target = latest.current.find(record => record.id === id);
+      const target = latest.current.find((record) => record.id === id);
       if (!target) return false;
-      const edited = annotateRecord(target, observation);
-      const next = latest.current.map(record => record.id === id ? edited : record);
+      const edited = annotateRecord(
+        {
+          ...target,
+          feature: {
+            ...target.feature,
+            properties: { ...target.feature.properties, ...properties }
+          }
+        },
+        observation
+      );
+      const next = latest.current.map((record) =>
+        record.id === id ? edited : record
+      );
       validateGeometryStorageBudget(next);
       // Fail before changing the map if storage cannot retain the observation and photo previews.
       localStorage.setItem(storageKey, JSON.stringify(next));
-      commit(next); setError(null); return true;
-    } catch { setError(new GeometryError('storage')); return false; }
+      commit(next);
+      setError(null);
+      return true;
+    } catch {
+      setError(new GeometryError('storage'));
+      return false;
+    }
+  };
+  const updateProperties = (
+    id: string,
+    properties: Record<string, unknown>
+  ): boolean => {
+    try {
+      const target = latest.current.find((r) => r.id === id);
+      if (!target) return false;
+      const next = latest.current.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              feature: {
+                ...r.feature,
+                properties: { ...r.feature.properties, ...properties }
+              }
+            }
+          : r
+      );
+      validateGeometryStorageBudget(next);
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      commit(next);
+      setError(null);
+      return true;
+    } catch {
+      setError(new GeometryError('storage'));
+      return false;
+    }
+  };
+  const batch = (
+    ids: string[],
+    action: 'show' | 'hide' | 'delete'
+  ): boolean => {
+    try {
+      const chosen = new Set(ids);
+      // Linked extents follow their parent when hidden or removed.
+      const affected = latest.current
+        .filter(
+          (r) =>
+            chosen.has(r.id) || chosen.has(fieldAreaOf(r)?.observationId ?? '')
+        )
+        .map((r) => r.id);
+      const set = new Set(affected);
+      const next =
+        action === 'delete'
+          ? latest.current.filter((r) => !set.has(r.id))
+          : latest.current.map((r) =>
+              set.has(r.id) ? { ...r, visible: action === 'show' } : r
+            );
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      commit(next);
+      if (action === 'delete' && selectedId && set.has(selectedId))
+        setSelectedId(null);
+      setError(null);
+      return true;
+    } catch {
+      setError(new GeometryError('storage'));
+      return false;
+    }
   };
   return {
+    batch,
+    updateProperties,
     annotate,
     records,
     selectedId,

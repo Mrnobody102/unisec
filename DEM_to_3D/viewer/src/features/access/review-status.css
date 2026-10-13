@@ -1,0 +1,24 @@
+/* Shared review semantics in resident reports and the coordinator inbox. */
+.citizen-review {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.citizen-review.is-pending {
+  color: var(--warning-ink);
+  background: var(--warning-soft);
+}
+.citizen-review.is-checked {
+  color: var(--open-ink);
+  background: var(--open-soft);
+}
+.citizen-review.is-needs-info {
+  color: var(--select-ink);
+  background: var(--ws-tint);
+}
+.citizen-review.is-rejected {
+  color: var(--ws-muted);
+  background: var(--ws-raised);
+}

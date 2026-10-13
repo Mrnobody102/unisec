@@ -1,25 +1,11 @@
-import { ObservationEditor } from '../observations/ObservationEditor';
+import { useState } from 'react';
+import type { GeometryRecord } from '../../geo/vector/types';
+import type { Locale } from '../../types/dear';
 import { observationOf } from '../observations/model';
 import { observationLabel } from '../observations/labels';
-import type { FieldObservation } from '../observations/model';
-import { useState } from 'react';
-import area from '@turf/area';
-import {
-  geometryPositions,
-  isPolygon,
-  type GeometryRecord,
-  type GeometryRole
-} from '../../geo/vector/types';
-import type { Locale } from '../../types/dear';
+import { fieldAreaOwner } from '../observations/fieldAreas';
 import { UiIcon } from '../../shared/ui/UiIcon';
-import { DisclosureTrigger } from '../../shared/ui/DisclosureTrigger';
-import { roleLabel, roleColors, formatArea } from './geometryPresentation';
-import { exportGeometryWkt } from './geometryExports';
-import {
-  kmlAltitudeMode,
-  kmlAltitudeLabel,
-  kmlAltitudeModeKey
-} from './kmlMetadata';
+import { roleLabel, roleColors } from './geometryPresentation';
 
 type Props = {
   records: GeometryRecord[];
@@ -27,10 +13,7 @@ type Props = {
   locale: Locale;
   disabled: boolean;
   onSelect: (id: string) => void;
-  onAnnotate?: (id: string, value: FieldObservation) => boolean;
-  onResponse?: (id: string) => void;
-  onRemove: (id: string) => void;
-  onFit: (id: string) => void;
+  onBatch: (ids: string[], action: 'show' | 'hide' | 'delete') => boolean;
   onUpdate: (
     id: string,
     patch: Partial<Pick<GeometryRecord, 'name' | 'visible' | 'role'>>
@@ -43,291 +26,242 @@ export function GeometryLayers({
   locale,
   disabled,
   onSelect,
-  onRemove,
   onUpdate,
-  onFit,
-  onAnnotate,
-  onResponse
+  onBatch
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
-  const [metadata, setMetadata] = useState(false),
-    [copied, setCopied] = useState<string | null>(null),
-    [copyError, setCopyError] = useState(false);
-  const selected = records.find((record) => record.id === selectedId);
-  const copy = async () => {
-    if (!selected) return;
-    try {
-      await navigator.clipboard.writeText(
-        exportGeometryWkt(selected.feature.geometry)
-      );
-      setCopied(selected.id);
-      setCopyError(false);
-    } catch {
-      setCopyError(true);
-    }
-  };
+  const [query, setQuery] = useState('');
+  const [bulk, setBulk] = useState(false),
+    [checked, setChecked] = useState<string[]>([]),
+    [confirmDelete, setConfirmDelete] = useState(false),
+    [source, setSource] = useState('');
+  const filtered = records.filter(
+    (r) =>
+      !fieldAreaOwner(r, records) &&
+      (!source || r.source.name === source) &&
+      r.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+  );
   return (
-    <>
-      <section className="geodata-section geodata-layers">
-        <h2>
-          {t('Đối tượng', 'Features')}
-          <span>{records.length}</span>
-        </h2>
-        {!records.length && (
-          <p className="geodata-empty">
-            {t(
-              'Nhập tệp hoặc vẽ vùng để bắt đầu.',
-              'Import a file or draw an area to start.'
-            )}
-          </p>
-        )}
-        <ul>
-          {records.map((record) => (
-            <li
-              key={record.id}
-              className={record.id === selectedId ? 'is-selected' : ''}
-              data-geodata-id={record.id}
-            >
-              <input
-                type="checkbox"
-                disabled={disabled}
-                checked={record.visible}
-                aria-label={t('Hiện ', 'Show ') + record.name}
-                onChange={(event) =>
-                  onUpdate(record.id, { visible: event.target.checked })
-                }
-              />
-              <button
-                className="geodata-feature"
-                disabled={disabled}
-                onClick={() => {
-                  onSelect(record.id);
-                  setCopied(null);
+    <section className="geodata-section geodata-layers">
+      <h2>
+        {t('Đối tượng', 'Features')}
+        <span>{records.filter((r) => !fieldAreaOwner(r, records)).length}</span>
+      </h2>
+      {!records.length && (
+        <p className="geodata-empty">
+          {t(
+            'Nhập tệp hoặc vẽ vùng để bắt đầu.',
+            'Import a file or draw an area to start.'
+          )}
+        </p>
+      )}
+      {records.length > 8 && (
+        <label className="geodata-field">
+          <span>{t('Tìm đối tượng', 'Find a feature')}</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+      )}
+      {records.length > 0 && (
+        <div className="geodata-bulk">
+          {new Set(records.map((r) => r.source.name)).size > 1 && (
+            <label className="geodata-field">
+              {t('Tệp nguồn', 'Source file')}
+              <select
+                value={source}
+                onChange={(e) => {
+                  setSource(e.target.value);
+                  setConfirmDelete(false);
                 }}
               >
-                <span
-                  className="geodata-symbol"
-                  style={{ color: roleColors[record.role] }}
-                >
-                  <UiIcon
-                    name={
-                      record.feature.geometry.type === 'Point'
-                        ? 'location'
-                        : record.feature.geometry.type === 'LineString'
-                          ? 'minus'
-                          : 'area'
-                    }
-                    size={18}
-                  />
-                </span>
-                <span>
-                  <strong>{record.name}</strong>
-                  <small>
-                    {observationOf(record)
-                      ? observationLabel(observationOf(record)!.kind, locale)
-                      : roleLabel(record.role, locale)}
-                  </small>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected && (
-        <section className="geodata-section geodata-detail" key={selected.id}>
-          <h2>
-            {t('Thuộc tính', 'Properties')}
-            <span className="geodata-actions">
-              <button
-                className="icon-button"
-                aria-label={t('Xem trên bản đồ', 'Fit feature')}
-                title={t('Xem trên bản đồ', 'Fit feature')}
-                onClick={() => onFit(selected.id)}
-              >
-                <UiIcon name="fit" />
-              </button>
-              <button
-                className="icon-button"
-                disabled={disabled}
-                aria-label={t('Xóa ', 'Remove ') + selected.name}
-                title={t('Xóa đối tượng', 'Remove feature')}
-                onClick={() => onRemove(selected.id)}
-              >
-                <UiIcon name="trash" />
-              </button>
-            </span>
-          </h2>
-          <label className="geodata-field">
-            {t('Tên', 'Name')}
-            <input
-              maxLength={160}
-              aria-label={t('Tên đối tượng', 'Feature name')}
-              value={selected.name}
-              disabled={disabled}
-              onChange={(event) =>
-                onUpdate(selected.id, { name: event.target.value })
-              }
-            />
-          </label>
-          {isPolygon(selected.feature.geometry) && (
-            <label className="geodata-field">
-              {t('Sử dụng làm', 'Use as')}
-              <select
-                value={selected.role}
-                disabled={disabled || !isPolygon(selected.feature.geometry)}
-                aria-label={t('Vai trò đối tượng', 'Feature role')}
-                onChange={(event) =>
-                  onUpdate(selected.id, {
-                    role: event.target.value as GeometryRole
-                  })
-                }
-              >
-                {(['reference', 'aoi', 'footprint'] as const).map((role) => (
-                  <option key={role} value={role}>
-                    {roleLabel(role, locale)}
-                  </option>
+                <option value="">{t('Tất cả tệp', 'All files')}</option>
+                {[...new Set(records.map((r) => r.source.name))].map((name) => (
+                  <option key={name}>{name}</option>
                 ))}
               </select>
             </label>
           )}
-          <dl className="geodata-properties">
-            <div>
-              <dt>{t('Hình học', 'Geometry')}</dt>
-              <dd>{selected.feature.geometry.type}</dd>
-            </div>
-            {isPolygon(selected.feature.geometry) && (
-              <div>
-                <dt>{t('Diện tích', 'Area')}</dt>
-                <dd>≈ {formatArea(area(selected.feature), locale)}</dd>
-              </div>
-            )}
-            {selected.feature.geometry.type === 'Point' && (
-              <>
-                <div>
-                  <dt>{t('Vĩ độ', 'Latitude')}</dt>
-                  <dd className="geodata-coordinate">
-                    {selected.feature.geometry.coordinates[1].toFixed(6)}°
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('Kinh độ', 'Longitude')}</dt>
-                  <dd className="geodata-coordinate">
-                    {selected.feature.geometry.coordinates[0].toFixed(6)}°
-                  </dd>
-                </div>
-              </>
-            )}
-          </dl>
-          {selected.feature.geometry.type === 'Point' && onAnnotate && (
-            <ObservationEditor
-              key={selected.id + (observationOf(selected)?.updatedAt ?? '')}
-              record={selected}
-              locale={locale}
-              disabled={disabled}
-              onSave={(value) => onAnnotate(selected.id, value)}
-              onResponse={
-                onResponse ? () => onResponse(selected.id) : undefined
-              }
-            />
-          )}
           <div className="geodata-actions">
-            <DisclosureTrigger
-              expanded={metadata}
-              aria-controls="geodata-metadata"
-              onClick={() => setMetadata((value) => !value)}
-            >
-              {t('Nguồn và tọa độ', 'Source and coordinates')}
-            </DisclosureTrigger>
             <button
-              className="icon-button"
-              aria-label={t('Sao chép WKT', 'Copy WKT')}
-              title={t('Sao chép WKT', 'Copy WKT')}
-              onClick={() => void copy()}
+              className="text-button"
+              disabled={disabled}
+              onClick={() =>
+                onBatch(
+                  filtered.map((r) => r.id),
+                  'hide'
+                )
+              }
             >
-              <UiIcon name="copy" />
+              {t('Ẩn tất cả', 'Hide all')}
+            </button>
+            <button
+              className="text-button"
+              disabled={disabled}
+              onClick={() =>
+                onBatch(
+                  filtered.map((r) => r.id),
+                  'show'
+                )
+              }
+            >
+              {t('Hiện tất cả', 'Show all')}
+            </button>
+            <button
+              className="text-button"
+              disabled={disabled}
+              aria-pressed={bulk}
+              onClick={() => {
+                setBulk(!bulk);
+                setChecked([]);
+                setConfirmDelete(false);
+              }}
+            >
+              {bulk ? t('Xong', 'Done') : t('Chọn nhiều', 'Select multiple')}
             </button>
           </div>
-          {copied === selected.id && (
-            <p className="geodata-hint" role="status">
-              {t('Đã sao chép WKT', 'WKT copied')}
-            </p>
-          )}
-          {copyError && (
-            <p className="geodata-hint" role="status">
-              {t(
-                'Không truy cập được bộ nhớ tạm. Xuất GeoJSON để lấy tọa độ.',
-                'Clipboard unavailable. Export GeoJSON to get coordinates.'
-              )}
-            </p>
-          )}
-          {metadata && (
-            <div id="geodata-metadata" className="geodata-metadata">
-              <dl className="geodata-properties">
-                <div>
-                  <dt>{t('Tệp / đầu vào', 'File / input')}</dt>
-                  <dd>{selected.source.name}</dd>
-                </div>
-                <div>
-                  <dt>{t('Định dạng', 'Format')}</dt>
-                  <dd>{selected.source.format}</dd>
-                </div>
-                <div>
-                  <dt>CRS</dt>
-                  <dd>WGS84 (OGC:CRS84)</dd>
-                </div>
-                {(kmlAltitudeMode(selected.feature.properties) ||
-                  geometryPositions(selected.feature.geometry).some(
-                    (point) => point.length === 3
-                  )) && (
-                  <div>
-                    <dt>{t('Tham chiếu Z', 'Z reference')}</dt>
-                    <dd>
-                      {kmlAltitudeLabel(
-                        kmlAltitudeMode(selected.feature.properties),
-                        locale
-                      )}
-                    </dd>
-                  </div>
-                )}
-                <div>
-                  <dt>{t('Đỉnh', 'Vertices')}</dt>
-                  <dd>{geometryPositions(selected.feature.geometry).length}</dd>
-                </div>
-                <div>
-                  <dt>{t('Thời điểm nhập', 'Imported')}</dt>
-                  <dd>
-                    {new Date(selected.source.importedAt).toLocaleString(
-                      locale === 'vi' ? 'vi-VN' : 'en-GB'
+          {bulk && (
+            <>
+              <label className="geodata-bulk-all">
+                <input
+                  type="checkbox"
+                  disabled={disabled}
+                  checked={
+                    filtered.length > 0 &&
+                    filtered.every((r) => checked.includes(r.id))
+                  }
+                  onChange={(e) => {
+                    setChecked(
+                      e.target.checked ? filtered.map((r) => r.id) : []
+                    );
+                    setConfirmDelete(false);
+                  }}
+                />
+                {t('Chọn tất cả', 'Select all')} ({filtered.length})
+              </label>
+              <div className="geodata-actions">
+                <button
+                  className="button"
+                  disabled={disabled || !checked.length}
+                  onClick={() => onBatch(checked, 'hide')}
+                >
+                  {t('Ẩn', 'Hide')} ({checked.length})
+                </button>
+                <button
+                  className="button"
+                  disabled={disabled || !checked.length}
+                  onClick={() => onBatch(checked, 'show')}
+                >
+                  {t('Hiện', 'Show')}
+                </button>
+                <button
+                  className="button"
+                  disabled={disabled || !checked.length}
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <UiIcon name="trash" />
+                  {t('Xóa', 'Delete')}
+                </button>
+              </div>
+              {confirmDelete && (
+                <div
+                  className="geodata-bulk-confirm"
+                  role="group"
+                  aria-label={t('Xác nhận xóa', 'Confirm deletion')}
+                >
+                  <p>
+                    {t(
+                      'Xóa các mục đã chọn cùng ảnh và vùng liên quan?',
+                      'Delete selected items, including their photos and linked areas?'
                     )}
-                  </dd>
-                </div>
-              </dl>
-              <pre tabIndex={0}>
-                {exportGeometryWkt(selected.feature.geometry)}
-              </pre>
-              {Object.entries(selected.feature.properties)
-                .filter(
-                  ([key, value]) =>
-                    !['name', kmlAltitudeModeKey, 'dearObservation'].includes(
-                      key
-                    ) &&
-                    value != null &&
-                    value !== ''
-                )
-                .map(([key, value]) => (
-                  <div className="geodata-input-property" key={key}>
-                    <strong>{key}</strong>
-                    <span>
-                      {typeof value === 'object'
-                        ? JSON.stringify(value)
-                        : String(value)}
-                    </span>
+                  </p>
+                  <div className="geodata-actions">
+                    <button
+                      className="button"
+                      onClick={() => {
+                        if (onBatch(checked, 'delete')) {
+                          setChecked([]);
+                          setConfirmDelete(false);
+                        }
+                      }}
+                    >
+                      {t('Xóa mục đã chọn', 'Delete selected')}
+                    </button>
+                    <button
+                      className="button"
+                      onClick={() => setConfirmDelete(false)}
+                    >
+                      {t('Hủy', 'Cancel')}
+                    </button>
                   </div>
-                ))}
-            </div>
+                </div>
+              )}
+            </>
           )}
-        </section>
+        </div>
       )}
-    </>
+      <ul>
+        {filtered.map((record) => (
+          <li
+            key={record.id}
+            className={record.id === selectedId ? 'is-selected' : ''}
+            data-geodata-id={record.id}
+          >
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={bulk ? checked.includes(record.id) : record.visible}
+              aria-label={
+                (bulk ? t('Chọn ', 'Select ') : t('Hiện ', 'Show ')) +
+                record.name
+              }
+              onChange={(event) =>
+                bulk
+                  ? (setChecked((ids) =>
+                      event.target.checked
+                        ? [...ids, record.id]
+                        : ids.filter((id) => id !== record.id)
+                    ),
+                    setConfirmDelete(false))
+                  : onUpdate(record.id, { visible: event.target.checked })
+              }
+            />
+            <button
+              className="geodata-feature"
+              disabled={disabled}
+              onClick={() => {
+                onSelect(record.id);
+              }}
+            >
+              <span
+                className="geodata-symbol"
+                style={{ color: roleColors[record.role] }}
+              >
+                <UiIcon
+                  name={
+                    record.feature.geometry.type === 'Point'
+                      ? 'location'
+                      : record.feature.geometry.type === 'LineString'
+                        ? 'minus'
+                        : 'area'
+                  }
+                  size={18}
+                />
+              </span>
+              <span>
+                <strong>{record.name}</strong>
+                <small>
+                  {observationOf(record)
+                    ? observationLabel(observationOf(record)!.kind, locale)
+                    : roleLabel(record.role, locale)}
+                </small>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
