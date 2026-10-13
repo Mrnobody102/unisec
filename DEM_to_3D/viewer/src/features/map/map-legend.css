@@ -32,13 +32,16 @@
 .line.network { filter: drop-shadow(0 1px 0 #243f45) drop-shadow(0 -1px 0 #243f45); }
 .line.uncertain { border-top-style: dashed; }
 .map-legend .line.aoi { border-color: #85aa9d; border-top-style: dashed; }
-.legend-symbol { display: inline-grid; place-items: center; width: 19px; height: 19px; flex: none; border: 1px solid white; border-radius: 50%; color: white; background: #237ba9; }
-.legend-symbol.priority { background: #a6630b; }
-.legend-symbol.landslide { background: #cf3535; }
-.legend-symbol.suspected { color: #cf3535; border: 1px dashed #cf3535; background: #fff; }
-.legend-symbol.bridge, .legend-symbol.crossing, .legend-symbol.hlz { color: #a6630b; border-color: #a6630b; background: #fff; }
-.legend-symbol.staging { background: #236c68; border-radius: var(--radius-control); }
-.legend-symbol.flood { background: #087d9e; }
+/* Same palette and badge as the map symbols (styles/map-symbols.css). */
+.legend-symbol { display: inline-grid; place-items: center; width: 19px; height: 19px; flex: none; border: 1.5px solid #fff; border-radius: 50%; color: #fff; background: var(--sym-community); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+.legend-symbol svg { stroke-width: 2; }
+.legend-symbol.priority { background: var(--sym-priority); }
+.legend-symbol.landslide { background: var(--sym-landslide); }
+.legend-symbol.suspected { color: var(--sym-landslide); border: 1.5px dashed var(--sym-landslide); background: #fff; }
+.legend-symbol.bridge, .legend-symbol.crossing { background: var(--sym-verify); }
+.legend-symbol.hlz { color: var(--sym-hlz); border-color: var(--sym-hlz); background: #fff; }
+.legend-symbol.staging { background: var(--sym-staging); }
+.legend-symbol.flood { background: var(--sym-flood); }
 .map-bottom-bar[data-expanded="true"] { width: var(--legend-width); padding-bottom: 10px; }
 .map-bottom-bar[data-expanded="true"] .map-legend { gap: 9px 16px; }
 .map-bottom-bar[data-minimized="true"] { width: max-content; padding: 4px 10px; }

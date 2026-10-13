@@ -24,8 +24,20 @@ export type OverlayHit =
   | { type: 'poi'; id: string }
   | { type: 'aoi'; id: string };
 
+/** Right-click on the map: the object under the pointer, if any, and its WGS84 position. */
+export type MapContextRequest = {
+  clientX: number;
+  clientY: number;
+  latitude: number;
+  longitude: number;
+  hit: OverlayHit | null;
+  /** Zoom in around this position (object positions use a street-level zoom). */
+  zoomHere: () => void;
+};
+
 export type BasemapStyle = 'satellite' | 'terrain';
 export type BasemapState = {
+  provider?: 'configured' | 'eox';
   status: 'off' | 'loading' | 'ready' | 'partial' | 'error' | 'unavailable';
   style: BasemapStyle;
   loaded: number;
@@ -37,7 +49,8 @@ export type ViewControls = {
   zoomOut: () => void;
   resetView: () => void;
   retryBasemap: () => void;
-  focusProjected: (point: { x: number; y: number }) => void;
+  /** Centre a point in the part of the map not covered by floating panels (`inset` in px). */
+  focusProjected: (point: { x: number; y: number }, inset?: { right?: number }) => void;
 };
 
 export type MapDisplayProps = {

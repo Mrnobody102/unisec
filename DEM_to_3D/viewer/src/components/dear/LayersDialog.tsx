@@ -1,3 +1,4 @@
+import { PointRenderingControl } from '../../features/map/PointRenderingControl';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from './UiIcon';
@@ -37,7 +38,6 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
   return <section className="layers-panel" id="map-layers-panel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="map-layers-title">
     <div className="layers-heading floating-panel-handle" {...floating} tabIndex={0} role="group" aria-label={t('Vị trí bảng lớp', 'Layers panel position')} aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home" title={t('Kéo để đổi vị trí. Nhấp đúp để đặt lại.', 'Drag to move. Double-click to reset.')}><h2 id="map-layers-title">{t('Lớp bản đồ', 'Map layers')}</h2><button className="icon-button" onClick={onClose} aria-label={t('Đóng lớp bản đồ', 'Close map layers')}><UiIcon name="close" /></button></div>
     <div className="layers-content">
-      <label className="layer-toggle"><input type="checkbox" checked={layers.gis !== false} onChange={()=>onToggleLayer('gis')}/><span>{t('Dữ liệu GIS đã nhập (2D)','Imported GIS data (2D)')}</span></label>
       <fieldset className="basemap-choices"><legend>{t('Bản đồ nền', 'Base map')}</legend>
         {bases.map(([imagery, label]) => <label className={'basemap-choice ' + (layers.imagery === imagery ? 'is-active' : '')} key={String(imagery)}>
           <span className={'basemap-preview ' + (imagery ? 'is-imagery' : 'is-terrain')} aria-hidden="true">
@@ -50,6 +50,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
       {details(layers.imagery ? 'imagery' : 'terrain')}
       <div className="layer-source-row"><label className="regional-basemap-toggle"><input type="checkbox" checked={Boolean(layers.context)} onChange={() => onToggleLayer('context')}/><span>{t('Nền bản đồ khu vực', 'Regional basemap')}</span></label>{info('context', t('Nền bản đồ khu vực', 'Regional basemap'))}</div>
       {details('context')}
+      <fieldset className="map-layer-group"><legend>{t('Dữ liệu nhập', 'Imported data')}</legend><label><input type="checkbox" checked={layers.gis !== false} onChange={() => onToggleLayer('gis')}/><span>{t('Dữ liệu GIS đã nhập (2D)', 'Imported GIS data (2D)')}</span></label><PointRenderingControl locale={locale} disabled={mapMode !== '2d' || layers.gis === false}/></fieldset>
       {hasIncidentLayers && groups.map(group => <fieldset className="map-layer-group" key={group.name}><legend>{group.name}</legend>{group.items.filter(([id]) => (id !== 'flood' || hasFloodData) && (id !== 'hlz' || hasHLZData) && (id !== 'route' || hasSelectedRoute)).map(([id, label]) => (
         <div key={id}><div className="layer-source-row"><label><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span></label>{info(id, label)}</div>{details(id)}</div>
       ))}</fieldset>)}

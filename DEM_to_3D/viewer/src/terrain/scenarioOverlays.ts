@@ -140,7 +140,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         roadGroup.add(line);
       };
       const hasWarning = layers.status && road.status !== 'open';
-      // A blue casing under warning dashes looks like two overlapping routes.
+      // A route-colored casing under warning dashes looks like two overlapping routes.
       addLine(isRoadSelected ? roadColors.inspectedCasing : routeVisible && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + (isRoadSelected ? 4 : 2), true);
       addLine(lineColor, lineWidth, false);
     });

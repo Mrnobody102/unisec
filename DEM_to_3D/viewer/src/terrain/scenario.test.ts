@@ -7,6 +7,7 @@ import {
   initialRoadSegments,
   buildScenarioRoutes
 } from '../data/cheTaoScenario';
+import { roadColors } from './roadStyle';
 import { buildScenarioOverlays } from './scenarioOverlays';
 import type { TerrainMetadata } from '../types/terrain';
 import type { Line2 } from 'three/examples/jsm/lines/Line2.js';
@@ -132,7 +133,9 @@ describe('DEAR Scenario & Overlays', () => {
     expect(warning.material.color.getHex()).toBe(color);
     expect(warning.material.dashed).toBe(dashed);
     const casing = roadLines.find(line => line.userData.id === warningId && line.userData.casing)!;
-    expect(casing.material.color.getHex()).toBe(0x243f45);
+    // Warning dashes retain a neutral casing instead of the selected-route color.
+    expect(casing.material.color.getHexString()).toBe(roadColors.neutralCasing.slice(1));
+    expect(casing.material.color.getHexString()).not.toBe(roadColors.selectedCasing.slice(1));
     if (!roadsVisible) {
       const renderedIds = new Set(roadLines.map(line => line.userData.id));
       expect(renderedIds).toEqual(new Set(selectedRoute.segs.map(segment => segment.id)));
