@@ -122,13 +122,15 @@ def run(url, chrome, captures):
                 page.wait_for_timeout(200)
                 assert page.locator('#geo-panel-scenes input[type=date]').first.evaluate('node=>getComputedStyle(node).colorScheme') == theme
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,theme)
-                # Wait for theme transitions before checking paint; mixing theme frames is not a UI state.
-                assert page.locator('.geodata-snap input').evaluate('''node=>{
+                # Theme colours transition; wait until the control settles on the surface paint
+                # instead of sampling a mid-transition frame.
+                page.wait_for_function('''()=>{
+                  const node=document.querySelector('.geodata-snap input');
                   const paint=document.createElement('span');
                   paint.style.backgroundColor='var(--ws-surface)';node.parentElement.append(paint);
                   const matches=getComputedStyle(node).backgroundColor===getComputedStyle(paint).backgroundColor;
                   paint.remove();return matches;
-                }''')
+                }''',timeout=3000)
                 rect=page.locator('.geodata-workspace').bounding_box()
                 assert rect['x']==0 and rect['width']==width
                 if captures and width in [1440,320]:
@@ -187,8 +189,8 @@ def run(url, chrome, captures):
         page.get_by_role('checkbox',name='Hút vào điểm gần',exact=True).check()
         page.get_by_role('tab',name='AOI',exact=True).click()
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
-        target=page.locator('.leaflet-points-pane path').bounding_box()
         box=settled_box(page,'.geodata-vertex')
+        target=settled_box(page,'.leaflet-points-pane path')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down()
         page.mouse.move(target['x']+target['width']/2+5,target['y']+target['height']/2,steps=8)
         page.mouse.up()
