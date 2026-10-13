@@ -55,8 +55,20 @@ jobs:
           python scripts/check_layer_sources.py
           python scripts/check_secondary_tools.py --url http://127.0.0.1:5213
           python scripts/check_geodata_workspace.py --url http://127.0.0.1:5213
+          python scripts/check_interaction_ux.py --url http://127.0.0.1:5213
+          python scripts/check_header_guide.py --url http://127.0.0.1:5213
+          python scripts/check_display_settings.py --url http://127.0.0.1:5213
+          python scripts/check_select_controls.py --url http://127.0.0.1:5213
+          python scripts/check_field_observations.py --url http://127.0.0.1:5213
+          python scripts/check_field_areas.py --url http://127.0.0.1:5213
+          python scripts/check_resident_workflow.py --url http://127.0.0.1:5213
+          python scripts/check_basemap_recovery.py --url http://127.0.0.1:5213
+          python scripts/check_point_groups.py --url http://127.0.0.1:5213
+          python scripts/check_point_modes.py --url http://127.0.0.1:5213
+          python scripts/check_simplified_gis.py --url http://127.0.0.1:5213
           python scripts/check_analysis_tools.py --url http://127.0.0.1:5213
           python scripts/check_response_operations.py --url http://127.0.0.1:5213
+          python scripts/check_response_details.py --url http://127.0.0.1:5213
           python scripts/check_panel_usability.py
           python scripts/check_dataset_selection.py
           python scripts/check_offline_package.py dist-release/dear-offline.zip

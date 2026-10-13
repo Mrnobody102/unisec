@@ -23,7 +23,7 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
         page.on('pageerror', lambda error: report['errors'].append(str(error)))
         page.on('crash', lambda: report['errors'].append('Page crashed'))
         try:
-            t = time.monotonic(); page.goto(url)
+            t = time.monotonic(); page.goto(url+'/?map=2d&demoRole=manager')
             expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
             expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
             page.wait_for_function("document.querySelector('.leaflet-image-layer')?.complete")

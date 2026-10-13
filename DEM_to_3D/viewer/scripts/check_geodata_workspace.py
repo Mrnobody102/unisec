@@ -19,34 +19,30 @@ KML = '''<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Docum
 </MultiGeometry></Placemark></Folder></Document></kml>'''
 
 
+def open_import(page):
+    trigger = page.locator('.geodata-import > button')
+    if trigger.get_attribute('aria-expanded') != 'true': trigger.click()
+
+
 def check_controls(page, theme):
-    """Check the reported flush disclosure and consistent standalone/embedded form paint."""
-    toggle = page.locator('.geodata-section-toggle')
-    before = toggle.bounding_box()
-    toggle.hover()
-    assert toggle.bounding_box() == before, 'Disclosure shifted on hover'
-    metrics = toggle.evaluate('''node => {
-      const style = getComputedStyle(node), row = node.getBoundingClientRect();
-      const label = node.querySelector('span').getBoundingClientRect();
-      const icon = node.querySelector('svg').getBoundingClientRect();
-      return {height: row.height, left: label.left - row.left, right: row.right - icon.right};
-    }''')
-    assert metrics['height'] >= 36 and metrics['left'] >= 9 and metrics['right'] >= 9, metrics
-    toggle.focus()
-    page.keyboard.press('Tab'); page.keyboard.press('Shift+Tab')
-    assert toggle.evaluate("node => node.matches(':focus-visible') && getComputedStyle(node).outlineWidth === '2px'")
-    assert page.locator('.geodata-workspace select').first.evaluate('''node => {
-      const style = getComputedStyle(node);
-      return ['none', 'base-select'].includes(style.appearance) && parseFloat(style.paddingRight) >= 30 && style.backgroundImage.includes('svg');
-    }''')
-    checkbox = page.locator('.geodata-workspace input[type=checkbox]:checked').first
-    if checkbox.count():
-        paint = checkbox.evaluate("node => ({appearance: getComputedStyle(node).appearance, image: getComputedStyle(node).backgroundImage})")
-        assert paint['appearance'] == 'none', paint
-        assert ('102031' if theme == 'dark' else 'white') in paint['image'], paint
+    close_record = page.get_by_role('button', name='Đóng hồ sơ đối tượng', exact=True)
+    if close_record.is_visible(): close_record.click()
+    trigger = page.locator('.geodata-import > button')
+    before = trigger.bounding_box(); trigger.hover()
+    assert trigger.bounding_box() == before, 'Import action shifted on hover'
+    open_import(page)
+    dialog = page.get_by_role('dialog', name='Nhập dữ liệu', exact=True)
+    expect(dialog).to_be_visible()
+    assert dialog.locator('select').evaluate("node => parseFloat(getComputedStyle(node).paddingRight) >= 30")
+    box = dialog.bounding_box()
+    assert box['x'] >= 0 and box['width'] <= page.viewport_size['width']
+    page.keyboard.press('Escape')
+    expect(trigger).to_be_focused()
 
 
 def paste(page, text, role='reference'):
+    dialog = page.locator('.geometry-input-dialog[open]')
+    if dialog.count(): page.keyboard.press('Escape')
     page.get_by_role('tab', name='Lớp', exact=True).click()
     panel = page.locator('.geodata-import')
     toggle = panel.get_by_role('button', name='Nhập dữ liệu', exact=True)
@@ -65,13 +61,14 @@ def check_large_import(browser, url, root):
     page = context.new_page()
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
-    page.goto(url + '/?workspace=geodata&offline=1')
+    page.goto(url + '/?map=2d&workspace=geodata&offline=1')
     geometries = ''.join(f'<Point><coordinates>{104 + i / 100000},21.78</coordinates></Point>' for i in range(1000))
     notes = '<Placemark><name>Note only</name></Placemark>' * 1001
     # More than 2 MB, more than 100 geometries, and note-only placemarks must all work.
     kml = '<kml xmlns="http://www.opengis.net/kml/2.2"><Document><!--' + 'x' * 2_000_000 + '-->' + notes + '<Placemark><name>Khảo sát</name><MultiGeometry>' + geometries + '</MultiGeometry></Placemark></Document></kml>'
     path = root / 'large-survey.kml'
     path.write_text(kml, encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
     expect(page.get_by_role('alert')).to_have_count(0)
@@ -84,11 +81,13 @@ def check_large_import(browser, url, root):
     expect(page.locator('.geodata-map-label')).to_contain_text('Khảo sát 1000')
     before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
     (root / 'extra.wkt').write_text('POINT(104 21)', encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(root / 'extra.wkt')
     expect(page.get_by_role('alert')).to_contain_text('1.000')
     assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
     # An over-budget MultiGeometry must fail at 1,001, without replacing the active project.
     path.write_text(kml.replace('</MultiGeometry>', '<Point><coordinates>104,21</coordinates></Point></MultiGeometry>'), encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.get_by_role('alert')).to_contain_text('large-survey.kml')
     assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
@@ -96,6 +95,7 @@ def check_large_import(browser, url, root):
     page.evaluate("localStorage.removeItem('dear.geodata.v1')")
     page.reload()
     path.write_text(kml, encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
     page.get_by_role('button', name='Hoàn tác GIS', exact=True).click()
@@ -122,7 +122,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
     page = context.new_page()
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
-    page.goto(url + '/?workspace=geodata&offline=1')
+    page.goto(url + '/?map=2d&workspace=geodata&offline=1')
     modes = ['absolute', 'relativeToGround', 'clampToGround', 'relativeToSeaFloor', 'clampToSeaFloor']
     # The first two points coincide: their geometry must not be displaced or connected.
     geometries = ''.join(
@@ -136,6 +136,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
            '<MultiGeometry>' + geometries + '</MultiGeometry></Placemark></Document></kml>')
     path = root / 'altitude-survey.kml'
     path.write_text(kml, encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(5)
     original = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
@@ -143,6 +144,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
     assert all(record['role'] == 'reference' and record['feature']['geometry']['type'] == 'Point' for record in original)
     assert original[0]['feature']['geometry']['coordinates'][:2] == original[1]['feature']['geometry']['coordinates'][:2]
     expect(page.get_by_role('list', name='Chú giải dữ liệu')).to_contain_text('Tham chiếu')
+    page.get_by_role('combobox',name='Hiển thị điểm',exact=True).select_option('individual')
     for selected_index in [0, 4]:
         page.locator('.geodata-feature').nth(selected_index).click()
         paths = page.locator('.leaflet-points-pane path')
@@ -175,6 +177,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
         page.screenshot(path=str(captures / 'gis-reference-points.png'), animations='disabled')
     page.evaluate("localStorage.removeItem('dear.geodata.v1')")
     page.reload()
+    open_import(page)
     page.locator('input[type=file]').set_input_files(exported_path)
     expect(page.locator('.geodata-layers li')).to_have_count(5)
     restored = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
@@ -185,6 +188,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
     # Invalid altitude references must fail atomically instead of becoming ground or absolute.
     before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
     path.write_text(kml.replace('<altitudeMode>absolute</altitudeMode>', '<altitudeMode>invalid</altitudeMode>', 1), encoding='utf-8')
+    open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.get_by_role('alert')).to_contain_text('altitudeMode')
     assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
@@ -202,7 +206,7 @@ def run(url, chrome, captures):
         page = context.new_page()
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
-        page.goto(url + '/?workspace=geodata&offline=1')
+        page.goto(url + '/?map=2d&workspace=geodata&offline=1')
         expect(page.locator('.geodata-workspace')).to_be_visible()
         expect(page).to_have_title('DEAR | Dữ liệu GIS')
         paste(page, STRIPS, 'footprint')
@@ -210,6 +214,7 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-layers')).to_contain_text('Strix-2')
         paste(page, '21.782919° N, 104.053554° E')
         expect(page.locator('.geodata-layers li')).to_have_count(4)
+        page.locator('.geodata-feature').filter(has_text='WGS84 1').click()
         expect(page.locator('.geodata-coordinate').first).to_have_text('21.782919°')
         expect(page.locator('.geodata-coordinate').nth(1)).to_have_text('104.053554°')
         expect(page.locator('.geodata-map-label').last).to_be_visible()
@@ -227,13 +232,16 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Đóng lỗi nhập').click()
         (root / 'local.kml').write_text(KML, encoding='utf-8')
         (root / 'network.kml').write_text('<kml><NetworkLink><Link><href>https://example.invalid/remote</href></Link></NetworkLink></kml>', encoding='utf-8')
+        open_import(page)
         page.locator('input[type=file]').set_input_files([root / 'local.kml',root / 'network.kml'])
         expect(page.get_by_role('alert')).to_contain_text('NetworkLink')
         expect(page.locator('.geodata-layers li')).to_have_count(4)
         page.get_by_role('button', name='Đóng lỗi nhập').click()
         (root / 'local.kml').write_text(KML.replace('106,21 ','106,21,0 '), encoding='utf-8')
+        open_import(page)
         page.locator('input[type=file]').set_input_files(root / 'local.kml')
         expect(page.locator('.geodata-layers li')).to_have_count(7)
+        page.locator('.geodata-feature').nth(4).click()
         page.get_by_role('button', name='Nguồn và tọa độ').click()
         expect(page.locator('.geodata-metadata')).to_contain_text('<img src=x')
         assert page.locator('.geodata-metadata img').count() == 0
@@ -297,6 +305,7 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-layers li')).to_have_count(3)
         # Geometry and UI round trip through exported KML, including polygon holes.
         page.get_by_role('tab', name='Lớp', exact=True).click()
+        open_import(page)
         page.locator('input[type=file]').set_input_files(root / 'dear-all.kml')
         expect(page.locator('.geodata-layers li')).to_have_count(6)
         for width in [1366,1024,390,320]:
@@ -306,7 +315,7 @@ def run(url, chrome, captures):
                 if width < 761:
                     page.locator('.geodata-mobile-tabs').get_by_role('button', name='Dữ liệu', exact=True).click()
                 check_controls(page, theme)
-                expect(page.locator('.geodata-header')).to_be_visible()
+                expect(page.locator('.geodata-title')).to_be_visible()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width,theme)
                 assert page.locator('.geodata-sidebar').evaluate('node=>node.scrollWidth <= node.clientWidth'), (width,theme)
                 if width < 761:
@@ -319,14 +328,14 @@ def run(url, chrome, captures):
         assert not errors, errors
         # GIS opens directly from the map toolbar and returns keyboard focus on close.
         page.set_viewport_size({'width':1366,'height':768})
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         for iteration in range(3):
             page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
-            expect(page.locator('.geodata-workspace')).to_have_attribute('aria-modal','true')
+            expect(page.locator('.geodata-workspace')).to_have_attribute('role','region')
             expect(page.locator('.geodata-layers li')).to_have_count(6)
             check_controls(page, page.locator('html').get_attribute('data-theme'))
-            assert page.locator('.geodata-header button').count() == 1, 'Duplicate exit controls'
+            assert page.locator('.geodata-title button').count() == 1, 'Duplicate exit controls'
             if iteration == 0:
                 page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
                 surface.click(position={'x':100,'y':100});page.keyboard.press('Escape')
@@ -339,7 +348,7 @@ def run(url, chrome, captures):
         drawing_context = browser.new_context(viewport={'width':1366,'height':768})
         drawing_context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
         drawing_page = drawing_context.new_page()
-        drawing_page.goto(url + '/?workspace=geodata&offline=1')
+        drawing_page.goto(url + '/?map=2d&workspace=geodata&offline=1')
         draw_surface = drawing_page.locator('.geodata-map-surface')
         for mode in ['double','first']:
             drawing_page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()

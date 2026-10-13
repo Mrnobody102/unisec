@@ -5,6 +5,27 @@ from playwright.sync_api import expect, sync_playwright
 from workspace_layout_checks import check_workspace_layout
 
 
+def check_default_map_mode(browser, url):
+    """Coordinators open in 3D when WebGL exists; the sign-in screen never fetches the mesh."""
+    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
+    meshes = []
+    context.on('request', lambda request: meshes.append(request.url) if request.url.endswith('.glb') else None)
+    page = context.new_page()
+    page.goto(url + '/')
+    expect(page.get_by_role('heading', level=1)).to_be_visible(timeout=25000)
+    page.wait_for_timeout(500)
+    assert not meshes, 'The sign-in screen must not download the 3D terrain'
+    page.goto(url + '/?demoRole=manager')
+    webgl = page.evaluate("!!document.createElement('canvas').getContext('webgl2')")
+    toggle = page.get_by_role('button', name='Chuyển sang 3D', exact=True)
+    expect(toggle).to_have_attribute('aria-pressed', 'true' if webgl else 'false', timeout=25000)
+    if webgl:
+        expect(page.locator('canvas.terrain-canvas')).to_be_visible(timeout=25000)
+        assert meshes, 'The 3D workspace must load the terrain mesh'
+    context.close()
+
+
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
@@ -13,7 +34,7 @@ def run(url, chrome, captures):
         page = context.new_page()
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
@@ -45,6 +66,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Fit area', exact=True).click()
         # A road stays visually thin but can be picked 6 px away from its centreline.
         road = page.locator('.map-road-target[data-road-id="E1"]')
+        unselected_stroke = road.evaluate("path => path.previousElementSibling.getAttribute('stroke')")
         point = road.evaluate("""path => {
             const matrix = path.getScreenCTM(), length = path.getTotalLength();
             const map = document.querySelector('.map-area').getBoundingClientRect();
@@ -62,9 +84,9 @@ def run(url, chrome, captures):
             throw new Error('No unobstructed road selection point');
         }""")
         page.mouse.click(point['x'], point['y'])
-        expect(page.locator('.sidebar .road-profile-action')).to_be_visible()
-        assert road.evaluate("path => path.previousElementSibling.getAttribute('stroke')") == '#e2e8ee', 'Selecting a road must not create a blue route'
-        road_name = page.locator('.sidebar h1').text_content()
+        expect(page.locator('#response-details .road-profile-action')).to_be_visible()
+        assert road.evaluate("path => path.previousElementSibling.getAttribute('stroke')") == unselected_stroke, 'Inspecting a road must preserve the network stroke, independently of the route selection'
+        road_name = page.locator('#response-details h1').text_content()
         page.get_by_role('button', name='Elevation profile', exact=True).click()
         expect(page.locator('.profile-panel')).to_be_visible()
         expect(page.locator('.profile-target-name')).to_have_text(road_name)
@@ -289,6 +311,7 @@ def run(url, chrome, captures):
             measure.get_by_role('button', name='Close measurement', exact=True).click()
         assert not errors, errors
         check_workspace_layout(browser, url, captures)
+        check_default_map_mode(browser, url)
         browser.close()
         print('Map workspace passed: overview bounds, mouse/keyboard navigation and lifecycle; toolbar, panels, legend, layers, 2D/3D coordinates, copy and mobile.')
 

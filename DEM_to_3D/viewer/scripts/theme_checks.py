@@ -9,9 +9,9 @@ def check_themes(browser, url, captures=None):
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page()
         try:
-            page.goto(url)
+            page.goto(url+'/?map=2d&demoRole=manager')
             expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
-            expect(page.locator('.incident-timing dt')).to_have_text(['Mở đánh giá', 'Tổng hợp'])
+            expect(page.locator('.incident-timing dt')).to_have_text(['Bắt đầu đánh giá', 'Cập nhật dữ liệu'])
             metrics_reader = """() => {
               const rgba = color => color.match(/[\\d.]+/g).map(Number);
               const blend = (top, bottom) => top.slice(0, 3).map((c, i) => c * (top[3] ?? 1) + bottom[i] * (1 - (top[3] ?? 1)));
@@ -28,7 +28,7 @@ def check_themes(browser, url, captures=None):
                 const a = luminance(fg), b = luminance(bg);
                 return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
               };
-              const selector = '.sidebar h1, .sidebar h3, .sidebar dt, .sidebar dd, .sidebar p, .sidebar .status-text, .workspace-nav button, .incident-badge-group strong, .incident-meta, .header-revision, .map-toolbar input, .map-layer-trigger, .layers-heading, .layers-panel, .map-source-popover dt, .map-source-popover dd, .map-source-status, .evidence-road strong, .evidence-road span, .map-measure-heading strong, .map-measure-type span, .map-measure-type select, .measure-tabs button, .map-measure-result dt, .map-measure-result dd, .map-measure-hint';
+              const selector = '#response-details h1, #response-details h3, #response-details dt, #response-details dd, #response-details p, #response-details .status-text, .sidebar h1, .sidebar h3, .sidebar dt, .sidebar dd, .sidebar p, .sidebar .status-text, .workspace-nav button, .incident-badge-group strong, .incident-meta, .header-revision, .map-toolbar input, .map-layer-trigger, .layers-heading, .layers-panel, .map-source-popover dt, .map-source-popover dd, .map-source-status, .evidence-road strong, .evidence-road span, .map-measure-heading strong, .map-measure-type span, .map-measure-type select, .measure-tabs button, .map-measure-result dt, .map-measure-result dd, .map-measure-hint';
               const text = [...document.querySelectorAll(selector)].filter(node => node.getClientRects().length).map(node => ({text: node.textContent.trim().slice(0, 60), ratio: contrast(node)}));
               document.querySelectorAll('.map-search input, .sidebar input').forEach(node => {
                 if (node.getClientRects().length && !node.value && node.placeholder) text.push({text: node.placeholder, ratio: contrast(node, '::placeholder')});

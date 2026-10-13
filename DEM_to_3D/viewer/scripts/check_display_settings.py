@@ -15,7 +15,7 @@ def run(url, chrome, captures):
             page = context.new_page()
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
-            page.goto(url + '/?offline=1')
+            page.goto(url + '/?map=2d&offline=1&demoRole=manager')
             expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
             expect(page.locator('html')).to_have_attribute('data-theme', expected)
             assert page.evaluate("localStorage.getItem('dear.theme')") == expected
@@ -30,7 +30,7 @@ def run(url, chrome, captures):
             settings = page.locator('.settings-menu')
             expect(settings).to_be_visible()
             expect(settings.get_by_role('button', name='Sáng', exact=True)).to_have_attribute('aria-pressed', 'true')
-            expect(settings.get_by_role('combobox', name='Kiểu chữ', exact=True)).to_have_value('plex')
+            expect(settings.get_by_role('combobox', name='Kiểu chữ', exact=True)).to_have_value('source')
             expect(settings.locator('.font-sample')).to_have_count(0)
             expect(settings.get_by_role('button', name='Mô hình địa hình', exact=True)).not_to_be_visible()
             expect(settings.get_by_role('button', name='Đặt lại phiên làm việc', exact=True)).not_to_be_visible()
@@ -46,10 +46,13 @@ def run(url, chrome, captures):
             settings.get_by_role('button', name='Tối', exact=True).click()
             settings.get_by_role('button', name='English', exact=True).click()
             font = settings.get_by_role('combobox', name='Typography', exact=True)
-            for choice in ['modern', 'plex', 'classic']:
+            for choice in ['modern', 'plex', 'classic', 'source']:
                 font.select_option(choice)
                 expect(page.locator('html')).to_have_attribute('data-font', choice)
-            expect(page.locator('html')).to_have_attribute('data-font', 'classic')
+            expect(page.locator('html')).to_have_attribute('data-font', 'source')
+            page.evaluate('document.fonts.ready')
+            assert page.locator('.sidebar').evaluate("node => getComputedStyle(node).fontFamily.startsWith('\"Source Sans 3\"')")
+            assert page.evaluate("document.fonts.check('400 14px \"Source Sans 3\"', 'Ghi nhận hiện trường')")
             settings.locator('.settings-workspace summary').click()
             expect(settings.get_by_role('button', name='Terrain model', exact=True)).to_be_visible()
             expect(settings.get_by_role('button', name='Reset workspace', exact=True)).to_be_visible()
@@ -61,10 +64,10 @@ def run(url, chrome, captures):
             page.reload()
             expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
             expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-            expect(page.locator('html')).to_have_attribute('data-font', 'classic')
+            expect(page.locator('html')).to_have_attribute('data-font', 'source')
             expect(page.locator('html')).to_have_attribute('lang', 'en')
             page.get_by_role('button', name='Display settings', exact=True).click()
-            expect(page.get_by_role('combobox', name='Typography', exact=True)).to_have_value('classic')
+            expect(page.get_by_role('combobox', name='Typography', exact=True)).to_have_value('source')
             page.get_by_role('button', name='Close settings', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
             # Session reset stays available after deliberately expanding its section.
@@ -72,7 +75,7 @@ def run(url, chrome, captures):
             page.locator('.settings-workspace summary').click()
             page.get_by_role('button', name='Reset workspace', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
-            expect(page.locator('.header-data')).to_contain_text('09:31')
+            expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
             assert not errors, errors
             context.close()
         # A restricted browser must retain a usable light interface.
@@ -85,7 +88,7 @@ def run(url, chrome, captures):
         }""")
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page()
-        page.goto(url + '/?offline=1')
+        page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
@@ -99,7 +102,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='http://127.0.0.1:5174')
-    parser.add_argument('--chrome', default=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
+    parser.add_argument('--chrome', default=None)
     parser.add_argument('--captures', type=Path)
     args = parser.parse_args()
     if args.captures:

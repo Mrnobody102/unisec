@@ -11,7 +11,7 @@ def run(url, chrome, captures):
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page(); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         page.locator('.incident-priority-row').first.click()
         page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
@@ -61,7 +61,8 @@ def run(url, chrome, captures):
             expect(page.locator('.toast')).to_have_count(0, timeout=6000)
             page.screenshot(path=str(captures / 'workspace-layer-sources.png'))
         page.keyboard.press('Escape')
-        page.locator('.header-revision').click()
+        page.get_by_role('button', name='Sự kiện đang xem', exact=True).click()
+        page.get_by_role('button', name='Lịch sử cập nhật', exact=True).click()
         page.get_by_role('radio', name='Đánh giá ban đầu').click()
         page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
         page.get_by_role('button', name='Nguồn lớp Tình trạng đường', exact=True).click()

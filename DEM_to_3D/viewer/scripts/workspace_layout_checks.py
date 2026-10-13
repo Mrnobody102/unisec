@@ -14,7 +14,7 @@ def check_workspace_layout(browser, url, captures=None):
     context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
     page = context.new_page()
     try:
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         handle = page.locator('.panel-resize-handle')
         handle.focus()

@@ -33,10 +33,10 @@ def run(archive, chrome):
                 page = context.new_page()
                 page.on('request', lambda request: requests.append(request.url))
                 page.on('pageerror', lambda error: errors.append(str(error)))
-                page.goto(base)
+                page.goto(base + "/?map=2d&demoRole=manager")
                 expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
                 page.locator('.incident-priority-row').first.click()
-                expect(page.locator('.sidebar h1')).to_have_text('Nậm Khắt')
+                expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
                 page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
                 page.get_by_role('button', name='Xem chi tiết', exact=True).click()
                 page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
@@ -54,7 +54,7 @@ def run(archive, chrome):
                 page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
                 page.locator('.settings-workspace summary').click()
                 page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
-                expect(page.locator('.header-data')).to_contain_text('09:31')
+                expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
                 assert not errors, errors
                 external = [request for request in requests if request.startswith(('http:', 'https:')) and not request.startswith(base)]
                 assert not external, external
