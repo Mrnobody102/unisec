@@ -109,7 +109,7 @@ export const CommunityListView: React.FC<Props> = ({
                   {c.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
                 </StatusText>
               </span>
-              <p>{t(...communityAccessText(routes.get(c.id)))}</p>
+              {(routes.get(c.id)?.direct || routes.get(c.id)?.candidate) && <p>{t(...communityAccessText(routes.get(c.id)))}</p>}
             </button>
           ))
         )}

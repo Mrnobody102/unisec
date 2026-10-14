@@ -1,6 +1,12 @@
 import { UiIcon } from './UiIcon';
 import React from 'react';
-import type { Hazard, ImpactTab, Locale, RoadFilter, RoadSegment } from '../../types/dear';
+import type {
+  Hazard,
+  ImpactTab,
+  Locale,
+  RoadFilter,
+  RoadSegment
+} from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
 import { normalizeSearch } from '../../features/search/searchIndex';
 import { roadStatusLabels } from '../../features/routes/roadStatus';
@@ -16,6 +22,7 @@ type Props = {
   onChangeTab: (tab: ImpactTab) => void;
   onChangeRoadFilter: (filter: RoadFilter) => void;
   onSelectObject: (obj: string) => void;
+  selectedId?: string | null;
 };
 
 export const ImpactView: React.FC<Props> = ({
@@ -28,9 +35,9 @@ export const ImpactView: React.FC<Props> = ({
   tab,
   onChangeTab,
   onChangeRoadFilter,
-  onSelectObject
+  onSelectObject,
+  selectedId
 }) => {
-
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
 
   const blockedCount = roads.filter((r) => r.status === 'blocked').length;
@@ -43,7 +50,8 @@ export const ImpactView: React.FC<Props> = ({
       return true;
     })
     .filter((r) => {
-      const text = `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${r.hz || ''}`.toLowerCase();
+      const text =
+        `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${r.hz || ''}`.toLowerCase();
       return normalizeSearch(text).includes(normalizeSearch(query));
     })
     .sort((a, b) => {
@@ -52,7 +60,8 @@ export const ImpactView: React.FC<Props> = ({
     });
 
   const filteredHazards = hazards.filter((h) => {
-    const text = `${h.name[0]} ${h.name[1]} ${h.id} ${h.src[0]} ${h.src[1]}`.toLowerCase();
+    const text =
+      `${h.name[0]} ${h.name[1]} ${h.id} ${h.src[0]} ${h.src[1]}`.toLowerCase();
     return normalizeSearch(text).includes(normalizeSearch(query));
   });
 
@@ -62,24 +71,50 @@ export const ImpactView: React.FC<Props> = ({
         <h1>{t('Tình trạng đường', 'Road conditions')}</h1>
 
         <div className="search-box">
-          <UiIcon name="search" size={18}/>
+          <UiIcon name="search" size={18} />
           <input
             type="search"
-            aria-label={t('Tìm đường hoặc điểm ảnh hưởng', 'Find roads or affected sites')}
+            aria-label={t(
+              'Tìm đường hoặc điểm ảnh hưởng',
+              'Find roads or affected sites'
+            )}
             placeholder={t('Tìm đường hoặc địa điểm', 'Find road or place')}
             value={query}
             onChange={(e) => onChangeQuery(e.target.value)}
           />
         </div>
 
-        <div className="filters impact-metrics" role="group" aria-label={t('Lọc đoạn đường', 'Filter road sections')}>
-          {([['all', t('Tất cả', 'All'), roads.length], ['blocked', t('Bị chặn', 'Blocked'), blockedCount], ['uncertain', t('Cần xác minh', 'To verify'), uncertainCount]] as const).map(([value, label, count]) => <button
-            key={value}
-            className="filter"
-            data-road-filter={value}
-            aria-pressed={tab === 'roads' && roadFilter === value}
-            onClick={() => { onChangeQuery(''); onChangeTab('roads'); onChangeRoadFilter(value !== 'all' && tab === 'roads' && roadFilter === value ? 'all' : value); }}
-          >{label}<span className="filter-count">{count}</span></button>)}
+        <div
+          className="filters impact-metrics"
+          role="group"
+          aria-label={t('Lọc đoạn đường', 'Filter road sections')}
+        >
+          {(
+            [
+              ['all', t('Tất cả', 'All'), roads.length],
+              ['blocked', t('Bị chặn', 'Blocked'), blockedCount],
+              ['uncertain', t('Cần xác minh', 'To verify'), uncertainCount]
+            ] as const
+          ).map(([value, label, count]) => (
+            <button
+              key={value}
+              className="filter"
+              data-road-filter={value}
+              aria-pressed={tab === 'roads' && roadFilter === value}
+              onClick={() => {
+                onChangeQuery('');
+                onChangeTab('roads');
+                onChangeRoadFilter(
+                  value !== 'all' && tab === 'roads' && roadFilter === value
+                    ? 'all'
+                    : value
+                );
+              }}
+            >
+              {label}
+              <span className="filter-count">{count}</span>
+            </button>
+          ))}
         </div>
 
         <div className="decision-tabs" role="group">
@@ -102,25 +137,41 @@ export const ImpactView: React.FC<Props> = ({
         {tab === 'roads' ? (
           <div>
             {filteredRoads.length === 0 ? (
-              <p className="small" style={{ padding: '16px 0', color: 'var(--ws-muted)' }}>
-                {t('Không có đoạn đường phù hợp bộ lọc.', 'No road segments match the filter.')}
+              <p
+                className="small"
+                style={{ padding: '16px 0', color: 'var(--ws-muted)' }}
+              >
+                {t(
+                  'Không có đoạn đường phù hợp bộ lọc.',
+                  'No road segments match the filter.'
+                )}
               </p>
             ) : (
               filteredRoads.map((road) => (
                 <button
                   key={road.id}
                   className="object-row impact-row"
+                  aria-pressed={selectedId === `road:${road.id}`}
                   onClick={() => onSelectObject(`road:${road.id}`)}
                 >
                   <span>
                     <strong>{t(road.name[0], road.name[1])}</strong>
                     <small>
-                      <i className={'road-swatch is-' + road.status} aria-hidden="true"/>{road.len} km
+                      <i
+                        className={'road-swatch is-' + road.status}
+                        aria-hidden="true"
+                      />
+                      {road.len} km
                     </small>
                   </span>
-                  <StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>
-                    {t(...roadStatusLabels[road.status])}
-                  </StatusText>
+                  {road.status !== 'open' && (
+                    <StatusText
+                      tone={road.status === 'blocked' ? 'critical' : 'warning'}
+                      icon={road.status === 'blocked' ? 'blocked' : 'uncertain'}
+                    >
+                      {t(...roadStatusLabels[road.status])}
+                    </StatusText>
+                  )}
                 </button>
               ))
             )}
@@ -128,29 +179,40 @@ export const ImpactView: React.FC<Props> = ({
         ) : (
           <div>
             {filteredHazards.length === 0 ? (
-              <p className="small" style={{ padding: '16px 0', color: 'var(--ws-muted)' }}>
-                {t('Không tìm thấy điểm ảnh hưởng.', 'No matching impact sites.')}
+              <p
+                className="small"
+                style={{ padding: '16px 0', color: 'var(--ws-muted)' }}
+              >
+                {t(
+                  'Không tìm thấy điểm ảnh hưởng.',
+                  'No matching impact sites.'
+                )}
               </p>
             ) : (
               filteredHazards.map((hz) => (
                 <button
                   key={hz.id}
                   className="object-row impact-row"
+                  aria-pressed={selectedId === `hazard:${hz.id}`}
                   onClick={() => onSelectObject(`hazard:${hz.id}`)}
                 >
                   <span>
                     <strong>{t(hz.name[0], hz.name[1])}</strong>
-                    <small className="metadata-line">{hz.area != null && <span>{hz.area} ha</span>}<span>{t(hz.src[0], hz.src[1])}</span></small>
+                    <small className="metadata-line">
+                      {hz.area != null && <span>{hz.area} ha</span>}
+                      <span>{t(hz.src[0], hz.src[1])}</span>
+                    </small>
                   </span>
                   <StatusText>
-                    {hz.observation === 'reported' ? t('Có báo cáo', 'Reported') : t('Chưa xác minh', 'Unverified')}
+                    {hz.observation === 'reported'
+                      ? t('Có báo cáo', 'Reported')
+                      : t('Chưa xác minh', 'Unverified')}
                   </StatusText>
                 </button>
               ))
             )}
           </div>
         )}
-
       </div>
     </>
   );

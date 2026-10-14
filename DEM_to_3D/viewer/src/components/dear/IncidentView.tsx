@@ -62,34 +62,52 @@ export function IncidentView({
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
   const asOf = updated ? incident.asOfUpdated : incident.asOf;
-  const priorityCommunities = communities.filter((community) => community.prio === 1);
-  const open = tasks.filter((task) => workState(task, entries).status !== 'done');
-  const statusCounts = tasks.reduce((counts, task) => {
-    const status = workState(task, entries).status;
-    counts[status] = (counts[status] ?? 0) + 1;
-    return counts;
-  }, {} as Record<string, number>);
+  const priorityCommunities = communities.filter(
+    (community) => community.prio === 1
+  );
+  const open = tasks.filter(
+    (task) => workState(task, entries).status !== 'done'
+  );
+  const statusCounts = tasks.reduce(
+    (counts, task) => {
+      const status = workState(task, entries).status;
+      counts[status] = (counts[status] ?? 0) + 1;
+      return counts;
+    },
+    {} as Record<string, number>
+  );
   return (
     <>
       <div className="sidebar-top incident-head">
-        <h1>{incident.title ? t(...incident.title) : t('Sự kiện', 'Incident')}</h1>
-        <button className="text-button incident-area-link" onClick={onOpenArea}>
-          {t(...areaName)}
+        <h1>
+          {incident.title ? t(...incident.title) : t('Sự kiện', 'Incident')}
+        </h1>
+        <button
+          className="text-button incident-area-link"
+          title={t(...areaName)}
+          onClick={onOpenArea}
+        >
+          {t('Xem phạm vi trên bản đồ', 'Show response area')}
         </button>
-        <dl className="incident-timing">
-          <div>
-            <dt>{t('Mở đánh giá', 'Assessment opened')}</dt>
-            <dd>
-              <time dateTime={incident.triggeredAt}>{localClock(incident.triggeredAt)}</time>
-            </dd>
-          </div>
-          <div>
-            <dt>{t('Tổng hợp', 'Data as of')}</dt>
-            <dd>
-              <time dateTime={asOf}>{localClock(asOf)}</time>
-            </dd>
-          </div>
-        </dl>
+        <details className="incident-context-details">
+          <summary>{t('Thời gian đánh giá', 'Assessment timestamps')}</summary>
+          <dl className="incident-timing">
+            <div>
+              <dt>{t('Bắt đầu đánh giá', 'Assessment opened')}</dt>
+              <dd>
+                <time dateTime={incident.triggeredAt}>
+                  {localClock(incident.triggeredAt)}
+                </time>
+              </dd>
+            </div>
+            <div>
+              <dt>{t('Cập nhật dữ liệu', 'Data as of')}</dt>
+              <dd>
+                <time dateTime={asOf}>{localClock(asOf)}</time>
+              </dd>
+            </div>
+          </dl>
+        </details>
         {historical ? (
           <p className="incident-context-note">
             {t('Đang xem bản dữ liệu cũ', 'Viewing an older revision')}
@@ -98,15 +116,23 @@ export function IncidentView({
           reportPending && (
             <button className="incident-pending-report" onClick={onOpenReport}>
               <UiIcon name="uncertain" size={16} />
-              {t('Có báo cáo mới chưa cập nhật bản đồ', 'New report awaiting map update')}
+              {t(
+                'Có báo cáo mới chưa cập nhật bản đồ',
+                'New report awaiting map update'
+              )}
             </button>
           )
         )}
       </div>
       <div className="sidebar-scroll incident-body">
-        <section className="incident-section" aria-labelledby="incident-priority-heading">
+        <section
+          className="incident-section"
+          aria-labelledby="incident-priority-heading"
+        >
           <div className="incident-section-heading">
-            <h3 id="incident-priority-heading">{t('Địa bàn ưu tiên', 'Priority communities')}</h3>
+            <h3 id="incident-priority-heading">
+              {t('Địa bàn ưu tiên', 'Priority communities')}
+            </h3>
             <button
               className="text-button incident-all-communities"
               onClick={onOpenCommunities}
@@ -127,7 +153,10 @@ export function IncidentView({
                   <span>
                     <strong>{community.name}</strong>
                     <small className="priority-next-action">
-                      {t(...(assessment?.reason ?? communityAccessText(routes.get(community.id))))}
+                      {t(
+                        ...(assessment?.reason ??
+                          communityAccessText(routes.get(community.id)))
+                      )}
                     </small>
                   </span>
                 </button>
@@ -140,44 +169,74 @@ export function IncidentView({
           aria-labelledby="incident-road-heading"
         >
           <div className="incident-section-heading">
-            <h3 id="incident-road-heading">{t('Tình trạng đường', 'Road conditions')}</h3>
+            <h3 id="incident-road-heading">
+              {t('Tình trạng đường', 'Road conditions')}
+            </h3>
           </div>
-          <button className="road-count-row" onClick={() => onOpenRoads('blocked')}>
+          <button
+            className="road-count-row"
+            onClick={() => onOpenRoads('blocked')}
+          >
             <StatusText tone="critical" icon="blocked">
               {t('Bị chặn', 'Blocked')}
             </StatusText>
             <span>
-              {blockedRoadCount} {t('đoạn', blockedRoadCount === 1 ? 'section' : 'sections')}
+              {blockedRoadCount}{' '}
+              {t('đoạn', blockedRoadCount === 1 ? 'section' : 'sections')}
             </span>
           </button>
-          <button className="road-count-row" onClick={() => onOpenRoads('uncertain')}>
+          <button
+            className="road-count-row"
+            onClick={() => onOpenRoads('uncertain')}
+          >
             <StatusText tone="warning" icon="uncertain">
               {t('Cần xác minh', 'To verify')}
             </StatusText>
             <span>
-              {uncertainRoadCount} {t('đoạn', uncertainRoadCount === 1 ? 'section' : 'sections')}
+              {uncertainRoadCount}{' '}
+              {t('đoạn', uncertainRoadCount === 1 ? 'section' : 'sections')}
             </span>
           </button>
         </section>
-        <section className="incident-section incident-work" aria-labelledby="incident-work-heading">
+        <section
+          className="incident-section incident-work"
+          aria-labelledby="incident-work-heading"
+        >
           <div className="incident-section-heading">
-            <h3 id="incident-work-heading">{t('Theo dõi xác minh', 'Verification tracking')}</h3>
-            <button className="text-button incident-all-communities" onClick={() => onOpenWork()}>
+            <h3 id="incident-work-heading">
+              {t('Theo dõi xác minh', 'Verification tracking')}
+            </h3>
+            <button
+              className="text-button incident-all-communities"
+              onClick={() => onOpenWork()}
+            >
               {t('Mở', 'Open')} ({open.length})
             </button>
           </div>
           <dl className="incident-work-summary">
-            {Object.entries(statusCounts).map(([status, count]) => <div key={status}><dt>{t(...workStatusText[status as keyof typeof workStatusText])}</dt><dd>{count}</dd></div>)}
+            {Object.entries(statusCounts).map(([status, count]) => (
+              <div key={status}>
+                <dt>
+                  {t(...workStatusText[status as keyof typeof workStatusText])}
+                </dt>
+                <dd>{count}</dd>
+              </div>
+            ))}
           </dl>
         </section>
-        <div className="incident-detail-actions">
-          <button className="text-button" onClick={onOpenTimeline}>
-            {t('Nhật ký sự kiện', 'Incident journal')}
+        <nav
+          className="incident-detail-actions"
+          aria-label={t('Tham khảo', 'Reference')}
+        >
+          <button className="incident-link" onClick={onOpenTimeline}>
+            <UiIcon name="history" size={18} />
+            <span>{t('Nhật ký sự kiện', 'Incident journal')}</span>
           </button>
-          <button className="text-button" onClick={onOpenData}>
-            {t('Nguồn dữ liệu', 'Data sources')}
+          <button className="incident-link" onClick={onOpenData}>
+            <UiIcon name="info" size={18} />
+            <span>{t('Nguồn dữ liệu', 'Data sources')}</span>
           </button>
-        </div>
+        </nav>
       </div>
     </>
   );

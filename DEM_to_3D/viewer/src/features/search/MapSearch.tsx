@@ -70,7 +70,7 @@ export function MapSearch({ locale, results, query, onQuery, onSelect, disabled 
     {expanded && <div id="map-search-results" className="map-search-results" role="listbox" aria-label={t('Kết quả tìm kiếm', 'Search results')}>
       {!results.length && <p>{t('Không tìm thấy kết quả', 'No results found')}</p>}
       {results.map((result, index) => <button key={result.key} id={`map-result-${index}`} role="option" aria-selected={index === active}
-        onPointerMove={() => setActive(index)} onClick={() => choose(result)}><span className="map-search-icon">{resultIcon(result)}</span><span><strong>{highlight(result.name, query)}</strong><small>{result.category}</small></span></button>)}
+        onPointerEnter={() => setActive(index)} onClick={() => choose(result)}><span className="map-search-icon">{resultIcon(result)}</span><span><strong>{highlight(result.name, query)}</strong><small>{result.category}</small></span></button>)}
     </div>}
   </div>;
 }

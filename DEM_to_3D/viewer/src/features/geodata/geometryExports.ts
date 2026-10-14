@@ -1,3 +1,4 @@
+import { recordIdKey } from '../observations/fieldAreas';
 import type { Position } from 'geojson';
 import { GeometryError, isPolygon, type GeometryRecord, type VectorGeometry } from '../../geo/vector/types';
 import { coverageMethod, polygonCoverage } from '../../geo/vector/polygonCoverage';
@@ -17,7 +18,7 @@ function oriented(geometry: VectorGeometry): VectorGeometry {
 export function exportGeometryGeoJSON(records: GeometryRecord[]): string {
   return JSON.stringify({type:'FeatureCollection',features:records.map(record=>({...record.feature,id:record.id,
     geometry:oriented(record.feature.geometry),properties:{...record.feature.properties,name:record.name,
-      geometryRole:record.role,source:record.source.name,inputFormat:record.source.format,importedAt:record.source.importedAt}})),
+      [recordIdKey]:record.id,geometryRole:record.role,source:record.source.name,inputFormat:record.source.format,importedAt:record.source.importedAt}})),
     metadata:{coordinateOrder:'longitude,latitude',method:coverageMethod,
       coverage:polygonCoverage(records)}},null,2);
 }
@@ -54,7 +55,7 @@ function kmlGeometry(raw: VectorGeometry, mode: KmlAltitudeMode | undefined): st
 function kmlPlacemark(record: GeometryRecord): string {
   const mode = kmlAltitudeMode(record.feature.properties);
   if (record.feature.properties[kmlAltitudeModeKey] != null && !mode) throw new GeometryError('kml-altitude');
-  const properties = { ...record.feature.properties, geometryRole: record.role, source: record.source.name };
+  const properties = { ...record.feature.properties, [recordIdKey]: record.id, geometryRole: record.role, source: record.source.name };
   const extended = Object.entries(properties)
     .filter(([key, value]) => !['name', 'description', kmlAltitudeModeKey, '__proto__', 'prototype', 'constructor'].includes(key) && value != null)
     .map(([key, value]) => {

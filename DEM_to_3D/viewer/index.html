@@ -1,10 +1,20 @@
 <!doctype html>
-<html lang="vi" data-theme="dark" data-font="plex">
+<html lang="vi" data-theme="light" data-font="source">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101318" />
-    <script>try { if (localStorage.getItem('dear.theme') === 'light') document.documentElement.dataset.theme = 'light'; const font = localStorage.getItem('dear.font-choice'); if (['classic', 'plex', 'modern'].includes(font)) document.documentElement.dataset.font = font; } catch {}</script>
+    <meta name="theme-color" content="#fbfcf9" />
+    <script>
+      try {
+        if (localStorage.getItem('dear.theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+          document.querySelector('meta[name="theme-color"]').content = '#191f1b';
+        }
+        const font = localStorage.getItem('dear.font-choice');
+        if (['classic', 'plex', 'modern', 'source'].includes(font)) document.documentElement.dataset.font = font;
+        if (localStorage.getItem('dear.locale') === 'en') document.documentElement.lang = 'en';
+      } catch { /* Defaults remain usable when browser storage is unavailable. */ }
+    </script>
     <title>DEAR | Bản đồ ứng phó</title>
   </head>
   <body>

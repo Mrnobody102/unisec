@@ -1,3 +1,5 @@
+import { editsFor, type ScenarioEdit } from '../../features/access/scenarioEdits';
+import { EditableTitle } from '../../shared/ui/EditableTitle';
 import React from 'react';
 import type {
   Community,
@@ -36,9 +38,15 @@ type Props = {
   onOpenEvidence: (id: string) => void;
   onSelectObject: (id: string) => void;
   onOpenPriority: () => void;
+
+  onRenameRoad?: (id: string, names: [string, string]) => boolean;
+  /** Manual scenario edits, to show who last changed a road's status. */
+  scenarioEdits?: ScenarioEdit[];
 };
 
 export const ObjectDetailView: React.FC<Props> = ({
+  onRenameRoad,
+  scenarioEdits = [],
   objectId,
   aoi,
   parentName,
@@ -88,7 +96,7 @@ export const ObjectDetailView: React.FC<Props> = ({
         {parentName && <button className="text-button back panel-parent" onClick={onBack}>
           <UiIcon name="back" size={16} /> {parentName}
         </button>}
-        <div className="detail-title"><h1 id="object-title">{title}</h1><button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
+        <div className="detail-title">{road ? <EditableTitle id="object-title" title={title} names={road.name} locale={locale} onRename={onRenameRoad && (names => onRenameRoad(road.id, names))} /> : <h1 id="object-title">{title}</h1>}<button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
         {road && <div className="detail-priority detail-meta"><StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>{t(...roadStatusLabels[road.status])}</StatusText><span>{road.len} km</span></div>}
       </div>
 
@@ -109,11 +117,23 @@ export const ObjectDetailView: React.FC<Props> = ({
                 : relatedHazard && <p className="observation-meta metadata-line"><span>{t(...relatedHazard.src)}</span><time>{relatedHazard.detected}</time></p>}
             </section>}
             <section className="workflow-section detail-next">
+              {(() => {
+                const edit = editsFor(scenarioEdits, 'road', road.id).find((item) => item.change.kind === 'status');
+                return edit ? (
+                  <p className="manual-edit-note">
+                    <UiIcon name="edit" size={14} />
+                    <span>
+                      {t('Sửa thủ công bởi ', 'Set manually by ')}{edit.author.name}, {new Date(edit.at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' })}
+                      {edit.note && <em>{edit.note}</em>}
+                    </span>
+                  </p>
+                ) : null;
+              })()}
               {road.status !== 'open' ? <p className={'object-next-action is-' + road.status}><UiIcon name={road.status === 'blocked' ? 'blocked' : 'uncertain'} size={16}/><span>{road.status === 'blocked' ? t('Đoạn bị chặn, không sử dụng để tiếp cận.', 'Blocked section. Do not use for access.')
                 : relatedHazard?.kind === 'bridge' ? t('Cần xác minh mực nước và khả năng qua cầu.', 'Verify water level and bridge passage.')
                 : relatedHazard?.kind === 'crossing' ? t('Cần xác minh khả năng qua khe.', 'Verify passage at the gully crossing.')
                 : t('Khả năng đi qua chưa được xác minh.', 'Passage has not been verified.')}</span></p>
-                : <p className="road-verification-note">{t('Chưa có xác nhận khả năng đi qua tại hiện trường.', 'Passage has not been confirmed in the field.')}</p>}
+                : null}
               <div className="detail-actions">
                 {road.hz && <button className="button" onClick={() => onOpenEvidence(road.hz!)}><UiIcon name="info" size={16}/>{roadRecord ? evidencePresentation(roadRecord.type, locale).action : t('Xem chi tiết', 'View details')}</button>}
                 <button className="button road-profile-action" disabled={!hasTerrainProfile} aria-pressed={profileOpen} onClick={onToggleProfile} title={!hasTerrainProfile ? t('Chưa có DEM cho đoạn đường này', 'DEM unavailable for this road section') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>
@@ -143,7 +163,7 @@ export const ObjectDetailView: React.FC<Props> = ({
             {hazardRecord && findingAddsDetail(title, t(...hazardRecord.finding)) && <p className="hazard-observation">{t(...hazardRecord.finding)}</p>}
             {hazardRecord && <EvidenceMetadata evidence={hazardRecord} locale={locale} className="observation-times" showSource={false}/>}
 
-            <dl className="object-facts fact-rows">
+            {(hazard.area != null || !hazardRecord) && <dl className="object-facts fact-rows">
               {hazard.area != null && (hazard.kind === 'landslide' || hazard.kind === 'flood') && <div>
                 <dt>{t('Diện tích ước tính', 'Estimated area')}</dt>
                 <dd>{hazard.area} ha</dd>
@@ -152,7 +172,7 @@ export const ObjectDetailView: React.FC<Props> = ({
                 <dt>{t('Ghi nhận lúc', 'Impact recorded')}</dt>
                 <dd>{hazard.detected}</dd>
               </div>}
-            </dl>
+            </dl>}
             <div className="detail-actions"><button className="button" onClick={() => onOpenEvidence(hazard.id)}><UiIcon name="info" size={16}/>{hazardRecord ? evidencePresentation(hazardRecord.type, locale).action : t('Xem chi tiết', 'View details')}</button></div>
 
             {affectedRoads.length > 0 && <section className="workflow-section"><h3>{t('Đoạn đường liên quan', 'Related road sections')}</h3>{affectedRoads.map(item => <button className="object-row impact-row" key={item.id} onClick={() => onSelectObject(`road:${item.id}`)}><span><strong>{t(...item.name)}</strong><small>{item.len} km</small></span><StatusText tone={item.status === 'blocked' ? 'critical' : item.status === 'uncertain' ? 'warning' : 'neutral'} icon={item.status === 'blocked' ? 'blocked' : item.status === 'uncertain' ? 'uncertain' : undefined}>{t(...roadStatusLabels[item.status])}</StatusText></button>)}</section>}

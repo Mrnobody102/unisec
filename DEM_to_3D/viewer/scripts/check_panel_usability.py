@@ -11,7 +11,9 @@ from workspace_context_checks import check_workspace_context
 
 
 def check_panel(page):
-    problems = page.locator('.sidebar').evaluate("""panel => {
+    panel = page.locator('#response-details:visible')
+    if not panel.count(): panel = page.locator('#response-panel:visible')
+    problems = panel.evaluate("""panel => {
       const errors = [];
       if (panel.scrollWidth > panel.clientWidth + 1) errors.push('panel overflow');
       const body = panel.querySelector('.sidebar-scroll');
@@ -50,7 +52,7 @@ def run(url, chrome, captures):
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page(); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         page.wait_for_function("document.querySelector('.leaflet-image-layer')?.complete")
@@ -64,8 +66,8 @@ def run(url, chrome, captures):
         page.keyboard.press('Escape')
         check_symbols(page)
         page.evaluate('document.fonts.ready')
-        assert page.locator('html').get_attribute('data-font') == 'plex'
-        assert page.locator('.sidebar').evaluate("node => getComputedStyle(node).fontFamily.startsWith('\"IBM Plex Sans\"')")
+        assert page.locator('html').get_attribute('data-font') == 'source'
+        assert page.locator('.sidebar').evaluate("node => getComputedStyle(node).fontFamily.startsWith('\"Source Sans 3\"')")
         for width in [1366, 1024, 390, 320]:
             page.set_viewport_size({'width': width, 'height': 768})
             if width < 900:
@@ -111,7 +113,7 @@ def run(url, chrome, captures):
             expect(page.locator('.decision-tabs button')).to_have_count(2)
             if width >= 900:
                 action = page.locator('.access-primary').bounding_box()
-                panel_box = page.locator('.sidebar').bounding_box()
+                panel_box = page.locator('#response-details').bounding_box()
                 assert action['y'] + action['height'] <= panel_box['y'] + panel_box['height'], 'Primary action is below the initial viewport'
                 route = page.locator('.route-metrics').bounding_box()
                 assert route['y'] + route['height'] <= action['y'], 'Route context must appear before its action'
@@ -169,7 +171,7 @@ def run(url, chrome, captures):
             road_query.fill('khau mang')
             expect(page.locator('.impact-row')).to_have_count(1)
             page.locator('.impact-row').click()
-            expect(page.locator('.sidebar h1')).to_have_text('Đường vào Khau Mang qua cầu')
+            expect(page.locator('#response-details h1')).to_have_text('Đường vào Khau Mang qua cầu')
             check_panel(page)
             page.get_by_role('button', name='Xem báo cáo', exact=True).click()
             expect(page.locator('.evidence-metadata')).to_contain_text('03:55')
@@ -219,7 +221,7 @@ def run(url, chrome, captures):
                 search = page.get_by_role('combobox', name='Tìm trên bản đồ', exact=True)
                 search.fill(name)
                 search.press('Enter')
-                panel = page.locator('.sidebar')
+                panel = page.locator('#response-details')
                 expect(panel.get_by_text('Chưa có tuyến để đánh giá', exact=True)).to_have_count(1)
                 expect(panel.locator('.decision-route')).to_have_count(0)
                 expect(panel.locator('.sidebar-intro')).to_have_count(0)
@@ -272,7 +274,6 @@ def run(url, chrome, captures):
         expect(page.locator('.detail-priority .status-text')).to_have_text('Chưa ghi nhận đường bị chặn')
         expect(page.locator('.object-observation')).to_have_count(0)
         expect(page.locator('.object-next-action')).to_have_count(0)
-        expect(page.locator('.road-verification-note')).to_contain_text('Chưa có xác nhận khả năng đi qua')
         # Contact time is metadata rather than repeated in the finding sentence.
         search.fill('Nậm Khắt')
         search.press('Enter')
@@ -299,14 +300,14 @@ def run(url, chrome, captures):
         expect(page.locator('.route-section-detail')).to_contain_text('09:40')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
         page.locator('.decision-tabs button').nth(1).click()
-        expect(page.locator('.sidebar').get_by_text('Đường tiếp cận bị chặn. Mất liên lạc.', exact=True)).to_have_count(1)
+        expect(page.locator('#response-details').get_by_text('Đường tiếp cận bị chặn. Mất liên lạc.', exact=True)).to_have_count(1)
         expect(page.locator('.sidebar-intro')).to_have_count(0)
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
         search = page.get_by_role('combobox', name='Search map', exact=True)
         search.fill('pung hoc')
         search.press('Enter')
-        panel = page.locator('.sidebar')
+        panel = page.locator('#response-details')
         expect(panel.get_by_text('No mapped access route', exact=True)).to_have_count(1)
         expect(panel.locator('.decision-route')).to_have_count(0)
         check_panel(page)
@@ -316,7 +317,7 @@ def run(url, chrome, captures):
         check_panel(page)
         assert not errors, errors
         page.get_by_role('button', name='Display settings', exact=True).click()
-        page.get_by_role('button', name='Inter', exact=True).click()
+        page.get_by_role('combobox', name='Typography', exact=True).select_option('classic')
         page.reload()
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         assert page.locator('html').get_attribute('data-font') == 'classic'

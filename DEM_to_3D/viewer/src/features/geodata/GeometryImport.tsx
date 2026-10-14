@@ -1,16 +1,20 @@
+import { FileDropZone } from '../../shared/ui/FileDropZone';
 import { GEOMETRY_LIMITS as limits } from '../../geo/vector/limits';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { ImportRole } from './geometrySession';
 import type { Locale } from '../../types/dear';
+import { GeometryInputDialog } from './GeometryInputDialog';
 import { UiIcon } from '../../shared/ui/UiIcon';
-import { DisclosureTrigger } from '../../shared/ui/DisclosureTrigger';
 import { roleLabel } from './geometryPresentation';
 
 type Props = {
   locale: Locale;
   busy: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   disabled: boolean;
-  count: number;
+  error?: string;
+  onDismissError?: () => void;
   onFiles: (files: File[], role: ImportRole) => Promise<boolean>;
   onText: (text: string, role: ImportRole) => boolean;
 };
@@ -18,119 +22,150 @@ type Props = {
 export function GeometryImport({
   locale,
   busy,
+  open: expanded,
+  onOpenChange: setExpanded,
   disabled,
-  count,
+  error,
+  onDismissError,
   onFiles,
   onText
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
-  const input = useRef<HTMLInputElement>(null);
   const [role, setRole] = useState<ImportRole>('auto'),
     [paste, setPaste] = useState(false),
     [text, setText] = useState('');
-  const [expanded, setExpanded] = useState(!count);
   return (
-    <section className="geodata-section geodata-import">
-      <h2>
-        <DisclosureTrigger
-          className="geodata-section-toggle"
-          onClick={() => setExpanded((value) => !value)}
-          expanded={expanded}
-          aria-controls="geodata-import-fields"
+    <section className="geodata-import">
+      <button
+        className="button"
+        disabled={disabled || busy}
+        aria-haspopup="dialog"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(true)}
+      >
+        <UiIcon name="layers" size={16} />
+        {t('Nhập dữ liệu', 'Import data')}
+      </button>
+      {expanded && (
+        <GeometryInputDialog
+          title={t('Nhập dữ liệu', 'Import data')}
+          locale={locale}
+          onClose={() => setExpanded(false)}
         >
-          {t('Nhập dữ liệu', 'Import data')}
-        </DisclosureTrigger>
-      </h2>
-      <div id="geodata-import-fields" hidden={!expanded}>
-        <label className="geodata-field">
-          {t('Sử dụng làm', 'Use as')}
-          <select
-            value={role}
-            disabled={disabled || busy}
-            onChange={(event) => setRole(event.target.value as ImportRole)}
-          >
-            <option value="auto">{t('Theo tệp', 'From file')}</option>
-            {(['reference', 'aoi', 'footprint'] as const).map((role) => (
-              <option key={role} value={role}>
-                {roleLabel(role, locale)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="geodata-actions">
-          <button
-            className="button primary"
-            disabled={busy || disabled}
-            onClick={() => input.current?.click()}
-          >
-            <UiIcon name="plus" />
-            {busy ? t('Đang đọc…', 'Reading…') : t('Chọn tệp', 'Choose files')}
-          </button>
-          <button
-            className="button"
-            disabled={busy || disabled}
-            onClick={() => setPaste((value) => !value)}
-            aria-expanded={paste}
-          >
-            {t('Dán tọa độ / WKT', 'Paste coordinates / WKT')}
-          </button>
-        </div>
-        <input
-          ref={input}
-          type="file"
-          aria-label={t('Tệp dữ liệu GIS', 'GIS data files')}
-          accept=".kml,.geojson,.json,.wkt,.txt"
-          multiple
-          hidden
-          onChange={async (event) => {
-            const files = [...(event.target.files ?? [])];
-            event.target.value = '';
-            if (files.length && (await onFiles(files, role))) setExpanded(false);
-          }}
-        />
-        {paste && (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (onText(text, role)) {
-                setText('');
-                setPaste(false);
-                setExpanded(false);
-              }
-            }}
-          >
+          <div id="geodata-import-fields">
+            {error && (
+              <div className="geodata-input-error" role="alert">
+                <p>{error}</p>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={t('Đóng lỗi nhập', 'Dismiss import error')}
+                  onClick={onDismissError}
+                >
+                  <UiIcon name="close" />
+                </button>
+              </div>
+            )}
             <label className="geodata-field">
-              {t('Nội dung', 'Input')}
-              <textarea
-                aria-label={t('Tọa độ, WKT hoặc GeoJSON', 'Coordinates, WKT or GeoJSON')}
-                value={text}
+              {t('Sử dụng làm', 'Use as')}
+              <select
+                value={role}
                 disabled={disabled || busy}
-                rows={5}
-                placeholder={
-                  '21°45\'26.80"N 104°02\'48.44"E\n21.782919° N, 104.053554° E'
-                }
-                onChange={(event) => setText(event.target.value)}
-              />
+                onChange={(event) => setRole(event.target.value as ImportRole)}
+              >
+                <option value="auto">{t('Theo tệp', 'From file')}</option>
+                {(['reference', 'aoi', 'footprint'] as const).map((role) => (
+                  <option key={role} value={role}>
+                    {roleLabel(role, locale)}
+                  </option>
+                ))}
+              </select>
             </label>
-            <p className="geodata-hint">
-              {t('WGS84. Điểm: DD hoặc DMS, mỗi dòng một điểm. WKT/GeoJSON: kinh độ, vĩ độ.', 'WGS84. Points: DD or DMS, one point per line. WKT/GeoJSON: longitude, latitude.')}
-            </p>
+            <FileDropZone
+              multiple
+              disabled={busy || disabled}
+              accept=".kml,.geojson,.json,.wkt,.txt"
+              title={
+                busy
+                  ? t('Đang đọc…', 'Reading…')
+                  : t('Chọn hoặc kéo thả tệp', 'Choose or drop files')
+              }
+              hint="KML, GeoJSON, WKT"
+              onFiles={async (files) => {
+                if (await onFiles(files, role)) setExpanded(false);
+              }}
+            />
             <button
-              className="button primary"
-              disabled={!text.trim() || busy || disabled}
-              type="submit"
+              className="text-button geodata-paste-toggle"
+              disabled={busy || disabled}
+              onClick={() => setPaste((value) => !value)}
+              aria-expanded={paste}
             >
-              {t('Nhập', 'Import')}
+              {t('Dán tọa độ / WKT', 'Paste coordinates / WKT')}
             </button>
-          </form>
-        )}
-        <dl className="geodata-import-limits">
-          <dt>{t('Định dạng', 'Formats')}</dt><dd>KML, GeoJSON, WKT (UTF-8)</dd>
-          <dt>{t('Mỗi tệp', 'Per file')}</dt><dd>{limits.inputBytes / 1_000_000} MB</dd>
-          <dt>{t('Mỗi lần nhập', 'Per import')}</dt><dd>{limits.filesPerBatch} {t('tệp', 'files')}, {limits.batchBytes / 1_000_000} MB</dd>
-          <dt>{t('Mỗi phiên', 'Per workspace')}</dt><dd>{limits.features.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')} {t('đối tượng', 'features')}</dd>
-        </dl>
-      </div>
+            {paste && (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (onText(text, role)) {
+                    setText('');
+                    setPaste(false);
+                    setExpanded(false);
+                  }
+                }}
+              >
+                <label className="geodata-field">
+                  {t('Nội dung', 'Input')}
+                  <textarea
+                    aria-label={t(
+                      'Tọa độ, WKT hoặc GeoJSON',
+                      'Coordinates, WKT or GeoJSON'
+                    )}
+                    value={text}
+                    disabled={disabled || busy}
+                    rows={5}
+                    placeholder={
+                      '21°45\'26.80"N 104°02\'48.44"E\n21.782919° N, 104.053554° E'
+                    }
+                    onChange={(event) => setText(event.target.value)}
+                  />
+                </label>
+                <p className="geodata-hint">
+                  {t(
+                    'WGS84. Điểm: DD hoặc DMS, mỗi dòng một điểm. WKT/GeoJSON: kinh độ, vĩ độ.',
+                    'WGS84. Points: DD or DMS, one point per line. WKT/GeoJSON: longitude, latitude.'
+                  )}
+                </p>
+                <button
+                  className="button primary"
+                  disabled={!text.trim() || busy || disabled}
+                  type="submit"
+                >
+                  {t('Nhập', 'Import')}
+                </button>
+              </form>
+            )}
+            <dl className="geodata-import-limits">
+              <dt>{t('Định dạng', 'Formats')}</dt>
+              <dd>KML, GeoJSON, WKT (UTF-8)</dd>
+              <dt>{t('Mỗi tệp', 'Per file')}</dt>
+              <dd>{limits.inputBytes / 1_000_000} MB</dd>
+              <dt>{t('Mỗi lần nhập', 'Per import')}</dt>
+              <dd>
+                {limits.filesPerBatch} {t('tệp', 'files')},{' '}
+                {limits.batchBytes / 1_000_000} MB
+              </dd>
+              <dt>{t('Mỗi phiên', 'Per workspace')}</dt>
+              <dd>
+                {limits.features.toLocaleString(
+                  locale === 'vi' ? 'vi-VN' : 'en-US'
+                )}{' '}
+                {t('đối tượng', 'features')}
+              </dd>
+            </dl>
+          </div>
+        </GeometryInputDialog>
+      )}
     </section>
   );
 }

@@ -18,12 +18,13 @@ export function addRoadLayers({ road, points, layer, selected, inspected, warnin
   const opacity = selected || inspected || warning ? 1 : networkOpacity;
   const casingColor = inspected ? roadColors.inspectedCasing : selected && !warning ? roadColors.selectedCasing : roadColors.neutralCasing;
   const casing = L.polyline(points, { pane, color: casingColor, weight: weight + (inspected ? 4 : 2), opacity: opacity * 0.8, interactive: false }).addTo(layer);
-  L.polyline(points, { pane, color, weight, opacity, interactive: false,
+  L.polyline(points, { pane, color, weight, opacity, interactive: false, className: selected ? 'map-road-route-line' : 'map-road-network-line',
     dashArray: warning && road.status === 'uncertain' ? '7 5' : undefined }).addTo(layer);
   const touch = window.matchMedia('(pointer: coarse)').matches;
   const target = L.polyline(points, { pane, color: 'transparent', weight: touch ? 24 : 16,
     opacity: 1, bubblingMouseEvents: false, className: 'map-road-target' }).addTo(layer);
-  target.getElement()?.setAttribute('data-road-id', road.id);
+  target.getElement()?.setAttribute('data-road-id', road.sourceRoadId ?? road.id);
+  if (selected) target.getElement()?.setAttribute('data-route-segment', road.id);
   target.on('click', onSelect);
   target.on('mouseover', () => casing.setStyle({ color: roadColors.inspectedCasing, opacity: 0.85, weight: weight + 4 }));
   target.on('mouseout', () => casing.setStyle({ color: casingColor, opacity: opacity * 0.8, weight: weight + (inspected ? 4 : 2) }));

@@ -1,0 +1,3 @@
+heic-to 1.6.6, LGPL-3.0. Unmodified library, loaded only for HEIC preview.
+Source and build instructions: https://github.com/hoppergee/heic-to
+Upstream libheif: https://github.com/strukturag/libheif

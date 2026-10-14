@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { FileDropZone } from '../shared/ui/FileDropZone';
 import '../features/terrain/model-upload.css';
 
 export type UploadMode = 'single' | 'merge';
@@ -18,10 +18,6 @@ type Props = {
 
 export function ModelUploadPanel({ locale = 'vi', mode, geographicMerge, fileNames, busy, error, onModeChange, onGeographicMergeChange, onFiles, onClear }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
-  const handleFiles = (event: ChangeEvent<HTMLInputElement>): void => {
-    onFiles(Array.from(event.target.files ?? []));
-    event.target.value = '';
-  };
   return <section className="upload-panel" aria-label={t('Nạp mô hình địa hình', 'Import terrain model')}>
     <div className="upload-modes" role="radiogroup" aria-label={t('Số mô hình', 'Model count')}>
       <label className={mode === 'single' ? 'upload-mode active' : 'upload-mode'}>
@@ -34,11 +30,9 @@ export function ModelUploadPanel({ locale = 'vi', mode, geographicMerge, fileNam
       </label>
     </div>
     {mode === 'merge' && <label className="geographic-toggle"><input type="checkbox" disabled={busy} checked={geographicMerge} onChange={event => onGeographicMergeChange(event.target.checked)} /><span><strong>{t('Ghép theo tọa độ', 'Align by coordinates')}</strong><small>{t('Các mô hình cần cùng hệ tọa độ theo mét.', 'Models require the same coordinate system in meters.')}</small></span></label>}
-    <label className="upload-dropzone">
-      <strong>{busy ? t('Đang tải mô hình…', 'Loading model…') : t('Chọn tệp mô hình', 'Choose model files')}</strong>
-      <input type="file" multiple accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json" onChange={handleFiles} disabled={busy} />
-      <small>{t('GLB hoặc GLTF, kèm dữ liệu địa hình và ảnh nếu có.', 'GLB or GLTF, with terrain data and imagery when available.')}</small>
-    </label>
+    <FileDropZone multiple disabled={busy} accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json"
+      title={busy ? t('Đang tải mô hình…', 'Loading model…') : t('Chọn hoặc kéo thả tệp mô hình', 'Choose or drop model files')}
+      hint="GLB, GLTF" onFiles={onFiles}/>
     {fileNames.length > 0 && <div className="upload-files" aria-live="polite">{fileNames.map(name => <span key={name}>{name}</span>)}</div>}
     {fileNames.length > 0 && <button type="button" className="upload-clear" disabled={busy} onClick={onClear}>{t('Gỡ mô hình đã tải', 'Remove uploaded models')}</button>}
     {error && <div className="upload-error" role="alert">{error}</div>}

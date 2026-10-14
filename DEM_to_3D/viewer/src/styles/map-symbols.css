@@ -1,0 +1,114 @@
+/*
+ * Map symbology after web-map conventions (Google/Apple Maps): one round badge per object,
+ * category colour, white glyph and ring, soft shadow. The selected object rises into a teardrop
+ * pin whose tip marks the location. The palette is shared with the legend.
+ */
+:root {
+  --sym-community: #4c5fb8;
+  --sym-priority: #d4661a;
+  --sym-landslide: #c9362c;
+  --sym-flood: #1683c4;
+  --sym-verify: #b7791f;
+  --sym-staging: #1f8a4c;
+  --sym-hlz: #24323a;
+  --sym-report: #c27c0e;
+  --sym-survey: #2b6fd6;
+  --sym-ink: #1d2b33;
+  --sym-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+.map-marker-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+
+.map-pin {
+  --pin: #5b6d82;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px var(--pin-ring-style, solid) var(--pin-ring, #fff);
+  border-radius: 50%;
+  background: var(--pin-fill, var(--pin));
+  color: var(--pin-ink, #fff);
+  box-shadow: var(--sym-shadow);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: box-shadow 120ms ease-out;
+}
+.map-pin:hover,
+.map-pin:focus-visible {
+  z-index: 4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+.map-pin:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.map-pin[hidden] { display: none; }
+.map-pin-icon { display: grid; place-items: center; }
+.map-pin-icon svg { width: 16px; height: 16px; stroke-width: 2; }
+.map-pin-icon[hidden],
+.map-pin-count[hidden] { display: none; }
+
+.map-pin.community { --pin: var(--sym-community); }
+.map-pin.community.is-priority { --pin: var(--sym-priority); }
+.map-pin.landslide { --pin: var(--sym-landslide); }
+.map-pin.flood { --pin: var(--sym-flood); }
+.map-pin.bridge,
+.map-pin.crossing { --pin: var(--sym-verify); }
+.map-pin.staging { --pin: var(--sym-staging); }
+/* Landing zones read as a white "H" pad, as on aviation charts. */
+.map-pin.hlz { --pin: var(--sym-hlz); --pin-fill: #fff; --pin-ink: var(--pin); --pin-ring: var(--pin); }
+.map-pin.hlz .map-pin-icon svg { stroke-width: 2.4; }
+/* Unconfirmed: hollow badge, dashed ring in the category colour. */
+.map-pin.is-suspected { --pin-fill: #fff; --pin-ink: var(--pin); --pin-ring: var(--pin); --pin-ring-style: dashed; }
+.map-pin.hlz.is-suspected { --pin: var(--sym-priority); }
+.map-pin.is-unavailable { opacity: 0.7; }
+.map-pin.is-unavailable::after { content: ''; position: absolute; width: 24px; height: 2px; border-radius: 1px; background: var(--sym-landslide); rotate: -45deg; }
+
+/* Selection: the badge becomes a teardrop pin carrying the same glyph. */
+.map-pin-drop { display: none; position: absolute; left: calc(50% - 18px); top: calc(50% - 45px); width: 36px; height: 48px; color: var(--pin); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); pointer-events: none; }
+.map-pin.is-selected { z-index: 5; --pin-fill: transparent; --pin-ring: transparent; --pin-ink: #fff; box-shadow: none; }
+.map-pin.is-selected:hover,
+.map-pin.is-selected:focus-visible { scale: 1; box-shadow: none; }
+.map-pin.is-selected::after { display: none; }
+.map-pin.is-selected .map-pin-drop { display: block; transform-origin: 18px 45px; animation: pin-drop 280ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.map-pin.is-selected .map-pin-icon { position: absolute; top: calc(50% - 35.5px); left: calc(50% - 8px); z-index: 1; }
+.map-pin.has-overlap.is-selected .map-pin-icon svg { width: 16px; height: 16px; }
+@keyframes pin-drop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.8); }
+}
+
+/* Groups: white disc with a ring in the anchor's colour; clusters show the count only. */
+.map-pin.is-cluster,
+.map-pin.is-overlap {
+  --pin-fill: #fff;
+  --pin-ink: var(--sym-ink);
+  --pin-ring: var(--pin);
+  --pin-ring-style: solid;
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pin) 30%, transparent), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.map-pin.is-cluster .map-pin-icon { display: none; }
+.map-pin.is-selected:is(.is-cluster, .is-overlap) .map-pin-drop { display: none; }
+.map-pin.is-selected.is-overlap .map-pin-icon { position: static; }
+.map-pin.is-selected:is(.is-cluster, .is-overlap) { box-shadow: 0 0 0 4px color-mix(in srgb, var(--pin) 30%, transparent), 0 2px 6px rgba(0, 0, 0, 0.25); }
+.map-pin.is-cluster .map-pin-count { font: 700 13px/1 var(--font-sans); font-variant-numeric: tabular-nums; }
+.map-pin.is-cluster.has-critical,
+.map-pin.is-overlap.has-critical { --pin: var(--sym-landslide); }
+/* A feature with others stacked underneath: larger badge plus a stack dot. */
+.map-pin.has-overlap { width: 34px; height: 34px; }
+.map-pin.has-overlap .map-pin-icon svg { width: 18px; height: 18px; }
+.map-pin.has-overlap::after { content: ''; position: absolute; right: -3px; bottom: -3px; width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; background: var(--sym-ink); box-sizing: border-box; }
+
+/* Labels: white text with a dark halo over imagery, dark text with a white halo over terrain. */
+.map-pin-label { position: absolute; top: 2px; left: 33px; padding: 2px 0; color: #fff; font-size: 12px; line-height: 1.45; font-weight: 600; letter-spacing: 0.005em; white-space: nowrap; pointer-events: none; text-shadow: var(--pin-label-halo); }
+.map-pin.is-selected .map-pin-label { font-weight: 700; }
+.map-marker-layer[data-basemap="terrain"] .map-pin .map-pin-label { color: #183338; text-shadow: 0 0 1px #fff, 0 0 2px #fff, 0 0 4px rgba(255, 255, 255, 0.9); }
+.map-pin.is-label-hidden .map-pin-label { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .map-pin { transition: none; }
+  .map-pin.is-selected .map-pin-drop { animation: none; }
+}

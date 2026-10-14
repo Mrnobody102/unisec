@@ -78,3 +78,16 @@ Phần còn cần tách: phân tích địa hình khỏi shell, toán địa lý
 Giữ đường dẫn web hiện tại cho CI/Vercel. Backend và monorepo sản phẩm thuộc [platform](../../../vsp-eo-platform/docs/architecture/source-structure.md), không xây tại repo demo. Kế thừa code theo [handoff](../../../vsp-eo-platform/docs/plans/handoff.md); không import source qua hai repo.
 
 Không duy trì danh sách từng file, số dòng hoặc nhật ký refactor ở đây. Git giữ lịch sử; tài liệu chỉ đổi khi trách nhiệm hoặc hướng phụ thuộc đổi.
+
+### Hồ sơ GIS và ghi nhận thực địa
+
+- `features/geodata/GeometryLayers.tsx` chỉ quản lý danh sách; `GeometryInspector.tsx` chỉ quản lý hồ sơ lựa chọn. `geometry-inspector.css` giữ quy tắc dock/phản hồi theo kích thước màn.
+- `features/observations/captureMetadata.ts` phân biệt giờ máy ảnh với thời điểm có múi giờ; `photo.ts` đọc EXIF, tạo preview và checksum tệp gốc. `PhotoGallery` trình bày metadata chính; `PhotoPreview` dùng native dialog.
+- `features/observations/fieldAreas.ts` giữ contract, liên kết điểm–polygon, xóa cùng điểm và ánh xạ ID khi nhập lại. `FieldAreaList.tsx` trình bày tác vụ vùng; drawing dùng editor hình học sẵn có và bản nháp riêng.
+- `features/help/` giữ UI hướng dẫn và catalog chữ `locales/vi.ts`, `en.ts`; không có logic nghiệp vụ hoặc trang web riêng.
+
+### Vai trò và tiếp nhận thực địa
+
+`features/access/` sở hữu phiên vai trò demo, màn người dân, tiếp nhận/kiểm tra và tên hiển thị của tình huống. `features/observations/` sở hữu ảnh, EXIF, ghi nhận và vùng gắn điểm. `features/routes/selectedRoadJourney.ts` tính đường giữa hai vị trí trên mạng prepared; panel chỉ nhận kết quả. `features/map/imagerySource.ts` giữ cấu hình nguồn ảnh 2D có attribution. Chữ mới của phần vai trò/hành trình có catalog Việt/Anh cạnh feature. Chưa có backend auth hoặc API ghi.
+
+Ranh giới Workbench/DEAR được ghi tại [nền tảng EO và DEAR](../../../vsp-eo-platform/docs/architecture/platform-and-dear.md). Hiện demo chưa dùng package EO hoặc adapter `reference-handoff/v1`; không coi Reference Viewer là app DEAR. Inbox chỉ sở hữu lựa chọn; `ReportReviewForm` giữ bản nháp kiểm tra. `photoSummary` so sánh metadata ảnh với thông tin đã trình bày, giữ sai khác và thời gian thiếu múi giờ để đối chiếu.

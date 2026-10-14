@@ -1,0 +1,112 @@
+.workspace {
+  --response-detail-width: 376px;
+  --response-detail-reserve: 408px;
+}
+/* Selection is inspected once, independently from the context list. */
+.response-detail-dock {
+  position: absolute;
+  z-index: 18;
+  top: calc(var(--size-workspace-toolbar) + 16px);
+  right: 16px;
+  bottom: 16px;
+  width: min(
+    var(--response-detail-width),
+    calc(100% - var(--panel-width, var(--size-panel-left)) - 96px)
+  );
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--radius-float);
+  background: var(--ws-surface);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ws-text);
+}
+.response-detail-dock[hidden] {
+  display: none;
+}
+.response-detail-dock .sidebar-top {
+  flex: none;
+  padding: 20px 20px 16px;
+}
+.response-detail-dock .sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  padding-inline: 20px;
+}
+.response-detail-dock h3 {
+  margin: 0 0 10px;
+  color: var(--ws-text);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.response-detail-dock .section-line h3 {
+  margin: 0;
+}
+.workspace[data-response-profile='true'] .response-detail-dock {
+  bottom: 336px;
+}
+/* The dock floats over a full-width map (as in Google Earth); only right-edge map
+   controls step aside so the card never covers them. */
+.map-area :is(.map-north, .map-overview, .map-attribution) {
+  transition: margin-right var(--motion-panel, 200ms) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.workspace[data-response-layout='dock'][data-response-detail='true']
+  .map-area
+  :is(.map-north, .map-overview, .map-attribution) {
+  margin-right: var(--response-detail-reserve);
+}
+/* Enter like a sheet sliding in from the map edge. */
+.response-detail-dock:not([hidden]) {
+  animation: response-dock-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes response-dock-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .response-detail-dock:not([hidden]) {
+    animation: none;
+  }
+  .map-area :is(.map-north, .map-overview, .map-attribution) {
+    transition: none;
+  }
+}
+/* One information pane when a resized list leaves insufficient space for the dock. */
+.workspace[data-response-layout='pane'][data-response-detail='true']
+  .work-area
+  > .sidebar {
+  visibility: hidden;
+}
+.workspace[data-response-layout='pane'] .response-detail-dock {
+  position: relative;
+  grid-column: 1;
+  grid-row: 2;
+  inset: auto;
+  width: auto;
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid var(--ws-line);
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (max-width: 900px) {
+  .response-detail-dock {
+    border: 0;
+  }
+  .workspace[data-mobile='map'] .response-detail-dock {
+    display: none;
+  }
+}
+
+#response-panel .impact-row[aria-pressed='true'] {
+  background: var(--ws-tint);
+  box-shadow: inset 2px 0 var(--select);
+}
+#response-panel .impact-row[aria-pressed='true'] strong {
+  color: var(--select-ink);
+}

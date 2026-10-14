@@ -1,6 +1,6 @@
 # Deploy DEAR lên Vercel
 
-Cập nhật: 2026-10-05. Bản deploy dùng dữ liệu prepared và các file địa hình trong repo. API Python cục bộ không được đưa lên Vercel bằng cấu hình này.
+Cập nhật: 2026-10-12. Bản deploy dùng dữ liệu prepared và các file địa hình trong repo. API Python cục bộ không được đưa lên Vercel bằng cấu hình này.
 
 ## Cấu hình dự án
 
@@ -34,7 +34,7 @@ Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu
 
 | Kiểm tra | Kết quả cần có |
 |---|---|
-| Mở web và reload | Có sự kiện, AOI, địa bàn và ảnh nền 2D |
+| Mở web và reload | Màn vào hai vai trò; vào điều phối để xem sự kiện và bản đồ 2D |
 | `/workspace-config.json` | JSON có `dataSource: "prepared"` |
 | `/scenarios/che-tao/v0.2/manifest.json` | JSON, không trả HTML |
 | Chuyển 3D rồi về 2D | Tải được địa hình, 2D tiếp tục hoạt động |
@@ -58,3 +58,29 @@ Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu
 Demo giữ `dataSource: "prepared"` và để trống `VITE_DEAR_API_BASE`. Không cần API ghi, DB hoặc worker để trình diễn bộ đã chuẩn bị. Các biến `VITE_*` đọc được từ trình duyệt, không chứa khóa bí mật.
 
 Backend sản phẩm được thiết kế tại [platform](../../../vsp-eo-platform/docs/plans/roadmap.md#backend-và-worker), có cấu hình và artifact riêng; không bổ sung vào project Vercel demo theo tài liệu này.
+
+## Cho khán giả quét QR
+
+Vercel Hobby không công bố một mức người dùng đồng thời được bảo đảm. Hạn mức hiện hành gồm 100 GB Fast Data Transfer và 1 triệu CDN Requests trong kỳ sử dụng; vượt hạn mức có thể phải chờ kỳ sau. Hobby chỉ dành cho cá nhân, phi thương mại, vì vậy bản demo đại diện công ty cần chọn gói phù hợp hoặc xác nhận với Vercel. Nguồn: [Hobby](https://vercel.com/docs/plans/hobby), [limits](https://vercel.com/docs/limits).
+
+Web hiện dùng tài nguyên tĩnh qua CDN. Không có kết nối máy chủ riêng cho mỗi người xem. Ước lượng dung lượng bằng số lượt mở mới × số MB tải mỗi lượt; ví dụ minh họa 500 lượt × 20 MB = 10 GB, không phải số đo hoặc cam kết sức tải của bản này. Tính thêm tải lại, ảnh 3D, lượt quét trước buổi thi và phần hạn mức đã dùng. Tile nền từ nhà cung cấp ngoài có giới hạn riêng.
+
+QR nên trỏ URL production công khai, mở được ở cửa sổ riêng tư không đăng nhập Vercel. Thử trên Wi-Fi hội trường và 4G, bắt đầu 2D, đo tải nguội trong Network và kiểm Usage trước buổi thi. Chuẩn bị bản offline trên máy trình diễn. Chưa có kiểm tải nhiều người trên URL production; không tuyên bố đạt một số người đồng thời dựa trên test máy local.
+
+Ảnh khán giả gửi chỉ nằm trên thiết bị của họ. Muốn hiển thị tập trung ở bàn điều phối phải có backend; xem [hai vai trò](../product/community-reporting.md).
+
+## Nguồn ảnh nền chi tiết
+
+Đã bỏ việc ảnh prepared thô che tile trực tuyến sau khi tile tải đủ. Ảnh tải theo mức zoom. EOxCloudless mặc định có pixel khoảng 10 m, nên zoom lớn vẫn không thể có chi tiết tương đương ảnh hàng không/sub-meter. Nguồn: [EOX viewing products](https://cloudless.eox.at/products/viewing).
+
+Có thể cấu hình cùng một nguồn XYZ HTTPS cho GIS và bản đồ ứng phó 2D bằng các biến build:
+
+```dotenv
+VITE_DEAR_IMAGERY_URL=https://tiles.example.org/imagery/{z}/{x}/{y}.jpg
+VITE_DEAR_IMAGERY_NAME=Ảnh nền khu vực
+VITE_DEAR_IMAGERY_ATTRIBUTION=Nhà cung cấp / nguồn ảnh
+VITE_DEAR_IMAGERY_LINK=https://example.org/imagery-terms
+VITE_DEAR_IMAGERY_MAX_ZOOM=18
+```
+
+URL và attribution phải cùng có mới bật. Khai báo mức zoom gốc đúng tài liệu nguồn; không nâng thông số này để phóng lớn pixel cũ. Khóa đưa vào `VITE_*` phải là khóa công khai giới hạn domain/quyền; không dùng khóa bí mật. Nguồn này cần quyền hiển thị phù hợp và CORS nếu phục vụ xuất ảnh. Nền 3D vẫn dùng nguồn EOX hiện hành. Không tự lấy tile Google Earth hoặc bỏ thông tin bản quyền.

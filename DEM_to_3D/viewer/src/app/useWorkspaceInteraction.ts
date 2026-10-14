@@ -1,9 +1,13 @@
 import { useCallback, useReducer } from 'react';
 import { initialWorkspaceInteraction, workspaceInteractionReducer } from './workspaceInteraction';
+import { defaultMapMode } from './defaultMapMode';
 import type { WorkspaceDialog } from './workspaceInteraction';
 
 export function useWorkspaceInteraction() {
-  const [state, dispatch] = useReducer(workspaceInteractionReducer, initialWorkspaceInteraction);
+  const [state, dispatch] = useReducer(workspaceInteractionReducer, initialWorkspaceInteraction, initial => {
+    const mapMode = defaultMapMode();
+    return { ...initial, mapMode, homeMapMode: mapMode };
+  });
   const recover2D = useCallback(() => dispatch({ type: 'fallback-2d' }), []);
   const setActiveDialog = useCallback((dialog: WorkspaceDialog) => dispatch({ type: 'dialog', dialog }), []);
   const setMapMode = useCallback((mode: '2d' | '3d') => dispatch({ type: 'map-mode', mode }), []);

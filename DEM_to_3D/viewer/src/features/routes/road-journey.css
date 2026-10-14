@@ -1,0 +1,340 @@
+.road-journey-panel {
+  --journey-a: #246b9a;
+  --journey-b: #c2410c;
+  --journey-ok: #2b8a5e;
+  position: absolute;
+  z-index: 750;
+  top: calc(var(--map-toolbar-height, 48px) + 12px);
+  right: 16px;
+  width: min(360px, calc(100% - 32px));
+  max-height: calc(100% - var(--map-toolbar-height, 48px) - 80px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--map-chrome-line, var(--ws-line));
+  border-radius: var(--radius-control);
+  background: var(--ws-surface);
+  box-shadow: var(--shadow-float);
+}
+.road-journey-panel > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 8px 6px 16px;
+  border-bottom: 1px solid var(--ws-line);
+  background: var(--map-chrome);
+}
+.road-journey-panel h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.road-journey-panel > header .icon-button {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ws-muted);
+}
+.road-journey-panel > header .icon-button:hover {
+  color: var(--ws-text);
+  background: var(--hover);
+}
+.road-journey-content {
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* A/B stops: pin · field · pick-on-map, with a swap control spanning both rows. */
+.journey-stops {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  column-gap: 6px;
+  align-items: center;
+}
+.journey-stop {
+  grid-column: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 34px;
+  align-items: start;
+  gap: 8px;
+  padding: 4px 0;
+}
+.journey-stop:first-child::after {
+  /* Dotted leg between the A and B pins. */
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 33px;
+  height: calc(100% - 24px);
+  border-left: 2px dotted var(--ws-muted);
+  opacity: 0.6;
+}
+.journey-swap {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ws-muted);
+}
+.journey-swap:hover:not(:disabled) {
+  color: var(--ws-text);
+  background: var(--hover);
+}
+.journey-swap:disabled {
+  opacity: 0.35;
+}
+.journey-pin {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 5px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--journey-a, #246b9a);
+  color: #fff;
+  box-shadow: 0 1px 3px #0005;
+  font: 700 11px/1 var(--font-sans);
+}
+.journey-pin.is-b {
+  background: var(--journey-b, #c2410c);
+}
+/* Route stops on the map: lettered teardrop pins, tip on the stop. */
+.journey-map-pin {
+  color: var(--journey-a, #246b9a);
+}
+.journey-map-pin.is-b {
+  color: var(--journey-b, #c2410c);
+}
+.journey-map-pin > span {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 48px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+  transform-origin: 18px 45px;
+  animation: pin-drop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.journey-map-pin b {
+  position: absolute;
+  top: 9.6px;
+  left: 0;
+  right: 0;
+  color: #fff;
+  font: 700 13px/16px var(--font-sans);
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-map-pin > span {
+    animation: none;
+  }
+}
+.journey-stop-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.journey-stop-field select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--control-border, var(--ws-line));
+  border-radius: var(--radius-control);
+  background-color: var(--ws-raised);
+  color: var(--ws-text);
+  font: 13px var(--font-sans);
+  text-overflow: ellipsis;
+}
+.journey-stop-field select:focus-visible,
+.journey-stop[data-active] select {
+  border-color: var(--select);
+  outline: 1px solid var(--select);
+}
+.journey-stop-meta {
+  overflow: hidden;
+  color: var(--ws-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.journey-stop-meta[data-far] {
+  color: var(--warning-ink);
+}
+.journey-stop[data-active] .journey-stop-meta {
+  color: var(--select-ink);
+  white-space: normal;
+}
+.journey-pick {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+.journey-pick[aria-pressed="true"] {
+  color: var(--select-ink);
+  background: var(--ws-tint);
+  border-color: var(--select);
+}
+
+.journey-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 32px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.journey-option input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+.journey-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--ws-raised);
+  color: var(--ws-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.journey-message.is-error {
+  background: var(--critical-soft);
+  color: var(--critical-ink);
+}
+
+.journey-result {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ws-line);
+}
+.journey-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.journey-total strong {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.journey-total strong span {
+  color: var(--ws-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+.journey-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.journey-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.journey-status.is-open {
+  color: var(--journey-ok);
+  background: color-mix(in srgb, var(--journey-ok) 12%, transparent);
+}
+.journey-status.is-uncertain {
+  color: var(--warning-ink);
+  background: var(--warning-soft);
+}
+.journey-status.is-blocked {
+  color: var(--critical-ink);
+  background: var(--critical-soft);
+}
+.journey-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+.journey-breakdown > div {
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--ws-raised);
+}
+.journey-breakdown dt {
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+.journey-breakdown dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.journey-profile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.journey-profile svg {
+  width: 16px;
+  height: 16px;
+}
+.journey-note {
+  margin: 0;
+  color: var(--ws-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .road-journey-panel {
+    right: 12px;
+    width: calc(100% - 24px);
+    max-height: calc(100% - var(--map-toolbar-height, 48px) - 104px);
+  }
+}
+
+.journey-distance {
+  display: grid;
+  gap: 2px;
+}
+.journey-distance > small {
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+.journey-stop-meta[data-error] {
+  white-space: normal;
+  color: var(--critical-ink);
+}
+.journey-message.is-info {
+  color: var(--ws-muted);
+  background: var(--ws-raised);
+}
+
+.road-journey-content[hidden] {
+  display: none;
+}
+.road-journey-panel[data-collapsed] > header {
+  border-bottom: 0;
+}

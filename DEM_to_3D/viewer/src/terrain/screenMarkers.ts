@@ -1,3 +1,4 @@
+import { teardropPinSvg } from './pinShape';
 import type { Community, Hazard, Locale, ResponseSite } from '../types/dear';
 import type { OverlayHit } from '../features/map/mapContracts';
 import { mapSymbolSvg, type MapSymbolName } from './mapSymbols';
@@ -74,14 +75,15 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       choice.addEventListener('click', event => { event.stopPropagation(); closeChooser(); options.onSelect(member.hit); });
       chooser!.appendChild(choice);
     });
-    chooser.addEventListener('pointerdown', event => event.stopPropagation());
+    for (const type of ['pointerdown', 'mousedown', 'touchstart', 'mousemove', 'dblclick', 'wheel'])
+      chooser.addEventListener(type, event => event.stopPropagation());
     layer.appendChild(chooser);
     const width = Math.min(280, host.clientWidth - 16);
     const height = Math.min(chooser.scrollHeight, host.clientHeight - 16);
     chooser.style.width = `${width}px`; chooser.style.maxHeight = `${height}px`;
     const r = marker.button.getBoundingClientRect(), area = host.getBoundingClientRect();
     const x = r.x - area.x, y = r.y - area.y;
-    chooserAnchor = { x, y };
+    chooserAnchor = { x: x + r.width / 2, y: y + r.height / 2 };
     const protectedRects = controlRects();
     const candidates = [{ x: x + r.width + 8, y }, { x: x - width - 8, y }, { x, y: y + r.height + 8 }, { x, y: y - height - 8 }];
     const inside = (p: { x: number; y: number }) => p.x >= 8 && p.y >= 8 && p.x + width <= host.clientWidth - 8 && p.y + height <= host.clientHeight - 8;
@@ -113,7 +115,10 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     button.dataset.mapObject = `${hit.type}:${hit.id}`;
     const icon = document.createElement('span'); icon.className = 'map-pin-icon'; icon.innerHTML = mapSymbolSvg(symbol);
     const count = document.createElement('span'); count.className = 'map-pin-count'; count.hidden = true;
-    button.append(icon, count);
+    // Selected objects rise into a teardrop pin whose tip marks the exact location (as in web maps).
+    const drop = document.createElement('span'); drop.className = 'map-pin-drop'; drop.setAttribute('aria-hidden', 'true');
+    drop.innerHTML = teardropPinSvg();
+    button.append(drop, icon, count);
     let label: HTMLSpanElement | null = null;
     if (labelVisible) { label = document.createElement('span'); label.className = 'map-pin-label'; label.textContent = displayName; button.appendChild(label); }
     button.addEventListener('click', event => {
@@ -122,7 +127,8 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       if (members.length > 1) openChooser(markers.find(m => m.button === button)!, members);
       else options.onSelect(hit);
     });
-    button.addEventListener('pointerdown', event => event.stopPropagation());
+    for (const type of ['pointerdown', 'mousedown', 'touchstart', 'dblclick'])
+      button.addEventListener(type, event => event.stopPropagation());
     layer.appendChild(button);
     markers.push({ id: button.dataset.mapObject!, hit, name, symbol, button, label, icon, count, point: pos, selected, priority: selected ? 100 : kind.includes('is-priority') ? 50 : kind.startsWith('staging') ? 30 : 10, width: 0 });
   };
@@ -158,7 +164,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
     const workspace = host.closest('.map-area') ?? host.parentElement;
-    return Array.from(workspace?.querySelectorAll<HTMLElement>('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview') ?? [])
+    return Array.from(workspace?.querySelectorAll<HTMLElement>('.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {
@@ -168,7 +174,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     const positions = markers.flatMap(marker => {
       const position = project(marker.point);
       marker.button.hidden = true;
-      return position ? [{ id: marker.id, ...position, priority: marker.priority }] : [];
+      return position ? [{ id: marker.id, ...position, priority: marker.priority, selected: marker.selected }] : [];
     });
     const layout = layoutMarkerGroups(positions, width, height, controls);
     groups = new Map(layout.map(group => [group.anchor.id, group.members.map(p => markers.find(m => m.id === p.id)!)]));
@@ -176,16 +182,18 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       const members = groups.get(chooserTrigger.dataset.mapObject!) ?? [];
       const group = layout.find(g => g.anchor.id === chooserTrigger!.dataset.mapObject);
       if (!group || members.map(m => m.id).sort().join(',') !== chooserKey ||
-          Math.hypot(group.rect.x - chooserAnchor.x, group.rect.y - chooserAnchor.y) > 1) closeChooser();
+          Math.hypot(group.anchor.x - chooserAnchor.x, group.anchor.y - chooserAnchor.y) > 1) closeChooser();
     }
     const occupied = [...controls, ...layout.map(group => group.rect)];
     if (chooser) { const area = host.getBoundingClientRect(), r = chooser.getBoundingClientRect(); occupied.push({ x: r.x - area.x, y: r.y - area.y, width: r.width, height: r.height }); }
     layout.forEach(group => {
       const marker = markers.find(m => m.id === group.anchor.id)!;
-      const { x, y } = group.anchor, half = group.rect.width / 2;
+      const { x, y } = group.anchor;
       const clustered = group.members.length > 1;
       const members = [marker, ...groups.get(marker.id)!.filter(member => member !== marker)];
       const presentation = markerPresentation(members, options.allowCounts?.() ?? false);
+      // The collision rectangle includes the selected pin. Its width is not the DOM button width.
+      const half = clustered ? 17 : 14;
       const display = marker;
       marker.button.hidden = false;
       marker.button.style.transform = `translate(${x - half}px,${y - half}px)`;
@@ -213,10 +221,22 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       const choices = [{ x: x + 22, y: y - 10 }, { x: x - marker.width - 22, y: y - 10 }, { x: x - marker.width / 2, y: y - 43 }, { x: x - marker.width / 2, y: y + 22 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);
-      if (place) { marker.label.style.left = `${place.x - x + half}px`; marker.label.style.top = `${place.y - y + half}px`; occupied.push({ ...place, width: marker.width, height: 22 }); }
+      if (place) { marker.label.style.left = `${place.x - x + half - marker.button.clientLeft}px`; marker.label.style.top = `${place.y - y + half - marker.button.clientTop}px`; occupied.push({ ...place, width: marker.width, height: 22 }); }
     });
   };
+  // Reference/photo layers have their own DOM. Relayout when their selected label or
+  // popup changes, so collision avoidance also covers those layers, not just our symbols.
+  let relayoutFrame = 0;
+  const externalChanges = new MutationObserver(changes => {
+    if (changes.every(change => change.target === layer || layer.contains(change.target))) return;
+    if (!relayoutFrame) relayoutFrame = requestAnimationFrame(() => {
+      relayoutFrame = 0;
+      if (!disposed && lastProjection) update(lastProjection);
+    });
+  });
+  externalChanges.observe(host.closest('.map-area') ?? host.parentElement ?? host, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
   return { update, dispose: () => {
+    externalChanges.disconnect(); cancelAnimationFrame(relayoutFrame);
     disposed = true; closeChooser(); document.fonts.removeEventListener('loadingdone', onFontsLoaded);
     document.removeEventListener('pointerdown', dismiss, true); document.removeEventListener('keydown', escape); document.removeEventListener('focusin', dismissFocus);
     layer.remove();

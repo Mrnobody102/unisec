@@ -60,6 +60,8 @@ export function parseKml(text: string): VectorFeature[] {
     const geometries=[...placemark.children].filter(child=>['Point','LineString','Polygon','MultiGeometry','Model','Track','MultiTrack','LinearRing'].includes(child.localName));
     if (!geometries.length) return [];
     const properties: Record<string, unknown> = { name:content(placemark,'name'), description:content(placemark,'description') };
+    const stamp=children(placemark,'TimeStamp')[0];
+    if (stamp) properties.timestamp=content(stamp,'when');
     const extended=children(placemark,'ExtendedData')[0];
     if (extended) for (const item of [...extended.getElementsByTagNameNS('*','Data'),...extended.getElementsByTagNameNS('*','SimpleData')]) {
       const key=item.getAttribute('name');

@@ -1,11 +1,11 @@
-/** Shared by WebGL road strokes and their HTML legend swatches. */
+/** Shared by 2D/WebGL road strokes and their HTML legend swatches. */
 export const roadColors = {
-  networkImagery: '#e2e8ee',
-  networkTerrain: '#7d929c',
-  selected: '#2588cf',
+  networkImagery: '#e7e6d9',
+  networkTerrain: '#76857e',
+  selected: '#287a66',
   blocked: '#ef4444',
   uncertain: '#f59e0b',
-  selectedCasing: '#0763ad',
+  selectedCasing: '#173c32',
   inspectedCasing: '#ffffff',
-  neutralCasing: '#243f45'
+  neutralCasing: '#283a33'
 } as const;

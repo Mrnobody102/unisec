@@ -5,14 +5,14 @@ from incident_panel_checks import check_incident_layout
 
 
 def check_control_surfaces(browser, url, captures=None):
-    for theme, font in product(['light', 'dark'], ['classic', 'plex', 'modern']):
+    for theme, font in product(['light', 'dark'], ['classic', 'plex', 'modern', 'source']):
         context = browser.new_context(viewport={'width': 1366, 'height': 768})
         context.add_init_script(f"localStorage.setItem('dear.theme', '{theme}')")
         context.add_init_script(f"localStorage.setItem('dear.font-choice', '{font}')")
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page()
         try:
-            page.goto(url)
+            page.goto(url+'/?map=2d&demoRole=manager')
             expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
             page.evaluate('document.fonts.ready')
             check_incident_layout(page)
@@ -35,7 +35,7 @@ def check_control_surfaces(browser, url, captures=None):
                     nav.querySelectorAll('button').forEach(button => {
                         const r = button.getBoundingClientRect(), label = button.querySelector('span').getBoundingClientRect();
                         const icon = button.querySelector('svg').getBoundingClientRect();
-                        if (r.left < box.left || r.right > box.right) errors.push('tab outside navigation');
+                        if (r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom) errors.push('tab outside navigation');
                         if (icon.left - r.left < 7 || r.right - label.right < 7) errors.push('tab content touches border: ' + button.textContent);
                         if (label.left - icon.right < 5) errors.push('tab icon touches label');
                     });

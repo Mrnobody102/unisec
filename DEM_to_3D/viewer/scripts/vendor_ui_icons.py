@@ -1,47 +1,119 @@
-"""Refresh the small Lucide subset used by the workspace, including its license."""
-from concurrent.futures import ThreadPoolExecutor
+"""Vendor the pinned official Carbon icon subset without running npm lifecycle scripts.
+
+Use --archive PATH for an already downloaded tarball. --check verifies checked-in
+outputs instead of writing them. Only validated descriptors and license are read;
+the archive is never extracted and its JavaScript is never executed.
+"""
+import argparse
+import hashlib
+import io
+import json
 from pathlib import Path
 import re
+import tarfile
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = 'https://raw.githubusercontent.com/lucide-icons/lucide/main/'
+VERSION = '11.90.0'
+GIT_HEAD = '44f90d8d6b24889af06cee1422ceb37f58e40bed'
+SHA256 = '8804fd1e197bfeb0fc75a2f641104bcfdc469fee9a9a7700e27041acbe959d60'
+ARCHIVE_URL = f'https://registry.npmjs.org/@carbon/icons/-/icons-{VERSION}.tgz'
+SIZES = (16, 20, 24, 32)
 ICONS = {
-    'copy': 'copy',
-    'zoomIn': 'zoom-in', 'zoomOut': 'zoom-out',
-    'plus': 'plus', 'minus': 'minus', 'close': 'x', 'back': 'chevron-left', 'next': 'chevron-right',
-    'help': 'circle-question-mark', 'info': 'info', 'expand': 'chevron-down',
-    'collapse': 'chevron-up', 'fit': 'maximize', 'search': 'search',
-    'download': 'download', 'layers': 'layers', 'settings': 'sliders-horizontal',
-    'bell': 'bell', 'people': 'users', 'profile': 'chart-no-axes-combined',
-    'ruler': 'ruler', 'area': 'square-dashed', 'undo': 'undo-2', 'trash': 'trash',
-    'check': 'check', 'blocked': 'circle-minus', 'uncertain': 'triangle-alert',
-    'priority': 'flag',
-    'panelOpen': 'panel-left-open', 'panelClose': 'panel-left-close',
-    'location': 'locate-fixed',
-    'pointer': 'mouse-pointer-2', 'polygon': 'pentagon', 'rectangle': 'rectangle-horizontal',
-    'edit': 'square-pen', 'redo': 'redo-2', 'image': 'image',
+    'route': 'road', 'pointer': 'cursor--1', 'polygon': 'lasso--polygon',
+    'rectangle': 'area', 'edit': 'edit', 'redo': 'redo', 'image': 'image',
+    'copy': 'copy', 'location': 'location',
+    'panelOpen': 'side-panel--open', 'panelClose': 'side-panel--close',
+    'plus': 'add', 'minus': 'subtract', 'zoomIn': 'zoom--in', 'zoomOut': 'zoom--out',
+    'close': 'close', 'back': 'chevron--left', 'next': 'chevron--right',
+    'help': 'help', 'info': 'information', 'expand': 'chevron--down',
+    'collapse': 'chevron--up', 'fit': 'center-to-fit', 'search': 'search',
+    'download': 'download', 'layers': 'layers', 'settings': 'settings--adjust',
+    'bell': 'notification', 'people': 'group', 'profile': 'chart--line',
+    'ruler': 'ruler', 'area': 'area--custom', 'undo': 'undo', 'trash': 'trash-can',
+    'check': 'checkmark', 'blocked': 'misuse', 'uncertain': 'warning--alt',
+    'priority': 'flag', 'account': 'user--avatar', 'history': 'time',
 }
 
-def fetch(item):
-    name, icon = item
-    source = urlopen(BASE + f'icons/{icon}.svg', timeout=30).read().decode()
-    body = re.search(r'<svg[^>]*>(.*?)</svg>', source, re.S).group(1).strip()
-    return f"  '{name}': <>{body}</>,"
+
+def descriptor(archive, name, size):
+    source = archive.extractfile(f'package/es/{name}/{size}.js').read().decode('utf-8')
+    match = re.search(r'var _\d+_default = (\{.*?\});', source, re.S)
+    if match is None:
+        raise ValueError(f'Missing descriptor: {name}/{size}')
+    # Official SVG path data can contain literal tabs inside the JSON-like string.
+    data = json.loads(match.group(1), strict=False)
+    if data.get('name') != name or data.get('size') != size or data.get('elem') != 'svg':
+        raise ValueError(f'Unexpected descriptor identity: {name}/{size}')
+    allowed_attrs = {'d', 'cx', 'cy', 'r', 'opacity', 'fill', 'data-icon-path'}
+    for node in data['content']:
+        if node['elem'] not in ('path', 'circle') or set(node['attrs']) - allowed_attrs:
+            raise ValueError(f'Unsupported SVG node: {name}/{size}')
+    return {'viewBox': data['attrs']['viewBox'], 'content': data['content']}
+
+
+def outputs(raw):
+    if hashlib.sha256(raw).hexdigest() != SHA256:
+        raise ValueError('Archive checksum differs from the reviewed Carbon release')
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:gz') as archive:
+        package = json.load(archive.extractfile('package/package.json'))
+        if (package['name'], package['version'], package['gitHead'], package['license']) != (
+            '@carbon/icons', VERSION, GIT_HEAD, 'Apache-2.0'
+        ):
+            raise ValueError('Archive package provenance differs from the pinned release')
+        icons = {
+            key: {size: descriptor(archive, name, size) for size in SIZES}
+            for key, name in ICONS.items()
+        }
+        license_text = archive.extractfile('package/LICENSE').read()
+    header = (
+        '// Copyright IBM Corp. 2016, 2023. Apache-2.0.\n'
+        '// Official @carbon/icons subset. Generated by scripts/vendor_ui_icons.py.\n'
+        '// Original viewBox and compound path geometry are preserved.\n'
+        "export type CarbonIconSize = 16 | 20 | 24 | 32;\n"
+        "export type CarbonNode = { elem: 'path' | 'circle'; attrs: Record<string, string | number> };\n"
+        'export type CarbonIcon = { viewBox: string; content: CarbonNode[] };\n\n'
+    )
+    names = ' | '.join(json.dumps(key) for key in ICONS)
+    header += 'export type CarbonIconName = ' + names + ';\n\n'
+    data = header + 'export const carbonIcons: Record<CarbonIconName, Record<CarbonIconSize, CarbonIcon>> = '
+    data += json.dumps(icons, ensure_ascii=False, indent=2) + ';\n'
+    provenance = {
+        'package': '@carbon/icons', 'version': VERSION, 'gitHead': GIT_HEAD,
+        'license': 'Apache-2.0', 'archive': ARCHIVE_URL, 'archiveSha256': SHA256,
+        'repository': 'https://github.com/carbon-design-system/carbon/tree/' + GIT_HEAD + '/packages/icons',
+        'sizes': list(SIZES), 'icons': ICONS,
+        'processing': 'SVG descriptors copied without path or viewBox changes; no lifecycle scripts executed.',
+    }
+    source_text = (json.dumps(provenance, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+    return {
+        ROOT / 'src/shared/ui/carbonIconData.ts': data.encode('utf-8'),
+        ROOT / 'vendor/carbon/LICENSE': license_text,
+        ROOT / 'vendor/carbon/SOURCE.json': source_text,
+        ROOT / 'public/licenses/carbon-icons/LICENSE': license_text,
+        ROOT / 'public/licenses/carbon-icons/SOURCE.json': source_text,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--archive', type=Path)
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    raw = args.archive.read_bytes() if args.archive else urlopen(ARCHIVE_URL, timeout=60).read()
+    mismatches = []
+    for path, content in outputs(raw).items():
+        if args.check:
+            if not path.exists() or path.read_bytes() != content:
+                mismatches.append(str(path.relative_to(ROOT)))
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    if mismatches:
+        raise SystemExit('Vendored outputs differ: ' + ', '.join(mismatches))
+    print(f'Carbon {VERSION}: {len(ICONS)} icons, {len(SIZES)} official sizes, license and provenance ' +
+          ('verified.' if args.check else 'updated.'))
+
 
 if __name__ == '__main__':
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        paths = list(pool.map(fetch, ICONS.items()))
-    target = ROOT / 'src/shared/ui/UiIcon.tsx'
-    target.write_text(
-        "// Lucide icon subset. License: vendor/lucide/LICENSE.\n"
-        "// Generated by scripts/vendor_ui_icons.py.\n"
-        "const paths = {\n" + '\n'.join(paths) + "\n};\n\n"
-        "export type UiIconName = keyof typeof paths;\n"
-        "export function UiIcon({ name, size = 18 }: { name: UiIconName; size?: number }): JSX.Element {\n"
-        '  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths[name]}</svg>;\n'
-        "}\n", encoding='utf-8')
-    license_dir = ROOT / 'vendor/lucide'
-    license_dir.mkdir(parents=True, exist_ok=True)
-    (license_dir / 'LICENSE').write_bytes(urlopen(BASE + 'LICENSE', timeout=30).read())
-    print(f'Updated {len(paths)} icons and license.')
+    main()

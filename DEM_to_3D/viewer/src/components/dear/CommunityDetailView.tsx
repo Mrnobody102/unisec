@@ -1,3 +1,4 @@
+import { EditableTitle } from '../../shared/ui/EditableTitle';
 import React from 'react';
 import type {
   Community,
@@ -34,9 +35,11 @@ type Props = {
   onOpenSources: () => void;
   onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
+  onRename?: (names: [string, string]) => boolean;
 };
 
 export const CommunityDetailView: React.FC<Props> = ({
+  onRename,
   community,
   assessment,
   terrainCovered,
@@ -64,7 +67,7 @@ export const CommunityDetailView: React.FC<Props> = ({
     <>
       <div className="sidebar-top">
         <div className="detail-title">
-          <h1 id="place-title">{community.name}</h1>
+          <EditableTitle id="place-title" title={community.name} names={[community.name, community.name]} bilingual={false} locale={locale} onRename={onRename} />
           <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
         </div>
         <div className="detail-priority">

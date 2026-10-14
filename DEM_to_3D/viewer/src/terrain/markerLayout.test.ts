@@ -14,6 +14,16 @@ describe('map symbol layout', () => {
     expect(groups.flatMap(g => g.members.map(p => p.id)).sort()).toEqual(['community', 'hazard', 'other']);
     expect(overlaps(groups[0].rect, groups[1].rect)).toBe(false);
   });
+  it('reserves the full selected pin so it cannot cover a nearby bridge or label', () => {
+    const points = [
+      { id: 'selected', x: 100, y: 120, priority: 100, selected: true },
+      { id: 'bridge', x: 100, y: 70, priority: 10 }
+    ];
+    const groups = layoutMarkerGroups(points, 400, 300, []);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].members.map(point => point.id)).toEqual(['selected', 'bridge']);
+    expect(groups[0].rect).toEqual({ x: 82, y: 75, width: 36, height: 48 });
+  });
   it('does not cover a map control, including a neighbour behind that control', () => {
     const control = { x: 0, y: 0, width: 80, height: 150 };
     const groups = layoutMarkerGroups([

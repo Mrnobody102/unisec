@@ -38,13 +38,14 @@ Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và
 | Bản đồ | AOI, nền, mạng đường, tình trạng đường, điểm ảnh hưởng, địa bàn, điểm tập kết | Thanh tìm/lớp/đo trên trái, chú giải dưới trái, nguồn sau nút thông tin |
 | Lưu đánh giá | Xem trước bản đồ 2D và nhận định theo tuyến đang chọn | PNG; PDF, GeoJSON và JSON trong Định dạng khác |
 | Chuông thông báo | Hộp xem nhanh tin mới | Chi tiết tin, cập nhật bản đồ, lịch sử thông báo |
-| Cài đặt | Ngôn ngữ, sáng/tối, font | Quản lý mô hình địa hình, đặt lại phiên |
+| Cài đặt | Ngôn ngữ, sáng/tối, font trong dropdown gọn; giữ lựa chọn khi mở lại | Nhóm Phiên làm việc thu gọn: mô hình địa hình và đặt lại phiên |
 | Thời điểm dữ liệu trên header | Mốc bản đồ đang xem | Nhật ký sự kiện và chọn bản dữ liệu trước/sau tin đã áp dụng |
-| Lớp bản đồ | Nền và nhóm lớp nghiệp vụ | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
+| GIS | Nhập lớp, điểm tọa độ, ghi nhận và ảnh thực địa | Hồ sơ điểm, AOI và danh mục cảnh; [quy tắc liên kết bản đồ](geodata-workspace.md#quan-hệ-với-bản-đồ-ứng-phó) |
+| Lớp bản đồ | Nền và nhóm lớp nghiệp vụ; bật/tắt GIS đã nhập | Độ rõ, lọc đường, nhãn địa danh, so ảnh trước/sau |
 
 Panel bên trái chỉnh độ rộng hoặc thu gọn bằng nút đầu toolbar. Giữ tab, đối tượng và tuyến khi thu gọn. Chọn đối tượng sẽ mở lại panel. Ba tab **Sự kiện / Đường sá / Địa bàn** nằm trên panel, cùng hàng với thanh công cụ bản đồ. Mobile chuyển giữa **Thông tin** và **Bản đồ**.
 
-Toolbar cố định: tìm kiếm và **Lớp / Đo / Vị trí** bên trái, điều hướng và **2D / 3D** bên phải. Khi vùng bản đồ hẹp còn 600 px, hai nhóm chuyển thành hai hàng. Canvas và cửa sổ công cụ ở bên dưới. Nút panel trung tính ở đầu toolbar, giữ vị trí khi thu/mở panel. Thông báo và cài đặt nằm trên toolbar khi mở.
+Toolbar cố định: tìm kiếm và **Lớp / GIS / Đo / Vị trí** bên trái, điều hướng và **2D / 3D** bên phải. Khi vùng bản đồ hẹp còn 600 px, hai nhóm chuyển thành hai hàng. Canvas và cửa sổ công cụ ở bên dưới. Nút panel trung tính ở đầu toolbar, giữ vị trí khi thu/mở panel. Thông báo và cài đặt nằm trên toolbar khi mở.
 
 ## Hành vi
 

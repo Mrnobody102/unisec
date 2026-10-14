@@ -1,0 +1,193 @@
+@import './review-status.css';
+
+.report-inbox {
+  width: min(920px, calc(100vw - 32px));
+}
+.inbox-tabs {
+  display: flex;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--ws-line);
+}
+.inbox-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 12px;
+  border-radius: 0;
+  background: transparent;
+}
+.inbox-tabs button[aria-pressed='true'] {
+  border-bottom-color: var(--ws-brand);
+  color: var(--ws-brand);
+}
+.inbox-empty {
+  padding: 56px 20px;
+  color: var(--ws-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.inbox-body {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 320px;
+}
+.inbox-body > nav {
+  border-right: 1px solid var(--ws-line);
+  padding: 12px;
+}
+.inbox-body nav button {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid transparent;
+  padding: 12px;
+  background: transparent;
+}
+.inbox-body nav button[aria-pressed='true'] {
+  background: var(--ws-tint);
+  border-color: transparent;
+  box-shadow: inset 2px 0 var(--select);
+}
+.inbox-body nav span,
+.inbox-body nav small {
+  color: var(--ws-muted);
+  font-size: 12px;
+}
+.inbox-body article,
+.inbox-labels {
+  padding: 20px;
+  min-width: 0;
+}
+.inbox-body h3 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+.inbox-review {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ws-line);
+}
+.report-inbox input,
+.report-inbox select,
+.report-inbox textarea {
+  width: 100%;
+  padding: 8px 10px;
+  min-height: 38px;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--radius-control);
+  background: var(--ws-raised);
+  color: var(--ws-text);
+  font: inherit;
+}
+@media (max-width: 760px) {
+  .inbox-body {
+    grid-template-columns: 1fr;
+  }
+  .inbox-body > nav {
+    display: flex;
+    gap: 8px;
+    overflow: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--ws-line);
+  }
+  .inbox-body nav button {
+    width: 180px;
+    flex: none;
+  }
+  .inbox-tabs {
+    padding: 0 12px;
+  }
+  .inbox-tabs button {
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: normal;
+  }
+  .header-report-button span,
+  .demo-account span {
+    display: none;
+  }
+}
+
+/* The dialog is a flex column with hidden overflow: the list and the detail scroll on their own. */
+.report-inbox .inbox-body {
+  flex: 1;
+  min-height: 0;
+}
+.report-inbox .inbox-body > nav,
+.report-inbox .inbox-body > article {
+  min-height: 0;
+  overflow: auto;
+}
+.report-inbox .inbox-body > nav {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.report-inbox .inbox-body > article {
+  padding: 24px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+.report-inbox .inbox-body > article > *,
+.report-inbox .inbox-body h3 {
+  margin: 0;
+}
+.report-inbox .inbox-body .field-note:empty {
+  display: none;
+}
+.report-inbox .inbox-review {
+  display: grid;
+  gap: 12px;
+  margin: 8px 0 0;
+  padding-top: 20px;
+}
+.report-inbox .inbox-review .button {
+  justify-self: start;
+}
+.report-inbox .inbox-body nav button {
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 10px;
+  border-radius: var(--radius-control);
+}
+.report-inbox .inbox-body nav button > img,
+.report-inbox .inbox-thumb {
+  grid-row: 1 / span 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+.report-inbox .inbox-thumb {
+  display: grid;
+  place-items: center;
+  background: var(--ws-raised);
+  color: var(--ws-muted);
+}
+.report-inbox .inbox-item-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.report-inbox .inbox-item-text strong {
+  overflow: hidden;
+  color: var(--ws-text);
+  font-size: 13px;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.report-inbox .inbox-body nav .citizen-review {
+  justify-self: start;
+  grid-column: 2;
+}
+
+.report-inbox .inbox-item-code { font-family: var(--font-mono); color: var(--ws-text); white-space: nowrap; }

@@ -74,12 +74,6 @@ export function ResponseWorkDialog({
             <UiIcon name="close" />
           </button>
         </header>
-        <div className="response-work-context">
-          {t(
-            'Ghi nhận lưu tại trình duyệt, chưa đồng bộ với đơn vị hiện trường.',
-            'Records are stored in this browser, without field-team synchronization.'
-          )}
-        </div>
         {(readOnly || storageError) && <div className="response-work-notices">
           {readOnly && (
             <p className="operations-notice" role="status">
@@ -125,9 +119,11 @@ export function ResponseWorkDialog({
                     <strong>{t(...task.action)}</strong>
                     <small>{t(...task.subject)}</small>
                   </span>
-                  <span className={`work-status work-${workState(task, entries).status}`}>
-                    {t(...workStatusText[workState(task, entries).status])}
-                  </span>
+                  {workState(task, entries).status !== 'pending' && (
+                    <span className={`work-status work-${workState(task, entries).status}`}>
+                      {t(...workStatusText[workState(task, entries).status])}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -146,17 +142,22 @@ export function ResponseWorkDialog({
                 <UiIcon name="back" />
                 {t('Danh sách công việc', 'Work list')}
               </button>
-              <h3>{t(...active.action)}</h3>
-              <p className="work-subject">{t(...active.subject)}</p>
+              <header className="work-detail-head">
+                <div>
+                  <h3>{t(...active.action)}</h3>
+                  <p className="work-subject">{t(...active.subject)}</p>
+                </div>
+                <button
+                  className="button work-locate"
+                  onClick={() => (active.kind === 'report' ? onReport() : onInspect(active.objectId))}
+                >
+                  <UiIcon name={active.kind === 'report' ? 'info' : 'location'} size={16} />
+                  {active.kind === 'report'
+                    ? t('Xem báo cáo', 'View report')
+                    : t('Xem trên bản đồ', 'View on map')}
+                </button>
+              </header>
               <section className="work-basis"><h4>{t('Căn cứ', 'Evidence')}</h4><p>{t(...active.reason)}</p></section>
-              <button
-                className="text-button"
-                onClick={() => (active.kind === 'report' ? onReport() : onInspect(active.objectId))}
-              >
-                {active.kind === 'report'
-                  ? t('Xem báo cáo', 'View report')
-                  : t('Xem trên bản đồ', 'View on map')}
-              </button>
               {state.changed && (
                 <p className="operations-notice">
                   {t(
@@ -184,7 +185,6 @@ export function ResponseWorkDialog({
                   }}
                 >
                   <fieldset disabled={readOnly}>
-                    <p className="work-completion">{t(...active.completion)}</p>
                     <div className="work-fields">
                       <label>
                         {t('Trạng thái công việc', 'Work status')}
@@ -207,7 +207,13 @@ export function ResponseWorkDialog({
                     </div>
                     <label>
                       {t('Kết quả / lý do chờ', 'Result / reason for waiting')}
-                      <textarea name="note" rows={3} maxLength={1000} defaultValue={state.note} />
+                      <textarea
+                        name="note"
+                        rows={3}
+                        maxLength={1000}
+                        defaultValue={state.note}
+                        placeholder={t(...active.completion)}
+                      />
                     </label>
                     {error && (
                       <p className="operations-notice" role="alert">
@@ -223,12 +229,6 @@ export function ResponseWorkDialog({
                   </fieldset>
                 </form>
               )}
-              <p className="small">
-                {t(
-                  'Trạng thái công việc không thay đổi dữ liệu bản đồ.',
-                  'Work status does not change map data.'
-                )}
-              </p>
             </section>
           )}
           {!active && (

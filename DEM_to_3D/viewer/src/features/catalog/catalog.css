@@ -20,11 +20,13 @@
   display: flex;
   align-items: start;
   gap: 10px;
-  padding: 12px 6px;
+  padding: 12px 10px;
+  border-left: 2px solid transparent;
   border-bottom: 1px solid var(--ws-line);
 }
 .catalog-results li.is-selected {
   background: var(--ws-tint);
+  border-left-color: var(--select);
 }
 .catalog-results input {
   flex: none;
@@ -137,4 +139,100 @@
     width: 100%;
     border-left: 0;
   }
+}
+
+/* Result cards with provider quicklooks. */
+.catalog-results li {
+  align-items: center;
+  padding: 10px 12px;
+}
+.catalog-thumb {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--ws-line);
+  border-radius: 3px;
+  background: var(--ws-raised);
+  color: var(--ws-muted);
+}
+.catalog-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.catalog-thumb.is-large {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-bottom: 1px solid var(--ws-line);
+  border-radius: 0;
+  background: #000;
+}
+.catalog-thumb.is-large img {
+  object-fit: contain;
+}
+.catalog-thumb.is-large svg {
+  width: 28px;
+  height: 28px;
+}
+.catalog-scene {
+  align-items: center;
+  gap: 12px;
+}
+.catalog-scene > span {
+  gap: 2px;
+}
+.catalog-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.catalog-chips > span {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--ws-raised);
+  color: var(--ws-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.catalog-pick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.catalog-pick:hover {
+  background: var(--hover);
+}
+.catalog-results .catalog-pick input {
+  margin: 0;
+}
+.catalog-detail-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.catalog-credit {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+.catalog-thumb:has(img) {
+  background: linear-gradient(100deg, var(--ws-raised) 30%, var(--ws-tint) 50%, var(--ws-raised) 70%) 0 0 / 200% 100%;
+  animation: catalog-thumb-loading 1.4s linear infinite;
+}
+@keyframes catalog-thumb-loading {
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catalog-thumb:has(img) { animation: none; }
 }

@@ -1,5 +1,5 @@
 export type ScreenRect = { x: number; y: number; width: number; height: number };
-export type ScreenMarker = { id: string; x: number; y: number; priority: number };
+export type ScreenMarker = { id: string; x: number; y: number; priority: number; selected?: boolean };
 export type MarkerGroup = { anchor: ScreenMarker; members: ScreenMarker[]; rect: ScreenRect };
 
 export function overlaps(a: ScreenRect, b: ScreenRect, gap = 4): boolean {
@@ -8,7 +8,9 @@ export function overlaps(a: ScreenRect, b: ScreenRect, gap = 4): boolean {
 }
 
 const markerRect = (point: ScreenMarker, size: number): ScreenRect =>
-  ({ x: point.x - size / 2, y: point.y - size / 2, width: size, height: size });
+  point.selected
+    ? { x: point.x - 18, y: point.y - 45, width: 36, height: 48 }
+    : { x: point.x - size / 2, y: point.y - size / 2, width: size, height: size };
 
 /** Aggregate colliding screen symbols, without moving their geographic positions.
  * The selected/highest-priority member anchors each group. A group includes all

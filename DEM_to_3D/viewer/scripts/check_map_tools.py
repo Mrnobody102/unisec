@@ -3,6 +3,9 @@ import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
+# Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
+LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+
 
 def run(url, chrome, captures):
     with sync_playwright() as p:
@@ -12,7 +15,7 @@ def run(url, chrome, captures):
         page = context.new_page()
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
-        page.goto(url)
+        page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
         panel = page.locator('.map-measure-panel')
@@ -22,18 +25,17 @@ def run(url, chrome, captures):
             page.mouse.click(box['x'] + box['width'] * x, box['y'] + box['height'] * y)
         expect(panel.locator('.map-measure-result')).to_contain_text('km')
         result = panel.locator('.map-measure-result').text_content()
-        page.get_by_role('button', name='Thao tác bản đồ', exact=True).click()
-        expect(page.locator('#map-gesture-help')).to_be_visible()
-        expect(page.locator('#map-gesture-help')).not_to_contain_text('3D')
+        page.get_by_role('button', name='Hướng dẫn sử dụng', exact=True).click()
+        expect(page.locator('.user-guide')).to_be_visible()
         page.keyboard.press('Escape')
-        expect(page.locator('#map-gesture-help')).to_have_count(0)
+        expect(page.locator('.user-guide')).to_have_count(0)
         expect(panel).to_be_visible()
         expect(panel.locator('.map-measure-result')).to_have_text(result)
         # Popover clicks and keyboard commands must not consume measurement points.
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
-        page.get_by_role('button', name='IBM Plex Sans', exact=True).click()
+        page.get_by_role('combobox', name='Typography', exact=True).select_option('plex')
         page.keyboard.press('Escape')
         expect(panel).to_be_visible()
         panel.get_by_role('button', name='Measurement settings', exact=True).click()
@@ -88,7 +90,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
     args.add_argument('--url', default='http://127.0.0.1:5212')
-    args.add_argument('--chrome', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
+    args.add_argument('--chrome', default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None)
     args.add_argument('--captures', type=Path)
     options = args.parse_args()
     if options.captures:

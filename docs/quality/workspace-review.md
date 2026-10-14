@@ -1,6 +1,6 @@
 # Kiểm tra workspace
 
-Mốc đối chiếu: 11/10/2026; GIS/catalog prepared và dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
+Mốc đối chiếu: 12/10/2026; GIS/catalog prepared và dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
 
 ## Phạm vi đã kiểm
 
@@ -47,3 +47,15 @@ Việc còn làm ở [công việc SIC](../tasks/sic-2026.md), điều kiện b�
 [Log phiên 30 phút](assets/session-30min.json) giữ browser, hash build, lỗi và số liệu của lần đo đó. Cách chạy lại ở [nghiệm thu](acceptance.md).
 
 Chỉ cập nhật mốc kiểm tra khi chốt bản demo/phát hành hoặc có thay đổi đáng kể về phạm vi kiểm chứng. Lịch sử sửa lỗi và log từng lần chạy nằm trong Git/CI.
+
+## Hồ sơ thực địa và vùng khoanh vẽ
+
+Các kiểm tra mới nằm tại `scripts/check_field_observations.py` và `scripts/check_field_areas.py`: EXIF giờ chụp/GPS, ảnh lớn và Escape, lưu lỗi không mất hồ sơ, file timestamp, vùng gắn điểm, sửa/hủy/hoàn tác, AOI giữ nguyên, vòng KML đổi ID, bản nháp giữ khi vẽ, sáng/tối và 320–1440 px, hướng dẫn và trả focus. Kiểm tra GIS cũ mở hồ sơ bằng lựa chọn rõ ràng, phù hợp bố cục danh sách–hồ sơ mới.
+
+Ảnh fixture có nhãn TEST PHOTO và metadata tự dựng để kiểm phần mềm. Polygon fixture không phải sản phẩm giải đoán hoặc đo đạc hiện trường. Chưa có kiểm chứng ảnh gốc 081026.kml hoặc đồng bộ nhiều thiết bị. Luồng hai vai trò trong cùng trình duyệt được kiểm tại `check_resident_workflow.py`; GIS hàng loạt và ranh giới tại `check_simplified_gis.py`. HEIC kiểm bằng tệp mẫu libheif, không phải ảnh hiện trường đã xác minh.
+
+Kiểm tra gom cụm ở `check_point_groups.py` bao gồm chọn từng điểm cùng vị trí, ảnh lớn, chuyển ảnh bằng bàn phím, Escape, bảng thuộc tính không chồng thẻ nhóm và quay lại nhóm từ bản đồ ứng phó. Kiểm tra trên các chiều rộng 320–1440 px. Luồng cư dân kiểm việc gửi ảnh có EXIF/GPS khi phần thông tin bổ sung vẫn đóng. Phiên rà soát 12/10/2026: typecheck, 266 unit tests (53 files) và production build đã đạt; nguồn nền EOX vẫn có giới hạn 10 m và việc gửi ghi nhận chỉ lưu tại trình duyệt.
+
+`check_basemap_recovery.py` mô phỏng một ô ảnh lỗi hai lần trước khi tải được, kiểm tra cảnh báo được gỡ và ảnh trực tuyến thay lớp dự phòng. Tiến trình tải đếm theo từng ô, loại ô đã rời khung nhìn, tránh giữ lớp ảnh mờ sau khi đổi zoom hoặc tải lại thành công.
+
+Dropdown được kiểm bằng `check_select_controls.py`: đo vị trí chữ thực trong trình duyệt, font của ô và danh sách mở, khoảng chừa biểu tượng, tên địa bàn dài, ba bộ chữ, sáng/tối, Việt/Anh và 320–1440 px. Escape đóng danh sách trước khi đóng GIS hoặc cài đặt, không hủy thao tác vẽ đang làm. Thiết bị cảm ứng và chế độ tương phản cao giữ bộ chọn gốc của trình duyệt. Kiểm tra này chạy cùng luồng browser trong CI.

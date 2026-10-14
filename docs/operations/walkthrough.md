@@ -34,11 +34,12 @@ Demo chứng minh luồng ứng phó trên web. Chưa chứng minh pipeline vệ
 | Nội dung | Thao tác |
 |---|---|
 | Địa hình | Chọn đường hoặc địa bàn, mở mặt cắt, đọc độ cao/dốc tại vị trí rồi chuyển 3D/2D. Đây là độ dốc DEM, không phải khảo sát mặt đường |
+| Điểm và ảnh khảo sát | Mở GIS trên toolbar. Thêm tọa độ hoặc chọn điểm KML, lưu Ghi nhận thực địa và ảnh, rồi Xem trên bản đồ ứng phó. Điểm hiện ở 2D với nhãn Chưa xác minh, không tự cập nhật trạng thái tuyến |
 | Nguồn dữ liệu | Trong Lớp bản đồ, mở thông tin của lớp. Phân biệt ngày ảnh với thời điểm tổng hợp |
 | So ảnh | Chỉ trình diễn với cặp trước/sau đã được RS duyệt. Bỏ bước này nếu chưa có ảnh phù hợp |
 | Bãi đáp | Tìm “bãi đáp”, mở H. Đây là vị trí đề xuất, chưa khảo sát |
 | Dự phòng | Nếu 3D lỗi, dùng 2D. Nếu mất mạng, dùng gói offline |
-| Lặp lại | Trong Cài đặt, chọn Đặt lại phiên làm việc |
+| Lặp lại | Trong Cài đặt, mở Phiên làm việc rồi chọn Đặt lại phiên làm việc |
 
 Trước buổi demo: duyệt nội dung với RS/PO, thử đúng máy trình chiếu và URL Vercel, chuẩn bị gói offline/video. Xem [cách chạy offline](offline.md), [cách tính tuyến và ưu tiên](../architecture/response-analysis.md).
 
@@ -49,3 +50,13 @@ Cài/build theo [README](../../README.md), sau đó chạy `npm run serve:worksp
 Mã NR-18/PR-7/T-5 là mã mô phỏng, không phải số hiệu đường chính thức. H là vị trí đề xuất chưa khảo sát. Nếu rút ngắn, giữ địa bàn, so tuyến, tin mới và bản xuất; chỉ mở mặt cắt/3D khi cần. So ảnh cần cặp được duyệt; GeoPackage chưa triển khai.
 
 Trình diễn KML/AOI/catalog là phần mở rộng sau luồng ứng phó, tại [workspace GIS](../product/geodata-workspace.md). Import không sửa tình huống hoặc công bố kết quả phân tích. [Kế hoạch và công việc](../tasks/sic-2026.md) giữ các điều kiện bàn giao còn thiếu.
+
+## Trình diễn điểm và ảnh thực địa
+
+1. Mở **GIS**, nhập KML hoặc **Thêm điểm tọa độ**. Chọn điểm để mở hồ sơ.
+2. Chọn **Thêm ghi nhận thực địa**, gắn ảnh JPEG/PNG/WebP. Kiểm tra giờ chụp, máy ảnh và GPS hiện ngay; ảnh không có metadata vẫn xem được. Xác định múi giờ nếu nguồn không có.
+3. Lưu ghi nhận. Chọn **Vẽ vùng nghi ảnh hưởng**, khoanh polygon trên bản đồ rồi **Kết thúc**. Có thể thêm nhiều vùng và sửa đỉnh. AOI đã có giữ nguyên.
+4. Chọn **Xem trên bản đồ ứng phó** để xem điểm, ảnh và vùng trên 2D. Ghi nhận vẫn chưa xác minh; trạng thái đường/ưu tiên không tự thay.
+5. Xuất GeoJSON/KML làm bản sao hồ sơ. Tệp gốc ảnh giữ riêng; preview trong demo không thay tệp phục vụ phân tích.
+
+Nút **?** cạnh Cài đặt mở hướng dẫn theo tác vụ, có tiếng Việt và tiếng Anh. Luồng người dân gửi ảnh, lưu bản gốc trên server và xét duyệt chưa thuộc demo hiện tại.

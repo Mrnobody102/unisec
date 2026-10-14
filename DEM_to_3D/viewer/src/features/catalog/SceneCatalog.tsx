@@ -73,8 +73,8 @@ export function SceneCatalog({
       'The pair has no common extent inside the AOI.'
     ),
     'metadata-only': t(
-      'Thông số thu nhận phù hợp; chưa kiểm tra ảnh, pixel hợp lệ và đồng đăng ký.',
-      'Metadata is compatible. Raster, masks and coregistration are not checked.'
+      'Thông số thu nhận phù hợp.',
+      'Acquisition metadata is compatible.'
     )
   }[pair];
   if (error)
@@ -95,10 +95,7 @@ export function SceneCatalog({
   return (
     <fieldset className="scene-catalog" disabled={disabled}>
       <section className="geodata-section">
-        <h2>{t('Tìm cảnh ảnh', 'Find imagery')}</h2>
-        <p className="geodata-hint">
-          {catalog.source.region}: {catalog.scenes.length} {t('cảnh trong danh mục', 'catalog scenes')}
-        </p>
+        <h2>{t('Tìm ảnh vệ tinh', 'Find imagery')}</h2>
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -216,61 +213,47 @@ export function SceneCatalog({
           )
         )}
         <ul className="catalog-results">
-          {results.slice(0, page * 6).map(({ scene, coverage }) => (
-            <li key={scene.id} className={selected.includes(scene.id) ? 'is-selected' : ''}>
-              <input
-                type="checkbox"
-                aria-label={t('Chọn cảnh ', 'Select scene ') + scene.id}
-                checked={selected.includes(scene.id)}
-                onChange={(event) =>
-                  onSelection(
-                    event.target.checked
-                      ? [...selected, scene.id]
-                      : selected.filter((id) => id !== scene.id)
-                  )
-                }
-              />
-              <button
-                className="catalog-scene"
-                title={scene.id}
-                aria-label={t('Thông tin cảnh ', 'Scene metadata ') + scene.id}
-                onClick={() => onInspect(scene)}
-              >
-                <UiIcon name={scene.sensor === 'sar' ? 'layers' : 'image'} />
-                <span>
-                  <strong className="metadata-line">
-                    <span>{scene.platform.replace('sentinel-', 'S').toUpperCase()} {scene.sensor === 'sar' ? 'GRD' : 'L2A'}</span>
-                    {scene.sensor === 'optical' &&
-                      scene.id.split('_').find((part) => /^T\d{2}[A-Z]{3}$/.test(part)) &&
-                      <span>{scene.id.split('_').find((part) => /^T\d{2}[A-Z]{3}$/.test(part))}</span>}
-                  </strong>
-                  <time>
-                    {new Date(scene.acquiredAt).toLocaleString(
-                      locale === 'vi' ? 'vi-VN' : 'en-GB',
-                      {
-                        timeZone: 'UTC',
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                      }
-                    )}{' '}
-                    UTC
-                  </time>
-                  <small className="metadata-line">
-                    <span>{t('Phủ AOI', 'AOI covered')} {(coverage * 100).toFixed(1)}%</span>
-                    <span>{scene.sensor === 'sar'
-                      ? scene.polarizations.join('/') || '—'
-                      : t('Mây cảnh', 'Scene cloud') +
-                        ' ' +
-                        (scene.cloudCover === null ? '—' : scene.cloudCover + '%')}</span>
-                  </small>
-                </span>
-              </button>
-            </li>
-          ))}
+          {results.slice(0, page * 6).map(({ scene, coverage }) => {
+            const chosen = selected.includes(scene.id);
+            return (
+              <li key={scene.id} className={chosen ? 'is-selected' : ''}>
+                <button
+                  className="catalog-scene"
+                  title={scene.id}
+                  aria-label={t('Thông tin ảnh ', 'Scene metadata ') + scene.id}
+                  onClick={() => onInspect(scene)}
+                >
+                  <SceneThumb scene={scene} />
+                  <span>
+                    <strong>{sceneTitle(scene)}</strong>
+                    <time dateTime={scene.acquiredAt}>{sceneTime(scene, locale)}</time>
+                    <span className="catalog-chips">
+                      <span>{t('Phủ AOI', 'AOI')} {Math.round(coverage * 100)}%</span>
+                      <span>
+                        {scene.sensor === 'sar'
+                          ? scene.polarizations.join('/') || 'SAR'
+                          : `${t('Mây', 'Cloud')} ${scene.cloudCover === null ? '—' : Math.round(scene.cloudCover) + '%'}`}
+                      </span>
+                    </span>
+                  </span>
+                </button>
+                <label className="catalog-pick" title={t('Chọn để đối chiếu', 'Select for comparison')}>
+                  <input
+                    type="checkbox"
+                    aria-label={t('Chọn cảnh ', 'Select scene ') + scene.id}
+                    checked={chosen}
+                    onChange={(event) =>
+                      onSelection(
+                        event.target.checked
+                          ? [...selected, scene.id]
+                          : selected.filter((id) => id !== scene.id)
+                      )
+                    }
+                  />
+                </label>
+              </li>
+            );
+          })}
         </ul>
         {results.length > page * 6 && (
           <button className="button" onClick={() => setPage((value) => value + 1)}>
@@ -280,12 +263,14 @@ export function SceneCatalog({
       </section>
       <section className="geodata-section catalog-selection">
         <h2>
-          {t('Ảnh đã chọn', 'Selected imagery')}
+          {t('Ảnh đã chọn', 'Selected scenes')}
           <span>{scenes.length}</span>
         </h2>
-        <p className="geodata-hint" data-pair-review={pair}>
-          {pairText}
-        </p>
+        {scenes.length > 1 && (
+          <p className="geodata-hint" data-pair-review={pair}>
+            {pairText}
+          </p>
+        )}
         <ul>
           {[...scenes]
             .sort((a, b) => a.acquiredAt.localeCompare(b.acquiredAt))
@@ -296,8 +281,8 @@ export function SceneCatalog({
                   title={scene.id}
                   onClick={() => onInspect(scene)}
                 >
-                  <strong>{scene.platform.replace('sentinel-', 'S').toUpperCase()}</strong>
-                  <time dateTime={scene.acquiredAt}>{scene.acquiredAt.slice(0, 19).replace('T', ' ')} UTC</time>
+                  <strong>{sceneTitle(scene)}</strong>
+                  <time dateTime={scene.acquiredAt}>{sceneTime(scene, locale)}</time>
                 </button>
                 <button
                   className="icon-button"
@@ -311,7 +296,7 @@ export function SceneCatalog({
         </ul>
         <div className="geodata-actions">
           <button className="button" disabled={!scenes.length || stale} onClick={onAdd}>
-            {t('Thêm phạm vi ảnh', 'Add footprints')}
+            {t('Lưu phạm vi vào lớp', 'Save footprints to layers')}
           </button>
           <button
             className="icon-button"
@@ -323,13 +308,9 @@ export function SceneCatalog({
             <UiIcon name="download" />
           </button>
         </div>
-        <p className="geodata-hint">
-          {catalog.source.provider}. {t('Thu thập danh mục', 'Catalog retrieved')}{' '}
-          {catalog.source.retrievedAt}.{' '}
-          <a href={catalog.source.license} target="_blank" rel="noreferrer">
-            {t('Quyền sử dụng', 'Terms')}
-          </a>
-        </p>
+        <a className="catalog-credit" href={catalog.source.license} target="_blank" rel="noreferrer">
+          © {catalog.source.provider}
+        </a>
       </section>
     </fieldset>
   );
@@ -363,10 +344,10 @@ export function SceneDetails({
   ];
   if (scene.sensor === 'sar')
     values.push(
-      ['Pass', scene.pass ?? '—'],
-      ['Relative orbit', String(scene.orbit ?? '—')],
-      ['Polarization', scene.polarizations.join('/') || '—'],
-      ['Pixel spacing', scene.pixelSpacing === null ? '—' : scene.pixelSpacing + ' m']
+      [t('Hướng bay', 'Pass'), scene.pass ? (locale === 'vi' ? (scene.pass === 'ascending' ? 'Hướng bắc' : 'Hướng nam') : scene.pass) : t('Không có','Not available')],
+      [t('Quỹ đạo tương đối', 'Relative orbit'), String(scene.orbit ?? '—')],
+      [t('Phân cực', 'Polarization'), scene.polarizations.join('/') || '—'],
+      [t('Kích thước pixel', 'Pixel spacing'), scene.pixelSpacing === null ? '—' : scene.pixelSpacing + ' m']
     );
   else
     values.push(
@@ -379,17 +360,19 @@ export function SceneDetails({
   return (
     <aside className="geodata-scene-detail">
       <header>
-        <h2>{t('Thông tin cảnh', 'Scene metadata')}</h2>
+        <h2>{t('Thông tin ảnh', 'Scene metadata')}</h2>
         <button
           className="icon-button"
-          aria-label={t('Đóng thông tin cảnh', 'Close scene metadata')}
+          aria-label={t('Đóng thông tin ảnh', 'Close scene metadata')}
           onClick={onClose}
         >
           <UiIcon name="close" />
         </button>
       </header>
+      <SceneThumb scene={scene} large />
       <div className="geodata-section">
-        <p className="catalog-scene-id">{scene.id}</p>
+        <h3 className="catalog-detail-title">{sceneTitle(scene)}</h3>
+        <details className="catalog-image-code"><summary>{t('Mã ảnh','Image identifier')}</summary><p className="catalog-scene-id">{scene.id}</p></details>
         <dl className="geodata-properties">
           {values.map(([label, value]) => (
             <div key={label}>
@@ -407,13 +390,39 @@ export function SceneDetails({
             STAC metadata
           </a>
         </div>
-        <p className="geodata-hint">
-          {t(
-            'Chưa tải dữ liệu ảnh. Độ phủ tính theo phạm vi cảnh, chưa trừ pixel không hợp lệ hoặc đánh giá chất lượng trong AOI.',
-            'Raster not loaded. Coverage is geometric; valid pixels and AOI quality are not checked.'
-          )}
-        </p>
       </div>
     </aside>
+  );
+}
+
+
+/** "Sentinel-1D GRD", "Sentinel-2A L2A". */
+function sceneTitle(scene: ImageryScene): string {
+  const platform = scene.platform.replace(/^sentinel-(\w+)$/i, (_, unit: string) => 'Sentinel-' + unit.toUpperCase());
+  return `${platform} ${scene.sensor === 'sar' ? 'GRD' : 'L2A'}`;
+}
+function sceneTime(scene: ImageryScene, locale: Locale): string {
+  return (
+    new Date(scene.acquiredAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB', {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) + ' UTC'
+  );
+}
+/** Provider quicklook; falls back to a sensor icon when absent or blocked. */
+function SceneThumb({ scene, large = false }: { scene: ImageryScene; large?: boolean }): JSX.Element {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span className={'catalog-thumb' + (large ? ' is-large' : '')} aria-hidden="true">
+      {scene.thumbnail && !failed ? (
+        <img src={scene.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+      ) : (
+        <UiIcon name={scene.sensor === 'sar' ? 'layers' : 'image'} />
+      )}
+    </span>
   );
 }
