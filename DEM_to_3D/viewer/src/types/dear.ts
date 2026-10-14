@@ -58,6 +58,8 @@ export type RoadStatus = 'open' | 'blocked' | 'uncertain';
 
 export type RoadSegment = {
   id: string;
+  /** Source road for a clipped journey segment; never an independently editable road. */
+  sourceRoadId?: string;
   name: [vi: string, en: string];
   scenarioRoadCode?: string;
   cls: 'primary' | 'secondary' | 'track';

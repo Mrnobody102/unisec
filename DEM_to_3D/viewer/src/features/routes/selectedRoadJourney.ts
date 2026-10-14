@@ -1,7 +1,7 @@
-import proj4 from 'proj4';
-import type { RoadSegment, ScenarioRoute } from '../../types/dear';
-import { projectedPathLength } from '../../terrain/pathGeometry';
-import { findPreparedNetworkPath } from './networkRouting';
+import proj4 from "proj4";
+import type { RoadSegment, ScenarioRoute } from "../../types/dear";
+import { projectedPathLength } from "../../terrain/pathGeometry";
+import { findPreparedNetworkPath } from "./networkRouting";
 type Point = { x: number; y: number };
 export type RoadAnchor = {
   point: Point;
@@ -9,25 +9,30 @@ export type RoadAnchor = {
   station: number;
   distance: number;
 };
-const crs = '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs';
+const crs = "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs";
 export function roadProjected(latitude: number, longitude: number): Point {
-  const [x, y] = proj4('EPSG:4326', crs, [longitude, latitude]);
+  const [x, y] = proj4("EPSG:4326", crs, [longitude, latitude]);
   return { x, y };
 }
 export function roadGeographic(point: Point): {
   latitude: number;
   longitude: number;
 } {
-  const [longitude, latitude] = proj4(crs, 'EPSG:4326', [point.x, point.y]);
+  const [longitude, latitude] = proj4(crs, "EPSG:4326", [point.x, point.y]);
   return { latitude, longitude };
 }
 export function nearestRoadAnchor(
   roads: RoadSegment[],
   point: Point,
-  maxDistance = 100
+  maxDistance = 100,
 ): RoadAnchor | null {
   let best: RoadAnchor | null = null;
-  for (const road of roads) {
+  for (const road of [...roads].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (
+      road.points.length < 2 ||
+      road.points.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y))
+    )
+      continue;
     let station = 0;
     for (let i = 1; i < road.points.length; i++) {
       const a = road.points[i - 1],
@@ -40,17 +45,22 @@ export function nearestRoadAnchor(
           0,
           Math.min(
             1,
-            ((point.x - a.x) * dx + (point.y - a.y) * dy) / (length * length)
-          )
+            ((point.x - a.x) * dx + (point.y - a.y) * dy) / (length * length),
+          ),
         ),
-        p = { x: a.x + t * dx, y: a.y + t * dy },
+        p =
+          t * length < 0.001
+            ? a
+            : (1 - t) * length < 0.001
+              ? b
+              : { x: a.x + t * dx, y: a.y + t * dy },
         distance = Math.hypot(point.x - p.x, point.y - p.y);
       if (!best || distance < best.distance)
         best = {
           point: p,
           roadId: road.id,
-          station: station + t * length,
-          distance
+          station: station + (p === a ? 0 : p === b ? length : t * length),
+          distance,
         };
       station += length;
     }
@@ -62,10 +72,12 @@ export function selectedRoadJourney(
   roads: RoadSegment[],
   start: RoadAnchor,
   end: RoadAnchor,
-  avoidBlocked = false
+  avoidBlocked = false,
 ): ScenarioRoute | null {
   if (
-    Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) < 0.1
+    !roads.some((r) => r.id === start.roadId) ||
+    !roads.some((r) => r.id === end.roadId) ||
+    Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) < 0.001
   )
     return null;
   const split = roads.flatMap((road) => {
@@ -75,7 +87,7 @@ export function selectedRoadJourney(
     const cuts = [
       { station: 0, point: road.points[0] },
       ...marks,
-      { station: length, point: road.points.at(-1)! }
+      { station: length, point: road.points.at(-1)! },
     ]
       .sort((a, b) => a.station - b.station)
       .filter((p, i, all) => !i || p.station - all[i - 1].station > 0.001);
@@ -85,8 +97,8 @@ export function selectedRoadJourney(
         stations[i - 1] +
           Math.hypot(
             road.points[i].x - road.points[i - 1].x,
-            road.points[i].y - road.points[i - 1].y
-          )
+            road.points[i].y - road.points[i - 1].y,
+          ),
       );
     return cuts.slice(1).map((cut, i) => {
       const from = cuts[i],
@@ -95,15 +107,16 @@ export function selectedRoadJourney(
           ...road.points.filter(
             (_, j) =>
               stations[j] > from.station + 0.001 &&
-              stations[j] < cut.station - 0.001
+              stations[j] < cut.station - 0.001,
           ),
-          cut.point
+          cut.point,
         ];
       return {
         ...road,
-        id: road.id + ':part:' + i,
+        id: road.id + ":part:" + i,
+        sourceRoadId: road.sourceRoadId ?? road.id,
         points,
-        len: projectedPathLength(points) / 1000
+        len: projectedPathLength(points) / 1000,
       };
     });
   });
@@ -111,25 +124,27 @@ export function selectedRoadJourney(
     split,
     start.point,
     end.point,
-    !avoidBlocked
+    !avoidBlocked,
+    new Set(),
+    1, // This tool measures shortest distance; uncertainty is shown, not a hidden cost penalty.
   );
   if (!steps) return null;
   const segs = steps.map((s) =>
-      s.reversed ? { ...s.road, points: [...s.road.points].reverse() } : s.road
+      s.reversed ? { ...s.road, points: [...s.road.points].reverse() } : s.road,
     ),
     points = segs.flatMap((s, i) => (i ? s.points.slice(1) : s.points));
   return {
     id: `journey:${start.roadId}:${start.station}:${end.roadId}:${end.station}:${avoidBlocked}`,
-    communityId: '',
-    type: 'candidate',
-    name: ['Hành trình đã chọn', 'Selected journey'],
+    communityId: "",
+    type: "candidate",
+    name: ["Hành trình đã chọn", "Selected journey"],
     points,
     segs,
-    status: segs.some((s) => s.status === 'blocked')
-      ? 'blocked'
-      : segs.some((s) => s.status === 'uncertain')
-        ? 'uncertain'
-        : 'open',
-    lengthKm: projectedPathLength(points) / 1000
+    status: segs.some((s) => s.status === "blocked")
+      ? "blocked"
+      : segs.some((s) => s.status === "uncertain")
+        ? "uncertain"
+        : "open",
+    lengthKm: projectedPathLength(points) / 1000,
   };
 }

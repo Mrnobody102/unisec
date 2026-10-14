@@ -13,6 +13,7 @@ import type { TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
 import { roadColors } from './roadStyle';
+import { routeRoadDisplay } from './routeRoadDisplay';
 import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../features/map/layerAppearance';
 
@@ -96,7 +97,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     const roadGroup = new THREE.Group();
     roadGroup.name = 'scenario-roads';
 
-    roads.forEach((road) => {
+    routeRoadDisplay(roads, selectedRoute, Boolean(layers.route)).forEach(({road, sourceId, routeSelected}) => {
       if (road.points.length < 2) return;
 
       const densePoints: Array<{ x: number; y: number }> = [];
@@ -106,8 +107,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         densePoints.push(...segPoints);
       }
 
-      const isRoadSelected = selectedObjectId === `road:${road.id}`;
-      const isPartOfSelectedRoute = selectedRoute?.segs.some((s) => s.id === road.id);
+      const isRoadSelected = selectedObjectId === `road:${sourceId}`;
+      const isPartOfSelectedRoute = routeSelected;
       const routeVisible = Boolean(isPartOfSelectedRoute && layers.route);
       if (!layers.roads && !routeVisible) return;
       const appearance = options.appearance ?? defaultLayerAppearance;
@@ -136,7 +137,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
         line.computeLineDistances();
         const order = layers.status && road.status !== 'open' ? mapLayerOrder.roadStatus : routeVisible || isRoadSelected ? mapLayerOrder.route : mapLayerOrder.roads;
         line.renderOrder = order * 2 + (casing ? 0 : 1);
-        line.userData = { type: 'road', id: road.id, casing };
+        line.userData = { type: 'road', id: sourceId, segmentId: road.id, casing };
         roadGroup.add(line);
       };
       const hasWarning = layers.status && road.status !== 'open';

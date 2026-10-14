@@ -550,6 +550,7 @@ export function CitizenWorkspace({
                   : position(latitude, longitude, 'map')
               }
               journeyEndpoints={journeyMarkers(journey)}
+                journeyFitRequest={journey.fitSequence}
               onSelectOverlayHit={onHit}
               scenarioProps={{
                 aoi: packet.aoi,

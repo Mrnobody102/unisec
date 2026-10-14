@@ -9,7 +9,7 @@ export const routingPolicy = { algorithm: 'dijkstra', version: 'network-v1', unc
 /** Prepared graph: endpoints are explicitly connected. Do not snap unknown roads
  * or connect line crossings without a surveyed network junction. */
 export function findPreparedNetworkPath(roads: RoadSegment[], start: Point, destination: Point,
-  ignoreStatus: boolean, excluded = new Set<string>()): Step[] | null {
+  ignoreStatus: boolean, excluded = new Set<string>(), uncertainCostMultiplier: number = routingPolicy.uncertainCostMultiplier): Step[] | null {
   const adjacency = new Map<string, Array<Step & { to: string; cost: number }>>();
   for (const road of [...roads].sort((a, b) => a.id.localeCompare(b.id))) {
     if (excluded.has(road.id) || (!ignoreStatus && road.status === 'blocked') || road.points.length < 2) continue;
@@ -17,7 +17,7 @@ export function findPreparedNetworkPath(roads: RoadSegment[], start: Point, dest
     const length = projectedPathLength(road.points);
     if (!Number.isFinite(length) || length <= 0) continue;
     // Versioned demo policy: uncertainty adds cost, not proof of passage.
-    const cost = length * (!ignoreStatus && road.status === 'uncertain' ? routingPolicy.uncertainCostMultiplier : 1);
+    const cost = length * (!ignoreStatus && road.status === 'uncertain' ? uncertainCostMultiplier : 1);
     const forward = adjacency.get(a) ?? []; forward.push({ road, reversed: false, to: b, cost }); adjacency.set(a, forward);
     const reverse = adjacency.get(b) ?? []; reverse.push({ road, reversed: true, to: a, cost }); adjacency.set(b, reverse);
   }

@@ -1,81 +1,71 @@
-import { useMemo, useState } from 'react';
-import type { RoadSegment } from '../../types/dear';
-import {
-  nearestRoadAnchor,
-  roadGeographic,
-  roadProjected,
-  selectedRoadJourney,
-  type RoadAnchor
-} from './selectedRoadJourney';
+import { useMemo, useState } from "react";
+import type { RoadSegment } from "../../types/dear";
+import { roadGeographic, roadProjected } from "./selectedRoadJourney";
+import { analyseRoadJourney, type JourneySelection } from "./journeyAnalysis";
+export {
+  JOURNEY_ACCESS_LIMIT_M,
+  type JourneyEndpoint,
+} from "./journeyAnalysis";
 
-/** Anywhere in the scenario can be an endpoint; the route joins the network at the nearest road. */
-export const JOURNEY_ACCESS_LIMIT_M = 5_000;
-
-export type JourneyEndpoint = RoadAnchor & {
-  /** The location the user chose, before snapping to the road network. */
-  origin: { x: number; y: number };
-  /** Preset key (`site:…`, `community:…`, `gis:…`) or `map` for a clicked location. */
-  source: string;
-  label?: string;
-};
-
+/** Keep chosen locations; derive their road connections from current geometry/status. */
 export function useRoadJourney(roads: RoadSegment[]) {
-  const [open, setOpen] = useState(false),
-    [picking, setPicking] = useState<'start' | 'end' | null>(null),
-    [start, setStart] = useState<JourneyEndpoint | null>(null),
-    [end, setEnd] = useState<JourneyEndpoint | null>(null),
-    [avoidBlocked, setAvoidBlocked] = useState(false),
-    [error, setError] = useState(false);
+  const [open, setOpenState] = useState(false),
+    [picking, setPicking] = useState<"start" | "end" | null>(null),
+    [startSelection, setStart] = useState<JourneySelection | null>(null),
+    [endSelection, setEnd] = useState<JourneySelection | null>(null),
+    [avoidBlocked, setAvoidBlocked] = useState(true),
+    [fitSequence, setFitSequence] = useState(0);
+  const setOpen = (value: boolean) => {
+    setOpenState(value);
+    if (!value) setPicking(null);
+  };
   const setPoint = (
-    side: 'start' | 'end',
-    point: { x: number; y: number },
-    source = 'map',
-    label?: string
+    side: "start" | "end",
+    origin: { x: number; y: number },
+    source = "map",
+    label?: string,
   ) => {
-    const anchor = nearestRoadAnchor(roads, point, JOURNEY_ACCESS_LIMIT_M);
-    if (!anchor) {
-      setError(true);
-      return;
-    }
-    setError(false);
-    const endpoint = { ...anchor, origin: point, source, label };
-    if (side === 'start') setStart(endpoint);
-    else setEnd(endpoint);
+    const selection = { origin, source, label };
+    if (side === "start") setStart(selection);
+    else setEnd(selection);
     setPicking(null);
+    if (side === "start" ? endSelection : startSelection)
+      setFitSequence((value) => value + 1);
   };
   const pick = (latitude: number, longitude: number) => {
     if (picking) setPoint(picking, roadProjected(latitude, longitude));
   };
-  const route = useMemo(
-    () => (start && end ? selectedRoadJourney(roads, start, end, avoidBlocked) : null),
-    [roads, start, end, avoidBlocked]
+  const analysis = useMemo(
+    () => analyseRoadJourney(roads, startSelection, endSelection, avoidBlocked),
+    [roads, startSelection, endSelection, avoidBlocked],
   );
   return {
     open,
     setOpen,
     picking,
     setPicking,
-    start,
-    end,
+    ...analysis,
     setPoint,
     pick,
+    fitSequence,
+    fit: () => setFitSequence((value) => value + 1),
     swap: () => {
-      setStart(end);
-      setEnd(start);
+      setStart(endSelection);
+      setEnd(startSelection);
+      setPicking(null);
     },
-    clear: (side: 'start' | 'end') => (side === 'start' ? setStart(null) : setEnd(null)),
+    clear: (side: "start" | "end") => {
+      if (side === "start") setStart(null);
+      else setEnd(null);
+      setPicking(null);
+    },
     avoidBlocked,
     setAvoidBlocked,
-    error,
-    route,
-    close: () => {
-      setOpen(false);
-      setPicking(null);
-    }
+    close: () => setOpen(false),
   };
 }
 
-/** A/B markers at the chosen locations, each with the point where it joins the road. */
+/** A/B stay at the chosen coordinates, including a failed network match. */
 export function journeyMarkers(journey: ReturnType<typeof useRoadJourney>) {
   if (!journey.open) return [];
   return [journey.start, journey.end].flatMap((endpoint, index) =>
@@ -83,10 +73,13 @@ export function journeyMarkers(journey: ReturnType<typeof useRoadJourney>) {
       ? [
           {
             ...roadGeographic(endpoint.origin),
-            label: index === 0 ? 'A' : 'B',
-            road: endpoint.distance > 1 ? roadGeographic(endpoint.point) : undefined
-          }
+            label: index === 0 ? "A" : "B",
+            road:
+              endpoint.anchor && endpoint.anchor.distance > 1
+                ? roadGeographic(endpoint.anchor.point)
+                : undefined,
+          },
         ]
-      : []
+      : [],
   );
 }

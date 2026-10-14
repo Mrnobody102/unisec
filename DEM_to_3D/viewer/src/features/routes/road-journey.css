@@ -69,7 +69,7 @@
 }
 .journey-stop:first-child::after {
   /* Dotted leg between the A and B pins. */
-  content: '';
+  content: "";
   position: absolute;
   left: 11px;
   top: 33px;
@@ -137,7 +137,9 @@
   text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
-  .journey-map-pin > span { animation: none; }
+  .journey-map-pin > span {
+    animation: none;
+  }
 }
 .journey-stop-field {
   display: grid;
@@ -182,7 +184,7 @@
   min-height: 34px;
   padding: 0;
 }
-.journey-pick[aria-pressed='true'] {
+.journey-pick[aria-pressed="true"] {
   color: var(--select-ink);
   background: var(--ws-tint);
   border-color: var(--select);
@@ -249,7 +251,7 @@
   font-weight: 500;
 }
 .journey-status::before {
-  content: '';
+  content: "";
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -311,4 +313,28 @@
     width: calc(100% - 24px);
     max-height: calc(100% - var(--map-toolbar-height, 48px) - 104px);
   }
+}
+
+.journey-distance {
+  display: grid;
+  gap: 2px;
+}
+.journey-distance > small {
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+.journey-stop-meta[data-error] {
+  white-space: normal;
+  color: var(--critical-ink);
+}
+.journey-message.is-info {
+  color: var(--ws-muted);
+  background: var(--ws-raised);
+}
+
+.road-journey-content[hidden] {
+  display: none;
+}
+.road-journey-panel[data-collapsed] > header {
+  border-bottom: 0;
 }

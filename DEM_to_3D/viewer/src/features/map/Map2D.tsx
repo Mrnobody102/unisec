@@ -9,6 +9,7 @@ import 'leaflet/dist/leaflet.css';
 import { projectedToWgs84, sceneToProjected } from '../../terrain/coordinate';
 import { createScreenMarkers } from '../../terrain/screenMarkers';
 import { addRoadLayers } from './addRoadLayers';
+import { routeRoadDisplay } from '../../terrain/routeRoadDisplay';
 import { mapLayerOrder, mapPane, type MapPane } from './mapLayerOrder';
 import type { TerrainData } from '../../types/terrain';
 import type { MapContextRequest, MapDisplayProps, OverlayHit } from './mapContracts';
@@ -23,6 +24,7 @@ import { showRoad, defaultLayerAppearance } from './layerAppearance';
 import { readMapLocation, type MapLocation } from './mapLocation';
 
 type Props = MapDisplayProps & {
+  journeyFitRequest?: number;
   journeyEndpoints?: Array<{latitude:number;longitude:number;label:string;road?:{latitude:number;longitude:number}}>;
   pointPickActive?: boolean; onPointPick?: (latitude:number,longitude:number)=>void;
   onMapContextMenu?: (request: MapContextRequest) => void;
@@ -158,9 +160,8 @@ export function Map2D(props: Props): JSX.Element {
             dashArray: '6 5', opacity: selected ? 0.9 : 0.6, bubblingMouseEvents: false })
             .on('click', () => onSelectOverlayHit?.({ type: 'aoi', id: scenario.aoi!.id })).addTo(overlay!);
         }
-        scenario.roads.forEach(road => {
-          const routeSelected = layers.route && scenario.selectedRoute?.segs.some(s => s.id === road.id);
-          const inspected = scenario.selectedObjectId === `road:${road.id}`;
+        routeRoadDisplay(scenario.roads, scenario.selectedRoute, Boolean(layers.route)).forEach(({road, sourceId, routeSelected}) => {
+          const inspected = scenario.selectedObjectId === `road:${sourceId}`;
           const selected = routeSelected || inspected;
           if (!layers.roads && !routeSelected) return;
           if (!showRoad(road.status, Boolean(selected), appearance.roads)) return;
@@ -168,7 +169,7 @@ export function Map2D(props: Props): JSX.Element {
           const warning = layers.status && road.status !== 'open';
           addRoadLayers({ road, points, layer: overlay!, selected: Boolean(routeSelected), inspected, warning: Boolean(warning),
             imagery: Boolean(layers.imagery), networkOpacity: appearance.networkOpacity,
-            onSelect: () => onSelectOverlayHit?.({ type: 'road', id: road.id }) });
+            onSelect: () => onSelectOverlayHit?.({ type: 'road', id: sourceId }) });
         });
         const selection = scenario.selectedObjectId ?? (scenario.selectedCommunityId ? `community:${scenario.selectedCommunityId}` : '');
         if (selection && selection !== lastSelection) {
@@ -271,7 +272,9 @@ export function Map2D(props: Props): JSX.Element {
     const map=mapRef.current;
     if (!map || !props.pointPickActive) return;
     const host=map.getContainer();
-    const pick=(event:MouseEvent)=>{ event.stopImmediatePropagation(); event.preventDefault(); const p=map.mouseEventToLatLng(event); propsRef.current.onPointPick?.(p.lat,p.lng); };
+    const pick=(event:MouseEvent)=>{
+      if (event.target instanceof Element && event.target.closest('.leaflet-control,.map-overview,.leaflet-popup,.map-object-chooser,.field-map-card')) return;
+      event.stopImmediatePropagation(); event.preventDefault(); const p=map.mouseEventToLatLng(event); propsRef.current.onPointPick?.(p.lat,p.lng); };
     host.addEventListener('click',pick,true);
     return ()=>host.removeEventListener('click',pick,true);
   },[mapReady,props.pointPickActive]);
@@ -289,6 +292,23 @@ export function Map2D(props: Props): JSX.Element {
     }
     return ()=>{group.remove();};
   },[mapReady,props.journeyEndpoints]);
+  useEffect(() => {
+    const map=mapRef.current;
+    if (!map || !props.journeyFitRequest || !props.journeyEndpoints?.length) return;
+    const points=(props.journeyEndpoints ?? []).flatMap(p => [L.latLng(p.latitude,p.longitude), ...(p.road ? [L.latLng(p.road.latitude,p.road.longitude)] : [])]);
+    const metadata=props.terrain?.metadata;
+    if (metadata) for (const p of props.scenarioProps?.selectedRoute?.points ?? []) {
+      const geo=projectedToWgs84(metadata,p);
+      if (geo.latitude !== undefined && geo.longitude !== undefined) points.push(L.latLng(geo.latitude,geo.longitude));
+    }
+    if (!points.length) return;
+    const host=map.getContainer(), rect=host.getBoundingClientRect();
+    const panel=(host.closest('.map-area') ?? host.parentElement)?.querySelector('.road-journey-panel')?.getBoundingClientRect();
+    let top=40,right=40;
+    if (panel && panel.width > rect.width * .6) top=Math.max(40,Math.min(rect.height-120,panel.bottom-rect.top+16));
+    else if (panel) right=Math.max(40,Math.min(rect.width-120,rect.right-panel.left+24));
+    map.fitBounds(L.latLngBounds(points),{paddingTopLeft:[40,top],paddingBottomRight:[right,80],maxZoom:16,animate:false});
+  },[mapReady,props.journeyFitRequest]);
   return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
     {mapReady && props.gisRecords && props.onGisSelect && <ResponseGisLayer mapRef={mapRef} records={props.gisRecords} selectedId={props.gisSelectedId ?? null} request={props.gisRequest ?? {version:0,id:null}} enabled={props.gisEnabled !== false} interactive={!props.measurementOpen && !props.locationOpen} locale={props.locale ?? 'vi'} groupIds={props.gisGroupIds} onSelect={props.onGisSelect} onGroup={props.onGisGroup}/>}
     <MapOverview mapRef={mapRef} raster={overviewRaster} area={overviewArea} locale={props.locale ?? 'vi'}

@@ -79,7 +79,7 @@ export const vi: GuideContent = {
         {
           icon: 'route',
           title: 'Hành trình giữa hai điểm',
-          text: 'Chọn A và B từ danh sách, hoặc bấm biểu tượng vị trí rồi bấm lên bản đồ. Điểm nằm ngoài đường được nối tới đường gần nhất.'
+          text: 'Chọn A và B từ danh sách, hoặc bấm biểu tượng vị trí rồi bấm lên bản đồ. Tránh đoạn bị chặn áp dụng cả khi chọn điểm nối vào đường. Nét đứt chỉ là đoạn nối thẳng chưa xác nhận lối đi; độ dài kết quả chỉ tính phần theo đường. Bấm Xem A, B và tuyến để đưa cả hành trình vào khung nhìn; trên điện thoại, mở lại chi tiết bằng nút mở rộng.'
         },
         {
           icon: 'layers',

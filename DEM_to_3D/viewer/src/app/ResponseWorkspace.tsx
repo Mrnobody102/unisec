@@ -950,6 +950,7 @@ export function ResponseWorkspace({
                 onPointPick={journey.pick}
                 onMapContextMenu={snapshotReady ? openMapMenu : undefined}
                 journeyEndpoints={journeyMarkers(journey)}
+                journeyFitRequest={journey.fitSequence}
                 locationOpen={locationOpen}
                 locationPoint={locationPoint}
                 onLocation={setLocationPoint}

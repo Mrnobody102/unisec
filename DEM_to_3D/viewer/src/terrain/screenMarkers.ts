@@ -164,7 +164,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   const controlRects = (): ScreenRect[] => {
     const hostRect = host.getBoundingClientRect();
     const workspace = host.closest('.map-area') ?? host.parentElement;
-    return Array.from(workspace?.querySelectorAll<HTMLElement>('.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin') ?? [])
+    return Array.from(workspace?.querySelectorAll<HTMLElement>('.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin') ?? [])
       .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
   };
   const update = (project: Projection): void => {
@@ -234,7 +234,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       if (!disposed && lastProjection) update(lastProjection);
     });
   });
-  externalChanges.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+  externalChanges.observe(host.closest('.map-area') ?? host.parentElement ?? host, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
   return { update, dispose: () => {
     externalChanges.disconnect(); cancelAnimationFrame(relayoutFrame);
     disposed = true; closeChooser(); document.fonts.removeEventListener('loadingdone', onFontsLoaded);

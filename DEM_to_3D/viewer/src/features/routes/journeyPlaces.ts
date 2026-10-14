@@ -1,4 +1,5 @@
-import { geometryPositions, type GeometryRecord } from '../../geo/vector/types';
+import pointOnFeature from "@turf/point-on-feature";
+import type { GeometryRecord } from "../../geo/vector/types";
 
 export type JourneyPlace = {
   key: string;
@@ -7,36 +8,33 @@ export type JourneyPlace = {
   group: string;
   latitude: number;
   longitude: number;
+  representative?: boolean;
 };
 
-/** Visible GIS points and areas as journey endpoints; an area is represented by its vertex centroid. */
+/** Points retain their coordinates. Non-point presets use a point on the feature,
+ * labelled as representative; reaching it does not establish access to the whole area. */
 export function gisJourneyPlaces(records: GeometryRecord[]): JourneyPlace[] {
   return records
     .filter((record) => record.visible)
     .flatMap((record) => {
       const geometry = record.feature.geometry;
-      const positions =
-        geometry.type === 'Polygon'
-          ? geometry.coordinates[0].slice(0, -1)
-          : geometry.type === 'MultiPolygon'
-            ? geometry.coordinates.flatMap((polygon) => polygon[0].slice(0, -1))
-            : geometryPositions(geometry);
-      if (!positions.length) return [];
-      const longitude = positions.reduce((sum, p) => sum + p[0], 0) / positions.length,
-        latitude = positions.reduce((sum, p) => sum + p[1], 0) / positions.length;
+      const [longitude, latitude] = pointOnFeature(record.feature).geometry
+        .coordinates;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
       return [
         {
-          key: 'gis:' + record.id,
+          key: "gis:" + record.id,
           label: record.name || record.id,
           group: record.source.name,
           latitude,
-          longitude
-        }
+          longitude,
+          representative: geometry.type !== "Point",
+        },
       ];
     })
     .sort(
       (a, b) =>
         a.group.localeCompare(b.group) ||
-        a.label.localeCompare(b.label, undefined, { numeric: true })
+        a.label.localeCompare(b.label, undefined, { numeric: true }),
     );
 }
