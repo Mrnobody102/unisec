@@ -24,12 +24,14 @@ def run(url, chrome, captures=None):
                 page.wait_for_timeout(350)
                 result = page.locator(".map-pin-label").evaluate_all("""nodes => {
                     const rect = n => {const r=n.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}};
-                    const labels=nodes.filter(n=>n.getBoundingClientRect().width && !n.parentElement.hidden).map(n=>({...rect(n),name:n.textContent,grouped:n.parentElement.hasAttribute('aria-haspopup')}));
+                    const labels=nodes.filter(n=>n.getBoundingClientRect().width && !n.parentElement.hidden).map(n=>({...rect(n),name:n.textContent,grouped:n.parentElement.hasAttribute('aria-haspopup'),feature:n.parentElement.classList.contains('has-overlap'),named:n.parentElement.getAttribute('aria-label')?.startsWith(n.textContent+'.')}));
                     const overlap=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
                     return {labels, collisions:labels.flatMap((a,i)=>labels.slice(i+1).filter(b=>overlap(a,b)).map(b=>[a.name,b.name]))};
                 }""")
                 assert not result["collisions"], (mode, step, result)
-                assert not any(label["grouped"] for label in result["labels"]), (mode, step, result)
+                # A retained selected/priority feature may keep its own name.
+                # Anonymous groups and count clusters must never borrow a member label.
+                assert all(not label["grouped"] or (label["feature"] and label["named"]) for label in result["labels"]), (mode, step, result)
                 counts[mode].append(len(result["labels"]))
                 if step == 0:
                     # Simulate a tooltip belonging to another overlay, over a visible label.
