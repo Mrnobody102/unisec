@@ -24,7 +24,9 @@ def run(url,chrome,captures):
   page.locator('.geodata-map .map-point-cluster').click();expect(card).to_be_visible();expect(page.locator('.geodata-inspector')).not_to_be_visible()
   for width in [1440,1024,390,320]:
    page.set_viewport_size({'width':width,'height':900})
-   if width<=760:page.locator('.geodata-mobile-tabs').get_by_role('button',name='Bản đồ',exact=True).click()
+   if width<=760:
+    page.locator('.geodata-mobile-tabs').get_by_role('button',name='Bản đồ',exact=True).click()
+    if not card.is_visible():page.locator('.geodata-map .map-point-cluster').click()
    expect(card).to_be_visible();assert card.evaluate('n=>n.scrollWidth<=n.clientWidth+1'),width
    assert card.evaluate('n=>n.getBoundingClientRect().top>=n.parentElement.querySelector(\".geodata-map-toolbar\").getBoundingClientRect().bottom+7'),('Point popup overlaps wrapped map toolbar',width)
    assert card.evaluate('n=>{const b=n.getBoundingClientRect();return [...n.querySelectorAll(\".point-group-row\")].every(r=>r.getBoundingClientRect().bottom<=b.bottom+1)}'),('All report choices should fit without repeated photo thumbnails',width)

@@ -1,3 +1,4 @@
+import {communitiesForHazard,roadHazardIds} from './roadHazards';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import type { IncidentWorkspaceSnapshot } from './deriveIncidentWorkspace';
 
@@ -32,11 +33,16 @@ export const workStatusText: Record<WorkStatus, [string, string]> = {
   done: ['Hoàn tất', 'Completed']
 };
 
-/** Work obligations are derived from evidence. Completion never edits hazard/road truth. */
+/** A mapped landslide area linked to a road; "affected" areas need the road checked. */
+export type AreaRoadLink = { areaId: string; areaName: string; roadId: string; relation: 'threatens' | 'affected' };
+
+/** Work obligations are derived from evidence. Finishing a check is where its result is
+ * recorded against the road or hazard (see ResponseWorkDialog), never silently here. */
 export function responseWork(
   packet: IncidentPacket,
   snapshot: IncidentWorkspaceSnapshot,
-  applied: boolean
+  applied: boolean,
+  areaLinks: AreaRoadLink[] = []
 ): ResponseWork[] {
   const tasks: ResponseWork[] = [];
   if (!applied)
@@ -77,7 +83,7 @@ export function responseWork(
           assessment.access,
           assessment.hazardIds,
           snapshot.roads
-            .filter((road) => assessment.hazardIds.includes(road.hz ?? ''))
+            .filter((road) => roadHazardIds(road).some(id=>assessment.hazardIds.includes(id)))
             .map((road) => [road.id, road.status, road.note])
         ]),
         title: [
@@ -95,23 +101,28 @@ export function responseWork(
         kind: 'access'
       });
   }
-  for (const road of snapshot.roads.filter((road) => road.status === 'uncertain')) {
-    const record = snapshot.evidence.find((item) => item.hazardId === road.hz);
+  const affectedBy = (roadId: string) => areaLinks.filter(link => link.roadId === roadId && link.relation === 'affected');
+  // Uncertain roads, and roads still shown passable although a mapped landslide affects them.
+  for (const road of snapshot.roads.filter((road) => road.status === 'uncertain' || (road.status === 'open' && affectedBy(road.id).length))) {
+    const records=snapshot.evidence.filter(item=>roadHazardIds(road).includes(item.hazardId)),record=records[0];
+    const areas = affectedBy(road.id);
     tasks.push({
       id: `road:${road.id}`,
       signature: JSON.stringify([
         road.status,
-        road.hz,
-        record?.id,
-        record?.observedAt,
-        record?.finding
+        roadHazardIds(road),
+        records.map(r=>[r.id,r.observedAt,r.finding]),
+        ...(snapshot.statusEditIds.has(road.id) ? [snapshot.statusEditIds.get(road.id)] : []),
+        ...(areas.length ? [areas.map(area => area.areaId).sort()] : [])
       ]),
       title: [`Xác minh ${road.name[0].replace(/^./, c => c.toLocaleLowerCase())}`, `Verify ${road.name[1]}`],
       action: ['Xác minh khả năng đi qua', 'Verify passage'],
       subject: road.name,
       completion: ['Khả năng đi qua, loại phương tiện và thời điểm kiểm tra.', 'Passability, vehicle type and inspection time.'],
-      reason: record?.finding ??
-        road.note ?? ['Chưa xác minh khả năng đi qua.', 'Passability not verified.'],
+      reason: road.status === 'open' && areas.length
+        ? [`Vùng sạt lở đã khoanh ảnh hưởng đoạn này: ${areas.map(area => area.areaName).join(', ')}.`,
+          `Mapped landslide affects this section: ${areas.map(area => area.areaName).join(', ')}.`]
+        : record?.finding ?? road.note ?? ['Chưa xác minh khả năng đi qua.', 'Passability not verified.'],
       objectId: `road:${road.id}`,
       priority: snapshot.communities.some(
         (community) =>
@@ -123,6 +134,22 @@ export function responseWork(
       )
         ? 1
         : 2,
+      kind: 'access'
+    });
+  }
+  // A suspected hazard stays a hypothesis until someone checks it on site.
+  for (const hazard of snapshot.hazards.filter(item => item.observation === 'suspected')) {
+    const record = snapshot.evidence.find(item => item.hazardId === hazard.id);
+    tasks.push({
+      id: `hazard:${hazard.id}`,
+      signature: JSON.stringify([hazard.observation, hazard.projected, record?.id ?? null]),
+      title: [`Kiểm chứng ${hazard.name[0].replace(/^./, c => c.toLocaleLowerCase())}`, `Verify ${hazard.name[1]}`],
+      action: ['Kiểm chứng tại hiện trường', 'Verify on site'],
+      subject: hazard.name,
+      completion: ['Có hay không có hiện tượng, phạm vi và ảnh hưởng tới đường.', 'Whether it is present, its extent and any road impact.'],
+      reason: record?.limitation ?? ['Chưa kiểm chứng thực địa.', 'Not verified on site.'],
+      objectId: `hazard:${hazard.id}`,
+      priority: communitiesForHazard(snapshot.communities, snapshot.routes, hazard.id).some(community => community.prio === 1) ? 1 : 2,
       kind: 'access'
     });
   }

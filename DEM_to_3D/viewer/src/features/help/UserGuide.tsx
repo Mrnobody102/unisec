@@ -28,6 +28,7 @@ export function UserGuide({
       ref={ref}
       className="user-guide"
       aria-labelledby={id}
+      onKeyDownCapture={(event) => { if (event.key === 'Escape') event.stopPropagation(); }}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

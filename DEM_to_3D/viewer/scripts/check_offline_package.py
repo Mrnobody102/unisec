@@ -40,8 +40,8 @@ def run(archive, chrome):
                 page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
                 page.get_by_role('button', name='Xem chi tiết', exact=True).click()
                 page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
-                expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
-                page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+                expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
+                page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
                 expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
                 with page.expect_download() as download:
                     page.get_by_role('button', name='Tải bản đồ PNG', exact=True).click()

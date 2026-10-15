@@ -1,4 +1,5 @@
 """Verify batch edits, live AOI dragging, minimal reports and optional HEIC decoding."""
+from gis_browser_actions import apply_boundary, reviewed_records
 import argparse, base64, hashlib, json, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -23,17 +24,17 @@ def run(url, chrome, heic, captures):
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
         expect(page.locator('.app-header')).to_be_visible()
         assert page.locator('.geodata-workspace').bounding_box()['y'] >= page.locator('.app-header').bounding_box()['height']
-        read=lambda:page.evaluate('JSON.parse(localStorage.getItem("dear.geodata.v1"))')
+        read=lambda:reviewed_records(page)
         page.get_by_role('button',name='Ẩn tất cả',exact=True).click();assert all(not r['visible'] for r in read())
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click();assert all(r['visible'] for r in read())
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page);assert all(r['visible'] for r in read())
         page.get_by_role('button',name='Chọn nhiều',exact=True).click()
         page.get_by_label('Chọn Điểm 001',exact=True).check();page.get_by_label('Chọn Điểm 002',exact=True).check()
         page.locator('.geodata-bulk').get_by_role('button',name='Xóa',exact=True).click()
         assert len(read())==7
         page.get_by_role('button',name='Xóa mục đã chọn',exact=True).click();assert len(read())==4
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click();assert len(read())==7
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page);assert len(read())==7
         page.get_by_role('button',name='Xong',exact=True).click()
-        page.get_by_role('tab',name='AOI',exact=True).click()
+        page.get_by_role('tab',name='Vùng quan tâm',exact=True).click()
         page.get_by_label('Tên vùng',exact=True).fill('Ranh giới khảo sát mới');page.get_by_label('Tên vùng',exact=True).press('Enter')
         assert next(r for r in read() if r['id']==aoi['id'])['name']=='Ranh giới khảo sát mới'
         page.locator('#geo-panel-aoi').get_by_role('button',name='Sửa ranh giới',exact=True).click()
@@ -41,11 +42,11 @@ def run(url, chrome, heic, captures):
         path=page.locator('.leaflet-drawing-pane path[stroke-width="3"]').first;before=path.get_attribute('d')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down();page.mouse.move(box['x']+30,box['y']+20,steps=5)
         expect(path).not_to_have_attribute('d',before)
-        page.mouse.up();page.get_by_role('button',name='Áp dụng',exact=True).click()
+        page.mouse.up();apply_boundary(page)
         edited=next(r for r in read() if r['id']==aoi['id'])['feature']['geometry'];assert edited!=aoi['feature']['geometry']
         page.locator('#geo-panel-aoi').get_by_role('button',name='Sửa ranh giới',exact=True).click()
         box=settled_box(page,'.geodata-move-handle');page.mouse.move(box['x']+13,box['y']+13);page.mouse.down();page.mouse.move(box['x']+45,box['y']+33,steps=5);page.mouse.up()
-        page.get_by_role('button',name='Áp dụng',exact=True).click()
+        apply_boundary(page)
         moved=next(r for r in read() if r['id']==aoi['id'])['feature']['geometry']['coordinates'][0]
         old=edited['coordinates'][0];dx=moved[0][0]-old[0][0];dy=moved[0][1]-old[0][1]
         assert abs(dx)>0 and all(abs((b[0]-a[0])-dx)<1e-10 and abs((b[1]-a[1])-dy)<1e-10 for a,b in zip(old,moved))

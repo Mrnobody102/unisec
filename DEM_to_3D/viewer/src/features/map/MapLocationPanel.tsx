@@ -23,9 +23,10 @@ export function MapLocationPanel({ locale, point, onClose }: { locale: Locale; p
   const copy = async () => {
     if (!point) return;
     try {
-      await navigator.clipboard.writeText([format === 'projected' ? point.crs : 'WGS84 (EPSG:4326)',
-        ...rows.map(([label, value]) => `${label}: ${value}`),
-        ...(point.elevation === undefined ? [] : [`${t('Độ cao', 'Elevation')}: ${point.elevation.toFixed(1)} m`])].join('\n'));
+      await navigator.clipboard.writeText(projected
+        ? [point.crs, ...rows.map(([label, value]) => `${label}: ${value}`),
+          ...(point.elevation === undefined ? [] : [`${t('Độ cao', 'Elevation')}: ${point.elevation.toFixed(1)} m`])].join('\n')
+        : `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`);
       setCopied('done');
     } catch { setCopied('error'); }
   };

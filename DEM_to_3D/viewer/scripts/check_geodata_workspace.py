@@ -1,4 +1,5 @@
 """Exercise local vector import, AOI coverage, drawing, persistence and GIS export."""
+from gis_browser_actions import download_geometry, publish_draft, published_records, reviewed_records, reviewed_records_json
 import argparse
 import json
 import tempfile
@@ -28,7 +29,10 @@ def check_controls(page, theme):
     close_record = page.get_by_role('button', name='Đóng hồ sơ đối tượng', exact=True)
     if close_record.is_visible(): close_record.click()
     trigger = page.locator('.geodata-import > button')
-    before = trigger.bounding_box(); trigger.hover()
+    # Wait for the detail dock transition before measuring hover stability.
+    from map_wait import settled_box
+    trigger.scroll_into_view_if_needed()
+    before = settled_box(page, '.geodata-import > button'); trigger.hover()
     assert trigger.bounding_box() == before, 'Import action shifted on hover'
     open_import(page)
     dialog = page.get_by_role('dialog', name='Nhập dữ liệu', exact=True)
@@ -72,43 +76,43 @@ def check_large_import(browser, url, root):
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
     expect(page.get_by_role('alert')).to_have_count(0)
-    records = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    records = json.loads(reviewed_records_json(page))
     assert all(record['role'] == 'reference' and record['source']['name'] == path.name for record in records)
     page.reload()
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
     page.locator('.geodata-feature').last.click()
     expect(page.locator('.geodata-map-label')).to_have_count(1)
     expect(page.locator('.geodata-map-label')).to_contain_text('Khảo sát 1000')
-    before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
+    before = reviewed_records_json(page)
     (root / 'extra.wkt').write_text('POINT(104 21)', encoding='utf-8')
     open_import(page)
     page.locator('input[type=file]').set_input_files(root / 'extra.wkt')
     expect(page.get_by_role('alert')).to_contain_text('1.000')
-    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    assert reviewed_records_json(page) == before
     # An over-budget MultiGeometry must fail at 1,001, without replacing the active project.
     path.write_text(kml.replace('</MultiGeometry>', '<Point><coordinates>104,21</coordinates></Point></MultiGeometry>'), encoding='utf-8')
     open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.get_by_role('alert')).to_contain_text('large-survey.kml')
-    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    assert reviewed_records_json(page) == before
     # A single batch is one undo/redo operation after clearing only this test context.
-    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.evaluate("localStorage.removeItem('dear.geodata.v1'); localStorage.removeItem('dear.gis.v2')")
     page.reload()
     path.write_text(kml, encoding='utf-8')
     open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
-    page.get_by_role('button', name='Hoàn tác GIS', exact=True).click()
+    page.get_by_role('button', name='Hoàn tác GIS', exact=True).click(); reviewed_records(page)
     expect(page.locator('.geodata-layers li')).to_have_count(0)
     page.get_by_role('button', name='Làm lại GIS', exact=True).click()
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
-    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.evaluate("localStorage.removeItem('dear.geodata.v1'); localStorage.removeItem('dear.gis.v2')")
     page.reload()
     paste(page, '''21°45'26.80"N 104°02'48.44"E
 21°45'48.01"N 104°02'43.99"E
 21°47'01.34"N 104°02'39.83"E''')
     expect(page.locator('.geodata-layers li')).to_have_count(3)
-    first = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))[0]['feature']['geometry']['coordinates']
+    first = json.loads(reviewed_records_json(page))[0]['feature']['geometry']['coordinates']
     assert abs(first[0] - (104 + 2 / 60 + 48.44 / 3600)) < 1e-10
     assert abs(first[1] - (21 + 45 / 60 + 26.80 / 3600)) < 1e-10
     assert not errors, errors
@@ -139,7 +143,7 @@ def check_point_and_kml_semantics(browser, url, root, captures):
     open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.locator('.geodata-layers li')).to_have_count(5)
-    original = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    original = json.loads(reviewed_records_json(page))
     assert [record['feature']['properties']['kmlAltitudeMode'] for record in original] == modes
     assert all(record['role'] == 'reference' and record['feature']['geometry']['type'] == 'Point' for record in original)
     assert original[0]['feature']['geometry']['coordinates'][:2] == original[1]['feature']['geometry']['coordinates'][:2]
@@ -147,18 +151,21 @@ def check_point_and_kml_semantics(browser, url, root, captures):
     page.get_by_role('combobox',name='Hiển thị điểm',exact=True).select_option('individual')
     for selected_index in [0, 4]:
         page.locator('.geodata-feature').nth(selected_index).click()
-        paths = page.locator('.leaflet-points-pane path')
-        expect(paths).to_have_count(5)
+        paths = page.locator('.leaflet-points-pane path.map-reference-point')
+        expect(paths).to_have_count(4)
         paint = paths.evaluate_all("nodes => nodes.map(n => ({stroke:n.getAttribute('stroke'), fill:n.getAttribute('fill'), alpha:n.getAttribute('fill-opacity')}))")
-        assert all(item['stroke'] == '#ffffff' and item['fill'] == '#b7791f' and item['alpha'] == '1' for item in paint), paint
+        assert all(item['stroke'] == '#b7791f' and item['fill'] == '#fafbf8' and item['alpha'] == '1' for item in paint), paint
+        selected = page.locator('.geodata-selected-point svg path')
+        expect(selected).to_have_count(1)
+        expect(selected).to_have_css('fill', 'rgb(217, 48, 37)')
         page.get_by_role('button', name='Phóng to GIS', exact=True).click()
-        assert page.evaluate("JSON.parse(localStorage.getItem('dear.geodata.v1')).map(r => r.feature.geometry)") == [record['feature']['geometry'] for record in original]
+        assert [r['feature']['geometry'] for r in published_records(page)] == [record['feature']['geometry'] for record in original]
     expect(page.locator('.geodata-coordinate').first).to_have_text('21.782919°')
     page.get_by_role('button', name='Nguồn và tọa độ', exact=True).click()
     expect(page.locator('.geodata-metadata')).to_contain_text('Bám đáy biển; không dùng Z')
     assert page.locator('.geodata-metadata script').count() == 0
     with page.expect_download() as download:
-        page.locator('.geodata-export').get_by_role('button', name='KML', exact=True).click()
+        download_geometry(page, 'KML')
     exported_path = root / 'altitude-export.kml'
     download.value.save_as(exported_path)
     xml = ET.parse(exported_path)
@@ -175,23 +182,23 @@ def check_point_and_kml_semantics(browser, url, root, captures):
         assert attrs['survey & class'] == 'A < B'
     if captures:
         page.screenshot(path=str(captures / 'gis-reference-points.png'), animations='disabled')
-    page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+    page.evaluate("localStorage.removeItem('dear.geodata.v1'); localStorage.removeItem('dear.gis.v2')")
     page.reload()
     open_import(page)
     page.locator('input[type=file]').set_input_files(exported_path)
     expect(page.locator('.geodata-layers li')).to_have_count(5)
-    restored = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+    restored = json.loads(reviewed_records_json(page))
     for before, after in zip(original, restored):
         assert before['feature']['geometry'] == after['feature']['geometry']
         for key in ['name', 'description', 'survey & class', 'kmlAltitudeMode']:
             assert before['feature']['properties'][key] == after['feature']['properties'][key]
     # Invalid altitude references must fail atomically instead of becoming ground or absolute.
-    before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
+    before = reviewed_records_json(page)
     path.write_text(kml.replace('<altitudeMode>absolute</altitudeMode>', '<altitudeMode>invalid</altitudeMode>', 1), encoding='utf-8')
     open_import(page)
     page.locator('input[type=file]').set_input_files(path)
     expect(page.get_by_role('alert')).to_contain_text('altitudeMode')
-    assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+    assert reviewed_records_json(page) == before
     assert not errors, errors
     context.close()
 
@@ -224,11 +231,11 @@ def run(url, chrome, captures):
             captures.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(captures / 'gis-strips-dark.png'), animations='disabled')
         # Invalid batches are atomic and retain existing data.
-        before = page.evaluate("localStorage.getItem('dear.geodata.v1')")
+        before = reviewed_records_json(page)
         paste(page, 'POLYGON((104 21,105 22,105 21,104 22,104 21))')
         expect(page.get_by_role('alert')).to_contain_text('tự cắt')
         expect(page.locator('.geodata-layers li')).to_have_count(4)
-        assert page.evaluate("localStorage.getItem('dear.geodata.v1')") == before
+        assert reviewed_records_json(page) == before
         page.get_by_role('button', name='Đóng lỗi nhập').click()
         (root / 'local.kml').write_text(KML, encoding='utf-8')
         (root / 'network.kml').write_text('<kml><NetworkLink><Link><href>https://example.invalid/remote</href></Link></NetworkLink></kml>', encoding='utf-8')
@@ -247,28 +254,30 @@ def run(url, chrome, captures):
         assert page.locator('.geodata-metadata img').count() == 0
         expect(page.get_by_role('combobox', name='Vai trò đối tượng', exact=True)).to_have_count(0)
         # A fresh project with overlapping footprints has 100%, not 150%, coverage.
-        page.evaluate("localStorage.removeItem('dear.geodata.v1')")
+        page.evaluate("localStorage.removeItem('dear.geodata.v1'); localStorage.removeItem('dear.gis.v2')")
         page.reload()
         paste(page,'AOI: POLYGON((104 21,106 21,106 22,104 22,104 21))','aoi')
         paste(page,'Left: POLYGON((104 21,105.5 21,105.5 22,104 22,104 21))\nRight: POLYGON((104.5 21,106 21,106 22,104.5 22,104.5 21))','footprint')
-        page.get_by_role('tab', name='AOI', exact=True).click()
+        page.get_by_role('tab', name='Vùng quan tâm', exact=True).click()
         expect(page.locator('[data-coverage-total]')).to_have_text('100%')
         page.get_by_role('tab', name='Lớp', exact=True).click()
-        page.get_by_role('checkbox', name='Hiện Left', exact=True).uncheck()
-        page.get_by_role('tab', name='AOI', exact=True).click()
+        page.get_by_role('checkbox', name='Hiện Left', exact=True).click()
+        page.get_by_role('tab', name='Vùng quan tâm', exact=True).click()
         expect(page.locator('[data-coverage-total]')).to_have_text('100%')
         page.get_by_role('tab', name='Lớp', exact=True).click()
         page.locator('.geodata-feature').filter(has_text='Right').click()
         page.get_by_role('textbox', name='Tên đối tượng').fill('Right renamed')
-        page.get_by_role('tab', name='AOI', exact=True).click()
+        page.get_by_role('button', name='Lưu tên', exact=True).click()
+        page.get_by_role('tab', name='Vùng quan tâm', exact=True).click()
         expect(page.locator('.geodata-coverage table')).to_contain_text('Right renamed')
         page.get_by_role('tab', name='Lớp', exact=True).click()
+        page.locator('.geodata-feature').filter(has_text='Right renamed').click()
         page.get_by_role('button', name='Sao chép WKT').click()
-        expect(page.get_by_role('status')).to_contain_text('Đã sao chép WKT')
+        expect(page.locator('.geodata-detail [role=status]')).to_contain_text('Đã sao chép WKT')
         assert page.evaluate('navigator.clipboard.readText()').startswith('POLYGON')
         for format in ['GeoJSON','KML']:
             with page.expect_download() as download:
-                page.locator('.geodata-export').get_by_role('button', name=format, exact=True).click()
+                download_geometry(page, format)
             path = root / download.value.suggested_filename
             download.value.save_as(path)
             if format == 'GeoJSON':
@@ -277,6 +286,7 @@ def run(url, chrome, captures):
                 assert abs(exported['metadata']['coverage']['fraction'] - 1) < 1e-10
             else:
                 assert 'Right renamed' in path.read_text(encoding='utf-8')
+        publish_draft(page)
         page.reload()
         expect(page.locator('.geodata-layers li')).to_have_count(3)
         expect(page.get_by_role('checkbox', name='Hiện Left', exact=True)).not_to_be_checked()
@@ -292,7 +302,7 @@ def run(url, chrome, captures):
         page.keyboard.press('Enter')
         expect(page.locator('.geodata-drawing-bar')).not_to_be_visible()
         expect(page.locator('.geodata-layers li')).to_have_count(3)
-        records = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        records = json.loads(reviewed_records_json(page))
         assert len([r for r in records if r['role'] == 'aoi']) == 1
         drawn=next(record for record in records if record['role'] == 'aoi')
         assert drawn['feature']['geometry']['coordinates'][0][0] == drawn['feature']['geometry']['coordinates'][0][-1]
@@ -328,6 +338,7 @@ def run(url, chrome, captures):
         assert not errors, errors
         # GIS opens directly from the map toolbar and returns keyboard focus on close.
         page.set_viewport_size({'width':1366,'height':768})
+        publish_draft(page)
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         for iteration in range(3):
@@ -361,7 +372,7 @@ def run(url, chrome, captures):
             expect(drawing_page.locator('.geodata-drawing-bar')).not_to_be_visible()
             assert not drawing_page.locator('[role=alert]').count()
         expect(drawing_page.locator('.geodata-layers li')).to_have_count(1)
-        assert not any(record['visible'] is False for record in json.loads(drawing_page.evaluate("localStorage.getItem('dear.geodata.v1')")))
+        assert not any(record['visible'] is False for record in json.loads(reviewed_records_json(drawing_page)))
         drawing_context.close()
         context.close()
         check_large_import(browser, url, root)

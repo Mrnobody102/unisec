@@ -77,6 +77,8 @@
 .app-header :is(.header-actions, .notification-anchor, .settings-anchor, .account-anchor) > :is(.button, .icon-button):hover { background: var(--header-hover); border-color: transparent; }
 .app-header :is(.header-actions, .notification-anchor, .settings-anchor, .account-anchor) > [aria-expanded="true"] { background: var(--header-hover); border-color: var(--header-stroke); }
 .app-header .unread-indicator { top: 7px; right: 7px; border-color: var(--header-bg); }
+.app-header .header-report-button { position: relative; }
+.app-header .header-report-button .unread-indicator { top: 4px; right: 4px; }
 .app-header .settings-menu { color: var(--ws-text); }
 .settings-anchor { position: relative; }
 .settings-menu {
@@ -137,3 +139,4 @@
   .workspace .app-header .header-report-button > span { display: none; }
   .workspace .app-header .brand-symbol, .workspace .app-header .brand-symbol svg { width: 24px; height: 24px; }
 }
+.app-header[inert] :is(.incident-context, .header-actions) { opacity: .5; }

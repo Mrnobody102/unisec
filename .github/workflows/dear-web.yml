@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: DEM_to_3D/viewer
@@ -69,7 +69,25 @@ jobs:
           python scripts/check_analysis_tools.py --url http://127.0.0.1:5213
           python scripts/check_response_operations.py --url http://127.0.0.1:5213
           python scripts/check_response_details.py --url http://127.0.0.1:5213
+          python scripts/check_gis_actions.py --url http://127.0.0.1:5213
+          python scripts/check_gis_draft_publish.py --url http://127.0.0.1:5213
+          python scripts/check_gis_detail_ownership.py --url http://127.0.0.1:5213
+          python scripts/check_response_gis_workflow.py --url http://127.0.0.1:5213
+          python scripts/check_landslide_areas.py --url http://127.0.0.1:5213
+          python scripts/check_citizen_mobile.py --url http://127.0.0.1:5213
+          python scripts/check_marker_stability.py --url http://127.0.0.1:5213
+          python scripts/check_map_motion.py --url http://127.0.0.1:5213
+          python scripts/check_map_symbol_consistency.py --url http://127.0.0.1:5213
+          python scripts/check_sketch_tools.py --url http://127.0.0.1:5213
           python scripts/check_panel_usability.py
           python scripts/check_dataset_selection.py
           python scripts/check_offline_package.py dist-release/dear-offline.zip
           python scripts/check_session.py --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json
+      - name: Verify map selection and storage synchronization fixtures
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5214 --strictPort > dist-release/fixture-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          python scripts/wait_for_server.py http://127.0.0.1:5214
+          python scripts/check_map_group_selection.py --url http://127.0.0.1:5214
+          python scripts/check_gis_storage_sync.py --url http://127.0.0.1:5214

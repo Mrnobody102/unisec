@@ -99,6 +99,7 @@ export const CommunityListView: React.FC<Props> = ({
         ) : (
           filtered.map((c) => (
             <button
+              data-map-preview={'community:'+c.id}
               key={c.id}
               className={`community ${selectedId === c.id ? 'active' : ''}`}
               onClick={() => onSelectCommunity(c.id)}

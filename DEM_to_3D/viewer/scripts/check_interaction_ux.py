@@ -55,13 +55,17 @@ def run(url, chrome, captures=None):
         expect(dialog).to_have_count(0)
         inspector = page.locator('.geodata-detail')
         inspector.get_by_label('Tên đối tượng',exact=True).fill('Điểm đã đổi tên')
+        inspector.get_by_role('button',name='Lưu tên',exact=True).click()
         inspector.get_by_role('button',name='Sửa tọa độ',exact=True).click()
         coordinates = page.get_by_role('dialog',name='Sửa tọa độ',exact=True)
         coordinates.get_by_label('Vĩ độ (°)',exact=True).fill('21.781')
         coordinates.get_by_label('Kinh độ (°)',exact=True).fill('104.051')
         coordinates.get_by_role('button',name='Lưu tọa độ',exact=True).click()
         expect(inspector.locator('.geodata-coordinate').first).to_have_text('21.781000°')
-        records = json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        page.get_by_role('button', name='Áp dụng thay đổi', exact=True).click()
+        page.get_by_role('dialog', name='Áp dụng thay đổi GIS?', exact=True).get_by_role('button', name='Áp dụng', exact=True).click()
+        records = json.loads(page.evaluate("localStorage.getItem('dear.gis.v2')"))['records']
         record = next(item for item in records if item['name']=='Điểm đã đổi tên')
         assert record['feature']['geometry']['coordinates']==[104.051,21.781]
         assert record['feature']['properties']['editMethod']=='manual-coordinates-v1'
@@ -74,7 +78,7 @@ def run(url, chrome, captures=None):
         for marker in page.locator('.geodata-map .map-pin:visible').all():
             box=marker.bounding_box()
             if box and box['x']>surface['x']+28 and box['y']>surface['y']+28 and box['x']+box['width']<surface['x']+surface['width']-28 and box['y']+box['height']<surface['y']+surface['height']-28: fixed_hover(marker)
-        community = page.locator('.geodata-map .map-pin[title*="Khau Mang"]:visible').first
+        community = next(pin for pin in page.locator('.geodata-map .map-pin:visible').all() if 'Khau Mang' in (pin.get_attribute('aria-description') or '').split(', '))
         expect(community).to_be_visible(timeout=5000)
         community.click()
         chooser=page.locator('.geodata-map .map-object-chooser')
@@ -91,6 +95,8 @@ def run(url, chrome, captures=None):
         card.get_by_label('Tên',exact=True).fill('Khau Mang kiểm tra')
         card.get_by_role('button',name='Lưu',exact=True).click()
         expect(card.get_by_role('heading',level=2)).to_have_text('Khau Mang kiểm tra')
+        page.get_by_role('button', name='Áp dụng thay đổi', exact=True).click()
+        page.get_by_role('dialog', name='Áp dụng thay đổi GIS?', exact=True).get_by_role('button', name='Áp dụng', exact=True).click()
         card.get_by_role('button',name='Đóng',exact=True).click()
         page.locator('.geodata-feature').filter(has_text='Điểm đã đổi tên').click()
         page.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()

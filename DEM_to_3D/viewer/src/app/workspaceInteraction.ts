@@ -1,6 +1,8 @@
 import type { ActiveDialog } from '../types/dear';
 
-export type MapTool = 'browse' | 'measure' | 'location' | 'profile';
+export type MapTool = 'browse' | 'measure' | 'draw' | 'location' | 'profile';
+/** Sketch tools take map clicks as vertices and work on the 2D map only. */
+const sketchTool = (tool: MapTool) => tool === 'measure' || tool === 'draw';
 export type WorkspaceDialog = ActiveDialog | 'upload';
 export type WorkspaceInteraction = {
   tool: MapTool;
@@ -28,12 +30,13 @@ export type InteractionAction =
 export function workspaceInteractionReducer(state: WorkspaceInteraction, action: InteractionAction): WorkspaceInteraction {
   switch (action.type) {
     case 'toggle-tool': return { ...state, tool: state.tool === action.tool ? 'browse' : action.tool,
-      dialog: null, focusDistance: null, mapMode: action.tool === 'measure' ? '2d' : state.mapMode };
+      dialog: null, focusDistance: null, mapMode: sketchTool(action.tool) ? '2d' : state.mapMode };
     case 'close-tool': return state.tool !== action.tool ? state : { ...state, tool: 'browse', focusDistance: null };
-    case 'dialog': return action.dialog ? { ...state, dialog: action.dialog, tool: 'browse', focusDistance: null } : { ...state, dialog: null };
+    case 'dialog': return action.dialog === 'help' ? { ...state, dialog: 'help' }
+      : action.dialog ? { ...state, dialog: action.dialog, tool: 'browse', focusDistance: null } : { ...state, dialog: null };
     case 'navigate': return { ...state, tool: 'browse', dialog: null, focusDistance: null };
     case 'map-mode': return { ...state, mapMode: action.mode,
-      tool: action.mode === '3d' && state.tool === 'measure' ? 'browse' : state.tool };
+      tool: action.mode === '3d' && sketchTool(state.tool) ? 'browse' : state.tool };
     case 'focus-distance': return state.tool === 'profile' ? { ...state, focusDistance: action.distance } : state;
     case 'fallback-2d': return { ...state, mapMode: '2d', homeMapMode: '2d', fallbackVersion: state.fallbackVersion + 1 };
     case 'reset': return { ...initialWorkspaceInteraction, mapMode: state.homeMapMode, homeMapMode: state.homeMapMode,

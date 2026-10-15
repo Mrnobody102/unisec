@@ -1,3 +1,4 @@
+import {roadHazardIds} from '../../features/incident/roadHazards';
 import { UiIcon } from './UiIcon';
 import React from 'react';
 import type {
@@ -51,7 +52,7 @@ export const ImpactView: React.FC<Props> = ({
     })
     .filter((r) => {
       const text =
-        `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${r.hz || ''}`.toLowerCase();
+        `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${roadHazardIds(r).join(' ')}`.toLowerCase();
       return normalizeSearch(text).includes(normalizeSearch(query));
     })
     .sort((a, b) => {
@@ -102,7 +103,6 @@ export const ImpactView: React.FC<Props> = ({
               data-road-filter={value}
               aria-pressed={tab === 'roads' && roadFilter === value}
               onClick={() => {
-                onChangeQuery('');
                 onChangeTab('roads');
                 onChangeRoadFilter(
                   value !== 'all' && tab === 'roads' && roadFilter === value
@@ -149,6 +149,7 @@ export const ImpactView: React.FC<Props> = ({
             ) : (
               filteredRoads.map((road) => (
                 <button
+                  data-map-preview={'road:'+road.id}
                   key={road.id}
                   className="object-row impact-row"
                   aria-pressed={selectedId === `road:${road.id}`}
@@ -191,6 +192,7 @@ export const ImpactView: React.FC<Props> = ({
             ) : (
               filteredHazards.map((hz) => (
                 <button
+                  data-map-preview={'hazard:'+hz.id}
                   key={hz.id}
                   className="object-row impact-row"
                   aria-pressed={selectedId === `hazard:${hz.id}`}

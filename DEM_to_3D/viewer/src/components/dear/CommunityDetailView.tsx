@@ -11,7 +11,8 @@ import type {
 import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { AccessPanel } from '../../features/routes/AccessPanel';
-import type { ResponseAssessment } from '../../features/incident/responseAssessment';
+import type { CommunitySignal, ResponseAssessment } from '../../features/incident/responseAssessment';
+import { KeyFacts, peopleText } from './DetailFacts';
 import { CommunityEvidence } from '../../features/incident/CommunityEvidence';
 
 type Props = {
@@ -36,10 +37,12 @@ type Props = {
   onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
   onRename?: (names: [string, string]) => boolean;
+  signal?: CommunitySignal;
 };
 
 export const CommunityDetailView: React.FC<Props> = ({
   onRename,
+  signal,
   community,
   assessment,
   terrainCovered,
@@ -75,6 +78,17 @@ export const CommunityDetailView: React.FC<Props> = ({
             {community.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
           </StatusText>
         </div>
+        <KeyFacts items={[
+          { label: t('Dân cư', 'Residents'), value: peopleText(community, locale) },
+          { label: t('Liên lạc', 'Contact'), value: signal?.communication === 'lost' ? t('Mất liên lạc', 'Lost')
+            : signal?.communication === 'available' ? t('Có liên lạc', 'Available') : t('Chưa rõ', 'Unknown'),
+            tone: signal?.communication === 'lost' ? 'critical' : undefined },
+          { label: t('Tiếp cận', 'Access'), value: assessment.access === 'blocked' ? t('Bị chặn', 'Blocked')
+            : assessment.access === 'uncertain' ? t('Cần xác minh', 'To verify')
+            : assessment.access === 'unmapped' ? t('Chưa có tuyến', 'No mapped route') : t('Chưa xác minh', 'Unverified'),
+            tone: assessment.access === 'blocked' ? 'critical' : assessment.access === 'uncertain' ? 'warning' : undefined },
+          ...(signal?.urgentNeed ? [{ label: t('Nhu cầu', 'Needs'), value: t('Cần hỗ trợ khẩn', 'Urgent support'), tone: 'critical' as const }] : [])
+        ]}/>
 
 
         <div className="decision-tabs" role="group">

@@ -5,6 +5,7 @@ import type { LayerAppearance } from './layerAppearance';
 
 /** Shared display contract. It contains no Leaflet or Three.js objects. */
 export type MapScene = {
+  datasetVersion?: string;
   aoi?: AnalysisArea;
   communities: Community[];
   responseSites?: ResponseSite[];
@@ -58,6 +59,7 @@ export type MapDisplayProps = {
   scenarioProps?: MapScene;
   onSelectOverlayHit?: (hit: OverlayHit) => void;
   viewControlRef?: MutableRefObject<ViewControls | null>;
+  onViewReady?: () => void;
   onBasemapState?: (state: BasemapState) => void;
   focusPoint?: { x: number; y: number; z: number } | null;
   profileMetadata?: TerrainMetadata;

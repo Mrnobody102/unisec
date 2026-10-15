@@ -1,0 +1,76 @@
+/* Floating window shared by map tools (ToolPanel): measurement and drawing. A fixed height keeps
+   the window still while its content changes; the body scrolls. */
+.map-tool-panel { position: absolute; z-index: 24; top: 64px; left: 16px; width: min(320px, calc(100% - 80px)); height: 460px; max-height: min(calc(100% - 112px), var(--floating-panel-height, 100%)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--map-control-line); border-radius: var(--radius-float); background: var(--ws-raised); color: var(--ws-text); box-shadow: var(--shadow-float); }
+.map-tool-panel[data-collapsed=true] { height: auto; }
+.map-tool-heading { display: flex; align-items: center; gap: 2px; padding: 9px 10px 9px 16px; font-size: 13px; flex: none; }
+.map-tool-heading > strong { flex: 1; font-weight: 600; }
+.map-tool-heading .icon-button { width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: var(--radius-xs); }
+.map-tool-choice { padding: 0 12px 10px; flex: none; }
+.map-tool-tabs { display: flex; border-bottom: 1px solid var(--ws-line); padding: 0 16px; gap: 20px; flex: none; }
+.map-tool-tabs button { position: relative; border: 0; padding: 8px 0 10px; background: none; color: var(--ws-muted); font: inherit; font-size: 12px; white-space: nowrap; }
+.map-tool-tabs button[aria-pressed=true] { color: var(--ws-brand); font-weight: 500; }
+.map-tool-tabs button[aria-pressed=true]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ws-brand); }
+.map-tool-tabs span { margin-left: 4px; font-variant-numeric: tabular-nums; }
+.map-tool-body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 14px 16px; }
+.map-tool-body[hidden] { display: none; }
+.map-tool-actions { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--ws-line); flex: none; }
+.map-tool-actions .button { min-height: 32px; font-size: 12px; padding: 5px 12px; border-radius: var(--radius-xs); }
+.map-tool-actions .primary { margin-left: auto; }
+.map-tool-actions .icon-button { width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: var(--radius-xs); }
+.map-tool-panel .text-button { font-size: 12px; line-height: 20px; }
+.map-tool-panel input[type=checkbox] { accent-color: var(--select); width: 15px; height: 15px; flex: none; margin: 0; }
+.map-tool-panel select { min-width: 128px; max-width: 65%; min-height: 32px; border: 1px solid var(--ws-line); border-radius: var(--radius-xs); background: var(--ws-raised); color: var(--ws-text); padding: 4px 8px; font: inherit; }
+.map-tool-compact { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 0; padding: 0 16px 12px; background: none; color: var(--ws-text); font-size: 12px; }
+.map-tool-compact > span { color: var(--ws-muted); }
+@media (max-width: 900px) {
+  .map-tool-panel { top: auto; bottom: 38px; left: 12px; width: calc(100% - 24px); max-height: min(360px, 48%); }
+  .map-tool-heading { padding-top: 6px; padding-bottom: 6px; }
+  .map-tool-choice { padding-bottom: 8px; }
+  .map-tool-actions { padding-top: 8px; padding-bottom: 8px; }
+}
+
+/* Result summary and the status hint under it. */
+.map-tool-result-header { display: flex; align-items: flex-start; gap: 8px; }
+.map-tool-result { display: grid; flex: 1; min-width: 0; align-content: start; gap: 10px; margin: 0; }
+.map-tool-result div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.map-tool-result dt { max-width: 48%; font-size: 12px; color: var(--ws-muted); line-height: 1.5; }
+.map-tool-result dd { margin: 0; font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.015em; white-space: nowrap; user-select: text; }
+.map-tool-result[data-empty=true] dd { font-size: 13px; font-weight: 400; color: var(--ws-muted); }
+.map-tool-copy.icon-button { width: 28px; height: 28px; min-height: 28px; padding: 0; flex: none; border: 0; border-radius: var(--radius-xs); }
+.map-tool-hint { min-height: 36px; margin: 4px 0 10px; font-size: 12px; line-height: 18px; color: var(--ws-muted); }
+.map-tool-panel[data-stage=finished] .map-tool-hint:empty { display: none; }
+
+/* Vertex table (VertexTable). */
+.vertex-table { margin-top: 12px; border-top: 1px solid var(--ws-line); font-size: 11px; }
+.vertex-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.vertex-table th, .vertex-table td { padding: 4px 2px; border-bottom: 1px solid var(--ws-line); text-align: left; font-weight: 400; white-space: nowrap; }
+.vertex-table thead th { padding-top: 8px; color: var(--ws-muted); font-size: 10px; }
+.vertex-table td:nth-child(n+3) { text-align: right; }
+.vertex-table tr[data-selected] > * { background: var(--ws-tint); }
+.vertex-select { min-width: 26px; min-height: 22px; padding: 0 6px; border: 1px solid var(--ws-line); border-radius: 999px; background: var(--ws-raised); color: var(--ws-text); font: inherit; font-size: 11px; }
+.vertex-select[aria-pressed=true] { border-color: var(--ws-brand); color: var(--ws-brand); font-weight: 600; }
+.vertex-coordinate { padding: 2px 0; border: 0; background: none; color: var(--ws-text); font: inherit; text-align: left; cursor: text; }
+.vertex-coordinate:hover { text-decoration: underline dotted; }
+.vertex-coordinate-input { width: 100%; min-width: 0; padding: 2px 4px; border: 1px solid var(--focus); border-radius: var(--radius-xs); background: var(--ws-raised); color: var(--ws-text); font: inherit; }
+.vertex-coordinate-input[aria-invalid=true] { border-color: #c9362c; }
+.vertex-remove.icon-button { width: 24px; height: 24px; min-height: 24px; padding: 0; border: 0; border-radius: var(--radius-xs); }
+.vertex-table tfoot th, .vertex-table tfoot td { color: var(--ws-muted); border-bottom: 0; }
+.vertex-table-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.vertex-table-error { margin: 6px 0 0; color: #c9362c; font-size: 11px; }
+
+/* Sketch geometry on the map (useSketchLayer): numbered vertices, segment handles and labels. */
+.map-sketch-vertex, .map-sketch-midpoint { --sketch-ink: #0c7560; display: grid; place-items: center; background: transparent; border: 0; }
+.map-draw-vertex, .map-draw-midpoint { --sketch-ink: #b87919; }
+.map-sketch-vertex span { box-sizing: border-box; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 3px; border: 2px solid var(--sketch-ink); border-radius: 999px; background: var(--ws-surface); color: var(--ws-text); font-size: 10px; line-height: 1; font-variant-numeric: tabular-nums; box-shadow: 0 1px 3px #102b3d30; }
+.map-sketch-vertex span:empty { min-width: 12px; height: 12px; }
+.map-sketch-vertex.is-editable { cursor: grab; }
+.map-sketch-vertex.is-selectable { cursor: pointer; }
+.map-sketch-vertex.is-highlighted span, .map-sketch-vertex:hover span, .map-sketch-vertex:focus-visible span { transform: scale(1.15); }
+.map-sketch-vertex.is-selected span { background: var(--sketch-ink); color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--sketch-ink) 30%, transparent); }
+.map-sketch-midpoint { cursor: copy; }
+.map-sketch-midpoint span { width: 10px; height: 10px; box-sizing: border-box; border: 1.5px solid var(--sketch-ink); border-radius: 50%; background: color-mix(in srgb, var(--ws-surface) 80%, transparent); }
+.map-sketch-midpoint:hover span, .map-sketch-midpoint:focus-visible span { width: 14px; height: 14px; background: var(--ws-surface); }
+.leaflet-tooltip.map-sketch-label, .leaflet-tooltip.map-sketch-segment, .leaflet-tooltip.map-sketch-cursor { width: max-content; max-width: 180px; white-space: normal; border: 1px solid var(--ws-line); border-radius: var(--radius-control); background: var(--ws-raised); color: var(--ws-text); box-shadow: 0 1px 4px #102b3d20; padding: 4px 7px; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.leaflet-tooltip.map-sketch-segment { padding: 1px 5px; font-size: 10px; color: var(--ws-muted); }
+.leaflet-tooltip.map-sketch-cursor { border-color: transparent; background: var(--ws-text); color: var(--ws-surface); }
+.leaflet-tooltip.map-sketch-label::before, .leaflet-tooltip.map-sketch-segment::before, .leaflet-tooltip.map-sketch-cursor::before { display: none; }

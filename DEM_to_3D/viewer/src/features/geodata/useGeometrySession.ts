@@ -1,3 +1,5 @@
+import { gisValueKey, publishedGisKey, readPublishedGis, writePublishedRecords } from './publishedGis';
+import { landslideAreaKey, landslideAreaOf, revisedLandslideBoundary } from '../landslides/landslideAreas';
 import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
 import { importGeometryFiles } from './importGeometryFiles';
@@ -23,10 +25,10 @@ import { annotateRecord, type FieldObservation } from '../observations/model';
 
 import { removeWithFieldAreas, fieldAreaOf } from '../observations/fieldAreas';
 
-const storageKey = 'dear.geodata.v1';
+
 function read() {
   try {
-    const text = localStorage.getItem(storageKey);
+    const text = JSON.stringify(readPublishedGis().records);
     if (text && textBytes(text) > GEOMETRY_LIMITS.storageBytes)
       throw new GeometryError('storage');
     return {
@@ -41,28 +43,52 @@ function read() {
   }
 }
 
-export function useGeometrySession() {
-  const [initial] = useState(read);
+export function useGeometrySession(options: {draft?:boolean;initialRecords?:GeometryRecord[];initialSelectedId?:string|null} = {}) {
+  const [initial] = useState(()=>options.initialRecords?{records:options.initialRecords,error:null}:read());
+  // Records as last read from or written to storage; writes merge against it (see mergeRecords).
+  const synced = useRef(initial.records);
+  // Set when a write had to merge in another tab's changes; the next commit adopts it.
+  const merged = useRef<GeometryRecord[] | null>(null);
+  const write=(next:GeometryRecord[])=>{validateGeometryStorageBudget(next);if(options.draft)return;
+    const written=writePublishedRecords(next,synced.current);synced.current=written;merged.current=written===next?null:written;};
   const [records, setRecords] = useState(initial.records);
   const [error, setError] = useState<unknown>(initial.error);
   const [busy, setBusy] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => options.initialSelectedId ?? null);
   const [viewRequest, setViewRequest] = useState({
     version: initial.records.length ? 1 : 0,
-    id: null as string | null
+    id: options.initialSelectedId ?? null as string | null
   });
   const latest = useRef(records);
   latest.current = records;
   const past = useRef<GeometryRecord[][]>([]),
     future = useRef<GeometryRecord[][]>([]);
   const [, setHistoryVersion] = useState(0);
-  const commit = (next: GeometryRecord[]) => {
+  const commit = (proposed: GeometryRecord[]) => {
+    const next = merged.current ?? proposed;
+    merged.current = null;
     if (next === latest.current) return;
     past.current = [...past.current, latest.current].slice(-25);
     future.current = [];
     latest.current = next;
     setRecords(next);
     setHistoryVersion((value) => value + 1);
+  };
+  const store = (next: GeometryRecord[]): boolean => {
+    try {
+      validateGeometryStorageBudget(next);
+      write(next);
+      setError(null);
+      return true;
+    } catch {
+      setError(new GeometryError('storage'));
+      return false;
+    }
+  };
+  const persist = (next: GeometryRecord[]): boolean => {
+    if (!store(next)) return false;
+    commit(next);
+    return true;
   };
   const travel = (action: 'undo' | 'redo') => {
     const next = geometryHistory(
@@ -71,16 +97,40 @@ export function useGeometrySession() {
       future.current,
       action
     );
+    if (!store(next.present)) return;
+    const present = merged.current ?? next.present;
+    merged.current = null;
     past.current = next.past;
     future.current = next.future;
-    latest.current = next.present;
-    setRecords(next.present);
+    latest.current = present;
+    setRecords(present);
     setSelectedId((id) =>
       next.present.some((record) => record.id === id) ? id : null
     );
     setError(null);
     setHistoryVersion((value) => value + 1);
   };
+  // Pick up records published by another tab, e.g. a resident report or a coordinator review.
+  useEffect(() => {
+    if (options.draft) return;
+    const sync = (event: StorageEvent) => {
+      if (event.key !== publishedGisKey) return;
+      const stored = read();
+      if (stored.error) return;
+      if (gisValueKey(stored.records) === gisValueKey(latest.current)) return;
+      synced.current = stored.records;
+      latest.current = stored.records;
+      merged.current = null;
+      // An undo snapshot predating another tab's report must never erase that report.
+      past.current = [];
+      future.current = [];
+      setRecords(stored.records);
+      setSelectedId(id => stored.records.some(record => record.id === id) ? id : null);
+      setHistoryVersion(value => value + 1);
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [options.draft]);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -88,21 +138,11 @@ export function useGeometrySession() {
       alive.current = false;
     };
   }, []);
-  useEffect(() => {
-    if (initial.error && records === initial.records) return;
-    try {
-      validateGeometryStorageBudget(records);
-      const value = JSON.stringify(records);
-      localStorage.setItem(storageKey, value);
-    } catch {
-      setError(new GeometryError('storage'));
-    }
-  }, [records]);
   const fit = (id: string | null = null) =>
     setViewRequest((previous) => ({ version: previous.version + 1, id }));
   const add = (additions: GeometryRecord[]) => {
     const combined = addGeometryRecords(latest.current, additions);
-    localStorage.setItem(storageKey, JSON.stringify(combined));
+    write(combined);
     commit(combined);
     setSelectedId(additions[0]?.id ?? null);
     setError(null);
@@ -152,13 +192,13 @@ export function useGeometrySession() {
     const target = previous.find((record) => record.id === id);
     if (
       !target ||
-      (fieldAreaOf(target) && patch.role && patch.role !== 'reference') ||
+      ((fieldAreaOf(target) || landslideAreaOf(target)) && patch.role && patch.role !== 'reference') ||
       (patch.role &&
         patch.role !== 'reference' &&
         !isPolygon(target.feature.geometry))
     )
-      return;
-    commit(
+      return false;
+    return persist(
       previous.map((record) => {
         if (record.id === id) return { ...record, ...patch };
         return patch.role === 'aoi' && record.role === 'aoi'
@@ -179,6 +219,7 @@ export function useGeometrySession() {
               geometry,
               properties: {
                 ...record.feature.properties,
+                ...(landslideAreaOf(record) ? { [landslideAreaKey]: revisedLandslideBoundary(landslideAreaOf(record)!, new Date().toISOString()) } : {}),
                 editedAt: new Date().toISOString(),
                 editMethod: geometry.type === 'Point' ? 'manual-coordinates-v1' : 'manual-vertices-v1'
               }
@@ -188,12 +229,12 @@ export function useGeometrySession() {
     );
     validateGeometryBudget(next.map((record) => record.feature.geometry));
     validateGeometryStorageBudget(next);
-    commit(next);
-    setError(null);
+    return persist(next);
   };
   const remove = (id: string) => {
-    commit(removeWithFieldAreas(latest.current, id));
+    if (!persist(removeWithFieldAreas(latest.current, id))) return false;
     if (selectedId === id) setSelectedId(null);
+    return true;
   };
   const annotate = (
     id: string,
@@ -218,7 +259,7 @@ export function useGeometrySession() {
       );
       validateGeometryStorageBudget(next);
       // Fail before changing the map if storage cannot retain the observation and photo previews.
-      localStorage.setItem(storageKey, JSON.stringify(next));
+      write(next);
       commit(next);
       setError(null);
       return true;
@@ -246,7 +287,7 @@ export function useGeometrySession() {
           : r
       );
       validateGeometryStorageBudget(next);
-      localStorage.setItem(storageKey, JSON.stringify(next));
+      write(next);
       commit(next);
       setError(null);
       return true;
@@ -275,7 +316,7 @@ export function useGeometrySession() {
           : latest.current.map((r) =>
               set.has(r.id) ? { ...r, visible: action === 'show' } : r
             );
-      localStorage.setItem(storageKey, JSON.stringify(next));
+      write(next);
       commit(next);
       if (action === 'delete' && selectedId && set.has(selectedId))
         setSelectedId(null);
@@ -286,7 +327,19 @@ export function useGeometrySession() {
       return false;
     }
   };
+  const accept = (next: GeometryRecord[], { preserveHistory = false } = {}) => {
+    validateGeometryStorageBudget(next);
+    if (!options.draft) synced.current = next;
+    latest.current = next;
+    setRecords(next);
+    setSelectedId(id => next.some(record => record.id === id) ? id : null);
+    if (!preserveHistory) { past.current = []; future.current = []; }
+    setHistoryVersion(v => v + 1);
+    setError(null);
+  };
   return {
+    accept,
+    draft:!!options.draft,
     batch,
     updateProperties,
     annotate,

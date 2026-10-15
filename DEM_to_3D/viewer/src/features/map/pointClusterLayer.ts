@@ -1,4 +1,5 @@
 import * as L from 'leaflet';
+import { selectedPinSvg } from '../../terrain/poiFrame';
 import type { Locale } from '../../types/dear';
 import type { PointRenderingMode } from './pointRendering';
 import {
@@ -69,6 +70,7 @@ export function attachPointClusters(
     badge.style.setProperty('--cluster-core', color);
     badge.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 3; i++) badge.append(document.createElement('i'));
+    if (selected) badge.innerHTML = selectedPinSvg();
     const label = selected
       ? t(
           `${selected.name} (+${members.length - 1} điểm)`,
@@ -84,7 +86,6 @@ export function attachPointClusters(
       pane: options.pane,
       interactive: options.interactive,
       keyboard: options.interactive,
-      title: label,
       riseOnHover: true,
       zIndexOffset: active ? 1000 : 0,
       icon: L.divIcon({
@@ -92,9 +93,10 @@ export function attachPointClusters(
         className:
           'map-point-cluster' +
           (site ? ' is-site' : '') +
-          (active ? ' is-selected' : ''),
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2]
+          (active ? ' is-selected map-selected-reference' : '') +
+          (selected ? ' has-selected-pin' : ''),
+        iconSize: [size, selected ? 32 : size],
+        iconAnchor: [size / 2, selected ? 28.8 : size / 2]
       })
     });
     const tip = document.createElement('span');
@@ -117,7 +119,7 @@ export function attachPointClusters(
     }
     marker.bindTooltip(selected ? tipTitle : tip, {
       direction: 'top',
-      offset: [0, -size / 2],
+      offset: [0, selected ? -30 : -size / 2],
       permanent: !!selected,
       className: options.tooltipClass
     });

@@ -56,6 +56,11 @@ def embedded_image(path: Path) -> bytes:
 
 
 def main(prepare: bool = False, manifest_path: Path | None = None) -> None:
+    if manifest_path is None:
+        bundled_schema = PUBLIC.parent / 'src' / 'data' / 'incident-v1.schema.json'
+        public_schema = PUBLIC / 'scenarios' / 'incident-v1.schema.json'
+        if not bundled_schema.is_file() or not public_schema.is_file() or bundled_schema.read_bytes() != public_schema.read_bytes():
+            fail('bundled and public incident schemas differ')
     selected = manifest_path if manifest_path is not None else workspace_manifest_path(PUBLIC)[0]
     manifest = json.loads(selected.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict):

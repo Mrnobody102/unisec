@@ -3,24 +3,28 @@ import type { Locale } from '../../types/dear';
 import type { GeometryRecord } from '../../geo/vector/types';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
 import { GeometryInputDialog } from './GeometryInputDialog';
+import { CoordinateFields } from './CoordinateFields';
 
 export function PointCoordinatesDialog({
   record,
   locale,
   onSave,
+  onPick,
   onClose
 }: {
   record: GeometryRecord;
   locale: Locale;
-  onSave: (coordinates: number[]) => void;
+  onSave: (coordinates: number[]) => boolean;
+  onPick?: () => void;
   onClose: () => void;
 }): JSX.Element | null {
   const point =
     record.feature.geometry.type === 'Point'
       ? record.feature.geometry.coordinates
       : null;
-  const [longitude, setLongitude] = useState(String(point?.[0] ?? ''));
-  const [latitude, setLatitude] = useState(String(point?.[1] ?? ''));
+  const initialLon=point?.[0]?.toFixed(6) ?? '',initialLat=point?.[1]?.toFixed(6) ?? '';
+  const [longitude, setLongitude] = useState(initialLon);
+  const [latitude, setLatitude] = useState(initialLat);
   const [error, setError] = useState('');
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   if (!point) return null;
@@ -37,13 +41,16 @@ export function PointCoordinatesDialog({
             const geometry = validateGeometry({
               type: 'Point',
               coordinates: [
-                Number(longitude),
-                Number(latitude),
+                longitude === initialLon ? point[0] : Number(longitude),
+                latitude === initialLat ? point[1] : Number(latitude),
                 ...point.slice(2)
               ]
             });
             if (geometry.type !== 'Point') return;
-            onSave(geometry.coordinates);
+            if (!onSave(geometry.coordinates)) {
+              setError(t('Chưa lưu được tọa độ. Dữ liệu trên bản đồ chưa thay đổi.', 'Coordinates could not be saved. The map data has not changed.'));
+              return;
+            }
             onClose();
           } catch {
             setError(
@@ -56,30 +63,9 @@ export function PointCoordinatesDialog({
         }}
       >
         <p className="geometry-input-feature">{record.name}</p>
-        <label className="geodata-field">
-          {t('Vĩ độ (°)', 'Latitude (°)')}
-          <input
-            required
-            type="number"
-            step="any"
-            min={-85.05112878}
-            max={85.05112878}
-            value={latitude}
-            onChange={(event) => setLatitude(event.target.value)}
-          />
-        </label>
-        <label className="geodata-field">
-          {t('Kinh độ (°)', 'Longitude (°)')}
-          <input
-            required
-            type="number"
-            step="any"
-            min={-180}
-            max={180}
-            value={longitude}
-            onChange={(event) => setLongitude(event.target.value)}
-          />
-        </label>
+        <p className="geodata-hint">{t('Lưu tọa độ sẽ cập nhật vị trí điểm trên bản đồ GIS và bản đồ ứng phó.', 'Saving updates this point on the GIS and response maps.')}</p>
+        <CoordinateFields latitude={latitude} longitude={longitude} onChange={(nextLat, nextLon) => { setLatitude(nextLat); setLongitude(nextLon); }}
+          locale={locale} onPick={onPick ? () => { onClose(); onPick(); } : undefined} />
         {error && (
           <p role="alert" className="field-error">
             {error}

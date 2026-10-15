@@ -1,5 +1,5 @@
 import { createScreenMarkers } from '../../terrain/screenMarkers';
-import { mapSymbolSvg } from '../../terrain/mapSymbols';
+import { selectedPinSvg } from '../../terrain/poiFrame';
 import * as L from 'leaflet';
 import type {
   Community,
@@ -14,6 +14,7 @@ import type { ScenarioTargetType } from '../access/scenarioEdits';
 
 /** Incident-scenario features drawn under GIS data. Managers can select, move and restatus them. */
 export type ScenarioOverlay = {
+  datasetVersion?: string;
   communities: Community[];
   responseSites: ResponseSite[];
   hazards: Hazard[];
@@ -71,7 +72,6 @@ export function scenarioOverlayLayer(
     label.append(strong, small);
     if (layer instanceof L.Marker) {
       layer.getElement()?.setAttribute('aria-label', name);
-      layer.getElement()?.setAttribute('title', name);
     }
     layer.bindTooltip(label, {
       direction: 'top',
@@ -128,8 +128,7 @@ export function scenarioOverlayLayer(
   const point = (
     target: ScenarioTarget,
     latlng: L.LatLng,
-    className: string,
-    glyph: string
+    className: string
   ) => {
     const selected = targetKey(target) === selectedKey;
     const draggable = selected && !!options.moving;
@@ -143,13 +142,10 @@ export function scenarioOverlayLayer(
         zIndexOffset: selected ? 1000 : 0,
         icon: L.divIcon({
           className:
-            'scenario-overlay-point ' +
-            className +
-            (selected ? ' is-selected' : '') +
-            (draggable ? ' is-moving' : ''),
-          html: `<span>${glyph}</span>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
+            'scenario-drag-pin ' + className + (draggable ? ' is-moving' : ''),
+          html: selectedPinSvg(),
+          iconSize: [28, 32],
+          iconAnchor: [14, 28.8]
         })
       }
     ).addTo(group);
@@ -194,6 +190,7 @@ export function scenarioOverlayLayer(
           : options.selected?.type === 'site'
             ? `poi:${options.selected.id}`
             : null,
+      onPreviewFocus:point=>{const dock=options.map.getContainer().closest('.geodata-map')?.querySelector('.scenario-card')?.getBoundingClientRect();options.map.panInside(geo(point),{paddingTopLeft:[48,72],paddingBottomRight:[dock?dock.width+32:48,72],animate:false});},
       onSelect: (hit) =>
         options.onSelect?.({
           type: hit.type === 'poi' ? 'site' : hit.type,
@@ -234,8 +231,7 @@ export function scenarioOverlayLayer(
       const marker = point(
         target,
         geo(item.projected),
-        `is-${symbol}`,
-        mapSymbolSvg(symbol)
+        `is-${symbol}`
       );
       tooltip(
         marker,

@@ -1,6 +1,7 @@
+import {roadHazardIds} from '../features/incident/roadHazards';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import schema from '../../public/scenarios/incident-v1.schema.json';
+import schema from './incident-v1.schema.json';
 import type { AnalysisArea, Community, Hazard, IncidentEvidence, IncidentModel, ResponseSite, RoadSegment, RoutingAssumptions } from '../types/dear';
 import type { CommunitySignal } from '../features/incident/responseAssessment';
 import { projectedPathLength } from '../terrain/pathGeometry';
@@ -73,12 +74,12 @@ export function validateIncidentPacket(value: unknown): IncidentPacket {
       new Date(parsed.getTime() + 7 * 3600000).toISOString().slice(0, 16) === `${year}-${month}-${day}T${clock}`, `hazard timestamp: ${hazard.id}`);
   }
   for (const road of value.roads) {
-    check(!road.hz || hazards.has(road.hz), `unknown road hazard: ${road.id}`);
+    check(roadHazardIds(road).every(id=>hazards.has(id)), `unknown road hazard: ${road.id}`);
     check(Math.abs(road.len - projectedPathLength(road.points) / 1000) <= 0.0051, `road length: ${road.id}`);
-    check(road.status !== 'blocked' || Boolean(road.hz), `blocked road evidence missing: ${road.id}`);
+    check(road.status !== 'blocked' || Boolean(roadHazardIds(road).length), `blocked road evidence missing: ${road.id}`);
   }
   const report = value.report;
-  check(value.roads.some(road => road.id === report.roadId && road.hz === report.hazard.id), 'report road/hazard link');
+  check(value.roads.some(road => road.id === report.roadId && roadHazardIds(road).includes(report.hazard.id)), 'report road/hazard link');
   check(hazards.has(report.hazard.id) && report.evidence.hazardId === report.hazard.id, 'report evidence link');
   check(Date.parse(report.evidence.observedAt) >= snapshot &&
     Date.parse(report.evidence.observedAt) <= Date.parse(report.evidence.receivedAt) && report.evidence.receivedAt === value.incident.asOfUpdated, 'report timestamps');

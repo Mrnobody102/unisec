@@ -48,6 +48,8 @@
 .workspace[data-response-profile='true'] .response-detail-dock {
   bottom: 336px;
 }
+ .response-detail-edit { flex: none; padding: 12px 20px 16px; }
+.response-detail-edit .button { display: inline-flex; align-items: center; gap: 6px; }
 /* The dock floats over a full-width map (as in Google Earth); only right-edge map
    controls step aside so the card never covers them. */
 .map-area :is(.map-north, .map-overview, .map-attribution) {
@@ -105,7 +107,7 @@
 
 #response-panel .impact-row[aria-pressed='true'] {
   background: var(--ws-tint);
-  box-shadow: inset 2px 0 var(--select);
+  box-shadow: none;
 }
 #response-panel .impact-row[aria-pressed='true'] strong {
   color: var(--select-ink);

@@ -4,6 +4,8 @@ import { validateIncidentPacket } from '../../data/incidentPacket';
 import { deriveIncidentWorkspace } from './deriveIncidentWorkspace';
 import { responseWork, restoreWork, workEntry, workState } from './responseWork';
 import { journalRecords } from './journalRecords';
+import { scenarioProperties } from '../access/scenarioProperties';
+import type { ScenarioEdit } from '../access/scenarioEdits';
 
 const packet = validateIncidentPacket(raw);
 describe('Response work and journal', () => {
@@ -63,5 +65,32 @@ describe('Response work and journal', () => {
     expect(report.at).toBe(packet.report.evidence.receivedAt);
     expect(report.record?.observedAt).toBe(packet.report.evidence.observedAt);
     expect(journalRecords(packet, [], '2026-10-08T04:00:00Z')[0].kind).toBe('revision');
+  });
+});
+
+describe('verification work follows the evidence', () => {
+  const confirm = (hazardId: string): ScenarioEdit => {
+    const hazard = packet.hazards.find(item => item.id === hazardId)!;
+    const from = scenarioProperties(hazard);
+    return { id: 'confirm', at: '2026-10-14T06:00:00Z', author: { id: 'manager', name: 'Coordinator' },
+      target: { type: 'hazard', id: hazardId, name: hazard.name[0] },
+      change: { kind: 'properties', from, to: { ...from, observation: 'reported' } }, note: 'Checked on site' };
+  };
+
+  it('asks for an on-site check of each suspected hazard until it is confirmed', () => {
+    const suspected = packet.hazards.find(item => item.observation === 'suspected')!;
+    expect(responseWork(packet, deriveIncidentWorkspace(packet, false), false).some(task => task.id === `hazard:${suspected.id}`)).toBe(true);
+    const confirmed = deriveIncidentWorkspace(packet, false, [confirm(suspected.id)]);
+    expect(confirmed.hazards.find(item => item.id === suspected.id)?.observation).toBe('reported');
+    expect(responseWork(packet, confirmed, false).some(task => task.id === `hazard:${suspected.id}`)).toBe(false);
+  });
+
+  it('asks to check a passable road that a mapped landslide affects, but not one it only threatens', () => {
+    const snapshot = deriveIncidentWorkspace(packet, false);
+    const road = snapshot.roads.find(item => item.status === 'open')!;
+    const link = { areaId: 'area-1', areaName: 'Vùng A', roadId: road.id };
+    expect(responseWork(packet, snapshot, false, [{ ...link, relation: 'threatens' }]).some(task => task.id === `road:${road.id}`)).toBe(false);
+    const task = responseWork(packet, snapshot, false, [{ ...link, relation: 'affected' }]).find(item => item.id === `road:${road.id}`);
+    expect(task?.reason[0]).toContain('Vùng A');
   });
 });

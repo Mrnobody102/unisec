@@ -1,6 +1,9 @@
+import {roadsForHazard} from './roadHazards';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { localClock } from './sourceTime';
 import { workStatusText, type WorkEntry } from './responseWork';
+import type { ScenarioEdit } from '../access/scenarioEdits';
+import { roadStatusShortLabels } from '../routes/roadStatus';
 type Record = {
   id: string;
   at: string;
@@ -15,7 +18,8 @@ type Record = {
 export function journalRecords(
   packet: IncidentPacket,
   entries: WorkEntry[],
-  appliedAt: string | null
+  appliedAt: string | null,
+  edits: ScenarioEdit[] = []
 ): Record[] {
   const { incident } = packet;
   const offset = incident.triggeredAt.match(/(Z|[+-]\d{2}:\d{2})$/)?.[0] ?? 'Z';
@@ -36,9 +40,9 @@ export function journalRecords(
     description: record.finding,
     record,
     pending: record.id === packet.report.evidence.id,
-    objectId: packet.roads.some((road) => road.hz === record.hazardId)
-      ? `road:${packet.roads.find((road) => road.hz === record.hazardId)!.id}`
-      : undefined
+    objectId: roadsForHazard(packet.roads,record.hazardId).length === 1
+      ? `road:${roadsForHazard(packet.roads,record.hazardId)[0].id}`
+      : `hazard:${record.hazardId}`
   }));
   const work: Record[] = entries.map((entry) => ({
     id: entry.id,
@@ -63,7 +67,26 @@ export function journalRecords(
         }
       ]
     : [];
-  return [...analysis, ...reports, ...work, ...revision].sort(
+  // Manual map changes are decisions too; they belong in the same trail as reports and work.
+  const changes: Record[] = edits.map((edit) => {
+    const c = edit.change;
+    const undo: [string, string] = edit.reverts ? [' (hoàn tác)', ' (undo)'] : ['', ''];
+    return {
+      id: `edit:${edit.id}`,
+      at: edit.at,
+      kind: 'revision',
+      title: c.kind === 'status'
+        ? [`${edit.target.name}: ${roadStatusShortLabels[c.from][0]} → ${roadStatusShortLabels[c.to][0]}`,
+          `${edit.target.name}: ${roadStatusShortLabels[c.from][1]} → ${roadStatusShortLabels[c.to][1]}`]
+        : c.kind === 'properties' && c.to.observation === 'reported' && c.from.observation !== 'reported'
+          ? [`${edit.target.name}: xác nhận tại hiện trường`, `${edit.target.name}: confirmed on site`]
+          : [`Sửa dữ liệu: ${edit.target.name}`, `Data edit: ${edit.target.name}`],
+      description: [`${edit.author.name}${undo[0]}${edit.note ? `. ${edit.note}` : ''}`,
+        `${edit.author.name}${undo[1]}${edit.note ? `. ${edit.note}` : ''}`],
+      objectId: edit.target.type === 'community' ? undefined : `${edit.target.type === 'site' ? 'poi' : edit.target.type}:${edit.target.id}`
+    };
+  });
+  return [...analysis, ...reports, ...work, ...revision, ...changes].sort(
     (a, b) => Date.parse(b.at) - Date.parse(a.at) || a.id.localeCompare(b.id)
   );
 }

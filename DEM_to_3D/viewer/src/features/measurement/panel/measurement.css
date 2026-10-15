@@ -1,0 +1,28 @@
+.map-measure-context { height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 18px; margin: 4px 0; color: var(--ws-muted); }
+.map-measure-context:empty { display: none; }
+.measure-redo svg { transform: scaleX(-1); }
+.measure-feature { display: block; margin: 8px 0 0; padding: 4px 0; }
+.measure-checkbox { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.measure-history-row { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--ws-line); }
+.measure-history-row:first-child { padding-top: 0; }
+.measure-history-row label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.measure-history-row strong, .measure-history-row small { display: block; font-size: 12px; font-weight: 400; }
+.measure-history-row small { margin-top: 4px; color: var(--ws-muted); font-variant-numeric: tabular-nums; }
+/* The result shown in the Measurement tab and on the map as the editable shape. */
+.measure-history-row[data-active] strong { font-weight: 600; }
+.measure-history-row em { margin-left: 8px; color: var(--ws-brand); font-style: normal; font-size: 11px; font-weight: 400; }
+.measure-history-row .icon-button { width: 28px; height: 28px; min-height: 28px; flex: none; padding: 0; border: 0; border-radius: var(--radius-xs); }
+.measure-empty { font-size: 12px; color: var(--ws-muted); margin: 0; }
+.measure-options { display: grid; gap: 12px; font-size: 12px; }
+.measure-options > label:not(.measure-checkbox) { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.measure-options .measure-method { margin: 0; padding-top: 12px; border-top: 1px solid var(--ws-line); color: var(--ws-muted); font-size: 11px; }
+.measure-method div { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.measure-method dd { margin: 0; }
+.map-2d.is-measuring .leaflet-container { cursor: grab; }
+.map-2d.is-measuring .leaflet-container[data-measure-drawing=true] { cursor: crosshair; }
+.map-2d.is-measuring .map-pin { pointer-events: none; }
+.map-2d.is-measuring .map-object-chooser { display: none; }
+.map-2d.is-measuring path.leaflet-interactive,
+.map-2d.is-locating path.leaflet-interactive,
+.map-2d.is-locating .map-pin { pointer-events: none; }
+.map-2d.is-locating .leaflet-container { cursor: crosshair; }

@@ -1,6 +1,6 @@
 # Hiển thị bản đồ
 
-Cập nhật: 2026-10-07. Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
+Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 
 ## Ký hiệu và tỷ lệ
 
@@ -10,24 +10,32 @@ Cập nhật: 2026-10-07. Quy tắc cho bản đồ ứng phó DEAR, đối chi�
 | Đường chưa rõ | Vàng, nét đứt | Cần kiểm tra khả năng đi qua |
 | Chưa ghi nhận tắc đường | Nét trung tính | Không suy ra là đường đi được |
 | Tuyến đang xem | Xanh dương | Đoạn bị chặn/chưa rõ vẫn giữ màu cảnh báo, viền trung tính |
-| Cộng đồng | Nhóm người màu xanh | Có tọa độ địa bàn |
-| Cộng đồng ưu tiên | Nhóm người màu nâu vàng | Mức ưu tiên, không phải kết luận cô lập |
+| Cộng đồng | POI đầu bo tròn, mũi neo ngắn, nền trắng và nét xanh xám | Có tọa độ địa bàn |
+| Cộng đồng ưu tiên | Ký hiệu nâu trầm có viền sáng mảnh | Mức ưu tiên, không phải kết luận cô lập |
 | Sạt lở được báo | Núi/đá màu đỏ | Báo cáo hiện trường có thời điểm |
-| Nghi sạt lở | Núi/đá viền đỏ nét đứt | Nhận định chưa kiểm chứng |
+| Nghi sạt lở | Núi/đá đỏ nhạt hơn điểm đã xác minh | Nhận định chưa kiểm chứng |
 | Cầu, điểm vượt khe, điểm tập kết | Ký hiệu riêng | Không dùng cùng dấu chấm than cho mọi loại điểm |
-| Bãi đáp H | Chữ H trong vòng tròn nét đứt | Vị trí mô phỏng ở trạng thái đề xuất, chưa khảo sát |
+| Bãi đáp H | Chữ H trong cùng khung POI trung tính | Vị trí mô phỏng ở trạng thái đề xuất, chưa khảo sát |
+| Vùng nguy cơ sạt lở | Polygon hổ phách, nét đứt, tô nhẹ | Khoanh vùng có căn cứ, lưu nguồn và mức rà soát; chưa phải xác suất sạt lở |
+| Vết sạt lở đã xảy ra | Polygon đỏ nâu, nét liền, tô nhẹ | Dấu vết được khoanh từ tư liệu hoặc thực địa; mức rà soát hiển thị riêng |
 | AOI | Ranh giới nét đứt mảnh | Phạm vi đánh giá, không phải phạm vi ngập hoặc footprint DEM |
 
-- Điểm dùng biểu tượng 28 px, không mô tả kích thước thật. Zoom làm thay đổi vị trí và mật độ nhãn, không phóng icon theo địa hình.
+- POI thường có vùng bấm 28 × 28 px, khung đầu tròn thuôn về mũi ngắn, nền trắng, viền màu trầm mảnh và glyph khoảng 16 px. Cả POI và pin đỏ khi chọn đều neo mũi vào tọa độ. Hover dùng chính ký hiệu và nhãn hiện có. Không thêm vòng hover, màu nền sặc sỡ hoặc hiệu ứng nảy. Glyph được lưu kèm nguồn tại `viewer/vendor/material/ROUNDED_SOURCE.json`; icon công cụ ngoài bản đồ giữ nguyên.
 - Nhãn ưu tiên đối tượng đang chọn, cộng đồng ưu tiên, điểm tập kết, rồi địa danh khác. Đo độ rộng theo font thực, thử nhiều vị trí, ẩn nhãn khi không còn chỗ. Tránh đè marker, nhãn và điều khiển.
-- Điểm chồng nhau dùng ký hiệu nhóm 34 px tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc chọn **Xem khu vực này** để tách điểm. Nhóm điểm gần nhau không có nghĩa là các điểm trùng tọa độ.
-- Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Khác loại hoặc trong 3D không hiện tổng số, giữ ký hiệu/tên địa bàn ưu tiên làm điểm đại diện khi có chỗ. Đối tượng đang chọn giữ ký hiệu và dấu nhóm. Nếu điểm chọn nằm sau điều khiển, không gắn tên của nó lên điểm khác. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
+- Điểm chồng nhau dùng glyph của đối tượng đại diện và số nhỏ khi đủ điều kiện đếm; nhóm điểm GIS nhập dùng nét xếp lớp không nền tròn. Ký hiệu nhóm neo tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc chọn **Xem khu vực này** để tách điểm. Nhóm điểm gần nhau không có nghĩa là các điểm trùng tọa độ.
+- Gom theo loại: điểm cùng loại gộp khi ký hiệu chạm nhau. Khác loại chỉ gộp khi một ký hiệu che tâm ký hiệu kia. Còn lại cả hai cùng hiện, có thể chồng một phần, điểm nguy hiểm vẽ trên và tâm từng ký hiệu vẫn bấm được.
+- Đại diện nhóm theo thứ tự: đang chọn, nguy hiểm đã báo cáo, cộng đồng ưu tiên, nguy hiểm nghi ngờ, điểm tập kết, rồi điểm khác. Sạt lở đã báo cáo không bị gộp dưới cộng đồng. Nhóm hỗn hợp còn chứa điểm nguy hiểm đã báo cáo dùng chấm nhóm màu đỏ, tên đọc cho trình đọc màn hình ghi rõ điều này.
+- Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Nhóm khác loại hoặc trong 3D không hiện tổng số. Đối tượng đang chọn giữ ký hiệu và dấu nhóm. Nếu điểm chọn nằm sau điều khiển, không gắn tên của nó lên điểm khác. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
 - Polygon phải bám hình học thật. Chỉ có tọa độ điểm thì không vẽ vòng tròn/ellipse giả làm phạm vi sạt lở hoặc ngập.
+- Vùng sườn dốc có thể đe dọa đường ở ngoài polygon. Liên kết với đường là nhận định có căn cứ, không chỉ là phép giao hình học. Phân biệt vùng phát sinh, lan truyền và bồi tích khi tư liệu cho phép; không tự tính runout từ polygon thủ công. Quy trình tại [GIS](geodata-workspace.md#vùng-nguy-cơ-và-vết-sạt-lở).
 - Nút panel, tìm kiếm, lớp và đo nằm cùng thanh trên trái. Chú giải thu gọn được và tạm ẩn khi mở công cụ. Khung lớp/đo/tọa độ có thể kéo, không che nhóm điều hướng. Vị trí địa lý không đổi.
+- Rê hoặc focus tên đối tượng trong danh sách làm rõ đúng tọa độ trên bản đồ; khi điểm nằm ngoài màn hình, bản đồ đưa điểm vào vùng nhìn. Bấm tên chọn chính đối tượng đó và hiển thị pin đỏ. Nhãn trên bản đồ là vùng bấm của điểm tương ứng.
 - Nhãn có ba chế độ: tự động, chỉ đối tượng đang xem, tắt. Bật lại lớp giữ nguyên tọa độ. Đỉnh hình đo là dữ liệu người dùng vẽ, có thể chỉnh riêng.
 - 2D dùng Bắc địa lý và thước khoảng cách ngang tại tâm bản đồ theo zoom. 3D dùng Bắc lưới, xoay theo camera. Không dùng thước phẳng cho góc nhìn nghiêng.
 - Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Màu xanh đánh dấu phần tuyến đang xem, không che đoạn đỏ hoặc vàng.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
+
+Phạm vi và cách kiểm tra nằm trong [kiểm tra workspace](../quality/workspace-review.md).
 
 ## Ảnh nền và bản đồ tổng quan
 
@@ -72,20 +80,25 @@ Biểu đồ có trục độ cao (m), khoảng cách (km), vùng dưới đư�
 | Tọa độ | Vĩ độ/kinh độ WGS84. Mở chi tiết để xem E/N UTM 48N |
 | Thông tin vị trí 2D/3D | Công cụ riêng đọc WGS84 hoặc hệ tọa độ của mô hình, độ cao và sao chép. 2D lấy độ cao từ DEM, ngoài DEM không có giá trị. 3D lấy điểm trên địa hình, không dùng độ cao đã phóng đại |
 | Phạm vi | Múi UTM 48N, 102° đến 108° Đông. Phép đo ngang, không cộng chiều dài theo sườn dốc |
-| Vẽ và chỉnh | Rê chuột xem trước, bấm thêm điểm. Sau khi kết thúc, chọn Chỉnh sửa để kéo đỉnh, Áp dụng để lưu, Hủy/Escape để khôi phục. Bắt điểm vào lớp đang hiện trong ngưỡng 10 px |
+| Vẽ và chỉnh | Rê chuột xem trước, nhãn cạnh con trỏ ghi đoạn đang kéo và tổng. Bấm thêm điểm; đỉnh đánh số. Chọn đỉnh trên bản đồ hoặc hàng trong bảng điểm; Delete/Backspace xóa đỉnh đang chọn. Tay nắm giữa đoạn chèn đỉnh khi bấm hoặc kéo. Sửa tọa độ trong bảng. Sửa một kết quả đã xong tự mở chỉnh sửa: Áp dụng để lưu, Hủy/Escape để khôi phục. Bắt điểm vào lớp đang hiện trong ngưỡng 10 px; giữ Alt khi bấm để đặt điểm tự do |
 | Hình học có sẵn | Đo trực tiếp đoạn đường, tuyến đang chọn hoặc AOI để giữ đúng đường gấp khúc/ranh giới |
 | Kết thúc | Nút Kết thúc, Enter/F2 hoặc nhấp đúp điểm cuối. Vùng có thể đóng bằng điểm đầu. Ctrl+Z/Ctrl+Y hoạt động khi vẽ hoặc chỉnh. Chuột phải không kết thúc phép đo |
-| Giữ kết quả | Đo mới hoặc đổi kiểu giữ phép đo đã hoàn tất. Có thể ẩn/xóa từng hình và sao chép kết quả. Đóng công cụ tạm dừng bản vẽ; mở lại để tiếp tục. Hủy/Escape bỏ bản vẽ chưa hoàn tất |
+| Giữ kết quả | Phép đo vào Kết quả ngay khi hoàn tất (Kết thúc, nhấp đúp, Enter hoặc điểm cuối của kiểu đo cố định số điểm). Phép đo đang xem có nhãn Đang xem; nhãn trên bản đồ dùng cùng số thứ tự. Chỉnh sửa rồi Áp dụng cập nhật đúng kết quả đó, không tạo bản sao. Đo mới bắt đầu phép đo tiếp theo. Có thể ẩn/xóa từng hình và sao chép kết quả; xóa kết quả đang xem cũng bỏ hình đó khỏi bản đồ. Đóng công cụ tạm dừng bản vẽ; mở lại để tiếp tục. Hủy/Escape bỏ bản vẽ chưa hoàn tất |
 | Đổi kiểu khi chỉnh sửa | Luôn chọn được kiểu đo. Giữ kết quả chỉnh hợp lệ theo kiểu cũ, rồi bắt đầu phép đo mới. Nếu chỉnh chưa hợp lệ, giữ kết quả trước khi chỉnh. Bản vẽ chưa kết thúc không được lưu khi đổi kiểu |
-| Vòng đời | Hình đo tồn tại trong phiên, hiện trên 2D và giữ khi đổi qua 3D. Tải lại trang hoặc Đặt lại phiên xóa hình đo. Chưa lưu thành lớp nghiệp vụ |
-| Diện tích màn hình | Thu gọn công cụ vẫn đo được. Mobile dùng khung đáy cao tối đa 48% vùng bản đồ. Thông số, từng đoạn và kết quả đã giữ mặc định đóng |
-| Nhãn đo | Chỉ giá trị và đơn vị, diện tích ở tâm hình. Ưu tiên phép đo hiện tại, tránh công cụ và đối tượng nghiệp vụ. Không đủ chỗ thì ẩn nhãn, kết quả vẫn có trong panel |
+| Vòng đời | Hình đo tồn tại trong phiên, hiện trên 2D và giữ khi đổi qua 3D. Tải lại trang hoặc Đặt lại phiên xóa hình đo. Phép đo chưa lưu thành lớp; dùng Vẽ để tạo đối tượng GIS |
+| Diện tích màn hình | Kiểu đo là nhóm lựa chọn hiện sẵn. Bảng điểm (tọa độ, đoạn, cộng dồn, cạnh đóng vùng) luôn hiện khi có điểm và cuộn trong khung cao cố định. Thu gọn công cụ vẫn đo được. Mobile dùng khung đáy cao tối đa 48% vùng bản đồ |
+| Nhãn đo | Chỉ giá trị và đơn vị, diện tích ở tâm hình. Khi công cụ mở, kết quả đang xem có thêm độ dài từng đoạn. Ưu tiên phép đo hiện tại, tránh công cụ và đối tượng nghiệp vụ. Không đủ chỗ thì ẩn nhãn, kết quả vẫn có trong panel |
+| Vẽ đối tượng | Lệnh Vẽ cạnh Đo: điểm, đường, vùng, chữ nhật, hình tròn, ghi chú. Cùng thao tác đỉnh như đo. Lưu vào GIS thành bản ghi tham chiếu; hình tròn và chữ nhật là Polygon kèm `shape`, `center`, `radius_m`, `corners`. Ghi chú giữ chữ trên bản đồ. Đề xuất và lộ trình: [Đo và vẽ](../../../vsp-eo-platform/docs/product/measure-and-draw.md) |
 
 Đo không tạo vùng ảnh hưởng, thay tình trạng đường hoặc tính lại mức ưu tiên.
 
 Độ chính xác phụ thuộc dữ liệu nền. Đo trên ellipsoid, chiều dài bề mặt DEM, thể tích và chỉnh sửa lớp nghiệp vụ chưa thuộc bộ công cụ này. Mặt cắt dọc tuyến dùng công cụ địa hình riêng.
 
 Mở rộng tiếp theo: mặt cắt theo đường tự vẽ và lưu/xuất hình đo thành lớp dữ liệu.
+
+Điểm sạt lở biểu thị vị trí sự cố; đoạn đường liên quan biểu thị phần mạng đường chịu ảnh hưởng. Quan hệ giữa hai đối tượng phải được gắn bằng ID và được người quản lý rà soát. Có điểm sạt lở gần đường không tự động biến cả đường thành “bị chặn”. Tình trạng đường cần bằng chứng và thời điểm riêng. Tương tự, một tọa độ ngập không đủ để vẽ phạm vi ngập.
+
+Các thay đổi trong GIS hiện được xem trước trong bản nháp. Nhiều thao tác trên lớp nhập và đối tượng ứng phó được áp dụng cùng một lần sau khi kiểm tra; hủy giữ nguyên dữ liệu đang dùng. Cơ chế này chỉ dành cho phiên demo trong trình duyệt, chưa thay thế quản trị phiên bản và quyền biên tập trên máy chủ.
 
 ## Đối chiếu Hình 2 của proposal
 

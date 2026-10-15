@@ -56,7 +56,9 @@ export function workspaceNavigationReducer(state: WorkspaceNavigation, action: N
         selectedRouteType: 'candidate', detailTab: 'decision', routeSectionId: null };
     }
     case 'inspect-object': {
-      const owner: ObjectView = action.id.startsWith('road:') || action.id.startsWith('hazard:') ? 'impact' : 'incident';
+      // Roads and hazards belong to the road tab. Other places open where the user already is,
+      // so picking a staging or landing site from the road tab does not switch tabs.
+      const owner: ObjectView = action.id.startsWith('road:') || action.id.startsWith('hazard:') || state.view === 'impact' ? 'impact' : 'incident';
       const origin = owner !== state.view ? state.view : state.objectIds[owner] ? state.objectOrigins[owner] : null;
       return { ...state, view: owner, objectIds: { ...state.objectIds, [owner]: action.id },
         objectOrigins: { ...state.objectOrigins, [owner]: origin } };

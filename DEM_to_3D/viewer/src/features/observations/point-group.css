@@ -114,9 +114,10 @@
   border-bottom: 0;
 }
 .point-group-list > li[aria-current='true'] {
-  background: var(--ws-tint);
-  box-shadow: inset 3px 0 var(--select);
+  background: transparent;
+  color: var(--select-ink);
 }
+.point-group-list > li[aria-current='true'] strong {text-decoration:underline;text-underline-offset:3px;}
 .point-group-list strong {
   font-weight: 500;
   overflow-wrap: anywhere;

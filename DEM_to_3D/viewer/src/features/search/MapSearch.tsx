@@ -38,25 +38,32 @@ export function MapSearch({ locale, results, query, onQuery, onSelect, disabled 
   onSelect: (result: SearchResult) => void; disabled: boolean;
 }): JSX.Element {
   const [open, setOpen] = useState(false), [active, setActive] = useState(0);
+  const [compactOpen, setCompactOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const compactTrigger = useRef<HTMLButtonElement>(null);
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   useEffect(() => {
-    const dismiss = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
+    const dismiss = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) { setOpen(false); setCompactOpen(false); } };
     document.addEventListener('pointerdown', dismiss);
     return () => document.removeEventListener('pointerdown', dismiss);
   }, []);
   const expanded = open && Boolean(query.trim());
-  const choose = (result: SearchResult) => { onSelect(result); setOpen(false); };
-  return <div ref={root} className="map-search">
+  const choose = (result: SearchResult) => { onSelect(result); setOpen(false); setCompactOpen(false); };
+  return <div ref={root} className={'map-search'+(compactOpen?' is-compact-open':'')}>
+    <button ref={compactTrigger} type="button" className="icon-button map-search-mobile-trigger"
+      aria-label={t('Mở tìm kiếm','Open map search')} aria-expanded={compactOpen}
+      onClick={() => { setCompactOpen(true); setOpen(true); requestAnimationFrame(() => root.current?.querySelector('input')?.focus()); }}>
+      <UiIcon name="search" size={16}/>
+    </button>
     <div className="map-search-field">
       <UiIcon name="search"/>
       <input role="combobox" aria-label={t('Tìm trên bản đồ', 'Search map')} aria-expanded={expanded}
         aria-controls={expanded ? 'map-search-results' : undefined} aria-autocomplete="list" aria-activedescendant={expanded && results[active] ? `map-result-${active}` : undefined}
         placeholder={t('Tìm địa bàn, đường, điểm…', 'Search places, roads, sites…')} value={query} disabled={disabled}
-        onFocus={() => setOpen(true)} onBlur={event => { if (!root.current?.contains(event.relatedTarget as Node | null)) setOpen(false); }}
+        onFocus={() => setOpen(true)} onBlur={event => { if (!root.current?.contains(event.relatedTarget as Node | null)) { setOpen(false); setCompactOpen(false); } }}
         onChange={event => { onQuery(event.target.value); setOpen(true); setActive(0); }}
         onKeyDown={event => {
-          if (event.key === 'Escape') { setOpen(false); event.stopPropagation(); }
+          if (event.key === 'Escape') { setOpen(false); setCompactOpen(false); if (compactOpen) compactTrigger.current?.focus(); event.stopPropagation(); }
           if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && query.trim()) {
             event.preventDefault(); setOpen(true);
             setActive(index => !results.length ? 0 : !expanded

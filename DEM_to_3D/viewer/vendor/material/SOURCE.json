@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/google/material-design-icons",
+  "commit": "49d4db35df873165d6bd6ba09b063c7dafbac2f4",
+  "family": "Material Symbols Outlined",
+  "sourceSize": 20,
+  "artwork": {
+    "community": {
+      "url": "https://raw.githubusercontent.com/google/material-design-icons/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web/home/materialsymbolsoutlined/home_20px.svg",
+      "sha256": "5b9428f3494cdd9be7c17ea6fcca5881a3f88765ebcc4b10c95aafd74f63a0bb"
+    },
+    "landslide": {
+      "url": "https://raw.githubusercontent.com/google/material-design-icons/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web/landslide/materialsymbolsoutlined/landslide_20px.svg",
+      "sha256": "0e556025c94aaeebe9c0cccf45a80d3613f51522ef23da817eb2fef363aa44a7"
+    },
+    "flood": {
+      "url": "https://raw.githubusercontent.com/google/material-design-icons/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web/water/materialsymbolsoutlined/water_20px.svg",
+      "sha256": "aa41ecf083af04e8af2ef6946d9d3059dfb8f15bec0ce6f29ca9f5923db7f691"
+    },
+    "staging": {
+      "url": "https://raw.githubusercontent.com/google/material-design-icons/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web/flag/materialsymbolsoutlined/flag_20px.svg",
+      "sha256": "35e73617fa497832903db9231eb18fa27f4b6e7d0bf8997b652090856a0fd57a"
+    },
+    "placePin": {
+      "url": "https://raw.githubusercontent.com/google/material-design-icons/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web/location_on/materialsymbolsoutlined/location_on_fill1_20px.svg",
+      "sha256": "566efac848a9763b9c5cf346bb0f1b28fcfdbccb4bb466cd5e51335b0531b730"
+    }
+  },
+  "processing": "Original SVG path geometry preserved; UI icon family unchanged."
+}

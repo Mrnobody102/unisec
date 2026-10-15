@@ -1,0 +1,32 @@
+import type { DrawingMessages } from './vi';
+
+export const en: DrawingMessages = {
+  panelTitle: 'Draw on map',
+  panelPosition: 'Drawing panel position',
+  moveHint: 'Drag to move. Double-click to reset.',
+  collapse: 'Collapse drawing',
+  expand: 'Expand drawing',
+  close: 'Close drawing',
+  kindLabel: 'Shape',
+  kinds: { point: 'Point', line: 'Line', polygon: 'Area', rectangle: 'Rectangle', circle: 'Circle', note: 'Note' },
+  name: 'Name',
+  note: 'Note text',
+  hintOutside: 'Point is outside the UTM 48N area.',
+  hintPoint: 'Select a position on the map.',
+  hintLine: 'Select the points of the line. Double-click the last point or press Enter to finish.',
+  hintPolygon: 'Select at least 3 points. Click the first point, double-click or press Enter to close the area.',
+  hintRectangle: 'Select two opposite corners.',
+  hintCircle: 'Select the centre, then a point on the circle.',
+  hintNote: 'Select a position, then type the note.',
+  hintReady: 'The shape is ready. Select, drag, insert or delete points before saving.',
+  hintNeedNote: 'Type the note text to save.',
+  undo: 'Undo',
+  undoTitle: 'Undo (Ctrl+Z)',
+  redo: 'Redo',
+  redoTitle: 'Redo (Ctrl+Y)',
+  discard: 'Discard',
+  save: 'Save to GIS',
+  source: 'Drawn on map',
+  saved: 'Saved “{name}” to GIS data.',
+  savedNote: 'Drawings are listed with the GIS layers and export like imported data.'
+};

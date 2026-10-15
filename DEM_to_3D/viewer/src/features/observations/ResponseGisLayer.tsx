@@ -1,4 +1,7 @@
 import { usePointRendering } from '../map/usePointRendering';
+import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
+import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
+import type { RoadSegment } from '../../types/dear';
 import { fieldAreaOwner } from './fieldAreas';
 import { useEffect, useRef } from 'react';
 import * as L from 'leaflet';
@@ -10,6 +13,7 @@ import { observationMarker } from './mapMarker';
 import { mapPane } from '../map/mapLayerOrder';
 import { attachPointClusters, type ClusterablePoint } from '../map/pointClusterLayer';
 import './observations.css';
+const emptyRoads: RoadSegment[] = [];
 
 /** WGS84 reference overlays keep their IDs. They never enter the incident hazard/road assessment. */
 export function ResponseGisLayer({
@@ -22,7 +26,8 @@ export function ResponseGisLayer({
   locale = 'vi',
   groupIds = [],
   onSelect,
-  onGroup
+  onGroup,
+  roads = emptyRoads, networkVersion
 }: {
   mapRef: React.MutableRefObject<L.Map | null>;
   records: GeometryRecord[];
@@ -35,6 +40,8 @@ export function ResponseGisLayer({
   groupIds?: string[];
   onSelect: (id: string) => void;
   onGroup?: (ids: string[]) => void;
+  roads?: RoadSegment[];
+  networkVersion?: string;
 }): null {
   const { mode: pointMode } = usePointRendering();
   const action = useRef(onSelect);
@@ -49,9 +56,10 @@ export function ResponseGisLayer({
     const clustered: ClusterablePoint[] = [];
     for (const record of records.filter((r) => r.visible)) {
       const owner = fieldAreaOwner(record, records);
+      const mappedArea = landslideAreaOf(record);
       const observation = observationOf(record),
         selected = record.id === selectedId || owner?.id === selectedId;
-      const color = observation
+      const color = mappedArea ? landslideAreaStyle(mappedArea).color : observation
         ? observationColor(observation.kind)
         : record.role === 'aoi'
           ? '#219a7d'
@@ -66,7 +74,7 @@ export function ResponseGisLayer({
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? {}
-              : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state } : {
                   color,
                   weight: selected ? 3 : 1.5,
                   fillOpacity: owner ? 0.18 : 0.03,
@@ -77,9 +85,10 @@ export function ResponseGisLayer({
               return L.circleMarker(position, {
                 pane: mapPane('selection'),
                 radius: selected ? 6 : 4,
-                color: '#fff',
+                className: selected ? 'map-selected-reference' : 'map-reference-point',
+                color,
                 weight: selected ? 2 : 1.5,
-                fillColor: color,
+                fillColor: '#fafbf8',
                 fillOpacity: 1,
                 interactive
               });
@@ -92,15 +101,17 @@ export function ResponseGisLayer({
         });
         const label = document.createElement('span');
         label.textContent = record.name;
+        // A drawn note is read on the map, so its text stays visible like a map label.
+        const note = record.feature.properties.shape === 'note';
         layer.bindTooltip(label, {
           direction: 'top',
-          permanent: record.id === selectedId,
-          className: 'field-map-tooltip'
+          permanent: note || record.id === selectedId,
+          className: note ? 'field-map-tooltip map-note-label' : 'field-map-tooltip'
         });
         if (interactive)
           layer.on('click', (event) => {
             L.DomEvent.stopPropagation(event.originalEvent);
-            action.current(owner?.id ?? record.id);
+            action.current(mappedArea ? record.id : owner?.id ?? record.id);
           });
         return layer;
       };
@@ -118,6 +129,7 @@ export function ResponseGisLayer({
         continue;
       }
       render().addTo(group);
+      if (mappedArea && selected && mappedArea.networkVersion === networkVersion) addAreaRoadSections(group, mappedArea, roads, mapPane('boundary'));
     }
     const disposeClusters = attachPointClusters(map, group, clustered, {
       pane: mapPane('selection'),
@@ -133,7 +145,7 @@ export function ResponseGisLayer({
       group.remove();
     };
     // groupKey stands in for groupIds so a new array with the same members does not redraw.
-  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode]);
+  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode, roads, networkVersion]);
   useEffect(() => {
     if (pointMode === 'individual' && groupKey) openGroup.current?.([]);
   }, [pointMode, groupKey]);

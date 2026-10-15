@@ -4,7 +4,8 @@ import type { TerrainData } from '../../types/terrain';
 import { createRaster2d } from '../map/raster2d';
 import { roadColors } from '../../terrain/roadStyle';
 import { roadStatusLabels } from '../routes/roadStatus';
-import { mapSymbolPaths, type MapSymbolName } from '../../terrain/mapSymbols';
+import {drawPoiMarker} from '../../terrain/poiFrame';
+import { type MapSymbolName } from '../../terrain/mapSymbols';
 import { localClock } from '../incident/sourceTime';
 import type { DecisionSnapshot } from './decisionSnapshot';
 
@@ -68,21 +69,17 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   // Symbols use the same geometry as the interactive map. Labels avoid symbols.
   const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
   const markers: Array<{ point: Point; symbol: MapSymbolName; label?: string; color: string; outline?: boolean }> = [
-    { point: snapshot.community.projected, symbol: 'community', label: snapshot.community.name, color: snapshot.assessment.priority === 1 ? '#a6630b' : '#237ba9' },
-    ...snapshot.communities.filter(c => c.id !== snapshot.community.id).map(c => ({ point: c.projected, symbol: 'community' as const, label: c.name, color: c.prio === 1 ? '#a6630b' : '#237ba9' })),
-    ...snapshot.responseSites.map(s => ({ point: s.projected, symbol: s.kind as MapSymbolName, label: t(...s.name), color: s.kind === 'hlz' ? '#a6630b' : '#236c68', outline: s.kind === 'hlz' })),
-    ...snapshot.hazards.map(h => ({ point: h.projected, symbol: h.kind as MapSymbolName, color: h.kind === 'landslide' ? '#cf3535' : '#a6630b', outline: h.observation === 'suspected' || h.kind === 'bridge' || h.kind === 'crossing' }))
+    { point: snapshot.community.projected, symbol: 'community', label: snapshot.community.name, color: snapshot.assessment.priority === 1 ? '#8f7b61' : '#6c8790' },
+    ...snapshot.communities.filter(c => c.id !== snapshot.community.id).map(c => ({ point: c.projected, symbol: 'community' as const, label: c.name, color: c.prio === 1 ? '#8f7b61' : '#6c8790' })),
+    ...snapshot.responseSites.map(s => ({ point: s.projected, symbol: s.kind as MapSymbolName, label: t(...s.name), color: s.kind === 'hlz' ? '#9a7b4d' : '#638471', outline: s.kind === 'hlz' })),
+    ...snapshot.hazards.map(h => ({ point: h.projected, symbol: h.kind as MapSymbolName, color: h.kind === 'landslide' ? '#b04d48' : '#9a7b4d', outline: h.observation === 'suspected' || h.kind === 'bridge' || h.kind === 'crossing' }))
   ];
-  for (const marker of markers) { const p = project(marker.point); occupied.push({ x: p.x - 17, y: p.y - 17, w: 34, h: 34 }); }
+  for (const marker of markers) { const p = project(marker.point); occupied.push({ x: p.x - 15, y: p.y - 31, w: 30, h: 34 }); }
   for (const marker of markers) {
-    const p = project(marker.point); ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
-    ctx.fillStyle = marker.outline ? '#fff' : marker.color; ctx.fill(); ctx.strokeStyle = marker.outline ? marker.color : '#fff'; ctx.lineWidth = 2;
-    if (marker.symbol === 'hlz') ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.save(); ctx.translate(p.x - 10, p.y - 10); ctx.scale(20 / 24, 20 / 24);
-    const path = new Path2D(mapSymbolPaths[marker.symbol]); ctx.strokeStyle = marker.outline ? marker.color : '#fff'; ctx.fillStyle = '#fff'; ctx.lineWidth = 1.6;
-    if (marker.symbol === 'community') ctx.fill(path); else ctx.stroke(path); ctx.restore();
+    const p = project(marker.point);
+    drawPoiMarker(ctx,marker.symbol,p.x,p.y,marker.color,28,marker.outline);
     if (!marker.label) continue;
-    ctx.font = '600 15px Inter, sans-serif'; const w = ctx.measureText(marker.label).width;
+    ctx.font = '600 15px "Source Sans 3", sans-serif'; const w = ctx.measureText(marker.label).width;
     const candidates = [{ x: p.x + 21, y: p.y - 9, w, h: 22 }, { x: p.x - 21 - w, y: p.y - 9, w, h: 22 }, { x: p.x - w / 2, y: p.y + 21, w, h: 22 }];
     const label = candidates.find(r => r.x >= frame.x && r.x + r.w <= frame.x + frame.w && r.y >= frame.y && r.y + r.h <= frame.y + frame.h &&
       !occupied.some(o => r.x < o.x + o.w && r.x + r.w > o.x && r.y < o.y + o.h && r.y + r.h > o.y));
@@ -126,10 +123,7 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   ];
   symbolLegend.forEach(([symbol, label, color], i) => {
     const x = 32 + i * 224, y = 882;
-    ctx.beginPath(); ctx.arc(x + 10, y, 12, 0, Math.PI * 2); ctx.fillStyle = symbol === 'hlz' ? '#fff' : color; ctx.fill();
-    if (symbol === 'hlz') { ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]); }
-    ctx.save(); ctx.translate(x + 1, y - 9); ctx.scale(18 / 24, 18 / 24); ctx.fillStyle = '#fff'; ctx.strokeStyle = symbol === 'hlz' ? color : '#fff'; ctx.lineWidth = 1.6;
-    const path = new Path2D(mapSymbolPaths[symbol]); if (symbol === 'community') ctx.fill(path); else ctx.stroke(path); ctx.restore();
+    drawPoiMarker(ctx,symbol,x+10,y+12,color,24,symbol==='hlz');
     text(label, x + 28, y + 5, 13);
   });
   const extraSymbols: Array<[MapSymbolName, string, string, boolean]> = [
@@ -139,9 +133,7 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   ];
   extraSymbols.forEach(([symbol, label, color, dashed], i) => {
     const x = 32 + i * 224, y = 916;
-    ctx.beginPath(); ctx.arc(x + 10, y, 12, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-    if (dashed) ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.save(); ctx.translate(x + 1, y - 9); ctx.scale(18 / 24, 18 / 24); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.stroke(new Path2D(mapSymbolPaths[symbol])); ctx.restore();
+    drawPoiMarker(ctx,symbol,x+10,y+12,color,24,dashed);
     text(label, x + 28, y + 5, 13);
   });
   ctx.beginPath(); ctx.moveTo(706, 916); ctx.lineTo(736, 916); ctx.strokeStyle = '#678c86'; ctx.lineWidth = 1.5; ctx.setLineDash([7, 5]); ctx.stroke(); ctx.setLineDash([]);

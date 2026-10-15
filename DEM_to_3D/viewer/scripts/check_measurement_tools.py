@@ -31,18 +31,15 @@ def run(url, chrome, captures):
             position = (box['x'] + box['width'] * x, box['y'] + box['height'] * y)
             page.mouse.click(*position) if click else page.mouse.move(*position)
 
+        names = {'distance': 'Distance', 'area': 'Area', 'radius': 'Radius', 'bearing': 'Bearing', 'angle': 'Angle', 'location': 'Coordinates'}
+
         def mode(value):
-            selector = panel.get_by_role('combobox', name='Measurement type', exact=True)
-            expect(selector).to_be_enabled()
-            index = selector.evaluate('(node, value) => [...node.options].findIndex(option => option.value === value)', value)
-            assert index >= 0, value
-            # Use a real mouse click and native menu keys, not select_option().
-            # This catches blocked pointer targets and an unexpectedly disabled control.
-            selector.click()
-            page.keyboard.press('Home')
-            for _ in range(index): page.keyboard.press('ArrowDown')
-            page.keyboard.press('Enter')
-            expect(selector).to_have_value(value)
+            # A real mouse click on the visible choice, not check(): this catches blocked
+            # pointer targets and an unexpectedly disabled control.
+            choice = panel.get_by_role('radio', name=names[value], exact=True)
+            expect(choice).to_be_enabled()
+            choice.click()
+            expect(choice).to_be_checked()
 
         pick(.55, .3); pick(.75, .35, False)
         expect(panel.locator('.map-measure-result')).to_contain_text('km')
@@ -131,12 +128,14 @@ def run(url, chrome, captures):
             expect(panel.get_by_role('button', name='Copy results', exact=True)).to_be_visible()
         # Source-only settings stay collapsed until requested, with independent retained results.
         panel.locator('[aria-controls="measurement-saved-view"]').click()
+        # Every finished measurement is a result, including the current one (location).
         saved = panel.locator('.measure-history-row')
-        expect(saved).to_have_count(5)
+        expect(saved).to_have_count(6)
+        expect(saved.last).to_have_attribute('data-active', 'true')
         saved.first.get_by_role('checkbox').uncheck()
         expect(page.locator('.map-measure-label')).to_have_count(5)
         saved.first.get_by_role('button').click()
-        expect(saved).to_have_count(4)
+        expect(saved).to_have_count(5)
         panel.get_by_role('button', name='Close measurement', exact=True).click()
         width = page.locator('.map-area').bounding_box()['width']
         sidebar_width = page.locator('.sidebar').bounding_box()['width']

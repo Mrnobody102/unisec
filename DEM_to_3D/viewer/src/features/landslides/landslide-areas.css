@@ -1,0 +1,27 @@
+.landslide-area-editor {display:grid;gap:12px;margin:16px 0;}
+.landslide-area-editor h3 {font-size:14px;margin:0;}
+.landslide-area-editor fieldset {border:0;padding:0;margin:0;}
+.landslide-area-editor legend {font-weight:600;margin-bottom:6px;}
+.landslide-check {display:flex;align-items:baseline;gap:8px;padding:4px 0;font-size:12px;}
+.landslide-check input {flex:none;accent-color:var(--select);}
+.landslide-area-editor details {border-top:1px solid var(--ws-line);padding-top:10px;}
+.landslide-area-editor summary {cursor:pointer;font-weight:500;font-size:12px;}
+.landslide-area-editor details[open]>summary {margin-bottom:10px;}
+.landslide-road-edit {padding:8px 0;border-bottom:1px solid var(--ws-line);}
+.landslide-road-edit .geodata-field {margin:8px 0;}
+.landslide-chainage {display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.landslide-chainage label {display:grid;gap:4px;font-size:11px;min-width:0;}
+.landslide-chainage input {width:100%;min-width:0;}
+.landslide-area-summary>p {margin:12px 0;font-size:13px;}
+.landslide-road-links {margin-top:16px;}
+.landslide-road-links h3 {font-size:12px;margin:0 0 8px;}
+.landslide-road-links>div {padding:8px 0;border-top:1px solid var(--ws-line);font-size:12px;}
+.landslide-road-links p {margin:4px 0;color:var(--ws-muted);font-size:11px;}
+.landslide-area-list {padding:16px 20px;border-bottom:1px solid var(--ws-line);}
+.landslide-area-list h2 {font-size:13px;display:flex;justify-content:space-between;margin:0 0 10px;}
+.landslide-area-list .geodata-actions {flex-wrap:wrap;margin-bottom:8px;}
+.landslide-area-list ul {list-style:none;padding:0;margin:0;}
+.landslide-area-list li {display:flex;gap:8px;align-items:center;border-top:1px solid var(--ws-line);}
+.landslide-area-list li>button {flex:1;text-align:left;padding:9px 0;border:0;background:transparent;color:var(--ws-text);min-width:0;}
+.landslide-area-list li>button small {display:block;color:var(--ws-muted);font-size:11px;margin-top:3px;}
+.landslide-area-list li>button[aria-pressed=true] {color:var(--select-ink);text-decoration:underline;text-underline-offset:3px;}

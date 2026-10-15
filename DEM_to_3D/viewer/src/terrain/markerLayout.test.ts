@@ -1,7 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { layoutMarkerGroups, overlaps } from './markerLayout';
+import { layoutMarkerGroups, markerPriority, overlaps } from './markerLayout';
 
 describe('map symbol layout', () => {
+  it('keeps touching symbols of different categories separate and clickable', () => {
+    const groups = layoutMarkerGroups([
+      { id: 'community:priority', x: 100, y: 100, priority: 50, category: 'community' },
+      { id: 'hazard:landslide', x: 128, y: 124, priority: 80, category: 'landslide' },
+      { id: 'community:other', x: 118, y: 96, priority: 10, category: 'community' }
+    ], 400, 300, []);
+    expect(groups.map(group => [group.anchor.id, group.members.map(member => member.id)])).toEqual([
+      ['hazard:landslide', ['hazard:landslide']],
+      ['community:priority', ['community:priority', 'community:other']]
+    ]);
+  });
+  it('lets a reported landslide anchor a community it would cover', () => {
+    const groups = layoutMarkerGroups([
+      { id: 'community:priority', x: 100, y: 100, priority: 50, category: 'community' },
+      { id: 'hazard:landslide', x: 106, y: 104, priority: 80, category: 'landslide' }
+    ], 400, 300, []);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].anchor.id).toBe('hazard:landslide');
+    expect(groups[0].members.map(member => member.id)).toEqual(['hazard:landslide', 'community:priority']);
+  });
+  it('ranks the selection, reported hazards, priority communities, unverified hazards, then staging', () => {
+    const ranks = [
+      markerPriority({ selected: true }),
+      markerPriority({ selected: false, hazard: true }),
+      markerPriority({ selected: false, priorityCommunity: true }),
+      markerPriority({ selected: false, hazard: true, suspected: true }),
+      markerPriority({ selected: false, staging: true }),
+      markerPriority({ selected: false })
+    ];
+    expect([...ranks].sort((a, b) => b - a)).toEqual(ranks);
+    expect(new Set(ranks).size).toBe(ranks.length);
+  });
   it('retains every nearby object in a selectable group anchored at the selected point', () => {
     const points = [
       { id: 'hazard', x: 100, y: 100, priority: 10 },
@@ -14,15 +46,15 @@ describe('map symbol layout', () => {
     expect(groups.flatMap(g => g.members.map(p => p.id)).sort()).toEqual(['community', 'hazard', 'other']);
     expect(overlaps(groups[0].rect, groups[1].rect)).toBe(false);
   });
-  it('reserves the full selected pin so it cannot cover a nearby bridge or label', () => {
+  it('reserves the selected POI above its true coordinate so it cannot cover a bridge or label', () => {
     const points = [
       { id: 'selected', x: 100, y: 120, priority: 100, selected: true },
-      { id: 'bridge', x: 100, y: 70, priority: 10 }
+      { id: 'bridge', x: 100, y: 106, priority: 10 }
     ];
     const groups = layoutMarkerGroups(points, 400, 300, []);
     expect(groups).toHaveLength(1);
     expect(groups[0].members.map(point => point.id)).toEqual(['selected', 'bridge']);
-    expect(groups[0].rect).toEqual({ x: 82, y: 75, width: 36, height: 48 });
+    expect(groups[0].rect).toEqual({ x: 85, y: 90.2, width: 30, height: 34 });
   });
   it('does not cover a map control, including a neighbour behind that control', () => {
     const control = { x: 0, y: 0, width: 80, height: 150 };

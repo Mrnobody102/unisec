@@ -10,6 +10,7 @@ import {
   type WorkStatus
 } from './responseWork';
 import './response-operations.css';
+import '../geodata/scenario-card.css';
 
 export function ResponseWorkDialog({
   tasks,
@@ -19,6 +20,8 @@ export function ResponseWorkDialog({
   readOnly,
   storageError,
   onRecord,
+  onVerifyRoad,
+  onVerifyHazard,
   onInspect,
   onReport,
   onClose
@@ -30,6 +33,9 @@ export function ResponseWorkDialog({
   storageError: boolean;
   initialTaskId: string | null;
   onRecord: (task: ResponseWork, status: WorkStatus, note: string, owner: string) => void;
+  /** Records a finished check against the road or hazard; absent when data cannot change here. */
+  onVerifyRoad?: (roadId: string, status: 'open' | 'blocked', note: string) => boolean;
+  onVerifyHazard?: (hazardId: string, confirmed: boolean, note: string) => boolean;
   onInspect: (id: string) => void;
   onReport: () => void;
   onClose: () => void;
@@ -167,67 +173,24 @@ export function ResponseWorkDialog({
                 </p>
               )}
               {active.kind !== 'report' && (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const data = new FormData(event.currentTarget);
+                <WorkForm task={active} state={state} locale={locale} readOnly={readOnly}
+                  onInvalid={() => setError(true)}
+                  onSubmit={(status, note, owner, outcome) => {
                     try {
-                      onRecord(
-                        active,
-                        String(data.get('status')) as WorkStatus,
-                        String(data.get('note') ?? ''),
-                        String(data.get('owner') ?? '')
-                      );
+                      // A finished road check settles the road: the work log and road status agree.
+                      const [kind, id] = [active.id.slice(0, active.id.indexOf(':')), active.id.slice(active.id.indexOf(':') + 1)];
+                      const saved = !outcome ? true
+                        : kind === 'road' ? onVerifyRoad?.(id, outcome as 'open' | 'blocked', note.trim())
+                        : kind === 'hazard' ? onVerifyHazard?.(id, outcome === 'confirmed', note.trim()) : true;
+                      if (!saved) throw new Error('Check result not saved');
+                      onRecord(active, status, note, owner);
                       setError(false);
                     } catch {
                       setError(true);
                     }
                   }}
-                >
-                  <fieldset disabled={readOnly}>
-                    <div className="work-fields">
-                      <label>
-                        {t('Trạng thái công việc', 'Work status')}
-                        <select
-                          name="status"
-                          aria-label={t('Trạng thái công việc', 'Work status')}
-                          defaultValue={state.status}
-                        >
-                          {(Object.keys(workStatusText) as WorkStatus[]).map((status) => (
-                            <option key={status} value={status}>
-                              {t(...workStatusText[status])}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        {t('Người phụ trách', 'Owner')}
-                        <input name="owner" maxLength={100} defaultValue={state.owner} />
-                      </label>
-                    </div>
-                    <label>
-                      {t('Kết quả / lý do chờ', 'Result / reason for waiting')}
-                      <textarea
-                        name="note"
-                        rows={3}
-                        maxLength={1000}
-                        defaultValue={state.note}
-                        placeholder={t(...active.completion)}
-                      />
-                    </label>
-                    {error && (
-                      <p className="operations-notice" role="alert">
-                        {t(
-                          'Nhập người phụ trách; ghi kết quả khi hoàn tất hoặc lý do chờ hỗ trợ.',
-                          'Enter an owner, plus a result when completed or a reason for waiting.'
-                        )}
-                      </p>
-                    )}
-                    <button className="button primary" type="submit">
-                      {t('Ghi nhận', 'Record update')}
-                    </button>
-                  </fieldset>
-                </form>
+                  error={error}
+                />
               )}
             </section>
           )}
@@ -239,5 +202,69 @@ export function ResponseWorkDialog({
         </div>
       </section>
     </div>
+  );
+}
+
+function WorkForm({ task, state, locale, readOnly, error, onInvalid, onSubmit }: {
+  task: ResponseWork; state: ReturnType<typeof workState>; locale: Locale; readOnly: boolean; error: boolean;
+  onInvalid: () => void;
+  onSubmit: (status: WorkStatus, note: string, owner: string, outcome: string | null) => void;
+}): JSX.Element {
+  const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
+  const [status, setStatus] = useState<WorkStatus>(state.status);
+  const [outcome, setOutcome] = useState<string | null>(null);
+  // Finishing a check must say what was found; that result updates the road or hazard.
+  const outcomes = task.id.startsWith('road:')
+    ? [{ value: 'open', label: t('Đi được', 'Passable'), tone: 'is-open' }, { value: 'blocked', label: t('Bị chặn', 'Blocked'), tone: 'is-blocked' }]
+    : task.id.startsWith('hazard:')
+      ? [{ value: 'confirmed', label: t('Xác nhận có', 'Confirmed'), tone: 'is-blocked' }, { value: 'absent', label: t('Không phát hiện', 'Not found'), tone: 'is-open' }]
+      : [];
+  const finishingCheck = outcomes.length > 0 && status === 'done';
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const note = String(data.get('note') ?? ''), owner = String(data.get('owner') ?? '');
+        // Check everything before the road changes, so a rejected work entry never leaves a stray status edit.
+        if (finishingCheck && (!outcome || !note.trim() || !owner.trim())) { onInvalid(); return; }
+        onSubmit(status, note, owner, finishingCheck ? outcome : null);
+      }}
+    >
+      <fieldset disabled={readOnly}>
+        <div className="work-fields">
+          <label>
+            {t('Trạng thái công việc', 'Work status')}
+            <select name="status" aria-label={t('Trạng thái công việc', 'Work status')} value={status}
+              onChange={(event) => setStatus(event.target.value as WorkStatus)}>
+              {(Object.keys(workStatusText) as WorkStatus[]).map((value) => (
+                <option key={value} value={value}>{t(...workStatusText[value])}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('Người phụ trách', 'Owner')}
+            <input name="owner" maxLength={100} defaultValue={state.owner} />
+          </label>
+        </div>
+        {finishingCheck && (
+          <div className="scenario-status work-outcome" role="radiogroup" aria-label={t('Kết quả xác minh', 'Verification result')}>
+            {outcomes.map(item => <button key={item.value} type="button" role="radio" className={item.tone} aria-checked={outcome === item.value} onClick={() => setOutcome(item.value)}>{item.label}</button>)}
+          </div>
+        )}
+        <label>
+          {t('Kết quả / lý do chờ', 'Result / reason for waiting')}
+          <textarea name="note" rows={3} maxLength={1000} defaultValue={state.note} placeholder={t(...task.completion)} />
+        </label>
+        {error && (
+          <p className="operations-notice" role="alert">
+            {finishingCheck
+              ? t('Chọn kết quả xác minh, người phụ trách và ghi kết quả.', 'Choose the result, an owner and describe it.')
+              : t('Nhập người phụ trách; ghi kết quả khi hoàn tất hoặc lý do chờ hỗ trợ.', 'Enter an owner, plus a result when completed or a reason for waiting.')}
+          </p>
+        )}
+        <button className="button primary" type="submit">{t('Cập nhật', 'Update')}</button>
+      </fieldset>
+    </form>
   );
 }

@@ -69,7 +69,7 @@ def run(url, chrome, captures):
         page.locator('.map-object-chooser button:not(.map-chooser-expand)').first.click()
         selected = page.locator('.map-pin.is-selected:visible').first
         expect(selected).to_be_visible()
-        expect(selected.locator('.map-pin-icon')).to_be_visible()
+        expect(selected.locator('.map-pin-shape svg')).to_be_visible()
         expect(selected.locator('.map-pin-count')).to_be_hidden()
         # Opening from the 3D view mounts a fresh working 2D map and tool.
         page.get_by_role('button', name='Switch to 3D', exact=True).click()

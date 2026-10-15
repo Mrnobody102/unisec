@@ -1,11 +1,11 @@
 import type { Locale, ScenarioRoute } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
+import { roadStatusIcon, roadStatusLabels, roadStatusTone } from './roadStatus';
 
 export function RouteOption({ route, selected, locale, onSelect }: {
   route: ScenarioRoute; selected: boolean; locale: Locale; onSelect: () => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
-  const blocked = route.status === 'blocked';
   return <button className="route-card" aria-pressed={selected} onClick={onSelect}>
     <span className="route-option-heading">
       <span className="route-option-selector" aria-hidden="true"/>
@@ -15,8 +15,8 @@ export function RouteOption({ route, selected, locale, onSelect }: {
       <span>{route.lengthKm} km</span>
     </span>
     <span className="route-bottom">
-      <StatusText tone={blocked ? 'critical' : 'warning'} icon={blocked ? 'blocked' : 'uncertain'}>
-        {blocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}
+      <StatusText tone={roadStatusTone(route.status)} icon={roadStatusIcon(route.status)}>
+        {t(...roadStatusLabels[route.status])}
       </StatusText>
     </span>
   </button>;

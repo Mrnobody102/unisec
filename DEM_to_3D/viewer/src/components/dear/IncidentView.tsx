@@ -1,5 +1,4 @@
 import type { Community, IncidentModel, Locale } from '../../types/dear';
-import { localClock } from '../../features/incident/sourceTime';
 import { communityAccessText } from '../../features/routes/accessAssessment';
 import { StatusText } from '../../shared/ui/StatusText';
 import { UiIcon } from '../../shared/ui/UiIcon';
@@ -8,7 +7,6 @@ import type { ScenarioRoutePair } from '../../types/dear';
 import '../../features/incident/incident-panel.css';
 import {
   workState,
-  workStatusText,
   type ResponseWork,
   type WorkEntry
 } from '../../features/incident/responseWork';
@@ -16,11 +14,12 @@ import {
 type Props = {
   incident: IncidentModel;
   locale: Locale;
-  updated: boolean;
   areaName: [vi: string, en: string];
   tasks: ResponseWork[];
   entries: WorkEntry[];
   reportPending: boolean;
+  pendingReport?: [vi: string, en: string];
+  onApplyReport?: () => void;
   historical: boolean;
   onOpenWork: (id?: string) => void;
   onOpenReport: () => void;
@@ -40,11 +39,12 @@ type Props = {
 export function IncidentView({
   incident,
   locale,
-  updated,
   areaName,
   tasks,
   entries,
   reportPending,
+  pendingReport,
+  onApplyReport,
   historical,
   onOpenWork,
   onOpenReport,
@@ -61,20 +61,11 @@ export function IncidentView({
   onOpenArea
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
-  const asOf = updated ? incident.asOfUpdated : incident.asOf;
   const priorityCommunities = communities.filter(
     (community) => community.prio === 1
   );
   const open = tasks.filter(
     (task) => workState(task, entries).status !== 'done'
-  );
-  const statusCounts = tasks.reduce(
-    (counts, task) => {
-      const status = workState(task, entries).status;
-      counts[status] = (counts[status] ?? 0) + 1;
-      return counts;
-    },
-    {} as Record<string, number>
   );
   return (
     <>
@@ -89,81 +80,36 @@ export function IncidentView({
         >
           {t('Xem phạm vi trên bản đồ', 'Show response area')}
         </button>
-        <details className="incident-context-details">
-          <summary>{t('Thời gian đánh giá', 'Assessment timestamps')}</summary>
-          <dl className="incident-timing">
-            <div>
-              <dt>{t('Bắt đầu đánh giá', 'Assessment opened')}</dt>
-              <dd>
-                <time dateTime={incident.triggeredAt}>
-                  {localClock(incident.triggeredAt)}
-                </time>
-              </dd>
-            </div>
-            <div>
-              <dt>{t('Cập nhật dữ liệu', 'Data as of')}</dt>
-              <dd>
-                <time dateTime={asOf}>{localClock(asOf)}</time>
-              </dd>
-            </div>
-          </dl>
-        </details>
         {historical ? (
           <p className="incident-context-note">
             {t('Đang xem bản dữ liệu cũ', 'Viewing an older revision')}
           </p>
         ) : (
           reportPending && (
-            <button className="incident-pending-report" onClick={onOpenReport}>
+            // Says what came in; the action is one click.
+            <div className="incident-pending-report" role="status">
               <UiIcon name="uncertain" size={16} />
-              {t(
-                'Có báo cáo mới chưa cập nhật bản đồ',
-                'New report awaiting map update'
-              )}
-            </button>
+              <div>
+                <strong>
+                  {t('Báo cáo mới từ hiện trường', 'New field report')}
+                  {pendingReport && `: ${t(...pendingReport)}`}
+                </strong>
+                <span className="incident-pending-actions">
+                  {onApplyReport && (
+                    <button className="button primary" onClick={onApplyReport}>
+                      {t('Cập nhật bản đồ', 'Update map')}
+                    </button>
+                  )}
+                  <button className="text-button" onClick={onOpenReport}>
+                    {t('Xem báo cáo', 'View report')}
+                  </button>
+                </span>
+              </div>
+            </div>
           )
         )}
       </div>
       <div className="sidebar-scroll incident-body">
-        <section
-          className="incident-section"
-          aria-labelledby="incident-priority-heading"
-        >
-          <div className="incident-section-heading">
-            <h3 id="incident-priority-heading">
-              {t('Địa bàn ưu tiên', 'Priority communities')}
-            </h3>
-            <button
-              className="text-button incident-all-communities"
-              onClick={onOpenCommunities}
-              aria-label={`${t('Tất cả địa bàn', 'All communities')} (${communities.length})`}
-            >
-              {t('Tất cả', 'All')} ({communities.length})
-            </button>
-          </div>
-          <div className="incident-priority-list">
-            {priorityCommunities.map((community) => {
-              const assessment = assessments.get(community.id);
-              return (
-                <button
-                  className="incident-priority-row"
-                  key={community.id}
-                  onClick={() => onSelectCommunity(community.id)}
-                >
-                  <span>
-                    <strong>{community.name}</strong>
-                    <small className="priority-next-action">
-                      {t(
-                        ...(assessment?.reason ??
-                          communityAccessText(routes.get(community.id)))
-                      )}
-                    </small>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
         <section
           className="incident-section incident-road-summary"
           aria-labelledby="incident-road-heading"
@@ -199,6 +145,46 @@ export function IncidentView({
           </button>
         </section>
         <section
+          className="incident-section"
+          aria-labelledby="incident-priority-heading"
+        >
+          <div className="incident-section-heading">
+            <h3 id="incident-priority-heading">
+              {t('Địa bàn ưu tiên', 'Priority communities')}
+            </h3>
+            <button
+              className="text-button incident-all-communities"
+              onClick={onOpenCommunities}
+              aria-label={`${t('Tất cả địa bàn', 'All communities')} (${communities.length})`}
+            >
+              {t('Tất cả', 'All')} ({communities.length})
+            </button>
+          </div>
+          <div className="incident-priority-list">
+            {priorityCommunities.map((community) => {
+              const assessment = assessments.get(community.id);
+              return (
+                <button
+                  data-map-preview={"community:"+community.id}
+                  className="incident-priority-row"
+                  key={community.id}
+                  onClick={() => onSelectCommunity(community.id)}
+                >
+                  <span>
+                    <strong>{community.name}</strong>
+                    <small className="priority-next-action">
+                      {t(
+                        ...(assessment?.reason ??
+                          communityAccessText(routes.get(community.id)))
+                      )}
+                    </small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+        <section
           className="incident-section incident-work"
           aria-labelledby="incident-work-heading"
         >
@@ -206,23 +192,11 @@ export function IncidentView({
             <h3 id="incident-work-heading">
               {t('Theo dõi xác minh', 'Verification tracking')}
             </h3>
-            <button
-              className="text-button incident-all-communities"
-              onClick={() => onOpenWork()}
-            >
-              {t('Mở', 'Open')} ({open.length})
-            </button>
           </div>
-          <dl className="incident-work-summary">
-            {Object.entries(statusCounts).map(([status, count]) => (
-              <div key={status}>
-                <dt>
-                  {t(...workStatusText[status as keyof typeof workStatusText])}
-                </dt>
-                <dd>{count}</dd>
-              </div>
-            ))}
-          </dl>
+          <button className="road-count-row" onClick={() => onOpenWork()}>
+            <span>{t('Chưa hoàn tất', 'Open')}</span>
+            <span>{open.length}</span>
+          </button>
         </section>
         <nav
           className="incident-detail-actions"

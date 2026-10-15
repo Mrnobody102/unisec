@@ -35,7 +35,7 @@ flowchart LR
 | Phần | Cách liên kết |
 |---|---|
 | Đối tượng GIS | Một phiên dữ liệu dùng chung trong ứng dụng, giữ ID, hình học, thuộc tính và lựa chọn khi đóng/mở GIS. Tab Lớp quản lý dữ liệu; bảng Lớp bản đồ bật/tắt lớp GIS đã nhập |
-| Vị trí | Hiện các hình WGS84 trên bản đồ ứng phó 2D, kể cả ngoài phạm vi DEM chuẩn bị. Chỉ hành động Xem trên bản đồ ứng phó đổi vùng nhìn. Chưa hiển thị lớp nhập trên 3D |
+| Vị trí | Hiện các hình WGS84 trên bản đồ ứng phó 2D. Vùng sạt lở có thêm hình bám DEM trong 3D, giữ khoảng trống NoData; dữ liệu GIS khác vẫn dùng 2D |
 | Ghi nhận | Điểm có loại nghi sạt lở, hư hỏng đường, nước/ngập hoặc khảo sát. Ký hiệu cảnh báo và nhãn Chưa xác minh cho ghi nhận mới; chọn điểm mở ghi chú và ảnh |
 | Đánh giá tình huống | Ghi nhận mới không tự sửa vùng thiên tai, mức ưu tiên, trạng thái tuyến hoặc nhật ký phân tích. AOI làm việc không thay AOI sự kiện |
 | Lưu/chia sẻ | GeoJSON/KML giữ ID nguồn để khi nhập lại tạo ID mới và nối vùng với đúng điểm trong bộ nhập, không nối nhầm với bản cũ. Vùng nhập thiếu điểm vẫn là tham chiếu chưa liên kết. Bản mở độc lập cùng origin đọc cùng bộ lưu. GeoJSON/KML giữ dữ liệu ghi nhận và bản xem trước ảnh. Không gửi báo cáo hoặc đồng bộ người dùng |
@@ -47,6 +47,18 @@ Khi mở từ DEAR với vai trò điều phối viên, GIS hiển thị cùng c
 Điểm tham chiếu nhập từ KML/GeoJSON vẫn thuộc bộ dữ liệu GIS. Sửa tên/tọa độ hoặc khoanh vùng không tự xác nhận một sự cố hay cập nhật trạng thái đường. Nguồn ảnh, tọa độ GPS gốc và vị trí hiển thị được giữ riêng để đối chiếu. Workspace độc lập không có gói tình huống vẫn chỉ quản lý dữ liệu nhập.
 
 Backend dùng chung với EO là bước tiếp theo: [thiết kế lát cắt đầu tiên](../../../vsp-eo-platform/docs/plans/backend-first-slice.md). Hiện hai repo chưa đồng bộ qua server; liên kết GIS/ứng phó nêu trên là trong cùng DEAR và cùng trình duyệt.
+
+## Vùng nguy cơ và vết sạt lở
+
+Trong tab Lớp, dùng **Khoanh vùng nguy cơ** hoặc **Khoanh vết sạt lở**. Vẽ polygon trên bản đồ, lưu căn cứ và áp dụng cùng bản nháp GIS. Vùng tồn tại độc lập với điểm chụp ảnh và AOI; có thể gắn các ghi nhận làm nguồn. Polygon tham chiếu đã nhập cũng có thể được phân loại thành vùng sạt lở. Nguồn thực địa, ảnh vệ tinh/ảnh bay, phản ánh người dân, hồ sơ cũ và địa hình/địa chất được lưu riêng; tiếng động bất thường hoặc vết nứt là dấu hiệu cần kiểm tra, không tự trở thành kết luận đã sạt.
+
+Phân biệt **vùng có nguy cơ** và **dấu vết đã xảy ra**; khi đủ căn cứ có thể ghi vùng phát sinh, lan truyền xuống dốc hoặc bồi tích. Hồ sơ lưu thời điểm tư liệu nếu biết, mã ảnh và độ phân giải, sai số ranh giới nếu đã đánh giá, người/mức rà soát. Không suy sai số ranh giới từ kích thước pixel. “Đã rà soát tư liệu” khác “Đã kiểm tra thực địa”. Vùng chưa đủ nguồn/căn cứ giữ trong bản nháp và chưa áp dụng được.
+
+Liên kết vùng với một hay nhiều đoạn đường theo nhận định của cán bộ, kể cả vùng sườn dốc không giao trực tiếp với mặt đường. Có thể chọn hai đầu trên bản đồ hoặc nhập khoảng mét từ đầu đoạn đường để xác định phần liên quan. Quan hệ **có thể ảnh hưởng / đã có ảnh hưởng** được lưu riêng với tình trạng đi lại. Muốn ghi đường bị chặn, mở hồ sơ đoạn đường, ghi lý do và xác nhận tình trạng; thay đổi vùng và đường được áp dụng cùng một lần. Đánh giá tình trạng hiện áp dụng cho đoạn đường trong mạng, chưa chia mạng thành các cạnh mới từ khoảng ảnh hưởng. Di chuyển hoặc sửa vùng không tự mở lại đường. Liên kết đường mang phiên bản bộ dữ liệu, cần chọn lại nếu đổi mạng đường.
+
+GeoJSON/KML giữ metadata `dearLandslideArea`, hình học, nguồn, trạng thái rà soát và liên kết. Khi nhập lại, nguồn điểm chỉ nối với điểm nằm trong cùng bộ nhập; nguồn ngoài bộ vẫn được đánh dấu chưa có hồ sơ. Vùng nhập từ mạng đường khác không tự gắn vào đường trùng mã. Các quy tắc này tham khảo [USGS inventory và susceptibility](https://www.usgs.gov/tools/us-landslide-inventory-and-susceptibility-map?items_per_page=6), [dấu hiệu chuyển động sườn dốc](https://www.usgs.gov/programs/landslide-hazards/science/landslide-basics) và [phân biệt nguồn, lan truyền và bồi tích](https://pubs.usgs.gov/ds/1064/ds1064.pdf). Công cụ khoanh vùng hỗ trợ diễn giải và ghi nhận; chưa có mô hình ổn định sườn dốc hoặc mô phỏng runout.
+
+Ảnh GeoTIFF Planet và điều chỉnh band/range/gamma, nhập nhiều raster và xuất ảnh hiển thị thuộc Workbench EO; nguồn gốc, giới hạn raster và timeline được giữ tại [quy trình ảnh EO](../../../vsp-eo-platform/docs/plans/imagery-timeline-and-planet.md). DEAR không dùng ảnh nền cũ để xác nhận vết sạt mới.
 
 ## Hồ sơ điểm và ảnh
 
@@ -137,3 +149,5 @@ Catalog này có phạm vi/ngày hữu hạn; không có kết quả không có 
 | [UNOSAT](https://unosat.org/products/4256) và ảnh giao diện đã gửi | Màn ứng phó tập trung tác động, phạm vi, nguồn và thời điểm; công cụ phân tích nằm ở workspace riêng. Chưa kiểm trực tiếp toàn bộ thao tác của webmap |
 
 Proposal vẫn là đích nghiệp vụ: SAR ưu tiên sau sự kiện, phân tích tác động đường/cộng đồng rồi tạo sản phẩm cứu hộ. Catalog là đầu vào hỗ trợ luồng đó, không thay pipeline hoặc biến demo thành sản phẩm xử lý tự động.
+
+Hoàn tác sau khi áp dụng tạo một bản nháp mới, không thay ngược dữ liệu đang dùng. Dữ liệu nhận từ tab khác làm mới lịch sử Hoàn tác để không xóa nhầm ghi nhận vừa nhận. So sánh xung đột dựa trên nội dung JSON, không phụ thuộc thứ tự trường. Khi sửa ranh giới vùng sạt lở, mức rà soát trở về chưa rà soát; căn cứ và liên kết đường vẫn được giữ.

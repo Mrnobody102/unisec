@@ -1,9 +1,14 @@
-import { useLayoutEffect, useRef } from 'react';
+import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
+import type { GeometryRecord } from '../geo/vector/types';
+import { UiIcon } from '../shared/ui/UiIcon';
+import { useLayoutEffect, useRef, type ComponentProps } from 'react';
 import { CommunityDetailView } from '../components/dear/CommunityDetailView';
 import { ObjectDetailView } from '../components/dear/ObjectDetailView';
 import { usePanelScroll } from '../shared/hooks/usePanelScroll';
 import { selectedMapObject } from './workspaceNavigation';
+import { workState } from '../features/incident/responseWork';
 import type { ResponsePanelProps } from './responsePanelTypes';
+import type { CommunitySignal } from '../features/incident/responseAssessment';
 import './response-details.css';
 
 type Props = Pick<
@@ -31,7 +36,12 @@ type Props = Pick<
   | 'onExport'
   | 'onRename'
   | 'scenarioEdits'
-> & { visible: boolean; onReturnFocus: () => void };
+  | 'workTasks'
+  | 'workEntries'
+  | 'onOpenWork'
+> & { visible: boolean; onReturnFocus: () => void; onEditScenario?: (target:ScenarioTarget)=>void; mappedAreas?: GeometryRecord[]; onOpenMappedArea?: (id: string) => void;
+  onSetRoadStatus?: ComponentProps<typeof ObjectDetailView>['onSetRoadStatus']; onRevertEdit?: (editId: string) => boolean;
+  signals?: Record<string, CommunitySignal> };
 
 /** One detail surface: map dock on wide screens, the information pane on compact screens. */
 export function ResponseDetails({
@@ -56,10 +66,18 @@ export function ResponseDetails({
   onOpenDialog,
   onOpenEvidence,
   onExport,
-  onRename,
   scenarioEdits,
+  onRename,
+  onSetRoadStatus,
+  onRevertEdit,
+  signals,
+  workTasks,
+  workEntries,
+  onOpenWork,
+  onEditScenario,
   visible,
   onReturnFocus
+  , mappedAreas, onOpenMappedArea
 }: Props): JSX.Element | null {
   const { view, selectedRouteType, detailTab } = navigation;
   const {
@@ -136,15 +154,16 @@ export function ResponseDetails({
         onOpenSources={() => onOpenDialog('data')}
         onOpenEvidence={onOpenEvidence}
         onExport={onExport}
-        onRename={
-          onRename && ((names) => onRename('community', community.id, names))
-        }
+        onRename={onRename && (names => onRename('community', community.id, names))}
+        signal={signals?.[community.id]}
       />
     );
   } else if (view !== 'priority' && objectId) {
     content = (
       <ObjectDetailView
         objectId={objectId}
+        mappedAreas={mappedAreas}
+        onOpenMappedArea={onOpenMappedArea}
         parentName={
           navigation.objectOrigins[view] === 'priority'
             ? community?.name
@@ -170,8 +189,15 @@ export function ResponseDetails({
         onSelectObject={onInspectObject}
         onOpenEvidence={onOpenEvidence}
         onOpenPriority={openCommunities}
-        onRenameRoad={onRename && ((id, names) => onRename('road', id, names))}
         scenarioEdits={scenarioEdits}
+        onRenameRoad={onRename && ((id, names) => onRename('road', id, names))}
+        onSetRoadStatus={onSetRoadStatus}
+        verification={(() => {
+          const task = objectId && /^(road|hazard):/.test(objectId) ? workTasks.find(item => item.id === objectId) : undefined;
+          return task ? { taskId: task.id, ...workState(task, workEntries) } : undefined;
+        })()}
+        onOpenWork={onOpenWork}
+        onRevertEdit={onRevertEdit}
       />
     );
   } else return null;
@@ -185,6 +211,11 @@ export function ResponseDetails({
       aria-label={locale === 'vi' ? 'Chi tiết đang chọn' : 'Selected details'}
     >
       {content}
+      {onEditScenario && detailKey && (() => {
+        const target:ScenarioTarget|null = view==='priority'&&community ? {type:'community',id:community.id} : objectId && ['road','hazard','poi'].includes(objectId.split(':')[0]) ?
+          {type:objectId.split(':')[0]==='poi'?'site':objectId.split(':')[0] as 'road'|'hazard',id:objectId.slice(objectId.indexOf(':')+1)} : null;
+        return target && <div className="response-detail-edit"><button className="button" onClick={()=>onEditScenario(target)}><UiIcon name="edit" size={16}/>{locale==='vi'?'Sửa trong GIS':'Edit in GIS'}</button></div>;
+      })()}
     </aside>
   );
 }

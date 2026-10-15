@@ -1,3 +1,4 @@
+import {roadsForHazard} from '../../features/incident/roadHazards';
 import type { Hazard, IncidentEvidence, Locale, RoadSegment } from '../../types/dear';
 import { UiIcon } from './UiIcon';
 import { EvidenceMetadata } from '../../features/incident/EvidenceMetadata';
@@ -15,7 +16,7 @@ type Props = {
 
 export function EvidenceDialog({ evidence, hazard, roads, locale, onClose, onSelectRoad }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
-  const affected = hazard ? roads.filter(road => road.hz === hazard.id) : [];
+  const affected = hazard ? roadsForHazard(roads,hazard.id) : [];
   return <div className="modal-overlay" onClick={onClose}>
     <section className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="evidence-dialog-title" onClick={event => event.stopPropagation()}>
       <div className="modal-head"><h2 id="evidence-dialog-title">{evidence ? evidencePresentation(evidence.type, locale).kind : t('Thông tin đánh giá', 'Assessment details')}</h2><button className="icon-button" onClick={onClose} aria-label={t('Đóng', 'Close')}><UiIcon name="close"/></button></div>

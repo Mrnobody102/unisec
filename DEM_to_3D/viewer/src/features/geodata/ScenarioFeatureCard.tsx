@@ -1,7 +1,16 @@
+import {ScenarioLinksEditor} from './ScenarioLinksEditor';
+import type { GeometryRecord } from '../../geo/vector/types';
+import { landslideAreaOf } from '../landslides/landslideAreas';
+import {roadHazardIds,roadsForHazard} from '../incident/roadHazards';
+import { ConfirmDialog } from '../../shared/ui/ConfirmDialog';
+import { scenarioProperties } from '../access/scenarioProperties';
+import { ScenarioPropertiesEditor } from './ScenarioPropertiesEditor';
+import { ScenarioCoordinatesDialog } from './ScenarioCoordinatesDialog';
 import { EditableTitle } from '../../shared/ui/EditableTitle';
 import type { RenameScenario } from '../access/ScenarioLabels';
 import { useState } from 'react';
 import type { Locale, RoadStatus } from '../../types/dear';
+import { roadStatusShortLabels } from '../routes/roadStatus';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { roadGeographic } from '../routes/selectedRoadJourney';
 import {
@@ -17,11 +26,7 @@ import {
 import './scenario-card.css';
 
 type Point = { x: number; y: number };
-const statusLabel: Record<RoadStatus, [string, string]> = {
-  open: ['Thông thường', 'Open'],
-  uncertain: ['Cần xác minh', 'To verify'],
-  blocked: ['Bị chặn', 'Blocked']
-};
+const statusLabel = roadStatusShortLabels;
 
 /** Edit panel for one scenario feature. Every change needs a reason and lands in the history. */
 export function ScenarioFeatureCard({
@@ -36,6 +41,12 @@ export function ScenarioFeatureCard({
   onCancelMove,
   onRecord,
   onRevert,
+  onPreviewPosition,
+  onPickPosition,
+  onResponse,
+  readOnly = false,
+  mappedAreas = [],
+  onOpenMappedArea,
   onClose
 }: {
   scenario: ScenarioOverlay;
@@ -49,6 +60,12 @@ export function ScenarioFeatureCard({
   onCancelMove: () => void;
   onRecord: (change: ScenarioChange, note: string, name: string) => boolean;
   onRevert: (id: string, note: string) => boolean;
+  onPreviewPosition: (point: Point) => void;
+  onPickPosition: () => void;
+  onResponse?: () => void;
+  readOnly?: boolean;
+  mappedAreas?: GeometryRecord[];
+  onOpenMappedArea?: (id: string) => void;
   onClose: () => void;
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
@@ -57,6 +74,7 @@ export function ScenarioFeatureCard({
   const [note, setNote] = useState(''),
     [status, setStatus] = useState<RoadStatus | null>(null),
     [error, setError] = useState('');
+  const [review, setReview] = useState<ScenarioChange | null>(null), [coordinatesOpen, setCoordinatesOpen] = useState(false);
   const feature =
     target.type === 'community'
       ? scenario.communities.find((item) => item.id === target.id)
@@ -92,6 +110,11 @@ export function ScenarioFeatureCard({
       );
     if (c.kind === 'status')
       return `${pick(statusLabel[c.from])} → ${pick(statusLabel[c.to])}`;
+    if (c.kind === 'links') return t('Cập nhật liên kết đường–sự cố','Updated road–hazard links');
+    if (c.kind === 'create') return target.type === 'site' ? t('Thêm bãi đáp đề xuất', 'Added candidate landing site') : t('Thêm sự cố', 'Added hazard');
+    if (c.kind === 'properties') return c.from.names[0] !== c.to.names[0] ? t('Đổi tên: ', 'Renamed: ') + c.to.names[0]
+      : c.from.siteAssessment !== c.to.siteAssessment ? t('Cập nhật khảo sát', 'Assessment updated')
+      : c.from.hazardKind !== c.to.hazardKind ? t('Cập nhật loại sự cố', 'Hazard type updated') : t('Cập nhật nhãn bản đồ', 'Map label updated');
     return t(`Đổi tên: ${c.from} → ${c.to}`, `Renamed: ${c.from} → ${c.to}`);
   };
   const save = (change: ScenarioChange) => {
@@ -100,11 +123,16 @@ export function ScenarioFeatureCard({
       return;
     }
     if (onRecord(change, note.trim(), name)) {
+      setReview(null);
       setNote('');
       setStatus(null);
       setError('');
     } else
       setError(t('Không lưu được thay đổi.', 'Could not save the change.'));
+  };
+  const prepare = (change: ScenarioChange) => {
+    if (!note.trim()) {setError(t('Ghi lý do thay đổi.', 'Add a reason for the change.'));return;}
+    setError('');setReview(change);
   };
   const reason = (
     <label className="scenario-card-field">
@@ -135,15 +163,7 @@ export function ScenarioFeatureCard({
             }
             bilingual={target.type !== 'community'}
             onRename={
-              onRename &&
-              (target.type === 'community' || target.type === 'road')
-                ? (names) =>
-                    onRename(
-                      target.type as 'community' | 'road',
-                      target.id,
-                      names
-                    )
-                : undefined
+              onRename && !readOnly ? (names) => onRecord({kind:'properties',from:scenarioProperties(feature),to:{...scenarioProperties(feature),names}},t('Cập nhật tên hiển thị','Update display name'),name) : undefined
             }
           />
         </div>
@@ -156,6 +176,7 @@ export function ScenarioFeatureCard({
         </button>
       </header>
 
+      {readOnly && <p className="scenario-card-block scenario-card-hint">{t('Bản dữ liệu cũ, chỉ xem.', 'Older revision, read only.')}</p>}
       {position && geo && (
         <div className="scenario-card-block">
           <dl className="scenario-card-facts">
@@ -166,11 +187,11 @@ export function ScenarioFeatureCard({
               </dd>
             </div>
           </dl>
-          {!moving ? (
-            <button className="button" onClick={onStartMove}>
-              <UiIcon name="pointer" size={16} />
-              {t('Di chuyển trên bản đồ', 'Move on map')}
-            </button>
+          {!readOnly && (!moving ? (
+            <div className="scenario-card-actions">
+              <button className="button" onClick={onStartMove}><UiIcon name="pointer" size={16} />{t('Di chuyển trên bản đồ', 'Move on map')}</button>
+              <button className="button" onClick={() => setCoordinatesOpen(true)}>{t('Sửa tọa độ', 'Edit coordinates')}</button>
+            </div>
           ) : !pending ? (
             <p className="scenario-card-hint" role="status">
               {t(
@@ -195,7 +216,7 @@ export function ScenarioFeatureCard({
                 <button
                   className="button primary"
                   onClick={() =>
-                    save({ kind: 'move', from: position, to: pending })
+                    prepare({ kind: 'move', from: position, to: pending })
                   }
                 >
                   {t('Lưu vị trí', 'Save position')}
@@ -205,10 +226,13 @@ export function ScenarioFeatureCard({
                 </button>
               </div>
             </>
-          )}
+          ))}
         </div>
       )}
 
+      {!readOnly && !moving && target.type !== 'road' && <ScenarioPropertiesEditor key={JSON.stringify(scenarioProperties(feature))} value={scenarioProperties(feature)}
+        type={target.type} landingSite={'kind' in feature && feature.kind === 'hlz'} locale={locale} onSave={(change, note) => onRecord(change, note, name)} />}
+      {['hazard','road'].includes(target.type) && <ScenarioLinksEditor key={target.id+JSON.stringify(target.type==='hazard'?roadsForHazard(scenario.roads,target.id).map(r=>r.id):road?roadHazardIds(road):[])} scenario={scenario} target={target} locale={locale} readOnly={readOnly} onSave={(c,n)=>onRecord(c,n,name)}/>}
       {road && (
         <div className="scenario-card-block">
           <div
@@ -219,6 +243,7 @@ export function ScenarioFeatureCard({
             {(['open', 'uncertain', 'blocked'] as const).map((value) => (
               <button
                 key={value}
+                disabled={readOnly}
                 role="radio"
                 aria-checked={(status ?? road.status) === value}
                 className={'is-' + value}
@@ -248,6 +273,14 @@ export function ScenarioFeatureCard({
           )}
         </div>
       )}
+      {road && onOpenMappedArea && mappedAreas.some(record => landslideAreaOf(record)?.roadLinks.some(link => link.roadId === road.id)) && (
+        <section className="scenario-card-block">
+          <h3>{t('Vùng liên quan', 'Linked areas')}</h3>
+          {mappedAreas.filter(record => landslideAreaOf(record)?.roadLinks.some(link => link.roadId === road.id)).map(record => (
+            <button key={record.id} className="text-button" onClick={() => onOpenMappedArea(record.id)}>{record.name}</button>
+          ))}
+        </section>
+      )}
       {error && (
         <p className="scenario-card-error" role="alert">
           {error}
@@ -270,7 +303,7 @@ export function ScenarioFeatureCard({
                   {edit.reverts && t(' (hoàn tác)', ' (undo)')}
                 </small>
                 {edit.note && <p>{edit.note}</p>}
-                {edit === latest && !moving && !status && (
+                {edit === latest && edit.change.kind !== 'create' && !readOnly && !moving && !status && (
                   <button
                     className="text-button"
                     onClick={() =>
@@ -288,6 +321,14 @@ export function ScenarioFeatureCard({
           </ol>
         )}
       </div>
+      {onResponse && <div className="scenario-card-block"><button className="button" onClick={onResponse}>{t('Xem trên bản đồ ứng phó', 'View on response map')}</button></div>}
+      {coordinatesOpen && position && <ScenarioCoordinatesDialog point={position} locale={locale} onClose={() => setCoordinatesOpen(false)} onPreview={onPreviewPosition} onPick={onPickPosition} />}
+      {review && <ConfirmDialog title={review.kind === 'move' ? t('Cập nhật vị trí?', 'Update position?') : t('Cập nhật tình trạng đường?', 'Update road status?')} locale={locale}
+        confirmLabel={t('Cập nhật', 'Update')} onCancel={() => setReview(null)} error={error} onConfirm={() => save(review)}>
+        <p>{name}</p><p>{note || t('Chưa có lý do thay đổi.', 'A reason is required.')}</p>
+        {review.kind === 'move' && <p>{t('Dời vị trí', 'Move position')}: {Math.round(Math.hypot(review.to.x-review.from.x,review.to.y-review.from.y))} m</p>}
+        {review.kind === 'move' && target.type === 'site' && 'kind' in feature && feature.kind === 'hlz' && <p>{t('Vị trí mới trở lại trạng thái đề xuất, chưa khảo sát.', 'The new position becomes an unsurveyed candidate.')}</p>}
+      </ConfirmDialog>}
     </section>
   );
 }

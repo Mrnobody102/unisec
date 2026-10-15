@@ -14,13 +14,14 @@ def check_symbols(page):
     problems = page.evaluate("""() => {
       const box = el => el.getBoundingClientRect();
       const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+      const coversCenter = (a, b) => { const x = (b.left + b.right) / 2, y = (b.top + b.bottom) / 2; return x > a.left + 1 && x < a.right - 1 && y > a.top + 1 && y < a.bottom - 1; };
       const visible = el => el.offsetHeight && getComputedStyle(el).visibility !== 'hidden';
       const pins = [...document.querySelectorAll('.map-pin')].filter(visible);
       const controls = [...document.querySelectorAll('.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.layers-panel,.map-attribution,.map-source-popover,.map-measure-panel')].filter(visible);
       const errors = [];
       pins.forEach((pin, i) => {
-        pins.slice(i + 1).forEach(other => { if (overlap(box(pin), box(other))) errors.push('pins: ' + pin.title + ' / ' + other.title); });
-        controls.forEach(control => { if (overlap(box(pin), box(control))) errors.push('control: ' + pin.title); });
+        pins.slice(i + 1).forEach(other => { if (coversCenter(box(pin), box(other)) || coversCenter(box(other), box(pin))) errors.push('pins: ' + pin.getAttribute('aria-label') + ' / ' + other.getAttribute('aria-label')); });
+        controls.forEach(control => { if (overlap(box(pin), box(control))) errors.push('control: ' + pin.getAttribute('aria-label')); });
       });
       const labels = [...document.querySelectorAll('.map-pin:not(.is-label-hidden) .map-pin-label')].filter(visible);
       labels.forEach((label, i) => {
@@ -78,7 +79,7 @@ def run(url, chrome, captures, prepared=False):
         if captures:
             page.screenshot(path=str(captures / 'workspace-summary.png'))
         expect(page.locator('.route-card')).to_have_count(2)
-        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         with page.expect_download() as download:
             page.get_by_role('button', name='Tải bản đồ PNG', exact=True).click()
@@ -95,7 +96,7 @@ def run(url, chrome, captures, prepared=False):
         assert snapshot['terrainAssets']['image']['sha256']
         page.keyboard.press('Escape')
         page.locator('.route-card').nth(1).click()
-        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         with page.expect_download() as download:
             page.locator('.export-formats summary').click()
@@ -120,7 +121,7 @@ def run(url, chrome, captures, prepared=False):
         page.get_by_role('button', name='Chuyển sang 3D', exact=True).click()
         expect(page.locator('.map-2d-surface')).to_be_visible(timeout=25000)
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
-        expect(page.locator('.toast')).to_contain_text('2D')
+        expect(page.locator('.notice-toast')).to_contain_text('2D')
 
         source = page.get_by_role('button', name='Nguồn bản đồ', exact=True)
         source.click(); expect(page.locator('.map-source-popover')).to_be_visible()
@@ -140,30 +141,30 @@ def run(url, chrome, captures, prepared=False):
         page.locator('.workspace-nav button').nth(1).click()
         page.get_by_role('searchbox', name='Tìm đường hoặc điểm ảnh hưởng').fill('E3')
         page.locator('.impact-row').click()
-        expect(page.locator('#response-details')).to_contain_text('Cần xác minh mực nước và khả năng qua cầu.')
+        expect(page.locator('#response-details')).to_contain_text('Khả năng qua cầu chưa được xác minh.')
         expect(page.locator('#response-details')).not_to_contain_text('Thông tin tham chiếu')
         page.get_by_role('button', name='Xem báo cáo', exact=True).click()
         expect(page.locator('.evidence-metadata')).to_contain_text('03:55')
         expect(page.locator('.evidence-metadata')).to_contain_text('04:10')
         expect(page.locator('.evidence-road')).to_contain_text('Khau Mang')
         if captures:
-            expect(page.locator('.toast')).to_have_count(0, timeout=6000)
+            expect(page.locator('.notice-toast')).to_have_count(0, timeout=6000)
             page.screenshot(path=str(captures / 'workspace-evidence.png'))
         page.locator('.evidence-road').click()
         expect(page.locator('.modal-overlay')).to_have_count(0)
         expect(page.locator('#response-details h1')).to_have_text('Đường vào Khau Mang qua cầu')
         if captures:
-            expect(page.locator('.toast')).to_have_count(0, timeout=6000)
+            expect(page.locator('.notice-toast')).to_have_count(0, timeout=6000)
             page.screenshot(path=str(captures / 'workspace-road-action.png'))
         page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
         page.get_by_role('button', name='Xem toàn khu vực', exact=True).click()
         for _ in range(7):
             page.get_by_role('button', name='Thu nhỏ', exact=True).click()
             page.wait_for_timeout(150)
-        group = page.locator('.map-pin.is-cluster:visible,.map-pin.is-overlap:visible,.map-pin.has-overlap:visible').first
+        group = page.locator('.map-pin.is-cluster:visible,.map-pin.has-overlap:visible').first
         expect(group).to_be_visible()
         check_symbols(page)
-        assert page.locator('.map-pin.is-overlap:visible .map-pin-count:visible').count() == 0
+        assert page.locator('.map-pin.has-overlap:visible .map-pin-count:visible').count() == 0
         group.click()
         expect(page.locator('.map-object-chooser')).to_be_visible()
         page.keyboard.press('Escape'); expect(page.locator('.map-object-chooser')).to_have_count(0)
@@ -186,7 +187,7 @@ def run(url, chrome, captures, prepared=False):
         panel.get_by_role('button', name='Chỉnh sửa', exact=True).click()
         expect(panel.get_by_role('button', name='Hoàn tác', exact=True)).to_be_disabled()
         panel.get_by_role('button', name='Hủy', exact=True).click()
-        panel.get_by_role('combobox', name='Kiểu đo', exact=True).select_option('area')
+        panel.get_by_role('radio', name='Diện tích', exact=True).check()
         pick(.55, .4); pick(.7, .4); pick(.7, .6)
         expect(panel.locator('.map-measure-result')).to_contain_text('Chu vi')
         expect(panel.get_by_role('button', name='Kết thúc')).to_be_enabled()
@@ -236,9 +237,9 @@ def run(url, chrome, captures, prepared=False):
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
         expect(page.locator('.incident-context-revision')).to_contain_text('09:45')
-        expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
+        expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
-        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
         with page.expect_download() as download:
             page.locator('.export-formats summary').click()
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
@@ -283,7 +284,7 @@ def run(url, chrome, captures, prepared=False):
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
         page.locator('.incident-priority-row').first.click()
         page.get_by_role('button', name='Chuyển sang 3D', exact=True).click()
-        expect(page.locator('.toast')).to_contain_text('2D', timeout=25000)
+        expect(page.locator('.notice-toast')).to_contain_text('2D', timeout=25000)
         expect(page.locator('.map-2d-surface')).to_be_visible()
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
         context.close()

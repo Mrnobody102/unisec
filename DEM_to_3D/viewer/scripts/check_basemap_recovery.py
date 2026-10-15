@@ -32,11 +32,13 @@ def run(url, chrome):
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         expect(page.locator('.map-2d img[data-retry="2"].leaflet-tile-loaded')).to_be_visible(timeout=15000)
-        page.wait_for_function("document.querySelector('.map-2d img.leaflet-image-layer')?.style.opacity === '0'")
+        # The local image remains underneath ready opaque tiles to fill future pan gaps.
+        expect(page.locator('.map-2d img.leaflet-image-layer')).to_have_css('opacity', '1')
+        assert page.locator('.leaflet-dear-imagery-pane').evaluate("p => +getComputedStyle(p).zIndex < +getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex")
         expect(page.locator('.map-source-warning')).to_have_count(0)
         assert failures == 2 and not errors, errors
         browser.close()
-    print('Basemap recovery passed: repeated tile failures recover, warning clears, detailed tiles replace the local fallback.')
+    print('Basemap recovery passed: repeated tile failures recover, warning clears, detailed tiles draw above the retained local fallback.')
 
 if __name__ == '__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5174');parser.add_argument('--chrome')

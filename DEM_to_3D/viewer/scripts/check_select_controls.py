@@ -46,6 +46,8 @@ def check_controls(page):
                 box = cdp.send('DOM.getBoxModel', {'nodeId': node['nodeId']})['model']['border']
             except Error:  # Hidden controls have no layout box.
                 continue
+            if max(box[::2]) - min(box[::2]) < 1 or max(box[1::2]) - min(box[1::2]) < 1:
+                continue  # Hidden/closed controls may have a zero-size CDP box.
             for value in descendants(node):
                 if '-internal-select-inner-element' not in value.get('attributes', []):
                     continue
@@ -147,7 +149,7 @@ def run(url, chrome, captures):
             if captures:
                 home.screenshot(path=str(captures / f'long-community-{width}.png'))
         home.evaluate('(s, text) => s.options[0].textContent = text', original)
-        page.get_by_label('Tên hiển thị', exact=True).fill('Kiểm tra giao diện')
+        page.get_by_label('Tên của bạn', exact=True).fill('Kiểm tra giao diện')
         page.get_by_role('button', name='Vào ứng dụng', exact=True).click()
         expect(page.locator('.citizen-workspace')).to_be_visible()
         for width in [1440, 390, 320]:

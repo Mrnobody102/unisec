@@ -137,7 +137,7 @@ export function GeometryToolbar({
       </div>
       {!editor.active && (
         <span className="geodata-tool-status" data-empty={!aoiName || undefined} title={aoiName}>
-          {aoiName ? `AOI: ${aoiName}` : t('Chưa có AOI', 'No AOI')}
+          {aoiName ? `${t('Vùng quan tâm', 'AOI')}: ${aoiName}` : t('Chưa có vùng quan tâm', 'No AOI')}
         </span>
       )}
     </div>

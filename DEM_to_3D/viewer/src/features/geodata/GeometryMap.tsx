@@ -1,22 +1,26 @@
 import { removeLeafletMap } from '../map/removeLeafletMap';
+import { selectedPinSvg } from '../../terrain/poiFrame';
+import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
+import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
 import type { RenameScenario } from '../access/ScenarioLabels';
 import { PointRenderingControl } from '../map/PointRenderingControl';
 import { usePointRendering } from '../map/usePointRendering';
 import { isSelectPickerEvent } from '../../shared/ui/selectKeyboard';
 import { scenarioOverlayLayer, targetKey, type ScenarioOverlay, type ScenarioTarget } from './scenarioOverlay';
 import { ScenarioFeatureCard } from './ScenarioFeatureCard';
+import type { GeometryMapDetail } from './geometryDetail';
 import type { ScenarioEdits } from '../access/scenarioEdits';
 import { roadGeographic, roadProjected } from '../routes/selectedRoadJourney';
 import { createTileProgress } from '../map/tileProgress';
 import { retryTileErrors } from '../map/tileRetry';
-import { imagerySource } from '../map/imagerySource';
+import { basemapTileOptions, imagerySource } from '../map/imagerySource';
 import { fieldAreaOwner } from '../observations/fieldAreas';
 import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import { useEffect, useRef, useState } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
-import { geometryPositions, type GeometryRecord } from '../../geo/vector/types';
+import { geometryPositions, type GeometryRecord, type VectorGeometry } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { MapAttribution } from '../../components/dear/MapAttribution';
@@ -44,10 +48,12 @@ type Props = {
   offline: boolean;
   viewRequest: { version: number; id: string | null };
   onSelect: (id: string) => void;
-  onGroupOpen?: () => void;
+  detail: GeometryMapDetail | null;
+  onDetail: (detail: GeometryMapDetail | null) => void;
   editor: ReturnType<typeof useGeometryEditor>;
   snapping: boolean;
   drawingColor?: string;
+  previewGeometry?: VectorGeometry;
   onFinish: () => void;
   onCancel: () => void;
   intersection: Feature<Polygon | MultiPolygon> | null;
@@ -56,7 +62,17 @@ type Props = {
   /** Present for managers: scenario features become selectable and editable. */
   scenarioEdits?: ScenarioEdits;
   onRenameScenario?: RenameScenario;
+  scenarioFocus?: ScenarioTarget | null;
+  onResponseScenario?: (target: ScenarioTarget) => void;
+  onScenarioNotice?: (message: [string,string]) => void;
+  onPickPoint?: (point: {latitude:number;longitude:number}) => void;
+  onCancelPick?: () => void;
+  pickLabel?: [string, string];
+  pickAnchor?: {latitude:number;longitude:number};
+  onPickScenarioPosition?: () => void;
 };
+
+const emptyPointGroup: readonly string[] = [];
 
 export function GeometryMap(props: Props): JSX.Element {
   const t = (vi: string, en: string) => (props.locale === 'vi' ? vi : en);
@@ -76,11 +92,17 @@ export function GeometryMap(props: Props): JSX.Element {
   const { mode: pointMode } = usePointRendering();
   const [showIntersection, setShowIntersection] = useState(true),
     [showScenario, setShowScenario] = useState(true),
-    [scenarioTarget, setScenarioTarget] = useState<ScenarioTarget | null>(null),
-    [scenarioMoving, setScenarioMoving] = useState(false),
-    [scenarioPending, setScenarioPending] = useState<{ x: number; y: number } | null>(null),
-    [pointGroup, setPointGroup] = useState<string[]>([]),
     [cursor, setCursor] = useState('');
+  const scenarioDetail = props.detail?.kind === 'scenario' ? props.detail : null;
+  const scenarioTarget = scenarioDetail?.target ?? null;
+  const scenarioMoving = scenarioDetail?.moving ?? false;
+  const scenarioPending = scenarioDetail?.pending ?? null;
+  const pointGroup = props.detail?.kind === 'group' ? props.detail.ids : emptyPointGroup;
+  const updateScenario = (patch: Partial<Pick<NonNullable<typeof scenarioDetail>, 'moving' | 'pending'>>) => {
+    const current = live.current.detail;
+    if (current?.kind === 'scenario')
+      live.current.onDetail({ ...current, ...patch });
+  };
   const [retry, setRetry] = useState(0);
   const [source, setSource] = useState<BasemapState>({
     status: 'off',
@@ -177,6 +199,7 @@ export function GeometryMap(props: Props): JSX.Element {
         );
     };
     const click = (event: L.LeafletMouseEvent) => {
+      if (live.current.onPickPoint) { live.current.onPickPoint({latitude:event.latlng.lat,longitude:event.latlng.lng}); return; }
       const { editor } = live.current;
       if (
         !['polygon', 'rectangle'].includes(editor.mode) ||
@@ -234,8 +257,7 @@ export function GeometryMap(props: Props): JSX.Element {
         maxNativeZoom: base === 'satellite' ? imagerySource.maxNativeZoom : 14,
         maxZoom: 19,
         noWrap: true,
-        keepBuffer: 1,
-        updateWhenIdle: true
+        ...basemapTileOptions
       }
     ));
     layer.on('loading', () => { progress.reset(); publish(); });
@@ -249,13 +271,29 @@ export function GeometryMap(props: Props): JSX.Element {
       layer.remove();
     };
   }, [ready, base, retry]);
+  // A scenario focus (e.g. "Edit in GIS") wins over the view request pending at that moment:
+  // on open the session asks to fit all GIS records, which would otherwise run after this
+  // and move the map away from the object being edited.
+  const appliedFocus = useRef<ScenarioTarget | null>(null);
+  const focusedView = useRef<typeof props.viewRequest | null>(null);
+  useEffect(() => {
+    const map=mapRef.current, target=props.scenarioFocus, scenario=props.scenario;
+    if(!ready||!map||!target||!scenario||appliedFocus.current===target) return;
+    setShowScenario(true);
+    const collection=target.type==='community'?scenario.communities:target.type==='hazard'?scenario.hazards:target.type==='site'?scenario.responseSites:scenario.roads;
+    const feature=collection.find(f=>f.id===target.id);
+    if(!feature) return;
+    appliedFocus.current=target; focusedView.current=props.viewRequest;
+    if('projected' in feature) {const g=roadGeographic(feature.projected);map.setView([g.latitude,g.longitude],Math.max(map.getZoom(),14),{animate:false});}
+    else map.fitBounds(L.latLngBounds(feature.points.map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);})),{padding:[48,48],maxZoom:16,animate:false});
+  },[ready,props.scenarioFocus,props.scenario]);
   const scenarioFitted = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map || scenarioFitted.current || !props.scenario) return;
     scenarioFitted.current = true;
     // With nothing imported yet, open on the incident area rather than a regional view.
-    if (props.viewRequest.version || props.records.some((record) => record.visible)) return;
+    if (props.scenarioFocus || props.viewRequest.version || props.records.some((record) => record.visible)) return;
     const { communities, responseSites, hazards, roads } = props.scenario;
     const points = [
       ...communities.map((item) => item.projected),
@@ -281,21 +319,18 @@ export function GeometryMap(props: Props): JSX.Element {
       selected: scenarioTarget,
       moving: scenarioMoving,
       pendingAt: pending ? L.latLng(pending.latitude, pending.longitude) : null,
-      onSelect: live.current.scenarioEdits && !live.current.editor.active
+      onSelect: !live.current.onPickPoint && !live.current.editor.active
         ? (target) => {
-            setScenarioTarget(target);
-            setScenarioMoving(false);
-            setScenarioPending(null);
-            setPointGroup([]);
+            live.current.onDetail({ kind: 'scenario', target, moving: false, pending: null });
           }
         : undefined,
-      onMoved: (_, position) => setScenarioPending(roadProjected(position.lat, position.lng))
+      onMoved: (_, position) => updateScenario({ pending: roadProjected(position.lat, position.lng) })
     }).addTo(map);
     return () => {
       layer.remove();
     };
     // The wrapper object is rebuilt per render; its arrays are stable snapshot data.
-  }, [ready, base, showScenario, props.scenario?.communities, props.scenario?.responseSites, props.scenario?.hazards, props.scenario?.roads, props.locale, targetKey(scenarioTarget), scenarioMoving, scenarioPending, props.editor.active]);
+  }, [ready, base, showScenario, props.scenario?.communities, props.scenario?.responseSites, props.scenario?.hazards, props.scenario?.roads, props.locale, targetKey(scenarioTarget), scenarioMoving, scenarioPending, props.editor.active, props.onPickPoint]);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
@@ -308,7 +343,8 @@ export function GeometryMap(props: Props): JSX.Element {
     )) {
       const observation = observationOf(record);
       const owner = fieldAreaOwner(record, props.records);
-      const color = owner
+      const mappedArea = landslideAreaOf(record);
+      const color = mappedArea ? landslideAreaStyle(mappedArea).color : owner
           ? '#b87919'
           : observation
             ? observationColor(observation.kind)
@@ -324,11 +360,12 @@ export function GeometryMap(props: Props): JSX.Element {
       const pointStyle: L.CircleMarkerOptions = {
         pane: 'points',
         radius: selected ? 6 : 4,
-        color: '#ffffff',
+        className: selected ? 'map-selected-reference' : 'map-reference-point',
+        color,
         weight: selected ? 2 : 1.5,
-        fillColor: color,
+        fillColor: '#fafbf8',
         fillOpacity: 1,
-        interactive: !props.editor.active
+        interactive: !props.editor.active && !props.onPickPoint
       };
       const render = () => {
         const layer = L.geoJSON(record.feature, {
@@ -337,7 +374,7 @@ export function GeometryMap(props: Props): JSX.Element {
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? pointStyle
-              : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state, interactive: !props.editor.active && !props.onPickPoint } : {
                   color,
                   weight: selected ? 3 : 1.5,
                   fillOpacity: owner
@@ -348,20 +385,25 @@ export function GeometryMap(props: Props): JSX.Element {
                       ? 0.15
                       : 0.06,
                   dashArray: record.role === 'footprint' ? '7 4' : undefined,
-                  interactive: !props.editor.active
+                  interactive: !props.editor.active && !props.onPickPoint
                 },
           pointToLayer: (_, position) =>
             observation
               ? observationMarker(position, record, observation, {
                   pane: 'points',
                   selected,
-                  interactive: !props.editor.active
+                  interactive: !props.editor.active && !props.onPickPoint
                 })
-              : L.circleMarker(position, pointStyle)
+              : selected
+                ? L.marker(position, { pane: 'points', interactive: !props.editor.active && !props.onPickPoint,
+                    keyboard: !props.editor.active && !props.onPickPoint, zIndexOffset: 1000,
+                    icon: L.divIcon({ html: selectedPinSvg(), className: 'geodata-selected-point map-selected-reference',
+                      iconSize: [28, 32], iconAnchor: [14, 28.8], tooltipAnchor: [0, -30] }) })
+                : L.circleMarker(position, pointStyle)
         });
         const label = document.createElement('span');
         label.textContent = record.name;
-        if (!props.editor.active)
+        if (!props.editor.active && !props.onPickPoint)
           layer
             .bindTooltip(label, {
               permanent: record.id === props.selectedId,
@@ -370,7 +412,6 @@ export function GeometryMap(props: Props): JSX.Element {
             })
             .on('click', (event) => {
               L.DomEvent.stopPropagation(event.originalEvent);
-              setPointGroup([]);
               live.current.onSelect(record.id);
             });
         return layer;
@@ -389,8 +430,9 @@ export function GeometryMap(props: Props): JSX.Element {
         continue;
       }
       render().addTo(group);
+      if (mappedArea && selected && mappedArea.networkVersion === props.scenario?.datasetVersion) addAreaRoadSections(group, mappedArea, props.scenario?.roads ?? [], 'reference');
       if (
-        !props.editor.active &&
+        !props.editor.active && !props.onPickPoint &&
         record.feature.geometry.type === 'LineString'
       ) {
         L.geoJSON(record.feature, { pane, style: { weight: 12, opacity: 0 } })
@@ -403,11 +445,11 @@ export function GeometryMap(props: Props): JSX.Element {
     }
     const disposeClusters = attachPointClusters(map, group, clustered, {
       pane: 'points',
-      interactive: !props.editor.active,
+      interactive: !props.editor.active && !props.onPickPoint,
       locale: props.locale,
       tooltipClass: 'geodata-map-label',
       mode: pointMode,
-      onOpenGroup: ids => {setPointGroup(ids); live.current.onGroupOpen?.();}
+      onOpenGroup: ids => live.current.onDetail({ kind: 'group', ids })
     });
     if (showIntersection && props.intersection)
       L.geoJSON(props.intersection, {
@@ -419,6 +461,13 @@ export function GeometryMap(props: Props): JSX.Element {
           interactive: false
         }
       }).addTo(group);
+    if (props.previewGeometry && props.editor.mode !== 'edit') {
+      const preview: Feature = { type: 'Feature', properties: {}, geometry: props.previewGeometry };
+      L.geoJSON(preview, {
+        pane: 'drawing',
+        style: { color: props.drawingColor ?? roleColors.aoi, weight: 3, fillOpacity: 0.12, interactive: false }
+      }).addTo(group);
+    }
     if (props.editor.mode === 'edit' && props.editor.draft.geometry) {
       const draft: Feature = {
         type: 'Feature',
@@ -504,7 +553,7 @@ export function GeometryMap(props: Props): JSX.Element {
         }
       );
     }
-    if (props.editor.draft.vertices.length) {
+    if (props.editor.draft.vertices.length && !props.previewGeometry) {
       const positions = props.editor.draft.vertices.map((p) =>
         L.latLng(p[1], p[0])
       );
@@ -536,15 +585,26 @@ export function GeometryMap(props: Props): JSX.Element {
     props.selectedId,
     props.editor.mode,
     props.editor.draft,
+    props.previewGeometry,
     props.intersection,
     showIntersection,
     pointMode,
     pointGroup,
+    props.onPickPoint,
+    props.scenario?.roads,
+    props.scenario?.datasetVersion,
     props.locale
   ]);
   useEffect(() => {
+    const map=mapRef.current, point=props.pickAnchor;
+    if(!ready||!map||!point||!props.onPickPoint)return;
+    const marker=L.circleMarker([point.latitude,point.longitude],{pane:'drawing',radius:4,color:'#fff',weight:1.5,fillColor:'#9a742f',fillOpacity:1,interactive:false}).addTo(map);
+    marker.bindTooltip(props.locale==='vi'?'Đầu đoạn':'Section start',{permanent:true,direction:'top',className:'geodata-map-label'});
+    return ()=>{marker.remove();};
+  },[ready,props.pickAnchor,props.onPickPoint,props.locale]);
+  useEffect(() => {
     const map = mapRef.current;
-    if (!ready || !map || props.viewRequest.version === 0) return;
+    if (!ready || !map || props.viewRequest.version === 0 || props.viewRequest === focusedView.current) return;
     const records = props.records.filter((record) =>
       props.viewRequest.id ? record.id === props.viewRequest.id : record.visible
     );
@@ -562,6 +622,9 @@ export function GeometryMap(props: Props): JSX.Element {
     });
   }, [ready, props.viewRequest]);
   useEffect(() => {
+    if (props.previewGeometry) previewRef.current?.setLatLngs([]);
+  }, [props.previewGeometry]);
+  useEffect(() => {
     const map = mapRef.current;
     previewRef.current?.setLatLngs([]);
     snapRef.current?.remove();
@@ -569,7 +632,7 @@ export function GeometryMap(props: Props): JSX.Element {
     else map?.doubleClickZoom.enable();
     if (!props.editor.active) return;
     const keys = (event: KeyboardEvent) => {
-      if (isSelectPickerEvent(event)) return;
+      if (isSelectPickerEvent(event) || (event.target as HTMLElement)?.closest('dialog[open]')) return;
       const key = event.key.toLowerCase();
       if (!['enter', 'escape', 'backspace', 'z', 'y'].includes(key)) return;
       if (['z', 'y'].includes(key) && !event.ctrlKey && !event.metaKey) return;
@@ -592,7 +655,9 @@ export function GeometryMap(props: Props): JSX.Element {
     document.addEventListener('keydown', keys, true);
     return () => document.removeEventListener('keydown', keys, true);
   }, [props.editor.mode]);
-  useEffect(()=>setPointGroup([]),[props.selectedId,props.editor.active,pointMode]);
+  useEffect(() => {
+    if (live.current.detail?.kind === 'group') live.current.onDetail(null);
+  }, [pointMode]);
   const groupRecords = props.records.filter(
     (record) => record.visible && pointGroup.includes(record.id)
   );
@@ -634,8 +699,11 @@ export function GeometryMap(props: Props): JSX.Element {
           <PointRenderingControl locale={props.locale} />
         )}
         {props.scenario && (
-          <label title={t('Địa bàn, đường và điểm sự cố của tình huống (chỉ xem)', 'Scenario communities, roads and hazards (read-only)')}>
-            <input type="checkbox" checked={showScenario} onChange={(event) => setShowScenario(event.target.checked)} />
+          <label>
+            <input type="checkbox" checked={showScenario} onChange={(event) => {
+              setShowScenario(event.target.checked);
+              if (!event.target.checked && scenarioDetail) props.onDetail(null);
+            }} />
             {t('Lớp tình huống', 'Scenario layer')}
           </label>
         )}
@@ -660,7 +728,7 @@ export function GeometryMap(props: Props): JSX.Element {
                     style={{ color: roleColors[role] }}
                     aria-hidden="true"
                   />
-                  {role === 'aoi' ? 'AOI' : roleLabel(role, props.locale)}
+                  {role === 'aoi' ? t('Vùng quan tâm', 'AOI') : roleLabel(role, props.locale)}
                 </li>
               ))}
             {props.records.some(
@@ -736,7 +804,7 @@ export function GeometryMap(props: Props): JSX.Element {
       <div
         ref={host}
         className={
-          'geodata-map-surface' + (props.editor.active ? ' is-drawing' : '')
+          'geodata-map-surface' + (props.editor.active || props.onPickPoint ? ' is-drawing' : '')
         }
       />
       <div className="geodata-map-footer">
@@ -745,45 +813,47 @@ export function GeometryMap(props: Props): JSX.Element {
           EPSG:3857 <span>{t('Bắc ở trên', 'North up')}</span>
         </span>
       </div>
-      {!props.editor.active && scenarioTarget && props.scenario && props.scenarioEdits && (
+      {!props.editor.active && !props.onPickPoint && scenarioTarget && props.scenario && (
         <ScenarioFeatureCard
-          onRename={props.onRenameScenario}
+          onRename={props.scenarioEdits?.canEdit ? props.onRenameScenario : undefined}
           key={targetKey(scenarioTarget)}
           scenario={props.scenario}
+          mappedAreas={props.records.filter(record => landslideAreaOf(record)?.networkVersion === props.scenario?.datasetVersion)}
+          onOpenMappedArea={props.onSelect}
           target={scenarioTarget}
-          edits={props.scenarioEdits.edits}
+          edits={props.scenarioEdits?.edits ?? []}
+          readOnly={!props.scenarioEdits?.canEdit}
           locale={props.locale}
           moving={scenarioMoving}
           pending={scenarioPending}
-          onStartMove={() => setScenarioMoving(true)}
-          onCancelMove={() => {
-            setScenarioMoving(false);
-            setScenarioPending(null);
-          }}
+          onStartMove={() => updateScenario({ moving: true })}
+          onPreviewPosition={pending => updateScenario({moving:true,pending})}
+          onPickPosition={() => props.onPickScenarioPosition?.()}
+          onResponse={props.onResponseScenario ? () => props.onResponseScenario!(scenarioTarget) : undefined}
+          onCancelMove={() => updateScenario({ moving: false, pending: null })}
           onRecord={(change, note, name) => {
-            const saved = props.scenarioEdits!.record({ target: { ...scenarioTarget, name }, change, note });
+            const site = scenarioTarget.type === 'site' ? props.scenario?.responseSites.find(s => s.id === scenarioTarget.id) : undefined;
+            const reviewed = change.kind === 'move' && site?.kind === 'hlz' ? {...change,fromAssessment:site.assessment,toAssessment:'candidate' as const} : change;
+            const saved = props.scenarioEdits?.record({ target: { ...scenarioTarget, name }, change: reviewed, note }) ?? false;
             if (saved) {
-              setScenarioMoving(false);
-              setScenarioPending(null);
+              updateScenario({ moving: false, pending: null });
+              props.onScenarioNotice?.(['Đã sửa đối tượng trong bản nháp.','Feature updated in draft.']);
             }
             return saved;
           }}
-          onRevert={(id, note) => props.scenarioEdits!.revert(id, note)}
-          onClose={() => {
-            setScenarioTarget(null);
-            setScenarioMoving(false);
-            setScenarioPending(null);
-          }}
+          onRevert={(id, note) => props.scenarioEdits?.revert(id, note) ?? false}
+          onClose={() => props.onDetail(null)}
         />
       )}
-      {!props.editor.active && groupRecords.length > 1 && (
+      {props.onPickPoint && <div className="scenario-pick-bar" role="status"><span>{props.pickLabel ? props.pickLabel[props.locale === 'vi' ? 0 : 1] : t('Chọn vị trí trên bản đồ.', 'Choose a point on the map.')}</span><button className="button" onClick={props.onCancelPick}>{t('Hủy', 'Cancel')}</button></div>}
+      {!props.editor.active && !props.onPickPoint && groupRecords.length > 1 && (
         <PointGroupCard key={pointGroup.join('|')}
           records={groupRecords}
           locale={props.locale}
           activeId={props.selectedId}
           openLabel={t('Chọn để xem hồ sơ', 'Select to inspect')}
-          onOpen={(id) => {setPointGroup([]);props.onSelect(id);}}
-          onClose={() => setPointGroup([])}
+          onOpen={props.onSelect}
+          onClose={() => props.onDetail(null)}
         />
       )}
       <MapAttribution

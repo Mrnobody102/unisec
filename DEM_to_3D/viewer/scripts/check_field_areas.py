@@ -1,4 +1,5 @@
 """Exercise the selected-point inspector and linked manual extents in the real Demo UI."""
+from gis_browser_actions import apply_boundary, download_geometry
 import argparse, json, tempfile, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -29,7 +30,12 @@ def run(url, chrome, captures):
         inspector.locator('.field-observation details.field-extra').evaluate('(el)=>el.open=true')
         inspector.get_by_label('Ghi chú hiện trường',exact=True).fill('Vết trượt ghi nhận khi khảo sát')
         inspector.get_by_role('button',name='Lưu ghi nhận',exact=True).click()
-        def records(): return json.loads(page.evaluate('localStorage.getItem("dear.geodata.v1")'))
+        def records():
+            # Draft edits are intentionally not published to localStorage yet.
+            with page.expect_download() as draft_download:
+                download_geometry(page, 'GeoJSON')
+            exported=json.loads(Path(draft_download.value.path()).read_text(encoding='utf-8'))
+            return [{'id': f['id'], 'role': f['properties']['geometryRole'], 'feature':f} for f in exported['features']]
         assert records()[0]['feature']['properties']['dearObservation']['observedAt']=='2026-09-29T01:30:15.000Z'
         def draw(offset=0):
             inspector.get_by_role('button',name='Vẽ vùng nghi ảnh hưởng',exact=True).click()
@@ -37,13 +43,14 @@ def run(url, chrome, captures):
             expect(page.locator('.geodata-drawing-bar')).to_contain_text('Vùng nghi ảnh hưởng')
             box=page.locator('.geodata-map-surface').bounding_box()
             for x,y in [(0.35+offset,0.35),(0.45+offset,0.35),(0.46+offset,0.48),(0.34+offset,0.48)]:page.mouse.click(box['x']+box['width']*x,box['y']+box['height']*y)
-            page.get_by_role('button',name='Kết thúc',exact=True).click()
+            apply_boundary(page)
             expect(inspector).to_be_visible()
         draw();draw(0.12)
         expect(inspector.locator('[data-field-area-id]')).to_have_count(2)
         areas=[r for r in records() if 'dearFieldArea' in r['feature']['properties']]
         assert len(areas)==2 and all(r['feature']['properties']['dearFieldArea']['observationId']==pid and r['role']=='reference' for r in areas)
-        assert next(r for r in records() if r['id']==aid)==aoi
+        saved_aoi=next(r for r in records() if r['id']==aid)
+        assert saved_aoi['role']=='aoi' and saved_aoi['feature']['geometry']==aoi['feature']['geometry']
         # Cancel a new region and cancel vertex edits both preserve stored extents.
         inspector.get_by_role('button',name='Sửa ghi nhận',exact=True).click()
         inspector.locator('.field-observation details.field-extra').evaluate('(el)=>el.open=true')
@@ -56,18 +63,19 @@ def run(url, chrome, captures):
         inspector.get_by_role('button',name='Sửa Vùng nghi ảnh hưởng 1',exact=True).click()
         expect(page.locator('.geodata-vertex').first).to_be_visible()
         v=settled_box(page,'.geodata-vertex');page.mouse.move(v['x']+v['width']/2,v['y']+v['height']/2);page.mouse.down();page.mouse.move(v['x']+20,v['y']+20,steps=8);page.mouse.up()
-        page.get_by_role('button',name='Áp dụng',exact=True).click()
+        apply_boundary(page)
         expect(inspector).to_be_visible()
         changed=next(r for r in records() if r['id']==areas[0]['id'])
         assert changed['feature']['geometry']!=areas[0]['feature']['geometry']
         # Area removal and undo do not remove the observation or AOI.
         inspector.get_by_role('button',name='Xóa Vùng nghi ảnh hưởng 2',exact=True).click()
+        page.get_by_role('dialog',name='Xóa đối tượng?',exact=True).get_by_role('button',name='Xóa đối tượng',exact=True).click()
         expect(inspector.locator('[data-field-area-id]')).to_have_count(1)
         page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
         expect(inspector.locator('[data-field-area-id]')).to_have_count(2)
         if captures: captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'gis-inspector-areas.png'))
         # KML round trip remaps point IDs and keeps AOI independent.
-        with page.expect_download() as download:page.get_by_role('button',name='KML',exact=True).click()
+        with page.expect_download() as download:download_geometry(page, 'KML')
         imported=Path(temp)/'roundtrip.kml';imported.write_bytes(Path(download.value.path()).read_bytes())
         if page.locator('.geodata-import > button').get_attribute('aria-expanded') != 'true': page.locator('.geodata-import > button').click()
         page.locator('.geodata-import input[type=file]').set_input_files(str(imported))
@@ -77,6 +85,7 @@ def run(url, chrome, captures):
         page.get_by_role('button',name='Đóng hồ sơ đối tượng',exact=True).click()
         page.locator(f'[data-geodata-id="{pid}"] .geodata-feature').click()
         inspector.get_by_role('button',name='Xóa Điểm thực địa A',exact=True).click()
+        page.get_by_role('dialog',name='Xóa đối tượng?',exact=True).get_by_role('button',name='Xóa đối tượng',exact=True).click()
         assert not any(r['id']==pid or r['feature']['properties'].get('dearFieldArea',{}).get('observationId')==pid for r in records())
         page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
         page.locator(f'[data-geodata-id="{pid}"] .geodata-feature').click()
@@ -94,6 +103,13 @@ def run(url, chrome, captures):
                 page.locator(f'[data-geodata-id="{pid}"] .geodata-feature').click()
         page.set_viewport_size({'width':1440,'height':960})
         inspector.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
+        publication=page.get_by_role('dialog',name='Áp dụng thay đổi GIS?',exact=True)
+        if not publication.count():
+            exit_review=page.get_by_role('dialog',name='Còn thay đổi chưa áp dụng',exact=True)
+            expect(exit_review).to_be_visible()
+            exit_review.get_by_role('button',name='Áp dụng và đóng',exact=True).click()
+        else:
+            publication.get_by_role('button',name='Áp dụng',exact=True).click()
         expect(page.locator('.field-map-card')).to_contain_text('Vết trượt')
         assert page.locator('.map-road-target').count()>0
         page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True).click()

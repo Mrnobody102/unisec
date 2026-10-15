@@ -54,8 +54,18 @@ Các kiểm tra mới nằm tại `scripts/check_field_observations.py` và `scr
 
 Ảnh fixture có nhãn TEST PHOTO và metadata tự dựng để kiểm phần mềm. Polygon fixture không phải sản phẩm giải đoán hoặc đo đạc hiện trường. Chưa có kiểm chứng ảnh gốc 081026.kml hoặc đồng bộ nhiều thiết bị. Luồng hai vai trò trong cùng trình duyệt được kiểm tại `check_resident_workflow.py`; GIS hàng loạt và ranh giới tại `check_simplified_gis.py`. HEIC kiểm bằng tệp mẫu libheif, không phải ảnh hiện trường đã xác minh.
 
-Kiểm tra gom cụm ở `check_point_groups.py` bao gồm chọn từng điểm cùng vị trí, ảnh lớn, chuyển ảnh bằng bàn phím, Escape, bảng thuộc tính không chồng thẻ nhóm và quay lại nhóm từ bản đồ ứng phó. Kiểm tra trên các chiều rộng 320–1440 px. Luồng cư dân kiểm việc gửi ảnh có EXIF/GPS khi phần thông tin bổ sung vẫn đóng. Phiên rà soát 12/10/2026: typecheck, 266 unit tests (53 files) và production build đã đạt; nguồn nền EOX vẫn có giới hạn 10 m và việc gửi ghi nhận chỉ lưu tại trình duyệt.
+Kiểm tra gom cụm ở `check_point_groups.py` bao gồm chọn từng điểm cùng vị trí, ảnh lớn, chuyển ảnh bằng bàn phím, Escape, bảng thuộc tính không chồng thẻ nhóm và quay lại nhóm từ bản đồ ứng phó. Kiểm tra trên các chiều rộng 320–1440 px. Luồng cư dân kiểm việc gửi ảnh có EXIF/GPS khi phần thông tin bổ sung vẫn đóng; nguồn nền EOX vẫn có giới hạn 10 m và việc gửi ghi nhận chỉ lưu tại trình duyệt.
 
 `check_basemap_recovery.py` mô phỏng một ô ảnh lỗi hai lần trước khi tải được, kiểm tra cảnh báo được gỡ và ảnh trực tuyến thay lớp dự phòng. Tiến trình tải đếm theo từng ô, loại ô đã rời khung nhìn, tránh giữ lớp ảnh mờ sau khi đổi zoom hoặc tải lại thành công.
 
 Dropdown được kiểm bằng `check_select_controls.py`: đo vị trí chữ thực trong trình duyệt, font của ô và danh sách mở, khoảng chừa biểu tượng, tên địa bàn dài, ba bộ chữ, sáng/tối, Việt/Anh và 320–1440 px. Escape đóng danh sách trước khi đóng GIS hoặc cài đặt, không hủy thao tác vẽ đang làm. Thiết bị cảm ứng và chế độ tương phản cao giữ bộ chọn gốc của trình duyệt. Kiểm tra này chạy cùng luồng browser trong CI.
+
+## Kiểm tra vùng sạt lở và tương tác bản đồ
+
+`check_landslide_areas.py` kiểm tra vẽ vùng nguy cơ/vết đã sạt độc lập với AOI và điểm nguồn, chặn áp dụng khi thiếu căn cứ, liên kết khoảng đường, trạng thái đường chỉ đổi qua đánh giá rõ ràng, công bố cùng bản nháp và xem ở 2D/3D. Unit test miền nghiệp vụ kiểm tra nguồn, mức rà soát, thứ tự từ–đến, phiên bản mạng đường, ID sau nhập/xuất và giữ vùng khi xóa nguồn điểm độc lập. Polygon thử nghiệm không phải ranh thiên tai đã được kiểm chứng.
+
+Các kiểm tra `check_map_motion.py`, `check_marker_stability.py`, `check_map_labels.py`, `check_map_group_selection.py` và `check_map_symbol_consistency.py` bao phủ pan/zoom/chuyển 2D/3D, neo mũi đúng tọa độ, hover/chọn, nhãn/cụm điểm, tránh bảng chi tiết và không thay đổi DOM marker khi đứng yên. `check_gis_detail_ownership.py`, `check_gis_draft_publish.py` và `check_map_tools.py` kiểm tra một bảng chi tiết, bản nháp/áp dụng, giới hạn lưu và giữ phép đo khi mở Hướng dẫn. Quy tắc sản phẩm được giữ tại [bản đồ](../product/cartography.md) và [GIS](../product/geodata-workspace.md).
+
+Các review theo ngày và ảnh chụp lặp đã được gộp vào trang này. Không tạo tài liệu review hoặc thư mục ảnh theo mỗi lượt sửa; log và ảnh kiểm thử tạm nằm ngoài tài liệu, lịch sử thay đổi nằm trong Git/CI.
+
+`check_gis_storage_sync.py` dùng hook lưu trữ thật trong trình duyệt để kiểm tra cập nhật liên tab và lịch sử Hoàn tác. Các kiểm tra hình học cũ dùng `reviewed_records` làm bước xác nhận toàn bộ bản nháp trước khi đọc dữ liệu đã lưu; kiểm tra nháp riêng vẫn xác nhận rằng lưu từng đối tượng chưa ghi vào dữ liệu đang dùng. Unit test xuất bản phân biệt đổi thứ tự trường JSON với đổi tọa độ thật. CI chạy cả các luồng này và kiểm tra di động/2D/3D.

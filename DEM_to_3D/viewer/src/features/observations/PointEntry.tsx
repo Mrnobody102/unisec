@@ -1,6 +1,7 @@
 import { GeometryInputDialog } from '../geodata/GeometryInputDialog';
+import { CoordinateFields } from '../geodata/CoordinateFields';
 import { UiIcon } from '../../shared/ui/UiIcon';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Locale } from '../../types/dear';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
 import { createGeometryRecords } from '../geodata/geometrySession';
@@ -9,6 +10,8 @@ export function PointEntry({
   locale,
   session,
   onAdded,
+  pickedPoint,
+  onPick,
   open,
   onOpenChange: setOpen,
   disabled = false
@@ -19,12 +22,17 @@ export function PointEntry({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdded?: (id: string) => void;
+  pickedPoint?: { latitude: number; longitude: number } | null;
+  onPick?: () => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const [name, setName] = useState(''),
     [lat, setLat] = useState(''),
     [lon, setLon] = useState(''),
     [error, setError] = useState('');
+  useEffect(() => {
+    if (pickedPoint) { setLat(pickedPoint.latitude.toFixed(6)); setLon(pickedPoint.longitude.toFixed(6)); }
+  }, [pickedPoint]);
   return (
     <section className="field-point-entry">
       <button
@@ -73,6 +81,7 @@ export function PointEntry({
                 session.add(additions);
                 if (additions[0]) onAdded?.(additions[0].id);
                 setOpen(false);
+                setName(''); setLat(''); setLon('');
                 setError('');
               } catch {
                 setError(
@@ -93,32 +102,8 @@ export function PointEntry({
                   onChange={(e) => setName(e.target.value)}
                 />
               </label>
-              <div className="catalog-dates">
-                <label className="geodata-field">
-                  {t('Vĩ độ (°)', 'Latitude (°)')}
-                  <input
-                    required
-                    type="number"
-                    min={-85.05112878}
-                    max={85.05112878}
-                    step="any"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                  />
-                </label>
-                <label className="geodata-field">
-                  {t('Kinh độ (°)', 'Longitude (°)')}
-                  <input
-                    required
-                    type="number"
-                    min={-180}
-                    max={180}
-                    step="any"
-                    value={lon}
-                    onChange={(e) => setLon(e.target.value)}
-                  />
-                </label>
-              </div>
+              <CoordinateFields latitude={lat} longitude={lon} onChange={(latitude, longitude) => { setLat(latitude); setLon(longitude); }} locale={locale}
+                onPick={onPick ? () => { setOpen(false); onPick(); } : undefined} />
               {error && (
                 <p role="alert" className="field-error">
                   {error}

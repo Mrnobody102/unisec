@@ -1,129 +1,166 @@
-import { UiIcon } from '../../shared/ui/UiIcon';
-import { observationCode } from '../observations/recordIdentity';
-import { accessMessages } from './locales';
-import type { ScenarioRevision } from './useScenarioRevision';
-import { journeyMarkers, useRoadJourney } from '../routes/useRoadJourney';
-import { RoadJourneyPanel } from '../routes/RoadJourneyPanel';
-import { useMemo, useRef, useState } from 'react';
+import type { ScenarioEdit } from "./scenarioEdits";
+import { UiIcon } from "../../shared/ui/UiIcon";
+import { observationCode } from "../observations/recordIdentity";
+import { accessMessages } from "./locales";
+import type { ScenarioRevision } from "./useScenarioRevision";
+import { journeyMarkers, useRoadJourney } from "../routes/useRoadJourney";
+import { CitizenDirections } from "./CitizenDirections";
+import { CitizenReportForm } from "./CitizenReportForm";
+import { VoicePlayback } from "../observations/VoicePlayback";
+import { useDeviceLocation } from "../../shared/hooks/useDeviceLocation";
+import { roadGeographic } from "../routes/selectedRoadJourney";
+import { recommendRoute, routeProblems } from "../routes/routeAdvice";
+import { CitizenRouteCard } from "./CitizenRouteCard";
+import { useMemo, useRef, useState } from "react";
 import type {
   OverlayHit,
   ViewControls,
-  BasemapState
-} from '../../features/map/mapContracts';
-import type { IncidentPacket } from '../../data/incidentPacket';
-import type { useTerrainWorkspace } from '../terrain/useTerrainWorkspace';
-import type { DemoIdentity } from './demoSession';
-import { useGeometrySession } from '../geodata/useGeometrySession';
-import { useIncidentWorkspace } from '../incident/useIncidentWorkspace';
-import { useMeasurementSession } from '../measurement/useMeasurementSession';
-import { Map2D } from '../map/Map2D';
-import { defaultLayerAppearance } from '../map/layerAppearance';
-import { ObservationEditor } from '../observations/ObservationEditor';
+  BasemapState,
+} from "../../features/map/mapContracts";
+import type { IncidentPacket } from "../../data/incidentPacket";
+import type { useTerrainWorkspace } from "../terrain/useTerrainWorkspace";
+import type { DemoIdentity } from "./demoSession";
+import { useGeometrySession } from "../geodata/useGeometrySession";
+import { useIncidentWorkspace } from "../incident/useIncidentWorkspace";
+import { useMeasurementSession } from "../measurement";
+import { Map2D } from "../map/Map2D";
+import { defaultLayerAppearance } from "../map/layerAppearance";
+import { ObservationEditor } from "../observations/ObservationEditor";
 import {
   annotateRecord,
   observationOf,
-  type FieldObservation
-} from '../observations/model';
-import { PhotoGallery } from '../observations/PhotoGallery';
-import { observationLabel } from '../observations/labels';
-import { validateGeometry } from '../../geo/vector/validateGeometry';
-import type { GeometryRecord } from '../../geo/vector/types';
+  type FieldObservation,
+} from "../observations/model";
+import { PhotoGallery } from "../observations/PhotoGallery";
+import { observationLabel } from "../observations/labels";
+import { validateGeometry } from "../../geo/vector/validateGeometry";
+import type { GeometryRecord } from "../../geo/vector/types";
 import {
   newSubmission,
   submissionOf,
   canEditSubmission,
   submissionKey,
-  type Submission
-} from './submissions';
-import { MapAttribution } from '../../components/dear/MapAttribution';
-import { UserGuide } from '../help/UserGuide';
-import './citizen.css';
+  type Submission,
+} from "./submissions";
+import { MapAttribution } from "../../components/dear/MapAttribution";
+import { UserGuide } from "../help/UserGuide";
+import "./citizen.css";
 
 type Props = {
   published: ScenarioRevision;
-  locale: import('../../types/dear').Locale;
+  scenarioEdits?: ScenarioEdit[];
+  locale: import("../../types/dear").Locale;
   identity: DemoIdentity;
   onSignOut: () => void;
   runtime: ReturnType<typeof useTerrainWorkspace> & { packet: IncidentPacket };
 };
 export function CitizenWorkspace({
   published,
+  scenarioEdits,
   locale,
   identity,
   onSignOut,
-  runtime
+  runtime,
 }: Props): JSX.Element {
   const m = accessMessages[locale];
-  const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
+  const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const { packet, defaultTerrain, manifest, offline } = runtime;
-  const snapshot = useIncidentWorkspace(packet, published.applied),
+  const snapshot = useIncidentWorkspace(
+      packet,
+      published.applied,
+      scenarioEdits,
+      published.at,
+    ),
     gis = useGeometrySession();
   const [openSubmission, setOpenSubmission] = useState<string | null>(null);
-  const [tab, setTab] = useState<'roads' | 'report' | 'mine'>('roads'),
+  const [tab, setTab] = useState<"roads" | "report" | "mine">("roads"),
     [community, setCommunity] = useState(
-      identity.communityId ?? packet.communities[0]?.id ?? ''
+      identity.communityId ?? packet.communities[0]?.id ?? "",
     );
   const [mapOnMobile, setMapOnMobile] = useState(false),
     [picking, setPicking] = useState(false),
     [help, setHelp] = useState(false),
-    [message, setMessage] = useState('');
-  const [lat, setLat] = useState(''),
-    [lon, setLon] = useState(''),
-    [source, setSource] = useState<Submission['locationSource']>('manual');
+    [message, setMessage] = useState("");
+  const [lat, setLat] = useState(""),
+    [lon, setLon] = useState(""),
+    [source, setSource] = useState<Submission["locationSource"]>("manual");
   const [draftId, setDraftId] = useState(() => crypto.randomUUID()),
-    [gpsBusy, setGpsBusy] = useState(false),
+    [locationCommunity, setLocationCommunity] = useState(""),
     [accuracy, setAccuracy] = useState<number | null>(null),
     [ownSelected, setOwnSelected] = useState<string | null>(null);
   const [ownView, setOwnView] = useState({
     version: 0,
-    id: null as string | null
+    id: null as string | null,
   });
   const [basemap, setBasemap] = useState<BasemapState>({
-    status: 'off',
-    style: 'satellite',
+    status: "off",
+    style: "satellite",
     loaded: 0,
-    total: 0
+    total: 0,
   });
   const root = useRef<HTMLDivElement>(null);
   const viewport = useRef<{ center: [number, number]; zoom: number } | null>(
-      null
+      null,
     ),
     controls = useRef<ViewControls | null>(null);
-  const { session: measure, dispatch } = useMeasurementSession('2d', false);
+  const { session: measure, dispatch } = useMeasurementSession("2d", false);
   const journey = useRoadJourney(snapshot.roads);
-  const routePair = snapshot.routes.get(community),
-    route = routePair?.candidate ?? routePair?.direct ?? null;
-  const own = gis.records.filter(
-    (r) => submissionOf(r)?.authorId === identity.id
+  const gps = useDeviceLocation();
+  const [locationRequest, setLocationRequest] = useState(0);
+  const advice = recommendRoute(snapshot.routes.get(community)),
+    route = advice.best;
+  const own = useMemo(
+    () => gis.records.filter((r) => submissionOf(r)?.authorId === identity.id),
+    [gis.records, identity.id],
+  );
+  const reportPosition = useRef({ lat, lon });
+  reportPosition.current = { lat, lon };
+  const citizenLayers = useMemo(
+    () => ({
+      aoi: true,
+      roads: true,
+      status: true,
+      communities: true,
+      route: true,
+      landslide: true,
+      flood: true,
+      staging: true,
+      hlz: false,
+      imagery: true,
+      context: !offline,
+      hillshade: true,
+    }),
+    [offline],
   );
   const draft: GeometryRecord = useMemo(
     () => ({
       id: draftId,
       name: m.fieldReport,
-      role: 'reference',
+      role: "reference",
       visible: true,
       source: {
         name: m.residentReport,
-        format: 'coordinate',
-        importedAt: new Date().toISOString()
+        format: "coordinate",
+        importedAt: new Date().toISOString(),
       },
       feature: {
-        type: 'Feature',
+        type: "Feature",
         properties: { observer: identity.name },
-        geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] }
-      }
+        geometry: { type: "Point", coordinates: [Number(lon), Number(lat)] },
+      },
     }),
-    [draftId, lat, lon, identity.name, locale]
+    [draftId, lat, lon, identity.name, locale],
   );
   const position = (
     latitude: number,
     longitude: number,
-    kind: Submission['locationSource']
+    kind: Submission["locationSource"],
   ) => {
+    if (kind !== "device") gps.cancel();
     setLat(latitude.toFixed(6));
     setLon(longitude.toFixed(6));
     setSource(kind);
-    if (kind !== 'device') setAccuracy(null);
+    if (kind !== "device") setAccuracy(null);
     setPicking(false);
     setMapOnMobile(false);
   };
@@ -142,34 +179,49 @@ export function CitizenWorkspace({
             geometry: validateGeometry(draft.feature.geometry),
             properties: {
               ...draft.feature.properties,
-              [submissionKey]: newSubmission(identity, source)
-            }
-          }
+              [submissionKey]: {
+                ...newSubmission(identity, source),
+                ...(source === "community"
+                  ? { locationCommunityId: locationCommunity }
+                  : {}),
+              },
+            },
+          },
         },
-        observation
+        observation,
       );
       gis.add([record]);
+      gps.cancel();
       setOwnSelected(record.id);
       setOwnView((v) => ({ version: v.version + 1, id: record.id }));
       setMessage(m.submittedInThisDemoSessionAwaitingCoordinator);
-      setTab('mine');
+      setTab("mine");
       setDraftId(crypto.randomUUID());
-      setLat('');
-      setLon('');
+      setLat("");
+      setLon("");
+      setAccuracy(null);
+      setSource("manual");
+      setLocationCommunity("");
       return true;
     } catch {
       setMessage(m.couldNotSaveTheReportCheckCoordinates);
       return false;
     }
   };
+  const switchTab = (value: "roads" | "report" | "mine") => {
+    gps.cancel();
+    setPicking(false);
+    journey.setPicking(null);
+    setTab(value);
+  };
   const onHit = (hit: OverlayHit) => {
-    if (hit.type === 'community') setCommunity(hit.id);
+    if (hit.type === "community") setCommunity(hit.id);
   };
   return (
     <div
       ref={root}
       className="response-workspace citizen-workspace"
-      data-citizen-map={mapOnMobile ? 'true' : undefined}
+      data-citizen-map={mapOnMobile ? "true" : undefined}
     >
       <header className="citizen-header">
         <div>
@@ -188,23 +240,23 @@ export function CitizenWorkspace({
         <aside className="citizen-panel">
           <nav aria-label={m.residentTasks}>
             <button
-              aria-pressed={tab === 'roads'}
-              onClick={() => setTab('roads')}
+              aria-pressed={tab === "roads"}
+              onClick={() => switchTab("roads")}
             >
               {m.roadInformation}
             </button>
             <button
-              aria-pressed={tab === 'report'}
+              aria-pressed={tab === "report"}
               onClick={() => {
-                setTab('report');
-                setMessage('');
+                switchTab("report");
+                setMessage("");
               }}
             >
               {m.reportAnObservation}
             </button>
             <button
-              aria-pressed={tab === 'mine'}
-              onClick={() => setTab('mine')}
+              aria-pressed={tab === "mine"}
+              onClick={() => switchTab("mine")}
             >
               {m.myReports}
             </button>
@@ -215,189 +267,221 @@ export function CitizenWorkspace({
                 {message}
               </p>
             )}
-            {tab === 'roads' && (
+            {gps.error && (
+              <p className="field-error" role="alert">
+                {gps.error === "denied"
+                  ? t(
+                      "Chưa được phép lấy vị trí. Bật quyền vị trí trong trình duyệt hoặc chọn trên bản đồ.",
+                      "Location permission is denied. Enable browser permission or choose on the map.",
+                    )
+                  : gps.error === "insecure"
+                    ? t(
+                        "Định vị cần mở ứng dụng qua HTTPS. Bạn vẫn có thể chọn trên bản đồ.",
+                        "Location requires HTTPS. You can still choose on the map.",
+                      )
+                    : t(
+                        "Chưa lấy được vị trí. Thử lại hoặc chọn trên bản đồ.",
+                        "Location unavailable. Retry or choose on the map.",
+                      )}
+              </p>
+            )}
+            {tab === "roads" && (
               <section>
                 <h1>{m.accessToAnArea}</h1>
-                <label className="geodata-field">
-                  {m.areaToView}
-                  <select
-                    value={community}
-                    onChange={(e) => setCommunity(e.target.value)}
-                  >
-                    {snapshot.communities.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {route ? (
-                  <>
-                    <h2>{t(...route.name)}</h2>
-                    <p className="citizen-route-status">
-                      {route.status === 'blocked'
-                        ? m.includesABlockedSection
-                        : route.status === 'uncertain'
-                          ? m.includesUnverifiedSections
-                          : m.noBlockageRecorded}
-                    </p>
-                    <p>{route.lengthKm} km</p>
-                    <ul className="citizen-road-list">
-                      {route.segs.map((road) => (
-                        <li key={road.id}>
-                          <strong>{t(...road.name)}</strong>
-                          {road.status !== 'open' && (
-                            <span>
-                              {road.status === 'blocked'
-                                ? m.blocked
-                                : m.needsChecking}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <p>{m.noMappedRouteInTheCurrentDataset}</p>
-                )}
-                <button
-                  className="button"
-                  onClick={() => {
-                    journey.setOpen(true);
+                <CitizenDirections
+                  journey={journey}
+                  communities={snapshot.communities}
+                  locale={locale}
+                  gps={gps}
+                  onPick={(side) => {
+                    gps.cancel();
+                    setPicking(false);
+                    journey.setPicking(side);
                     setMapOnMobile(true);
                   }}
-                >
-                  {m.chooseAnotherJourney}
-                </button>
-              </section>
-            )}
-            {tab === 'report' && (
-              <section>
-                <h1>{m.fieldObservation}</h1>
-                <ObservationEditor
-                  key={draftId}
-                  record={draft}
-                  locale={locale}
-                  initialEditing
-                  compact
-                  positionAccuracy={accuracy}
-                  locationControl={
-                    <fieldset className="citizen-position">
-                      <legend>{m.observationLocation}</legend>
-                      <div className="geodata-actions">
-                        <button
-                          className="button"
-                          onClick={() => {
-                            setPicking(true);
-                            setMapOnMobile(true);
-                          }}
-                        >
-                          {m.chooseOnMap}
-                        </button>
-                        <button
-                          className="button"
-                          disabled={gpsBusy}
-                          onClick={() => {
-                            if (!navigator.geolocation) {
-                              setMessage(m.locationIsNotAvailable);
-                              return;
-                            }
-                            setGpsBusy(true);
-                            navigator.geolocation.getCurrentPosition(
-                              (p) => {
-                                position(
-                                  p.coords.latitude,
-                                  p.coords.longitude,
-                                  'device'
-                                );
-                                setAccuracy(p.coords.accuracy);
-                                setGpsBusy(false);
-                              },
-                              () => {
-                                setGpsBusy(false);
-                                setMessage(m.couldNotObtainLocationChooseOnMap);
-                              },
-                              {
-                                enableHighAccuracy: true,
-                                timeout: 10000,
-                                maximumAge: 0
-                              }
-                            );
-                          }}
-                        >
-                          {gpsBusy ? m.locating : m.myLocation}
-                        </button>
-                      </div>
-                      <details className="field-extra">
-                        <summary>
-                          {lat && lon
-                            ? `${Number(lat).toFixed(5)}°, ${Number(lon).toFixed(5)}°`
-                            : locale === 'vi'
-                              ? 'Nhập tọa độ'
-                              : 'Enter coordinates'}
-                        </summary>
-                        <div className="catalog-dates">
-                          <label className="geodata-field">
-                            {m.latitude}
-                            <input
-                              aria-label={m.reportLatitude}
-                              type="number"
-                              min="-85.05112878"
-                              max="85.05112878"
-                              step="any"
-                              value={lat}
-                              onChange={(e) => {
-                                setLat(e.target.value);
-                                setSource('manual');
-                                setAccuracy(null);
-                              }}
-                            />
-                          </label>
-                          <label className="geodata-field">
-                            {m.longitude}
-                            <input
-                              aria-label={m.reportLongitude}
-                              type="number"
-                              min="-180"
-                              max="180"
-                              step="any"
-                              value={lon}
-                              onChange={(e) => {
-                                setLon(e.target.value);
-                                setSource('manual');
-                                setAccuracy(null);
-                              }}
-                            />
-                          </label>
-                        </div>
-                      </details>
-                      {source === 'photo' && (
-                        <p className="field-hint">
-                          {m.usingCameraGpsAdjustTheLocationIf}
-                        </p>
-                      )}
-                    </fieldset>
-                  }
-                  submitLabel={m.submitReport}
-                  onSave={submit}
-                  onPhotosRead={(photos) => {
-                    if (lat || lon) return;
-                    const photo = photos.find(
-                      (p) =>
-                        typeof p.exif.latitude === 'number' &&
-                        typeof p.exif.longitude === 'number'
-                    );
-                    if (photo)
-                      position(
-                        Number(photo.exif.latitude),
-                        Number(photo.exif.longitude),
-                        'photo'
-                      );
-                  }}
+                  onMap={() => setMapOnMobile(true)}
                 />
+                <details className="citizen-road-catalog">
+                  <summary>
+                    {t("Xem đường vào thôn/bản", "View village access roads")}
+                  </summary>
+                  <label className="geodata-field">
+                    {m.areaToView}
+                    <select
+                      value={community}
+                      onChange={(e) => setCommunity(e.target.value)}
+                    >
+                      {snapshot.communities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {route ? (
+                    <CitizenRouteCard
+                      route={route}
+                      avoided={advice.avoided}
+                      problems={routeProblems(route)}
+                      locale={locale}
+                      onShowMap={() => setMapOnMobile(true)}
+                    />
+                  ) : (
+                    <p>{m.noMappedRouteInTheCurrentDataset}</p>
+                  )}
+                </details>
               </section>
             )}
-            {tab === 'mine' && (
+            <section hidden={tab !== "report"}>
+              <h1>{m.fieldObservation}</h1>
+              <CitizenReportForm
+                key={draftId}
+                locale={locale}
+                observer={identity.name}
+                active={tab === "report" && !mapOnMobile}
+                accuracy={accuracy}
+                onSave={submit}
+                onPhotosRead={(photos) => {
+                  if (reportPosition.current.lat || reportPosition.current.lon)
+                    return;
+                  const photo = photos.find(
+                    (p) =>
+                      typeof p.exif.latitude === "number" &&
+                      typeof p.exif.longitude === "number",
+                  );
+                  if (photo)
+                    position(
+                      Number(photo.exif.latitude),
+                      Number(photo.exif.longitude),
+                      "photo",
+                    );
+                }}
+                locationControl={
+                  <fieldset className="citizen-position">
+                    <legend>{m.observationLocation}</legend>
+                    <div className="geodata-actions">
+                      <button
+                        type="button"
+                        className="button"
+                        disabled={gps.busy}
+                        onClick={async () => {
+                          const p = await gps.request();
+                          if (p) {
+                            position(p.latitude, p.longitude, "device");
+                            setAccuracy(p.accuracy);
+                          }
+                        }}
+                      >
+                        {gps.busy ? m.locating : m.myLocation}
+                      </button>
+                      <button
+                        type="button"
+                        className="button"
+                        onClick={() => {
+                          gps.cancel();
+                          journey.setPicking(null);
+                          setPicking(true);
+                          setMapOnMobile(true);
+                        }}
+                      >
+                        {m.chooseOnMap}
+                      </button>
+                    </div>
+                    {lat && lon && (
+                      <p className="citizen-position-value">
+                        {source === "community"
+                          ? t(
+                              "Vị trí gần đúng theo thôn/bản",
+                              "Approximate village location",
+                            )
+                          : source === "device"
+                            ? t("Vị trí hiện tại", "Current location")
+                            : source === "photo"
+                              ? t(
+                                  "Vị trí lưu trong ảnh",
+                                  "Location stored in photo",
+                                )
+                              : t("Vị trí đã chọn", "Selected location")}
+                        {accuracy !== null
+                          ? " · ±" + Math.round(accuracy) + " m"
+                          : ""}
+                      </p>
+                    )}
+                    <label className="geodata-field">
+                      {t(
+                        "Hoặc chọn thôn/bản xảy ra sự việc",
+                        "Or choose the village where it happened",
+                      )}
+                      <select
+                        value={source === "community" ? locationCommunity : ""}
+                        onChange={(e) => {
+                          const c = snapshot.communities.find(
+                            (c) => c.id === e.target.value,
+                          );
+                          if (c) {
+                            const p = roadGeographic(c.projected);
+                            position(p.latitude, p.longitude, "community");
+                            setLocationCommunity(c.id);
+                          } else {
+                            setLat("");
+                            setLon("");
+                            setLocationCommunity("");
+                            setAccuracy(null);
+                          }
+                        }}
+                      >
+                        <option value="">{m.notSelected}</option>
+                        {snapshot.communities.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <details className="field-extra">
+                      <summary>{t("Nhập tọa độ", "Enter coordinates")}</summary>
+                      <div className="catalog-dates">
+                        <label className="geodata-field">
+                          {m.latitude}
+                          <input
+                            aria-label={m.reportLatitude}
+                            type="number"
+                            min="-85.05112878"
+                            max="85.05112878"
+                            step="any"
+                            value={lat}
+                            onChange={(e) => {
+                              gps.cancel();
+                              setLat(e.target.value);
+                              setSource("manual");
+                              setAccuracy(null);
+                            }}
+                          />
+                        </label>
+                        <label className="geodata-field">
+                          {m.longitude}
+                          <input
+                            aria-label={m.reportLongitude}
+                            type="number"
+                            min="-180"
+                            max="180"
+                            step="any"
+                            value={lon}
+                            onChange={(e) => {
+                              gps.cancel();
+                              setLon(e.target.value);
+                              setSource("manual");
+                              setAccuracy(null);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </details>
+                  </fieldset>
+                }
+              />
+            </section>
+            {tab === "mine" && (
               <section>
                 <h1>{m.submittedObservations}</h1>
                 {!own.length ? (
@@ -411,7 +495,7 @@ export function CitizenWorkspace({
                         o = observationOf(record),
                         open = openSubmission === record.id;
                       const code =
-                        record.name.match(/[A-Z]{2}-[A-Z0-9]{4,}$/)?.[0] ?? '';
+                        record.name.match(/[A-Z]{2}-[A-Z0-9]{4,}$/)?.[0] ?? "";
                       const status = s.review.status;
                       return (
                         <li
@@ -447,9 +531,9 @@ export function CitizenWorkspace({
                                 {[
                                   code,
                                   new Date(s.submittedAt).toLocaleString(
-                                    locale === 'vi' ? 'vi-VN' : 'en-GB',
-                                    { dateStyle: 'short', timeStyle: 'short' }
-                                  )
+                                    locale === "vi" ? "vi-VN" : "en-GB",
+                                    { dateStyle: "short", timeStyle: "short" },
+                                  ),
                                 ]
                                   .filter(Boolean)
                                   .map((value, index) => (
@@ -457,12 +541,12 @@ export function CitizenWorkspace({
                                   ))}
                               </small>
                             </span>
-                            <span className={'citizen-review is-' + status}>
-                              {status === 'pending'
+                            <span className={"citizen-review is-" + status}>
+                              {status === "pending"
                                 ? m.awaitingReview
-                                : status === 'checked'
+                                : status === "checked"
                                   ? m.reviewed
-                                  : status === 'needs-info'
+                                  : status === "needs-info"
                                     ? m.moreInformationNeeded
                                     : m.notUsed}
                             </span>
@@ -486,13 +570,13 @@ export function CitizenWorkspace({
                                         [submissionKey]: {
                                           ...s,
                                           review: {
-                                            status: 'pending',
-                                            note: '',
-                                            reviewer: '',
-                                            reviewedAt: ''
+                                            status: "pending",
+                                            note: "",
+                                            reviewer: "",
+                                            reviewedAt: "",
                                           },
-                                          previousReview: s.review
-                                        }
+                                          previousReview: s.review,
+                                        },
                                       })
                                     }
                                   />
@@ -501,6 +585,10 @@ export function CitizenWorkspace({
                                     {o.note && (
                                       <p className="field-note">{o.note}</p>
                                     )}
+                                    <VoicePlayback
+                                      voice={o.voice}
+                                      locale={locale}
+                                    />
                                     <PhotoGallery
                                       photos={o.photos}
                                       locale={locale}
@@ -521,6 +609,8 @@ export function CitizenWorkspace({
         <section className="map-area citizen-map" aria-label={m.communityMap}>
           <div className="map-canvas">
             <Map2D
+              userLocation={gps.location}
+              userLocationRequest={locationRequest}
               onBasemapState={setBasemap}
               locale={locale}
               terrain={defaultTerrain}
@@ -540,17 +630,18 @@ export function CitizenWorkspace({
               gisRequest={ownView}
               onGisSelect={(id) => {
                 setOwnSelected(id);
-                setTab('mine');
+                setTab("mine");
                 setMapOnMobile(false);
               }}
               pointPickActive={picking || (journey.open && !!journey.picking)}
-              onPointPick={(latitude, longitude) =>
-                journey.picking
-                  ? journey.pick(latitude, longitude)
-                  : position(latitude, longitude, 'map')
-              }
+              onPointPick={(latitude, longitude) => {
+                if (journey.picking) {
+                  journey.pick(latitude, longitude);
+                  setMapOnMobile(false);
+                } else position(latitude, longitude, "map");
+              }}
               journeyEndpoints={journeyMarkers(journey)}
-                journeyFitRequest={journey.fitSequence}
+              journeyFitRequest={journey.fitSequence}
               onSelectOverlayHit={onHit}
               scenarioProps={{
                 aoi: packet.aoi,
@@ -559,30 +650,21 @@ export function CitizenWorkspace({
                 hazards: snapshot.hazards,
                 roads: snapshot.roads,
                 selectedRoute: journey.open ? journey.route : route,
-                selectedCommunityId: community,
+                selectedCommunityId: journey.open
+                  ? journey.end?.source.startsWith("community:")
+                    ? journey.end.source.slice(10)
+                    : null
+                  : community,
                 selectedObjectId: null,
-                layers: {
-                  aoi: true,
-                  roads: true,
-                  status: true,
-                  communities: true,
-                  route: true,
-                  landslide: true,
-                  flood: true,
-                  staging: true,
-                  hlz: false,
-                  imagery: true,
-                  context: !offline,
-                  hillshade: true
-                },
-                appearance: defaultLayerAppearance
+                layers: citizenLayers,
+                appearance: defaultLayerAppearance,
               }}
             />
           </div>
           <div
             className="citizen-map-tools"
             role="group"
-            aria-label={locale === 'vi' ? 'Điều khiển bản đồ' : 'Map controls'}
+            aria-label={locale === "vi" ? "Điều khiển bản đồ" : "Map controls"}
           >
             <button
               className="icon-button"
@@ -608,29 +690,43 @@ export function CitizenWorkspace({
             >
               <UiIcon name="fit" />
             </button>
+            <button
+              className="icon-button"
+              disabled={gps.busy}
+              aria-label={m.myLocation}
+              title={m.myLocation}
+              onClick={async () => {
+                const p = await gps.request();
+                if (p) setLocationRequest((v) => v + 1);
+              }}
+            >
+              <UiIcon name="location" />
+            </button>
           </div>
-          {picking && (
+          {(picking || journey.picking) && (
             <div className="citizen-pick-hint" role="status">
-              {m.chooseTheObservationLocationOnTheMap}
+              {picking
+                ? m.chooseTheObservationLocationOnTheMap
+                : journey.picking === "start"
+                  ? t(
+                      "Chọn nơi xuất phát trên bản đồ",
+                      "Choose the starting point on the map",
+                    )
+                  : t(
+                      "Chọn nơi đến trên bản đồ",
+                      "Choose the destination on the map",
+                    )}
               <button
                 className="button"
                 onClick={() => {
                   setPicking(false);
+                  journey.setPicking(null);
                   setMapOnMobile(false);
                 }}
               >
                 {m.cancel}
               </button>
             </div>
-          )}
-          {journey.open && (
-            <RoadJourneyPanel
-              locale={locale}
-              journey={journey}
-              communities={snapshot.communities}
-              sites={snapshot.responseSites}
-              roads={snapshot.roads}
-            />
           )}
           <MapAttribution
             locale={locale}

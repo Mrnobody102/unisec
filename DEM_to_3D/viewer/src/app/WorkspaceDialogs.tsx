@@ -1,3 +1,4 @@
+import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
 import type { ScenarioEdits } from '../features/access/scenarioEdits';
 import { ReportInbox } from '../features/access/ReportInbox';
 import type { RenameScenario } from '../features/access/ScenarioLabels';
@@ -27,6 +28,7 @@ import type { WorkspaceDialog } from './workspaceInteraction';
 
 type Props = {
   identity: DemoIdentity; onRename: RenameScenario; scenarioEdits?: ScenarioEdits; onEditGis: (id:string)=>void;
+  scenarioRequest?: ScenarioTarget | null; onResponseScenario?: (target:ScenarioTarget)=>void;
   gisSession: ReturnType<typeof useGeometrySession>; onGisResponse:(id:string)=>void;
   dialog: WorkspaceDialog;
   locale: Locale;
@@ -38,6 +40,8 @@ type Props = {
   historical: boolean;
   workTasks:ResponseWork[];workTaskId:string | null;workEntries:WorkEntry[];workStorageError:boolean;appliedAt:string | null;
   onRecordWork:(task:ResponseWork,status:WorkStatus,note:string,owner:string)=>void;
+  onVerifyRoad?:(roadId:string,status:'open'|'blocked',note:string)=>boolean;
+  onVerifyHazard?:(hazardId:string,confirmed:boolean,note:string)=>boolean;
   comparisonPair: ComparisonPair | null;
   onComparisonPair: (pair: ComparisonPair | null) => void;
   decisionSnapshot: DecisionSnapshot | null;
@@ -54,8 +58,8 @@ type Props = {
 };
 
 /** Global dialogs share the workspace's focus boundary; Layers stays attached to the map. */
-export function WorkspaceDialogs({ identity,onRename,scenarioEdits,onEditGis,gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
-  historical, workTasks,workTaskId,workEntries,workStorageError,onRecordWork,appliedAt,comparisonPair, onComparisonPair, decisionSnapshot, evidenceId, terrain,
+export function WorkspaceDialogs({ identity,onRename,scenarioEdits,scenarioRequest,onResponseScenario,onEditGis,gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
+  historical, workTasks,workTaskId,workEntries,workStorageError,onRecordWork,onVerifyRoad,onVerifyHazard,appliedAt,comparisonPair, onComparisonPair, decisionSnapshot, evidenceId, terrain,
   terrainMetadata, manifest, upload, onClose, onOpenReport, onApplyReport, onRevision,
   onInspectObject }: Props): JSX.Element | null {
   const { incident, roads, hazards, evidence } = snapshot;
@@ -70,16 +74,16 @@ export function WorkspaceDialogs({ identity,onRename,scenarioEdits,onEditGis,gis
     case 'comparison':
       return <ImageCompareDialog pair={comparisonPair} onPair={onComparisonPair} triggeredAt={incident.triggeredAt} locale={locale} onClose={onClose} />;
     case 'geodata':
-      return <GeometryWorkspace locale={locale} offline={offline} onClose={onClose} session={{...gisSession,annotate:(id,value)=>{const record=gisSession.records.find(r=>r.id===id);return gisSession.annotate(id,value,{[submissionKey]:record&&submissionOf(record) || newSubmission(identity,'manual')});}}} onResponse={onGisResponse} scenario={{ communities: snapshot.communities, responseSites: snapshot.responseSites, hazards, roads }} scenarioEdits={scenarioEdits} onRenameScenario={onRename}/>;
+      return <GeometryWorkspace scenarioRequest={scenarioRequest} onResponseScenario={onResponseScenario} locale={locale} offline={offline} onClose={onClose} session={gisSession} annotationProperties={(id,records)=>{const record=records.find(r=>r.id===id);return {[submissionKey]:record&&submissionOf(record) || newSubmission(identity,'manual')};}} onResponse={onGisResponse} scenario={{ datasetVersion: packet.datasetVersion, communities: snapshot.communities, responseSites: snapshot.responseSites, hazards, roads }} scenarioEdits={scenarioEdits} onRenameScenario={onRename}/>;
     case 'exportDecision':
       return decisionSnapshot ? <DecisionExportDialog snapshot={decisionSnapshot} terrain={terrain} imageUrl={manifest?.terrain.image?.url} locale={locale} onClose={onClose} /> : null;
     case 'alerts':
       return <NotificationDialog locale={locale} report={packet.report} road={roads.find(road => road.id === packet.report.roadId)} updated={reportApplied} historical={historical} onApplyReport={onApplyReport} onClose={onClose} onSelectRoad={onInspectObject} />;
     case 'notificationCenter':
     case 'timeline':
-      return <IncidentJournal packet={packet} applied={reportApplied} historical={historical} appliedAt={appliedAt} entries={workEntries} locale={locale} onClose={onClose} onOpenReport={onOpenReport} onInspect={onInspectObject} onRevision={onRevision} initialFilter={dialog === 'notificationCenter' ? 'report' : 'all'}/>;
+      return <IncidentJournal packet={packet} applied={reportApplied} historical={historical} appliedAt={appliedAt} entries={workEntries} edits={scenarioEdits?.edits} locale={locale} onClose={onClose} onOpenReport={onOpenReport} onInspect={onInspectObject} onRevision={onRevision} initialFilter={dialog === 'notificationCenter' ? 'report' : 'all'}/>;
     case 'responseWork':
-      return <ResponseWorkDialog tasks={workTasks} initialTaskId={workTaskId} entries={workEntries} locale={locale} readOnly={historical && reportApplied} storageError={workStorageError} onRecord={onRecordWork} onInspect={id=>{onClose();onInspectObject(id);}} onReport={onOpenReport} onClose={onClose}/>;
+      return <ResponseWorkDialog tasks={workTasks} initialTaskId={workTaskId} entries={workEntries} locale={locale} readOnly={historical && reportApplied} storageError={workStorageError} onRecord={onRecordWork} onVerifyRoad={onVerifyRoad} onVerifyHazard={onVerifyHazard} onInspect={id=>{onClose();onInspectObject(id);}} onReport={onOpenReport} onClose={onClose}/>;
     case 'data':
       return <DataDialog incident={incident} locale={locale} updated={updated} manifest={terrain ? manifest : null} terrainMetadata={terrainMetadata} onClose={onClose} />;
     case 'evidence':

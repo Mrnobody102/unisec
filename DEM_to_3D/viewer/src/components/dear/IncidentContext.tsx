@@ -9,7 +9,6 @@ type Props = {
   areaName: [string, string];
   snapshot: string;
   available: boolean;
-  onOpenIncident: () => void;
   onOpenTimeline: () => void;
   onOpenData: () => void;
 };
@@ -21,7 +20,6 @@ export function IncidentContext({
   areaName,
   snapshot,
   available,
-  onOpenIncident,
   onOpenTimeline,
   onOpenData
 }: Props): JSX.Element {
@@ -85,7 +83,7 @@ export function IncidentContext({
             <strong>
               {incident.title
                 ? t(...incident.title)
-                : t('Điều phối ứng phó', 'Response coordination')}
+                : t('Cứu trợ', 'Relief')}
             </strong>
             <button
               className="icon-button"
@@ -112,17 +110,12 @@ export function IncidentContext({
             </div>
           </dl>
           <div className="header-context-links">
-            <button disabled={!available} onClick={() => run(onOpenIncident)}>
-              <UiIcon name="people" />
-              <span>{t('Tình hình ứng phó', 'Response overview')}</span>
-              <UiIcon name="next" size={14} />
-            </button>
             <button
               disabled={!available}
               onClick={() => run(onOpenTimeline)}
             >
               <UiIcon name="history" />
-              <span>{t('Lịch sử cập nhật', 'Update history')}</span>
+              <span>{t('Nhật ký sự kiện', 'Incident journal')}</span>
               <UiIcon name="next" size={14} />
             </button>
             <button
