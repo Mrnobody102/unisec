@@ -1,5 +1,15 @@
+import {poiMetrics,markerSize} from './poiFrame';
 export type ScreenRect = { x: number; y: number; width: number; height: number };
-export type ScreenMarker = { id: string; x: number; y: number; priority: number; selected?: boolean };
+export type ScreenMarker = { id: string; x: number; y: number; priority: number; selected?: boolean; category?: string };
+
+/** Display rank: the selection, reported hazards, priority communities, unverified hazards, then staging. */
+export function markerPriority(marker: { selected: boolean; hazard?: boolean; suspected?: boolean; priorityCommunity?: boolean; staging?: boolean }): number {
+  if (marker.selected) return 100;
+  if (marker.hazard && !marker.suspected) return 80;
+  if (marker.priorityCommunity) return 50;
+  if (marker.hazard) return 40;
+  return marker.staging ? 30 : 10;
+}
 export type MarkerGroup = { anchor: ScreenMarker; members: ScreenMarker[]; rect: ScreenRect };
 
 export function overlaps(a: ScreenRect, b: ScreenRect, gap = 4): boolean {
@@ -7,20 +17,31 @@ export function overlaps(a: ScreenRect, b: ScreenRect, gap = 4): boolean {
     a.y < b.y + b.height + gap && a.y + a.height + gap > b.y;
 }
 
-const markerRect = (point: ScreenMarker, size: number): ScreenRect =>
-  point.selected
-    ? { x: point.x - 18, y: point.y - 45, width: 36, height: 48 }
-    : { x: point.x - size / 2, y: point.y - size / 2, width: size, height: size };
+const markerRect = (point: ScreenMarker, size: number): ScreenRect => {
+  size=markerSize(size>28,!!point.selected);
+  const {half,tip,height}=poiMetrics(size,!!point.selected),padding=point.selected?1:0;
+  return {x:point.x-half-padding,y:point.y-tip-padding,width:size+padding*2,height:height+padding*2};
+};
+
+const byPriority = (a: ScreenMarker, b: ScreenMarker) => b.priority - a.priority || a.id.localeCompare(b.id);
+const covers = (a: ScreenMarker, b: ScreenMarker): boolean => {
+  const r = markerRect(a, 32), other = markerRect(b, 32), x = other.x + other.width / 2, y = other.y + other.height / 2;
+  return x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height;
+};
 
 /** Aggregate colliding screen symbols, without moving their geographic positions.
- * The selected/highest-priority member anchors each group. A group includes all
- * its members, even when a member lies behind a control; controls always win.
+ * One category merges when its symbols touch. A higher-ranked group absorbs another
+ * category only when one anchor would cover the other's centre, so a reported hazard
+ * is never hidden under a community and touching symbols stay visible and clickable.
+ * The selected/highest-priority member anchors each group. A group includes all its
+ * members, even when a member lies behind a control; controls always win.
  */
 export function layoutMarkerGroups(points: ScreenMarker[], width: number, height: number, controls: ScreenRect[]): MarkerGroup[] {
-  const remaining = points.filter(p => Number.isFinite(p.x) && Number.isFinite(p.y) &&
-    p.x >= 17 && p.y >= 17 && p.x <= width - 17 && p.y <= height - 17)
-    .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
-  const groups: MarkerGroup[] = [];
+  const remaining = points.filter(p => {
+    const r=markerRect(p,28);
+    return Number.isFinite(p.x) && Number.isFinite(p.y) && r.x>=4 && r.y>=4 && r.x+r.width<=width-4 && r.y+r.height<=height-4;
+  }).sort(byPriority);
+  const clusters: ScreenMarker[][] = [];
   while (remaining.length) {
     const members = [remaining.shift()!];
     // Connected components prevent a newly enlarged count symbol from covering
@@ -29,13 +50,24 @@ export function layoutMarkerGroups(points: ScreenMarker[], width: number, height
     while (changed) {
       changed = false;
       for (let i = remaining.length - 1; i >= 0; i--) {
-        if (members.some(p => overlaps(markerRect(p, 34), markerRect(remaining[i], 34), 6))) {
+        if (remaining[i].category === members[0].category &&
+            members.some(p => overlaps(markerRect(p, 32), markerRect(remaining[i], 32), 6))) {
           members.push(remaining.splice(i, 1)[0]); changed = true;
         }
       }
     }
-    members.sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
-    const size = members.length > 1 ? 34 : 28;
+    clusters.push(members.sort(byPriority));
+  }
+  // Only anchors are compared across categories, so groups do not chain over the map.
+  const merged: ScreenMarker[][] = [];
+  for (const cluster of clusters.sort((a, b) => byPriority(a[0], b[0]))) {
+    const host = merged.find(group => covers(group[0], cluster[0]) || covers(cluster[0], group[0]));
+    if (host) host.push(...cluster); else merged.push([...cluster]);
+  }
+  const groups: MarkerGroup[] = [];
+  for (const members of merged) {
+    members.sort(byPriority);
+    const size = members.length > 1 ? 32 : 28;
     const anchor = members.find(p => !controls.some(r => overlaps(markerRect(p, size), r, 6)));
     if (!anchor) continue;
     groups.push({ anchor, members, rect: markerRect(anchor, size) });

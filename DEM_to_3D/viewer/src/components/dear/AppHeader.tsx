@@ -1,5 +1,5 @@
 import { UiIcon } from './UiIcon';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type {
   FontChoice,
   IncidentModel,
@@ -14,9 +14,12 @@ import { HeaderAccount } from './HeaderAccount';
 import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 
 type Props = {
+  /** While GIS is open its draft owns the session; header actions would replace it unguarded. */
+  locked?: boolean;
   identityName: string;
   onSignOut: () => void;
   onOpenReports: () => void;
+  reportsPending: boolean;
   locale: Locale;
   incident: IncidentModel;
   areaName: [vi: string, en: string];
@@ -46,6 +49,7 @@ export const AppHeader: React.FC<Props> = ({
   identityName,
   onSignOut,
   onOpenReports,
+  reportsPending,
   locale,
   incident,
   areaName,
@@ -68,8 +72,11 @@ export const AppHeader: React.FC<Props> = ({
   onOpenTimeline,
   onOpenNotifications,
   onReset,
-  activeModelName
+  activeModelName,
+  locked = false
 }) => {
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => { if (headerRef.current) headerRef.current.inert = locked; }, [locked]);
   const [prefOpen, setPrefOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -83,7 +90,7 @@ export const AppHeader: React.FC<Props> = ({
   const snapshot = updated ? incident.asOfUpdated : incident.asOf;
 
   return (
-    <header className="app-header">
+    <header className="app-header" ref={headerRef}>
       <div className="brand">
         <span className="brand-symbol" aria-hidden="true">
           <svg viewBox="0 0 32 32" fill="none">
@@ -109,7 +116,6 @@ export const AppHeader: React.FC<Props> = ({
         areaName={areaName}
         snapshot={snapshot}
         available={dataAvailable}
-        onOpenIncident={onOpenIncident}
         onOpenTimeline={onOpenTimeline}
         onOpenData={onOpenData}
       />
@@ -166,6 +172,7 @@ export const AppHeader: React.FC<Props> = ({
         >
           <UiIcon name="image" />
           <span>{t('Ghi nhận', 'Reports')}</span>
+          {reportsPending && <span className="unread-indicator" />}
         </button>
         <HeaderAccount
           locale={locale}

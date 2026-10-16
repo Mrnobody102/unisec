@@ -1,7 +1,7 @@
 .operations-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; padding: 0 0 12px; border-bottom: 1px solid var(--ws-line); }
 .operations-filters button { padding: 5px 10px; min-height: 32px; background: transparent; color: var(--ws-muted); border: 1px solid transparent; border-radius: var(--radius-control); font-size: 12px; }
 .operations-filters button[aria-pressed="true"] { color: var(--select-ink); background: var(--ws-tint); border-color: var(--map-chrome-line); }
-.response-work-context { padding: 8px 20px; color: var(--ws-muted); background: var(--map-chrome); border-bottom: 1px solid var(--ws-line); font-size: 11px; }
+.response-work-context { padding: 8px 20px; color: var(--ws-muted); font-size: 11px; }
 .response-work-dialog, .incident-journal { width: min(720px,calc(100vw - 24px)); }
 .response-work-dialog { width: min(920px,calc(100vw - 24px)); }
 .response-work-body { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); gap: 0 20px; height: min(560px,calc(100dvh - 210px)); }
@@ -19,7 +19,8 @@
 .response-work-row small { display: block; color: var(--ws-muted); margin-top: 4px; font-size: 12px; }
 .response-work-row[aria-pressed="true"] strong, .response-work-row:hover strong { color: var(--select-ink); }
 .response-work-row:focus-visible { outline-offset: -3px; }
-.response-work-row[aria-pressed="true"] { background: var(--ws-tint); box-shadow: inset 2px 0 var(--select); }
+.response-work-row[aria-pressed="true"] { background: transparent; color: var(--select-ink); }
+.response-work-row[aria-pressed="true"] strong {text-decoration:underline;text-underline-offset:3px;}
 .work-status { flex: none; font-size: 11px; line-height: 1.5; color: var(--ws-muted); padding: 2px 6px; border: 1px solid var(--ws-line); border-radius: var(--radius-control); }
 .work-active { color: var(--select-ink); background: var(--ws-tint); }
 .work-blocked { color: var(--warning-ink); background: var(--warning-soft); }
@@ -94,3 +95,4 @@
 .response-work-dialog .response-work-edit select { width: 100%; min-height: 38px; }
 .response-work-dialog .response-work-edit :is(input, textarea) { min-height: 38px; }
 .response-work-dialog .response-work-edit textarea::placeholder { color: var(--ws-muted); }
+.work-outcome { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 12px; }

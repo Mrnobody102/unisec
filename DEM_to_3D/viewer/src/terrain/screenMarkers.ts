@@ -1,8 +1,8 @@
-import { teardropPinSvg } from './pinShape';
 import type { Community, Hazard, Locale, ResponseSite } from '../types/dear';
 import type { OverlayHit } from '../features/map/mapContracts';
+import {poiFrameSvg,poiMetrics,markerSize} from './poiFrame';
 import { mapSymbolSvg, type MapSymbolName } from './mapSymbols';
-import { layoutMarkerGroups, overlaps, type ScreenRect } from './markerLayout';
+import { layoutMarkerGroups, markerPriority, overlaps, type ScreenRect } from './markerLayout';
 import { markerPresentation } from './markerPresentation';
 
 export type ScreenMarkerOptions = {
@@ -11,14 +11,16 @@ export type ScreenMarkerOptions = {
   selectedCommunityId: string | null; selectedObjectId: string | null; locale: Locale;
   onSelect: (hit: OverlayHit) => void;
   interactive?: boolean;
+  focusId?: string;
   allowCounts?: () => boolean;
   appearance?: import('../features/map/layerAppearance').LayerAppearance;
+  onPreviewFocus?: (point:{x:number;y:number})=>void;
   onExpandGroup?: (points: Array<{ x: number; y: number }>) => void;
 };
 type Marker = {
   id: string; hit: OverlayHit; name: string; symbol: MapSymbolName;
-  button: HTMLButtonElement; label: HTMLSpanElement | null; icon: HTMLElement;
-  count: HTMLSpanElement; point: { x: number; y: number }; selected: boolean; priority: number; width: number;
+  button: HTMLButtonElement; label: HTMLSpanElement; icon: HTMLElement;
+  count: HTMLSpanElement; point: { x: number; y: number }; selected: boolean; priority: number; width: number; labelEligible: boolean;
 };
 
 /** Screen-sized, keyboard-accessible markers remain legible while the terrain zooms. */
@@ -83,8 +85,8 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     chooser.style.width = `${width}px`; chooser.style.maxHeight = `${height}px`;
     const r = marker.button.getBoundingClientRect(), area = host.getBoundingClientRect();
     const x = r.x - area.x, y = r.y - area.y;
-    chooserAnchor = { x: x + r.width / 2, y: y + r.height / 2 };
-    const protectedRects = controlRects();
+    chooserAnchor = {x:x+r.width/2,y:y+poiMetrics(r.width,marker.selected).tip};
+    const protectedRects = controlRects().controls;
     const candidates = [{ x: x + r.width + 8, y }, { x: x - width - 8, y }, { x, y: y + r.height + 8 }, { x, y: y - height - 8 }];
     const inside = (p: { x: number; y: number }) => p.x >= 8 && p.y >= 8 && p.x + width <= host.clientWidth - 8 && p.y + height <= host.clientHeight - 8;
     const position = candidates.find(p => inside(p) && !protectedRects.some(rect => overlaps({ ...p, width, height }, rect))) ??
@@ -109,119 +111,165 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     const button = document.createElement('button');
     button.className = `map-pin ${kind}${selected ? ' is-selected' : ''}`;
     button.type = 'button';
-    button.title = displayName;
+    button.hidden = true;
     button.setAttribute('aria-label', displayName);
     button.setAttribute('aria-pressed', String(selected));
     button.dataset.mapObject = `${hit.type}:${hit.id}`;
     const icon = document.createElement('span'); icon.className = 'map-pin-icon'; icon.innerHTML = mapSymbolSvg(symbol);
     const count = document.createElement('span'); count.className = 'map-pin-count'; count.hidden = true;
-    // Selected objects rise into a teardrop pin whose tip marks the exact location (as in web maps).
-    const drop = document.createElement('span'); drop.className = 'map-pin-drop'; drop.setAttribute('aria-hidden', 'true');
-    drop.innerHTML = teardropPinSvg();
-    button.append(drop, icon, count);
-    let label: HTMLSpanElement | null = null;
-    if (labelVisible) { label = document.createElement('span'); label.className = 'map-pin-label'; label.textContent = displayName; button.appendChild(label); }
+    const frame=document.createElement('span');frame.className='map-pin-shape';frame.innerHTML=poiFrameSvg(selected);
+    button.append(frame,icon,count);
+    const label = document.createElement('span'); label.className = 'map-pin-label'; label.textContent = displayName; button.appendChild(label);
     button.addEventListener('click', event => {
       event.stopPropagation();
       const members = groups.get(button.dataset.mapObject!) ?? [];
-      if (members.length > 1) openChooser(markers.find(m => m.button === button)!, members);
+      if(event.target instanceof Element && event.target.closest('.map-pin-label')) options.onSelect(hit);
+      else if (members.length > 1) openChooser(markers.find(m => m.button === button)!, members);
       else options.onSelect(hit);
     });
     for (const type of ['pointerdown', 'mousedown', 'touchstart', 'dblclick'])
       button.addEventListener(type, event => event.stopPropagation());
     layer.appendChild(button);
-    markers.push({ id: button.dataset.mapObject!, hit, name, symbol, button, label, icon, count, point: pos, selected, priority: selected ? 100 : kind.includes('is-priority') ? 50 : kind.startsWith('staging') ? 30 : 10, width: 0 });
+    const priority = markerPriority({ selected, hazard: hit.type === 'hazard', suspected: kind.includes('is-suspected'),
+      priorityCommunity: kind.includes('is-priority'), staging: kind.startsWith('staging') });
+    markers.push({ id: button.dataset.mapObject!, hit, name, symbol, button, label, icon, count, point: pos, selected, priority, width: 0, labelEligible: labelVisible });
   };
-  if (layers.communities) communities.forEach(c => add({ type: 'community', id: c.id }, c.projected, c.name, `community${c.prio === 1 ? ' is-priority' : ''}`, 'community', c.id === options.selectedCommunityId, true));
+  // One selected pin: an inspected point replaces the open community's pin; a road selection keeps it.
+  const selectedPin = /^(community|hazard|poi):/.test(options.selectedObjectId ?? '') ? options.selectedObjectId
+    : options.selectedCommunityId ? `community:${options.selectedCommunityId}` : null;
+  if (layers.communities) communities.forEach(c => add({ type: 'community', id: c.id }, c.projected, c.name, `community${c.prio === 1 ? ' is-priority' : ''}`, 'community', selectedPin === `community:${c.id}`, c.labelMode !== 'hide'));
   hazards.forEach(h => {
     const visible = h.kind === 'landslide' ? layers.landslide : h.kind === 'flood' ? layers.flood : layers.status;
     if (!visible) return;
     const name = locale === 'vi' ? h.name[0] : h.name[1];
-    const selected = options.selectedObjectId === `hazard:${h.id}`;
-    add({ type: 'hazard', id: h.id }, h.projected, name, `hazard ${h.kind}${h.observation === 'suspected' ? ' is-suspected' : ''}`, h.kind, selected, selected);
+    const selected = selectedPin === `hazard:${h.id}`;
+    add({ type: 'hazard', id: h.id }, h.projected, name, `hazard ${h.kind}${h.observation === 'suspected' ? ' is-suspected' : ''}`, h.kind, selected, h.labelMode === 'show' || (h.labelMode !== 'hide' && selected));
   });
   (options.responseSites ?? []).forEach(site => {
     if (!layers[site.kind]) return;
     add({ type: 'poi', id: site.id }, site.projected, locale === 'vi' ? site.name[0] : site.name[1],
       `${site.kind}${site.assessment === 'candidate' ? ' is-suspected' : site.assessment === 'unavailable' ? ' is-unavailable' : ''}`,
-      site.kind, options.selectedObjectId === `poi:${site.id}`, true);
+      site.kind, selectedPin === `poi:${site.id}`, site.labelMode !== 'hide');
   });
   markers.sort((a, b) => b.priority - a.priority);
+  const markerById = new Map(markers.map(marker => [marker.id, marker]));
+  const preview=document.createElement('div');preview.className='map-hover-target';preview.hidden=true;preview.setAttribute('aria-hidden','true');layer.append(preview);
+  let previewPoint:{x:number;y:number}|null=null;
+  let previewId:string|null=null;
+  const previewEvent=(event:Event)=>{const d=(event as CustomEvent).detail;if(!d?.scope?.contains(host))return;previewId=d.id??null;previewPoint=d.id&&d.point?d.point:null;if(d.focus&&previewPoint)options.onPreviewFocus?.(previewPoint);if(lastProjection)update(lastProjection);};
+  document.addEventListener('dear:map-preview',previewEvent);
   // Measure the actual selected font, including Vietnamese diacritics.
   const measure = document.createElement('canvas').getContext('2d');
   const measureLabels = () => markers.forEach(marker => {
-    if (!marker.label || !measure) return;
+    if (!measure) return;
     const style = getComputedStyle(marker.label);
     measure.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     marker.width = Math.ceil(measure.measureText(marker.label.textContent ?? '').width) + 8;
   });
   measureLabels();
   let disposed = false;
+  let pendingFocusId = options.focusId;
   let lastProjection: Projection | undefined;
   const onFontsLoaded = () => { if (!disposed) { measureLabels(); if (lastProjection) update(lastProjection); } };
   document.fonts.addEventListener('loadingdone', onFontsLoaded);
   void document.fonts.ready.then(onFontsLoaded);
-  const controlRects = (): ScreenRect[] => {
+  const controlRects = (): { controls: ScreenRect[]; labels: ScreenRect[] } => {
     const hostRect = host.getBoundingClientRect();
-    const workspace = host.closest('.map-area') ?? host.parentElement;
-    return Array.from(workspace?.querySelectorAll<HTMLElement>('.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-measure-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin') ?? [])
-      .filter(el => el.offsetHeight > 0).map(el => { const r = el.getBoundingClientRect(); return { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height }; });
+    const workspace = host.closest('.geodata-workspace, .workspace') ?? host.closest('.map-area') ?? host.parentElement;
+    const entries = Array.from(workspace?.querySelectorAll<HTMLElement>('#response-details,.geodata-detail,.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-tool-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin,.map-selected-reference,.notice-toast') ?? [])
+      .filter(el => el.getBoundingClientRect().height > 0).map(el => {
+        const r = el.getBoundingClientRect();
+        return { tooltip: el.classList.contains('leaflet-tooltip'), rect: { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height } };
+      });
+    // Hover tooltips may displace labels, but must not hide the symbols beneath them.
+    return { controls: entries.filter(item => !item.tooltip).map(item => item.rect), labels: entries.filter(item => item.tooltip).map(item => item.rect) };
   };
   const update = (project: Projection): void => {
     lastProjection = project;
     const width = host.clientWidth, height = host.clientHeight;
-    const controls = controlRects();
+    const { controls, labels: externalLabels } = controlRects();
     const positions = markers.flatMap(marker => {
       const position = project(marker.point);
-      marker.button.hidden = true;
-      return position ? [{ id: marker.id, ...position, priority: marker.priority, selected: marker.selected }] : [];
+      return position ? [{ id: marker.id, ...position, priority: marker.priority, selected: marker.selected, category: marker.symbol }] : [];
     });
     const layout = layoutMarkerGroups(positions, width, height, controls);
-    groups = new Map(layout.map(group => [group.anchor.id, group.members.map(p => markers.find(m => m.id === p.id)!)]));
+    const pp=previewPoint?project(previewPoint):null;
+    const previewGroup=previewId?layout.find(group=>group.members.some(member=>member.id===previewId)):null;
+    const hidePreview=!!previewGroup||!pp||pp.x<12||pp.y<12||pp.x>width-12||pp.y>height-12||controls.some(r=>overlaps({x:pp.x-5,y:pp.y-5,width:10,height:10},r,0));
+    if(preview.hidden!==hidePreview)preview.hidden=hidePreview;
+    if(pp){const left=pp.x+'px',top=pp.y+'px';if(preview.style.left!==left)preview.style.left=left;if(preview.style.top!==top)preview.style.top=top;}
+    const visible = new Set(layout.map(group => group.anchor.id));
+    for (const marker of markers) {
+      const hidden = !visible.has(marker.id);
+      if (marker.button.hidden !== hidden) marker.button.hidden = hidden;
+    }
+    groups = new Map(layout.map(group => [group.anchor.id, group.members.map(p => markerById.get(p.id)!)]));
     if (chooserTrigger) {
       const members = groups.get(chooserTrigger.dataset.mapObject!) ?? [];
       const group = layout.find(g => g.anchor.id === chooserTrigger!.dataset.mapObject);
       if (!group || members.map(m => m.id).sort().join(',') !== chooserKey ||
           Math.hypot(group.anchor.x - chooserAnchor.x, group.anchor.y - chooserAnchor.y) > 1) closeChooser();
     }
-    const occupied = [...controls, ...layout.map(group => group.rect)];
+    if (pendingFocusId) {
+      const retained = layout.find(group => group.members.some(member => member.id === pendingFocusId));
+      // Rebuilding symbols after selection must not drop focus or move focus from a form.
+      if (retained && document.activeElement === document.body)
+        markerById.get(retained.anchor.id)?.button.focus({ preventScroll: true });
+      pendingFocusId = undefined;
+    }
+    const occupied = [...controls, ...externalLabels, ...layout.map(group => group.rect)];
     if (chooser) { const area = host.getBoundingClientRect(), r = chooser.getBoundingClientRect(); occupied.push({ x: r.x - area.x, y: r.y - area.y, width: r.width, height: r.height }); }
     layout.forEach(group => {
-      const marker = markers.find(m => m.id === group.anchor.id)!;
+      const marker = markerById.get(group.anchor.id)!;
       const { x, y } = group.anchor;
       const clustered = group.members.length > 1;
       const members = [marker, ...groups.get(marker.id)!.filter(member => member !== marker)];
       const presentation = markerPresentation(members, options.allowCounts?.() ?? false);
-      // The collision rectangle includes the selected pin. Its width is not the DOM button width.
-      const half = clustered ? 17 : 14;
+      const {half,tip}=poiMetrics(markerSize(clustered,marker.selected),marker.selected);
       const display = marker;
-      marker.button.hidden = false;
-      marker.button.style.transform = `translate(${x - half}px,${y - half}px)`;
+      const transform = `translate(${x - half}px,${y - tip}px)`;
+      if (marker.button.style.transform !== transform) marker.button.style.transform = transform;
+      const hoverLeft = `${x + 31 + marker.width < width - 8 ? 31 : -marker.width - 3}px`;
+      const hoverTop = `${y - tip + 4 < 8 ? tip + 6 : 4}px`;
+      if (marker.button.style.getPropertyValue('--hover-label-left') !== hoverLeft) marker.button.style.setProperty('--hover-label-left', hoverLeft);
+      if (marker.button.style.getPropertyValue('--hover-label-top') !== hoverTop) marker.button.style.setProperty('--hover-label-top', hoverTop);
       marker.button.classList.toggle('is-cluster', presentation === 'cluster');
-      marker.button.classList.toggle('is-overlap', presentation === 'overlap');
       marker.button.classList.toggle('has-overlap', presentation === 'feature-overlap');
       marker.button.classList.toggle('is-selected', marker.selected);
-      marker.button.classList.toggle('has-critical', (presentation === 'overlap' || presentation === 'cluster') && members.some(member => member.priority >= 50 || (member.symbol === 'landslide' && !member.button.classList.contains('is-suspected'))));
-      marker.button.setAttribute('aria-label', clustered ? (presentation === 'cluster'
+      // A mixed group whose anchor outranks a reported hazard still signals that hazard.
+      const hiddenHazard = presentation === 'feature-overlap' &&
+        members.slice(1).some(member => member.hit.type === 'hazard' && !member.button.classList.contains('is-suspected'));
+      marker.button.classList.toggle('has-hazard', hiddenHazard);
+      const accessibleName = clustered ? (presentation === 'cluster'
         ? `${group.members.length} ${categoryNames[marker.symbol][locale === 'vi' ? 0 : 1]}`
-        : `${display.name}. ${locale === 'vi' ? 'Mở danh sách điểm trong nhóm' : 'Browse points in this group'}`) : marker.name);
-      marker.button.title = clustered ? group.members.map(p => markers.find(m => m.id === p.id)!.name).join(', ') : marker.name;
-      if (clustered) { marker.button.setAttribute('aria-haspopup', 'true'); marker.button.setAttribute('aria-expanded', String(chooserTrigger === marker.button)); }
-      else { marker.button.removeAttribute('aria-haspopup'); marker.button.removeAttribute('aria-expanded'); }
-      const iconKey = presentation === 'overlap' ? 'overlap' : display.symbol;
-      if (marker.icon.dataset.symbol !== iconKey) {
-        marker.icon.dataset.symbol = iconKey;
-        marker.icon.innerHTML = presentation === 'overlap'
-          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>'
-          : mapSymbolSvg(display.symbol);
+        : `${display.name}. ${hiddenHazard ? (locale === 'vi' ? 'Có điểm nguy hiểm đã báo cáo trong nhóm. ' : 'Includes a reported hazard. ') : ''}${locale === 'vi' ? 'Mở danh sách điểm trong nhóm' : 'Browse points in this group'}`) : marker.name;
+      if (marker.button.getAttribute('aria-label') !== accessibleName) marker.button.setAttribute('aria-label', accessibleName);
+      const description = clustered ? group.members.map(p => markerById.get(p.id)!.name).join(', ') : marker.name;
+      if (marker.button.getAttribute('aria-description') !== description) marker.button.setAttribute('aria-description', description);
+      marker.button.classList.toggle('is-preview', previewGroup?.anchor.id === marker.id);
+      if (clustered) {
+        if (!marker.button.hasAttribute('aria-haspopup')) marker.button.setAttribute('aria-haspopup', 'true');
+        const expanded = String(chooserTrigger === marker.button);
+        if (marker.button.getAttribute('aria-expanded') !== expanded) marker.button.setAttribute('aria-expanded', expanded);
       }
-      marker.icon.hidden = false; marker.count.hidden = presentation !== 'cluster';
+      else { marker.button.removeAttribute('aria-haspopup'); marker.button.removeAttribute('aria-expanded'); }
+      if (marker.icon.dataset.symbol !== display.symbol) {
+        marker.icon.dataset.symbol = display.symbol;
+        marker.icon.innerHTML = mapSymbolSvg(display.symbol);
+      }
+      if (marker.icon.hidden) marker.icon.hidden = false;
+      if (marker.count.hidden !== (presentation !== 'cluster')) marker.count.hidden = presentation !== 'cluster';
       if (marker.count.textContent !== String(group.members.length)) marker.count.textContent = String(group.members.length);
-      if (!marker.label || options.appearance?.labels === 'none' || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { marker.button.classList.add('is-label-hidden'); return; }
-      const choices = [{ x: x + 22, y: y - 10 }, { x: x - marker.width - 22, y: y - 10 }, { x: x - marker.width / 2, y: y - 43 }, { x: x - marker.width / 2, y: y + 22 }];
+      if (!marker.labelEligible || options.appearance?.labels === 'none' || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { if (!marker.button.classList.contains('is-label-hidden')) marker.button.classList.add('is-label-hidden'); return; }
+      const choices = [{ x: x + 18, y: y - tip + 4 }, { x: x - marker.width - 18, y: y - tip + 4 }, { x: x - marker.width / 2, y: y - tip - 26 }, { x: x - marker.width / 2, y: y + 8 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);
-      if (place) { marker.label.style.left = `${place.x - x + half - marker.button.clientLeft}px`; marker.label.style.top = `${place.y - y + half - marker.button.clientTop}px`; occupied.push({ ...place, width: marker.width, height: 22 }); }
+      if (place) {
+        const left = `${place.x - x + half - marker.button.clientLeft}px`, top = `${place.y - y + tip - marker.button.clientTop}px`;
+        if (marker.label.style.left !== left) marker.label.style.left = left;
+        if (marker.label.style.top !== top) marker.label.style.top = top;
+        occupied.push({ ...place, width: marker.width, height: 22 });
+      }
     });
   };
   // Reference/photo layers have their own DOM. Relayout when their selected label or
@@ -234,8 +282,9 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       if (!disposed && lastProjection) update(lastProjection);
     });
   });
-  externalChanges.observe(host.closest('.map-area') ?? host.parentElement ?? host, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+  externalChanges.observe(host.closest('.geodata-workspace, .workspace') ?? host.closest('.map-area') ?? host.parentElement ?? host, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
   return { update, dispose: () => {
+    document.removeEventListener('dear:map-preview',previewEvent);
     externalChanges.disconnect(); cancelAnimationFrame(relayoutFrame);
     disposed = true; closeChooser(); document.fonts.removeEventListener('loadingdone', onFontsLoaded);
     document.removeEventListener('pointerdown', dismiss, true); document.removeEventListener('keydown', escape); document.removeEventListener('focusin', dismissFocus);

@@ -20,6 +20,6 @@ export function NotificationPopover({ locale, incident, report, road, updated, o
       <div className="notification-preview-heading"><strong>{incident.title ? t(...incident.title) : t('Cảnh báo sự kiện', 'Incident alert')}</strong><time dateTime={incident.triggeredAt}>{localClock(incident.triggeredAt)}</time></div>
       <button className="text-button" onClick={onOpenIncident}>{t('Mở sự kiện', 'Open incident')}</button>
     </div>
-    <button className="text-button notification-all" onClick={onOpenAll}>{t('Tất cả thông báo', 'All notifications')}</button>
+    <button className="text-button notification-all" onClick={onOpenAll}>{t('Nhật ký sự kiện', 'Incident journal')}</button>
   </section>;
 }

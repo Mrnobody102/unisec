@@ -1,17 +1,23 @@
 import { reportReviewLabel } from '../access/reportReviewLabel';
+import { landslideAreaOf } from '../landslides/landslideAreas';
+import { LandslideAreaSummary } from '../landslides/LandslideAreaSummary';
+import type { RoadSegment } from '../../types/dear';
 import { observationTimeLabel } from './captureMetadata';
 import type { GeometryRecord } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { observationOf } from './model';
 import { observationLabel } from './labels';
+import { VoicePlayback } from './VoicePlayback';
+import { submissionLocationLabel } from '../access/submissions';
 import { PhotoGallery } from './PhotoGallery';
 export function ResponseObservationCard({
   record,
   locale,
   onClose,
   onEdit,
-  onBack
+  onBack,
+  roads = [], onRoad
 }: {
   record: GeometryRecord;
   locale: Locale;
@@ -19,6 +25,8 @@ export function ResponseObservationCard({
   onEdit: () => void;
   /** Returns to the point group this record was opened from. */
   onBack?: () => void;
+  roads?: RoadSegment[];
+  onRoad?: (id: string) => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const observation = observationOf(record),
@@ -29,7 +37,7 @@ export function ResponseObservationCard({
   return (
     <section
       className="field-map-card"
-      aria-label={t('Điểm dữ liệu GIS', 'GIS data point')}
+      aria-label={landslideAreaOf(record) ? t('Vùng sạt lở', 'Landslide area') : t('Điểm dữ liệu GIS', 'GIS data point')}
     >
       <header>
         {onBack && (
@@ -51,6 +59,7 @@ export function ResponseObservationCard({
           <UiIcon name="close" />
         </button>
       </header>
+      {landslideAreaOf(record) && <LandslideAreaSummary record={record} roads={roads} locale={locale} onRoad={onRoad}/>}
       {observation && (
         <>
           <div className="field-record-heading">
@@ -59,10 +68,12 @@ export function ResponseObservationCard({
               {reportReviewLabel(record, locale)}
             </span>
           </div>
-          <p className="field-note">{observation.note}</p>
+          {observation.note&&<p className="field-note">{observation.note}</p>}
+          <VoicePlayback voice={observation.voice} locale={locale}/>
+          {submissionLocationLabel(record,locale)&&<p className="field-hint">{submissionLocationLabel(record,locale)}</p>}
         </>
       )}
-      <dl className="field-metadata">
+      {!landslideAreaOf(record) && <dl className="field-metadata">
         {point && (
           <>
             <div>
@@ -86,7 +97,7 @@ export function ResponseObservationCard({
               <dd>{observationTimeLabel(observation, locale)}</dd>
             </div>
           )}
-      </dl>
+      </dl>}
       {observation && (
         <PhotoGallery photos={observation.photos} locale={locale} />
       )}

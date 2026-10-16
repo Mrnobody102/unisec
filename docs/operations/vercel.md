@@ -28,7 +28,7 @@ Ba file nguồn `che_tao_v2_tex.glb`, `.grid.bin` và `.terrain.json` nằm ở 
 
 Không đưa `references/`, `node_modules/`, `dist/` hay ZIP offline vào Git để deploy. Vercel tự tạo `dist` từ source và lockfile. Không thêm rewrite mọi URL về `index.html`: app hiện chưa dùng đường dẫn cho từng màn hình, còn file dữ liệu thiếu phải trả 404.
 
-Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu, unit test, dependency runtime, build, gói offline và luồng trình duyệt. Đã cấu hình Node 22/Python 3.12 trên Linux; chưa có kết quả chạy GitHub Actions hoặc Vercel. Kết quả tại máy local ở [rà soát](../quality/workspace-review.md).
+Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu, unit test, dependency runtime, build, gói offline và luồng trình duyệt. Dùng Node 22/Python 3.12 trên Linux; kết quả từng commit xem tại GitHub Actions. Bộ UI mở rộng chạy thủ công qua workflow; phạm vi tại [kiểm tra workspace](../quality/workspace-review.md).
 
 ## Kiểm tra URL sau deploy
 

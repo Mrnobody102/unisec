@@ -25,7 +25,8 @@ def check_workspace_layout(browser, url, captures=None):
         assert abs(nav['y'] + nav['height'] - toolbar['y'] - toolbar['height']) < 1, 'Desktop tabs and search toolbar have different baselines'
         assert page.locator('.workspace-nav').evaluate('node => getComputedStyle(node).backgroundColor') == page.locator('.map-toolbar').evaluate('node => getComputedStyle(node).backgroundColor'), 'Workspace controls use different surface tones'
         search = page.get_by_role('combobox', name='Tìm trên bản đồ', exact=True)
-        assert search.bounding_box()['width'] >= 160, 'Search was squeezed by the toolbars'
+        trigger = page.locator('.map-search-mobile-trigger')
+        expect(trigger).to_be_visible()
         for selector in ['.map-toolbar', '.map-tools']:
             bounds = page.locator(selector).bounding_box()
             for button in page.locator(selector + ' button').all():
@@ -33,6 +34,8 @@ def check_workspace_layout(browser, url, captures=None):
                 if box:
                     assert box['x'] >= bounds['x'] and box['x'] + box['width'] <= bounds['x'] + bounds['width'] + 1
                     check_front(button)
+        trigger.click()
+        assert search.bounding_box()['width'] >= 160, 'Search was squeezed by the toolbars'
         search.fill('nam')
         expect(page.locator('.map-search-results')).to_have_css('opacity', '1')
         check_front(page.locator('.map-search-results [role=option]').first)

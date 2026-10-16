@@ -25,7 +25,7 @@ export function DecisionExportDialog({ snapshot, terrain, imageUrl, locale, onCl
   }, [snapshot, terrain, imageUrl, locale, attempt]);
   return <div className="modal-overlay" onClick={onClose}>
     <section className="modal-dialog decision-export-dialog" role="dialog" aria-modal="true" aria-labelledby="decision-export-title" onClick={e => e.stopPropagation()}>
-      <header className="modal-head"><h2 id="decision-export-title">{t('Lưu đánh giá tiếp cận', 'Save access assessment')}</h2><button className="icon-button" aria-label={t('Đóng', 'Close')} onClick={onClose}><UiIcon name="close"/></button></header>
+      <header className="modal-head"><h2 id="decision-export-title">{t('Xuất đánh giá tiếp cận', 'Export access assessment')}</h2><button className="icon-button" aria-label={t('Đóng', 'Close')} onClick={onClose}><UiIcon name="close"/></button></header>
       <div className="modal-body">
         {preview ? <img className="decision-export-preview" src={preview.url} alt={t(`Bản đồ và đánh giá tiếp cận ${snapshot.community.name}`, `Map and access assessment for ${snapshot.community.name}`)}/> :
           <div className="decision-export-loading" role={error ? 'alert' : 'status'}>{error ? t('Không tạo được ảnh bản đồ', 'Map image could not be created') : !terrain || !imageUrl ? t('Chưa có ảnh nền phù hợp để xuất bản đồ', 'No compatible imagery available for map export') : t('Đang tạo ảnh bản đồ', 'Preparing map image')}

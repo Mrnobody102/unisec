@@ -16,6 +16,8 @@ type Props = Pick<
   | 'workTasks'
   | 'workEntries'
   | 'reportPending'
+  | 'pendingReport'
+  | 'onApplyReport'
   | 'historical'
   | 'onOpenWork'
   | 'onOpenReport'
@@ -39,6 +41,8 @@ export function ResponsePanel({
   workTasks,
   workEntries,
   reportPending,
+  pendingReport,
+  onApplyReport,
   historical,
   onOpenWork,
   onOpenReport,
@@ -106,10 +110,11 @@ export function ResponsePanel({
         areaName={aoi.name}
         onOpenArea={() => onInspectObject(`aoi:${aoi.id}`)}
         locale={locale}
-        updated={updated}
         tasks={workTasks}
         entries={workEntries}
         reportPending={reportPending}
+        pendingReport={pendingReport}
+        onApplyReport={onApplyReport}
         historical={historical}
         onOpenWork={onOpenWork}
         onOpenReport={onOpenReport}
@@ -148,7 +153,7 @@ export function ResponsePanel({
           onNavigate({ type: 'filters', values: { impactTab } })
         }
         onChangeRoadFilter={(roadFilter) =>
-          onNavigate({ type: 'filters', values: { roadFilter } })
+          onNavigate({ type: 'road-list', filter: roadFilter })
         }
         onSelectObject={onInspectObject}
         selectedId={navigation.objectIds.impact}

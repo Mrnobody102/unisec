@@ -1,3 +1,4 @@
+import {roadHazardIds} from '../incident/roadHazards';
 import proj4 from 'proj4';
 import type { DecisionSnapshot } from './decisionSnapshot';
 
@@ -24,7 +25,7 @@ export function decisionGeoJSON(snapshot: DecisionSnapshot) {
   if (area < 0) ring.reverse();
   ring.push([...ring[0]]);
   add('aoi', snapshot.aoi.id, { type: 'Polygon', coordinates: [ring] }, { name: snapshot.aoi.name, observedAt: snapshot.aoi.observedAt, source: snapshot.aoi.source });
-  for (const road of snapshot.roads) add('road', road.id, line(road.points), { name: road.name, roadCode: road.scenarioRoadCode, status: road.status, class: road.cls, lengthKm: road.len, hazardId: road.hz });
+  for (const road of snapshot.roads) add('road', road.id, line(road.points), { name: road.name, roadCode: road.scenarioRoadCode, status: road.status, class: road.cls, lengthKm: road.len, hazardIds: roadHazardIds(road) });
   for (const community of snapshot.communities) add('community', community.id, { type: 'Point', coordinates: point(community.projected) }, { name: community.name, commune: community.commune, population: community.pop, households: community.hh, priority: community.prio, selected: community.id === snapshot.community.id });
   for (const hazard of snapshot.hazards) add('hazard', hazard.id, { type: 'Point', coordinates: point(hazard.projected) }, { name: hazard.name, hazardType: hazard.kind, observation: hazard.observation, observedAt: hazard.detected, source: hazard.src, evidence: snapshot.evidence.filter(record => record.hazardId === hazard.id) });
   for (const site of snapshot.responseSites) add('response-site', site.id, { type: 'Point', coordinates: point(site.projected) }, { name: site.name, siteType: site.kind, assessment: site.assessment, observedAt: site.observedAt, source: site.source });

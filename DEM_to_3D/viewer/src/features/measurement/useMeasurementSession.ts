@@ -1,5 +1,5 @@
 import { useLayoutEffect, useReducer } from 'react';
-import { initialMeasurementSession, measurementSessionReducer } from './measurementSession';
+import { initialMeasurementSession, measurementSessionReducer } from './core/session';
 
 /** Closing a tool preserves a drawing and restores any uncommitted edit. */
 export function useMeasurementSession(mapMode: '2d' | '3d', open: boolean) {

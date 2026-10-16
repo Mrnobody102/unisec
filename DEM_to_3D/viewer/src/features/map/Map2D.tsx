@@ -1,8 +1,10 @@
+import { DeviceLocationLayer } from './DeviceLocationLayer';
+import type { DeviceLocation } from '../../shared/hooks/useDeviceLocation';
 import { removeLeafletMap } from './removeLeafletMap';
 import { PIN, teardropPinSvg } from '../../terrain/pinShape';
 import { createTileProgress } from './tileProgress';
 import { retryTileErrors } from './tileRetry';
-import { imagerySource } from './imagerySource';
+import { basemapTileOptions, imagerySource } from './imagerySource';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -17,13 +19,14 @@ import { createRaster2d, type Raster2D } from './raster2d';
 import { ResponseGisLayer } from '../observations/ResponseGisLayer';
 import type { GeometryRecord } from '../../geo/vector/types';
 import { MapOverview } from './MapOverview';
-import { MapMeasurement } from '../measurement/MapMeasurement';
-import { measurementGeometry } from '../measurement/measurementGeometry';
-import type { MeasureAction, MeasurementSession } from '../measurement/measurementSession';
+import { MapMeasurement, measurementGeometry, type MeasureAction, type MeasurementSession } from '../measurement';
+import { DrawPanel, type DrawAction, type DrawSession } from '../drawing';
 import { showRoad, defaultLayerAppearance } from './layerAppearance';
 import { readMapLocation, type MapLocation } from './mapLocation';
 
 type Props = MapDisplayProps & {
+  userLocation?: DeviceLocation | null;
+  userLocationRequest?: number;
   journeyFitRequest?: number;
   journeyEndpoints?: Array<{latitude:number;longitude:number;label:string;road?:{latitude:number;longitude:number}}>;
   pointPickActive?: boolean; onPointPick?: (latitude:number,longitude:number)=>void;
@@ -35,10 +38,13 @@ type Props = MapDisplayProps & {
   locationOpen: boolean; locationPoint: MapLocation | null; onLocation: (point: MapLocation) => void;
   measurementOpen: boolean; onCloseMeasurement: () => void;
   measureSession: MeasurementSession; dispatchMeasureSession: Dispatch<MeasureAction>;
+  /** Drawing takes every map click while open; saved shapes become GIS records. */
+  drawOpen?: boolean; drawSession?: DrawSession; dispatchDrawSession?: Dispatch<DrawAction>;
+  onCloseDraw?: () => void; onSaveDrawing?: (record: GeometryRecord) => void;
 };
 
 export function Map2D(props: Props): JSX.Element {
-  const interacting = props.measurementOpen && (!props.measureSession.finished || props.measureSession.editing);
+  const interacting = (props.measurementOpen && (!props.measureSession.finished || props.measureSession.editing)) || Boolean(props.drawOpen);
   const geometry = useMemo(() => measurementGeometry(props.scenarioProps, props.locale ?? 'vi'), [props.scenarioProps, props.locale]);
   const [mapReady, setMapReady] = useState(false);
   const [overviewRaster, setOverviewRaster] = useState<Raster2D | null>(null);
@@ -70,7 +76,10 @@ export function Map2D(props: Props): JSX.Element {
     let markers: ReturnType<typeof createScreenMarkers> | null = null;
     let overlay: L.LayerGroup | null = null, tileLayer: L.TileLayer | null = null, raster: L.ImageOverlay | null = null;
     let onlineImageryReady = false;
-    const localOpacity = () => onlineImageryReady ? 0 : propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1;
+    // Under opaque satellite tiles the local raster stays visible beneath them, filling
+    // any tile not loaded yet; a faded basemap would show both, so it is hidden then.
+    const localOpacity = () => { const opacity = propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1; return onlineImageryReady && opacity < 1 ? 0 : opacity; };
+    const imageryPane = map.getPane(mapPane('imagery'))!;
     let rasterAbort: AbortController | null = null, rasterKey = '', tileKey = '', frame = 0, disposed = false;
     let hasFit = Boolean(saved), localData: TerrainData | null = null;
     let lastSelection = '';
@@ -98,6 +107,8 @@ export function Map2D(props: Props): JSX.Element {
       if (tileKey === key) return;
       tileKey = key; tileLayer?.remove(); tileLayer = null; onlineImageryReady = false; raster?.setOpacity(localOpacity());
       const style = imagery ? 'satellite' : 'terrain';
+      // Satellite tiles draw over the local raster; the terrain basemap stays beneath it.
+      imageryPane.style.zIndex = imagery && enabled ? '150' : String(200 + mapLayerOrder.imagery * 30);
       const publish = (status: 'off' | 'loading' | 'ready' | 'partial' | 'error', loaded = 0, total = 0) => {
         if (status === 'ready') onlineImageryReady = imagery && loaded > 0;
         else if (['off','partial','error'].includes(status)) onlineImageryReady = false;
@@ -108,7 +119,7 @@ export function Map2D(props: Props): JSX.Element {
       const progress = createTileProgress();
       const report = () => { const {status,loaded,total} = progress.snapshot(); publish(status,loaded,total); };
       const layer = imagery ? 's2cloudless_3857' : 'terrain-light_3857';
-      const tiles = retryTileErrors(L.tileLayer(imagery ? imagerySource.url : `https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/{z}/{y}/{x}.jpg`, { maxNativeZoom: imagery ? imagerySource.maxNativeZoom : 14, maxZoom: 19, keepBuffer: 1, updateWhenIdle: true, noWrap: true }));
+      const tiles = retryTileErrors(L.tileLayer(imagery ? imagerySource.url : `https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/{z}/{y}/{x}.jpg`, { maxNativeZoom: imagery ? imagerySource.maxNativeZoom : 14, maxZoom: 19, noWrap: true, ...basemapTileOptions }));
       tileLayer = tiles;
       tiles.on('loading', () => { progress.reset(); publish('loading'); });
       tiles.on('tileloadstart', event => progress.start(event.tile));
@@ -143,11 +154,14 @@ export function Map2D(props: Props): JSX.Element {
         }).catch(error => { if (!signal.aborted) console.warn('Local 2D raster unavailable', error); });
       }
       raster?.setOpacity(localOpacity());
+      const focused = document.activeElement as HTMLElement | null;
+      const focusId = focused?.closest('.map-marker-layer')?.parentElement === host ? focused.dataset.mapObject : undefined;
       markers?.dispose(); overlay?.remove(); markers = null; overlay = L.layerGroup().addTo(map);
       if (scenario && terrain) {
-        markers = createScreenMarkers(host, { ...scenario, locale,
-          interactive: !propsRef.current.locationOpen && !(propsRef.current.measurementOpen && (!propsRef.current.measureSession.finished || propsRef.current.measureSession.editing)),
+        markers = createScreenMarkers(host, { ...scenario, locale, focusId,
+          interactive: !propsRef.current.pointPickActive && !propsRef.current.locationOpen && !propsRef.current.drawOpen && !(propsRef.current.measurementOpen && (!propsRef.current.measureSession.finished || propsRef.current.measureSession.editing)),
           allowCounts: () => map.getZoom() < 14,
+          onPreviewFocus:point=>{const reserve=parseFloat(getComputedStyle(host.closest('.workspace')??host).getPropertyValue('--response-detail-reserve'))||0;propsRef.current.viewControlRef?.current?.focusProjected(point,{right:reserve});},
           onExpandGroup: points => {
             const positions = points.map(ll).filter((point): point is L.LatLng => point !== null);
             if (positions.length) map.fitBounds(L.latLngBounds(positions), { paddingTopLeft: [55, 80], paddingBottomRight: [75, 100], maxZoom: 17 });
@@ -184,7 +198,8 @@ export function Map2D(props: Props): JSX.Element {
         }
         lastSelection = selection;
       }
-      schedule();
+      if (frame) cancelAnimationFrame(frame);
+      updateLayout();
     };
     runtime.current = { refresh }; refresh();
     if (props.viewControlRef) props.viewControlRef.current = {
@@ -192,6 +207,7 @@ export function Map2D(props: Props): JSX.Element {
       focusProjected: (point, inset) => { const p = ll(point); if (!p) return; const shift = (inset?.right ?? 0) / 2; const target = shift ? map.unproject(map.project(p).add([shift, 0])) : p; map.panTo(target, { animate: true, duration: 0.3 }); },
       retryBasemap: () => { tileKey = ''; refresh(); }
     };
+    propsRef.current.onViewReady?.();
     const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); schedule(); }); resize.observe(host);
     const ui = new MutationObserver(schedule);
     const area = host.closest('.map-area');
@@ -202,9 +218,9 @@ export function Map2D(props: Props): JSX.Element {
       const current = propsRef.current;
       if (!current.onMapContextMenu) return;
       event.preventDefault();
-      if (current.locationOpen || current.pointPickActive || (current.measurementOpen && (!current.measureSession.finished || current.measureSession.editing))) return;
+      if (current.locationOpen || current.pointPickActive || current.drawOpen || (current.measurementOpen && (!current.measureSession.finished || current.measureSession.editing))) return;
       const target = event.target instanceof Element ? event.target : null;
-      const pin = target?.closest<HTMLElement>('.map-pin:not(.is-cluster):not(.is-overlap)');
+      const pin = target?.closest<HTMLElement>('.map-pin:not(.is-cluster)');
       const roadId = target?.closest('[data-road-id]')?.getAttribute('data-road-id');
       let hit: OverlayHit | null = null, at = map.mouseEventToLatLng(event);
       if (pin?.dataset.mapObject) {
@@ -230,10 +246,10 @@ export function Map2D(props: Props): JSX.Element {
   useLayoutEffect(() => {
     // Tool interaction must change before paint, independently of marker positioning.
     const markerLayer = hostRef.current?.querySelector<HTMLElement>('.map-marker-layer');
-    if (markerLayer) markerLayer.inert = props.locationOpen || interacting;
-  }, [props.locationOpen, interacting]);
+    if (markerLayer) markerLayer.inert = !!props.pointPickActive || props.locationOpen || interacting;
+  }, [props.locationOpen, props.pointPickActive, interacting]);
   useEffect(() => { runtime.current?.refresh(); }, [props.terrain, props.imageUrl, props.locale,
-    interacting, props.locationOpen,
+    interacting, props.locationOpen, props.pointPickActive,
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,
     props.scenarioProps?.selectedRoute, props.scenarioProps?.selectedCommunityId,
     props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers, props.scenarioProps?.appearance]);
@@ -310,10 +326,14 @@ export function Map2D(props: Props): JSX.Element {
     map.fitBounds(L.latLngBounds(points),{paddingTopLeft:[40,top],paddingBottomRight:[right,80],maxZoom:16,animate:false});
   },[mapReady,props.journeyFitRequest]);
   return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
-    {mapReady && props.gisRecords && props.onGisSelect && <ResponseGisLayer mapRef={mapRef} records={props.gisRecords} selectedId={props.gisSelectedId ?? null} request={props.gisRequest ?? {version:0,id:null}} enabled={props.gisEnabled !== false} interactive={!props.measurementOpen && !props.locationOpen} locale={props.locale ?? 'vi'} groupIds={props.gisGroupIds} onSelect={props.onGisSelect} onGroup={props.onGisGroup}/>}
+    {mapReady && <DeviceLocationLayer mapRef={mapRef} location={props.userLocation ?? null} request={props.userLocationRequest ?? 0} locale={props.locale ?? 'vi'}/>}
+    {mapReady && props.gisRecords && props.onGisSelect && <ResponseGisLayer mapRef={mapRef} records={props.gisRecords} roads={props.scenarioProps?.roads} networkVersion={props.scenarioProps?.datasetVersion} selectedId={props.gisSelectedId ?? null} request={props.gisRequest ?? {version:0,id:null}} enabled={props.gisEnabled !== false} interactive={!props.pointPickActive && !props.measurementOpen && !props.locationOpen && !props.drawOpen} locale={props.locale ?? 'vi'} groupIds={props.gisGroupIds} onSelect={props.onGisSelect} onGroup={props.onGisGroup}/>}
     <MapOverview mapRef={mapRef} raster={overviewRaster} area={overviewArea} locale={props.locale ?? 'vi'}
-      enabled={mapReady && !props.measurementOpen && !props.locationOpen && !props.profileOpen}/>
+      enabled={mapReady && !props.measurementOpen && !props.drawOpen && !props.locationOpen && !props.profileOpen}/>
     {mapReady && <MapMeasurement mapRef={mapRef} enabled={props.measurementOpen} locale={props.locale ?? 'vi'} onClose={props.onCloseMeasurement}
       session={props.measureSession} dispatch={props.dispatchMeasureSession} sources={geometry.sources} selected={geometry.selected}/>}
+    {mapReady && props.drawSession && props.dispatchDrawSession && <DrawPanel mapRef={mapRef} enabled={Boolean(props.drawOpen)} locale={props.locale ?? 'vi'}
+      session={props.drawSession} dispatch={props.dispatchDrawSession} sources={geometry.sources} records={props.gisRecords ?? []}
+      onSave={record => props.onSaveDrawing?.(record)} onClose={() => props.onCloseDraw?.()}/>}
   </div>;
 }

@@ -23,6 +23,9 @@ export type ResponsePanelProps = {
   workTasks: ResponseWork[];
   workEntries: WorkEntry[];
   reportPending: boolean;
+  /** What the unapplied report says, e.g. "Landslide · Road E12", shown in the notice. */
+  pendingReport?: [vi: string, en: string];
+  onApplyReport?: () => void;
   historical: boolean;
   onOpenWork: (id?: string) => void;
   onOpenReport: () => void;

@@ -18,9 +18,7 @@ export function CommunityEvidence({ community, assessment, terrainCovered, evide
     <section className="community-reference-section">
       <h3>{t('Dữ liệu tham chiếu', 'Reference data')}</h3>
       <dl className="fact-rows">
-        <div><dt>{t('Dân số', 'Population')}</dt><dd>{community.pop} {t('người', 'residents')}</dd></div>
-        <div><dt>{t('Số hộ', 'Households')}</dt><dd>{community.hh} {t('hộ', 'households')}</dd></div>
-        <div><dt>{t('Địa hình', 'Terrain')}</dt><dd>{terrainCovered === false ? t('Ngoài phạm vi DEM', 'Outside DEM coverage') : terrainCovered === true ? t('Có dữ liệu DEM', 'DEM available') : t('Chưa có thông tin', 'Not available')}</dd></div>
+        <div><dt>{t('Địa hình', 'Terrain')}</dt><dd>{terrainCovered === false ? t('Ngoài vùng có dữ liệu độ cao', 'Outside elevation coverage') : terrainCovered === true ? t('Có dữ liệu độ cao', 'Elevation data available') : t('Chưa có thông tin', 'Not available')}</dd></div>
       </dl>
     </section>
     <CommunityFindings facts={community.facts} communityName={community.name} evidence={evidence} locale={locale} onOpenEvidence={onEvidence}/>

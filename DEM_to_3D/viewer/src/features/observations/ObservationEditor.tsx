@@ -12,6 +12,10 @@ import {
 import { observationLabel } from './labels';
 import { readFieldPhoto } from './photo';
 import { PhotoGallery } from './PhotoGallery';
+import { VoicePlayback } from './VoicePlayback';
+import { VoiceRecorder } from './VoiceRecorder';
+import type { FieldVoice } from './voice';
+import { submissionLocationLabel } from '../access/submissions';
 import { FileDropZone } from '../../shared/ui/FileDropZone';
 import {
   deviceLocal,
@@ -83,6 +87,7 @@ export function ObservationEditor({
     current ? '' : (seed?.source ?? '')
   );
 
+  const [voice,setVoice]=useState<FieldVoice|undefined>(current?.voice),[voiceBusy,setVoiceBusy]=useState(false);
   const [photos, setPhotos] = useState<FieldPhoto[]>(current?.photos ?? []),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -173,6 +178,8 @@ export function ObservationEditor({
               </div>
             )}
           </dl>
+          {submissionLocationLabel(record,locale)&&<p className="field-hint">{submissionLocationLabel(record,locale)}</p>}
+          <VoicePlayback voice={current.voice} locale={locale}/>
           <PhotoGallery photos={current.photos} locale={locale} />
           <div className="geodata-actions">
             <button
@@ -201,12 +208,12 @@ export function ObservationEditor({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (busy || disabled) return;
-            if (!photos.length && !note.trim()) {
+            if (busy || voiceBusy || disabled) return;
+            if (!photos.length && !voice && !note.trim()) {
               setError(
                 t(
-                  'Thêm ảnh hoặc mô tả điều bạn thấy.',
-                  'Add a photo or describe what you saw.'
+                  'Thêm ảnh, ghi âm hoặc mô tả điều bạn thấy.',
+                  'Add a photo, a recording or describe what you saw.'
                 )
               );
               return;
@@ -234,6 +241,7 @@ export function ObservationEditor({
               accuracyM: positionAccuracy ?? current?.accuracyM ?? null,
               status: 'unreviewed',
               photos,
+              ...(voice?{voice}:{}),
               updatedAt: new Date().toISOString()
             };
             if (onSave(value)) {
@@ -248,6 +256,7 @@ export function ObservationEditor({
               );
           }}
         >
+          <VoiceRecorder voice={voice} onChange={setVoice} onBusyChange={setVoiceBusy} locale={locale} active={editing} disabled={busy||disabled}/>
           <fieldset disabled={busy || disabled}>
             <FileDropZone
               icon="image"
@@ -360,7 +369,7 @@ export function ObservationEditor({
             <button
               className="button primary"
               type="submit"
-              disabled={busy || disabled}
+              disabled={busy || voiceBusy || disabled}
             >
               {submitLabel ?? t('Lưu ghi nhận', 'Save observation')}
             </button>
@@ -374,6 +383,7 @@ export function ObservationEditor({
                 setObserver(current?.observer ?? '');
 
                 setPhotos(current?.photos ?? []);
+                setVoice(current?.voice);
                 setObserved(initialObserved);
                 setTimeZone(initialZone);
                 timeTouched.current = false;

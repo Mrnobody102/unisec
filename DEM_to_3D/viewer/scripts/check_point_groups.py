@@ -1,4 +1,5 @@
 """Regression for clustered-point cards, inspector exclusivity and photo modal stacking."""
+from gis_browser_actions import gis_task
 import argparse,base64,hashlib,tempfile,uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -15,6 +16,7 @@ def run(url,chrome,captures):
   context=browser.new_context(viewport={'width':1440,'height':960});context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
   page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
   page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))',records);page.reload();page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  gis_task(page)
   symbol=page.locator('.geodata-map .map-point-cluster')
   expect(symbol).to_have_attribute('aria-label','3 điểm gần cùng vị trí')
   assert symbol.inner_text()=='','Aggregate markers must not replace coordinates with count labels'
@@ -24,7 +26,9 @@ def run(url,chrome,captures):
   page.locator('.geodata-map .map-point-cluster').click();expect(card).to_be_visible();expect(page.locator('.geodata-inspector')).not_to_be_visible()
   for width in [1440,1024,390,320]:
    page.set_viewport_size({'width':width,'height':900})
-   if width<=760:page.locator('.geodata-mobile-tabs').get_by_role('button',name='Bản đồ',exact=True).click()
+   if width<=760:
+    page.locator('.geodata-mobile-tabs').get_by_role('button',name='Bản đồ',exact=True).click()
+    if not card.is_visible():page.locator('.geodata-map .map-point-cluster').click()
    expect(card).to_be_visible();assert card.evaluate('n=>n.scrollWidth<=n.clientWidth+1'),width
    assert card.evaluate('n=>n.getBoundingClientRect().top>=n.parentElement.querySelector(\".geodata-map-toolbar\").getBoundingClientRect().bottom+7'),('Point popup overlaps wrapped map toolbar',width)
    assert card.evaluate('n=>{const b=n.getBoundingClientRect();return [...n.querySelectorAll(\".point-group-row\")].every(r=>r.getBoundingClientRect().bottom<=b.bottom+1)}'),('All report choices should fit without repeated photo thumbnails',width)

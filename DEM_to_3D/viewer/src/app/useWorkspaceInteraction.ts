@@ -14,7 +14,7 @@ export function useWorkspaceInteraction() {
   const setFocusDistance = useCallback((distance: number | null) => dispatch({ type: 'focus-distance', distance }), []);
   const resetTools = useCallback(() => dispatch({ type: 'navigate' }), []);
   return { ...state, dispatch, recover2D, setActiveDialog, setMapMode, setFocusDistance, resetTools,
-    measurementOpen: state.tool === 'measure', locationOpen: state.tool === 'location', showProfile: state.tool === 'profile',
+    measurementOpen: state.tool === 'measure', drawOpen: state.tool === 'draw', locationOpen: state.tool === 'location', showProfile: state.tool === 'profile',
     activeDialog: state.dialog === 'upload' ? null : state.dialog, showCustomUploadModal: state.dialog === 'upload'
   };
 }

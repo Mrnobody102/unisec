@@ -1,4 +1,4 @@
-@import './review-status.css';
+@import "./review-status.css";
 
 .citizen-workspace {
   height: 100dvh;
@@ -50,7 +50,7 @@
   background: transparent;
   font-size: 13px;
 }
-.citizen-panel > nav button[aria-pressed='true'] {
+.citizen-panel > nav button[aria-pressed="true"] {
   color: var(--ws-brand);
   border-bottom-color: var(--ws-brand);
 }
@@ -68,7 +68,7 @@
   font-size: 14px;
   margin: 16px 0 10px;
 }
-.citizen-panel input:not([type='file']),
+.citizen-panel input:not([type="file"]),
 .citizen-panel textarea {
   width: 100%;
   min-height: 38px;
@@ -131,7 +131,7 @@
 }
 .citizen-submission[data-open] {
   border-color: var(--ws-line);
-  background: var(--ws-tint);
+  background: var(--ws-surface);
 }
 .citizen-submission-head {
   display: grid;
@@ -196,21 +196,66 @@
   background: var(--ws-tint);
   font-size: 13px;
 }
-.citizen-road-list {
-  list-style: none;
-  padding: 0;
-  margin: 16px 0;
-}
-.citizen-road-list li {
+/* Access-road summary; status colour is confined to the verdict. */
+.citizen-route {
   display: grid;
-  gap: 6px;
-  padding: 12px 0;
-  border-top: 1px solid var(--ws-line);
-  font-size: 13px;
+  gap: 10px;
+  margin: 16px 0 8px;
+  padding: 14px;
+  border: 1px solid var(--ws-line);
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+  --route-tone: var(--open);
+  --route-ink: var(--open-ink);
+  --route-soft: var(--open-soft);
 }
-.citizen-road-list span {
+.citizen-route[data-status="uncertain"] {
+  --route-tone: var(--warning);
+  --route-ink: var(--warning-ink);
+  --route-soft: var(--warning-soft);
+}
+.citizen-route[data-status="blocked"] {
+  --route-tone: var(--critical);
+  --route-ink: var(--critical-ink);
+  --route-soft: var(--critical-soft);
+}
+.citizen-route > * {
+  margin: 0;
+}
+.citizen-route-verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--route-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.citizen-route h2 {
+  font-size: 16px;
+}
+.citizen-route-facts,
+.citizen-route-why {
   color: var(--ws-muted);
-  font-size: 12px;
+  font-size: 14px;
+}
+.citizen-route-problems ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+}
+.citizen-route-problems li[data-status="blocked"] {
+  color: var(--critical-ink);
+}
+.citizen-route-advice {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.citizen-route-map {
+  justify-self: start;
+}
+.citizen-other-journey {
+  margin-top: 4px;
 }
 .citizen-map {
   flex: 1;
@@ -283,10 +328,10 @@
   .citizen-map {
     display: none;
   }
-  [data-citizen-map='true'] .citizen-panel {
+  [data-citizen-map="true"] .citizen-panel {
     display: none;
   }
-  [data-citizen-map='true'] .citizen-map {
+  [data-citizen-map="true"] .citizen-map {
     display: block;
   }
   .citizen-mobile-switch {
@@ -300,7 +345,7 @@
     border: 0;
     background: transparent;
   }
-  .citizen-mobile-switch button[aria-pressed='true'] {
+  .citizen-mobile-switch button[aria-pressed="true"] {
     color: var(--ws-brand);
     font-weight: 600;
   }
@@ -333,4 +378,195 @@
   float: left;
   width: 100%;
   margin: 0;
+}
+/* Resident controls: one action per button, consistent touch spacing. */
+.citizen-report-form {
+  display: grid;
+  gap: 16px;
+}
+.citizen-report-form > *,
+.citizen-voice > *,
+.citizen-directions > * {
+  margin: 0;
+}
+.citizen-capture-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.citizen-report-form .button,
+.citizen-directions .button {
+  min-height: 44px;
+}
+.citizen-report-form .field-form-actions {
+  display: flex;
+  margin: 0;
+  padding: 12px 0;
+}
+.citizen-report-form .field-form-actions .button {
+  width: 100%;
+}
+.citizen-report-form .citizen-position {
+  margin: 0;
+  gap: 12px;
+}
+.citizen-report-form .citizen-position .geodata-actions {
+  margin: 0;
+  gap: 12px;
+}
+.citizen-position-value {
+  font-size: 13px;
+  color: var(--ws-muted);
+}
+.citizen-voice {
+  display: grid;
+  gap: 10px;
+}
+.citizen-voice .geodata-actions {
+  gap: 8px;
+}
+.field-voice {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+}
+.field-voice audio {
+  display: block;
+  width: 100%;
+  height: 40px;
+}
+.citizen-photo-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  list-style: none;
+  padding: 0;
+}
+.citizen-photo-strip li {
+  flex: none;
+  width: 88px;
+  display: grid;
+  gap: 4px;
+}
+.citizen-photo-open {
+  padding: 0;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--radius-control);
+  background: none;
+}
+.citizen-photo-open img {
+  display: block;
+  width: 86px;
+  height: 72px;
+  object-fit: cover;
+}
+.citizen-photo-strip .text-button {
+  min-height: 36px;
+}
+.citizen-directions {
+  display: grid;
+  gap: 14px;
+}
+.citizen-directions h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.citizen-directions .geodata-field {
+  gap: 6px;
+}
+.citizen-directions .geodata-field .text-button {
+  justify-self: start;
+  min-height: 32px;
+}
+.citizen-direction-result {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ws-line);
+}
+.citizen-direction-result p {
+  margin: 0;
+}
+.citizen-road-catalog {
+  margin-top: 24px;
+  border-top: 1px solid var(--ws-line);
+  padding-top: 12px;
+}
+.citizen-road-catalog summary {
+  min-height: 36px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.citizen-road-catalog[open] > .geodata-field {
+  margin-top: 12px;
+}
+.citizen-route {
+  border: 0;
+  border-top: 1px solid var(--ws-line);
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 0;
+  margin-top: 16px;
+}
+.citizen-feedback {
+  border-left: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--ws-line);
+  padding: 0 0 12px;
+}
+.citizen-submission[data-open] {
+  background: var(--ws-surface);
+}
+.citizen-panel-scroll section[hidden] {
+  display: none;
+}
+@media (max-width: 760px) {
+  .citizen-panel-scroll {
+    padding: 16px;
+  }
+  .citizen-panel select:not([multiple]),
+  .citizen-panel input:not([type="file"]) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .citizen-panel textarea {
+    font-size: 16px;
+  }
+  .citizen-panel .button {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .citizen-panel .geodata-field {
+    font-size: 14px;
+  }
+  .citizen-map-tools .icon-button {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+  .citizen-pick-hint {
+    top: 68px;
+    font-size: 14px;
+    padding: 12px;
+    gap: 8px;
+  }
+  .citizen-submission-head {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .citizen-submission-head > img,
+  .citizen-submission-thumb {
+    width: 40px;
+    height: 40px;
+    grid-row: span 2;
+  }
+  .citizen-submission-head .citizen-review {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .citizen-header {
+    flex-wrap: wrap;
+  }
 }

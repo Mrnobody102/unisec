@@ -1,11 +1,10 @@
 import type { Hazard, IncidentEvidence, Locale, ScenarioRoute } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
-import { communityAccessText } from './accessAssessment';
 import { RouteOption } from './RouteOption';
+import { roadStatusLabels, roadStatusTone } from './roadStatus';
 import { RouteSections } from './RouteSections';
 import { routeNextAction, selectAccessRoute } from './routeReview';
-import { RouteVerification } from './RouteVerification';
 import './access-panel.css';
 
 type Props = {
@@ -36,7 +35,6 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
     else onFindings();
   };
   return <>
-    {(!active || (candidate && direct)) && <p className="decision-overview">{t(...communityAccessText({ candidate, direct }))}</p>}
     {active ? <section className="decision-route" aria-label={t('Tuyến đang xem', 'Selected route')}>
     {candidate && direct && <div className="access-route-choice" aria-labelledby="access-choice-title">
       <h3 id="access-choice-title">{t('Phương án tiếp cận', 'Access options')}</h3>
@@ -47,7 +45,7 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
     </div>}
       {!(candidate && direct) && <div className="access-route-label">
         <span>{t('Tuyến đang chọn', 'Selected route')}</span>
-        <StatusText tone={blocked ? 'critical' : 'warning'}>{blocked ? t('Bị chặn', 'Blocked') : t('Cần xác minh', 'Verify access')}</StatusText>
+        <StatusText tone={roadStatusTone(active.status)}>{t(...roadStatusLabels[active.status])}</StatusText>
       </div>}
       {!(candidate && direct) && <h2>{t(...active.name)}</h2>}
       {(!(candidate && direct) || active.eta) && <dl className="route-metrics">
@@ -62,11 +60,10 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
       </div>
       <RouteSections route={active} evidence={evidence} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
         onEvidence={onEvidence} onProfile={onProfile} hasProfile={hasProfile}/>
-      <RouteVerification route={active} evidence={evidence} locale={locale}/>
     </section> : <div className="next-action"><p className="assessment-action route-action">{action}</p><button className="button" onClick={onFindings}>{t('Xem thông tin địa bàn', 'Review community findings')}</button></div>}
     <div className="route-tools access-tools">
-      {active && !sectionId && <button className="button" onClick={onProfile} disabled={!hasProfile} title={!hasProfile ? t('Chưa có DEM cho tuyến này', 'DEM unavailable for this route') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>}
-      <button className="button decision-save" onClick={onExport}><UiIcon name="download" size={16}/>{t('Lưu đánh giá', 'Save assessment')}</button>
+      {active && !sectionId && <button className="button" onClick={onProfile} disabled={!hasProfile} title={!hasProfile ? t('Chưa có dữ liệu độ cao cho tuyến này', 'No elevation data for this route') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>}
+      <button className="button decision-save" onClick={onExport}><UiIcon name="download" size={16}/>{t('Xuất đánh giá', 'Export assessment')}</button>
     </div>
   </>;
 }

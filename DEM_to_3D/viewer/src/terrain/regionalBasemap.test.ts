@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import proj4 from 'proj4';
+import { imagerySource } from '../features/map/imagerySource';
+import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import metadataJson from '../../public/terrain/che_tao_v2_tex.terrain.json';
 import { validateMetadata } from './validation';
 import { pixelToProjected, sceneToProjected } from './coordinate';
-import { createRegionalBasemap, planRegionalTiles, tileLonLat, tileScenePoint, type BasemapState } from './regionalBasemap';
+import { createRegionalBasemap, planRegionalTiles, planBasemapTiles, tileLonLat, tileScenePoint, type BasemapState } from './regionalBasemap';
 
 const metadata = validateMetadata(metadataJson);
 describe('Regional basemap placement', () => {
@@ -28,6 +30,17 @@ describe('Regional basemap placement', () => {
       })).toBe(true);
     }
   });
+  it('adds detail around the DEM without unbounded regional requests or duplicate tiles', () => {
+    const tiles = planBasemapTiles(metadata, 14);
+    const context = planRegionalTiles(metadata, { budget: 32 });
+    expect(tiles.length).toBeLessThanOrEqual(96);
+    expect(new Set(tiles.map(t => `${t.z}/${t.x}/${t.y}`)).size).toBe(tiles.length);
+    expect(Math.max(...tiles.map(t => t.z))).toBeGreaterThan(Math.max(...context.map(t => t.z)));
+    expect(tiles.every(t => t.z <= 14)).toBe(true);
+    for (const t of context) expect(tiles).toContainEqual(t);
+    expect(planBasemapTiles(metadata, 8).every(t => t.z <= 8)).toBe(true);
+    expect(planBasemapTiles(metadata, 14.5).every(t => Number.isInteger(t.z) && t.z <= 14)).toBe(true);
+  });
   it('reprojects tiles into the DEM frame without gaps along shared edges', () => {
     const tile = planRegionalTiles(metadata)[0];
     const point = tileScenePoint(metadata, tile, .5, .5);
@@ -44,6 +57,40 @@ describe('Regional basemap placement', () => {
   });
   it('rejects unprojected terrain rather than placing tiles in the wrong location', () => {
     expect(() => planRegionalTiles({ ...metadata, crs: { authority: 'EPSG', code: 4326, linear_unit: 'degree' } })).toThrow('metric');
+  });
+  it('uses the configured source, renders detail above context and releases cached textures', async () => {
+    vi.stubGlobal('window', globalThis);
+    const close = vi.fn();
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ close })));
+    const fetchMock = vi.fn(async (_url: string, _options: RequestInit) => ({ ok: true, blob: async () => new Blob() }));
+    vi.stubGlobal('fetch', fetchMock);
+    const originalUrl = imagerySource.url;
+    imagerySource.url = 'https://imagery.example.test/{z}/{x}/{y}.png';
+    const states: BasemapState[] = [];
+    const basemap = createRegionalBasemap(metadata, new THREE.Matrix4(), state => states.push(state), 4);
+    try {
+      basemap.setOptions(true, 'satellite');
+      await vi.waitFor(() => expect(states.at(-1)?.status).toBe('ready'));
+      expect(states.at(-1)?.provider).toBe('configured');
+      expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(96);
+      expect(fetchMock.mock.calls.every(args => String(args[0]).startsWith('https://imagery.example.test/'))).toBe(true);
+      for (const child of basemap.group.children) {
+        const mesh = child as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+        expect(mesh.material.map?.anisotropy).toBe(4);
+        expect(mesh.material.depthWrite).toBe(false);
+        expect(mesh.renderOrder).toBeGreaterThan(0);
+        expect(mesh.renderOrder).toBeLessThan(mapLayerOrder.boundary * 2);
+      }
+      const requests = fetchMock.mock.calls.length;
+      basemap.setOptions(false, 'satellite');
+      basemap.setOptions(true, 'satellite');
+      expect(fetchMock.mock.calls.length).toBe(requests);
+    } finally {
+      basemap.dispose();
+      expect(close).toHaveBeenCalledTimes(fetchMock.mock.calls.length);
+      imagerySource.url = originalUrl;
+      vi.unstubAllGlobals();
+    }
   });
   it('stops requesting tiles when the service is unavailable', async () => {
     vi.stubGlobal('window', globalThis);

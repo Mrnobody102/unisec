@@ -1,0 +1,8 @@
+/* Drawing tool fields; the window, choice group and vertex table come from the shared tool panel. */
+.draw-field { display: grid; gap: 4px; margin-bottom: 12px; font-size: 12px; }
+.draw-field > span { color: var(--ws-muted); }
+.draw-field input, .draw-field textarea { width: 100%; box-sizing: border-box; min-height: 32px; padding: 5px 8px; border: 1px solid var(--ws-line); border-radius: var(--radius-xs); background: var(--ws-raised); color: var(--ws-text); font: inherit; resize: vertical; }
+.draw-field input:focus-visible, .draw-field textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
+.draw-note { margin: 12px 0 0; font-size: 11px; line-height: 16px; color: var(--ws-muted); }
+/* Drawn notes keep their text on the map (ResponseGisLayer). */
+.field-map-tooltip.map-note-label.leaflet-tooltip { width: max-content; max-width: 220px; white-space: normal; font-weight: 500; }

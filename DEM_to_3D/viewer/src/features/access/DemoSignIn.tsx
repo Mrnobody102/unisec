@@ -1,7 +1,7 @@
 import { accessMessages } from './locales';
 import { useState } from 'react';
 import type { Community, Locale } from '../../types/dear';
-import type { DemoRole } from './demoSession';
+import { managerName, type DemoRole } from './demoSession';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import './access.css';
 export function DemoSignIn({
@@ -28,7 +28,7 @@ export function DemoSignIn({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            onSignIn(role, name, community || null);
+            onSignIn(role, role === 'manager' ? managerName : name.trim(), community || null);
           }}
         >
           <fieldset className="demo-role-options">
@@ -62,8 +62,8 @@ export function DemoSignIn({
               </span>
             </label>
           </fieldset>
-          <label className="geodata-field">
-            {m.displayName}
+          {role==='resident'&&<label className="geodata-field">
+            {locale==='vi'?'Tên của bạn':'Your name'}
             <input
               required
               maxLength={160}
@@ -71,7 +71,7 @@ export function DemoSignIn({
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
             />
-          </label>
+          </label>}
           {role === 'resident' && (
             <label className="geodata-field">
               {m.homeCommunityOptional}

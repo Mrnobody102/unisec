@@ -21,6 +21,7 @@ export function validIdentity(raw: unknown): raw is DemoIdentity {
     (x.communityId === null || typeof x.communityId === 'string')
   );
 }
+export const managerName = 'Điều phối viên';
 export function useDemoSession() {
   const [identity, setIdentity] = useState<DemoIdentity | null>(() => {
     const role = new URLSearchParams(location.search).get('demoRole');
@@ -28,21 +29,24 @@ export function useDemoSession() {
       return {
         id: 'demo:manager:điều phối viên',
         role,
-        name: 'Điều phối viên',
+        name: managerName,
         communityId: null
       };
     try {
       const raw = JSON.parse(localStorage.getItem(demoSessionKey) ?? 'null');
-      return validIdentity(raw) ? raw : null;
+      // Older sessions stored the manager under a previous display name.
+      return validIdentity(raw) ? (raw.role === 'manager' ? { ...raw, name: managerName } : raw) : null;
     } catch {
       return null;
     }
   });
   const signIn = (role: DemoRole, name: string, communityId: string | null) => {
+    const displayName = role === 'manager' ? managerName : name.trim();
+    if (!displayName) return;
     const value: DemoIdentity = {
-      id: `demo:${role}:${name.trim().toLocaleLowerCase()}`,
+      id: role === 'manager' ? 'demo:manager:điều phối viên' : `demo:resident:${crypto.randomUUID()}`,
       role,
-      name: name.trim(),
+      name: displayName,
       communityId
     };
     if (!validIdentity(value)) return;

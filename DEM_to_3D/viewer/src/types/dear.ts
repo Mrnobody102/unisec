@@ -45,6 +45,7 @@ export type CommunityFact = CommunityFinding | [vi: string, en: string, viSource
 export type Community = {
   id: string;
   name: string;
+  labelMode?: 'auto' | 'show' | 'hide';
   commune: string;
   prio: 1 | 2 | 3;
   pop: number;
@@ -66,6 +67,7 @@ export type RoadSegment = {
   len: number;
   status: RoadStatus;
   hz?: string;
+  hazardIds?: string[];
   note?: [vi: string, en: string];
   fromKm?: number;
   toKm?: number;
@@ -77,8 +79,10 @@ export type HazardKind = 'landslide' | 'flood' | 'bridge' | 'crossing';
 export type Hazard = {
   id: string;
   name: [vi: string, en: string];
+  labelMode?: 'auto' | 'show' | 'hide';
   kind: HazardKind;
   observation: 'suspected' | 'reported';
+  roadLinksNeedReview?: boolean;
   area?: number;
   src: [vi: string, en: string];
   detected: string;
@@ -89,6 +93,7 @@ export type ResponseSite = {
   id: string;
   kind: 'staging' | 'hlz';
   name: [vi: string, en: string];
+  labelMode?: 'auto' | 'show' | 'hide';
   projected: { x: number; y: number };
   assessment: 'candidate' | 'assessed' | 'unavailable';
   observedAt: string;

@@ -4,7 +4,6 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 # Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
-LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 
 def run(url, chrome, captures):
@@ -69,7 +68,7 @@ def run(url, chrome, captures):
         page.locator('.map-object-chooser button:not(.map-chooser-expand)').first.click()
         selected = page.locator('.map-pin.is-selected:visible').first
         expect(selected).to_be_visible()
-        expect(selected.locator('.map-pin-icon')).to_be_visible()
+        expect(selected.locator('.map-pin-shape svg')).to_be_visible()
         expect(selected.locator('.map-pin-count')).to_be_hidden()
         # Opening from the 3D view mounts a fresh working 2D map and tool.
         page.get_by_role('button', name='Switch to 3D', exact=True).click()
@@ -90,7 +89,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
     args.add_argument('--url', default='http://127.0.0.1:5212')
-    args.add_argument('--chrome', default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None)
+    args.add_argument('--chrome', default=None)
     args.add_argument('--captures', type=Path)
     options = args.parse_args()
     if options.captures:

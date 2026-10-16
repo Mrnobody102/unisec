@@ -6,6 +6,7 @@ import { downloadBlob } from '../../shared/downloadBlob';
 import { localClock } from './sourceTime';
 import { journalRecords } from './journalRecords';
 import { type WorkEntry } from './responseWork';
+import type { ScenarioEdit } from '../access/scenarioEdits';
 import { EvidenceMetadata } from './EvidenceMetadata';
 import './response-operations.css';
 
@@ -15,6 +16,7 @@ export type JournalProps = {
   historical: boolean;
   appliedAt: string | null;
   entries: WorkEntry[];
+  edits?: ScenarioEdit[];
   locale: Locale;
   onClose: () => void;
   onOpenReport: () => void;
@@ -27,6 +29,7 @@ export function IncidentJournal({
   historical,
   appliedAt,
   entries,
+  edits = [],
   locale,
   onClose,
   onOpenReport,
@@ -36,7 +39,7 @@ export function IncidentJournal({
 }: JournalProps & { initialFilter?: string }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const [filter, setFilter] = useState(initialFilter);
-  const records = journalRecords(packet, entries, appliedAt).filter(
+  const records = journalRecords(packet, entries, appliedAt, edits).filter(
     (record) => filter === 'all' || record.kind === filter
   );
   const kinds = {
@@ -68,7 +71,7 @@ export function IncidentJournal({
                       {
                         datasetVersion: packet.datasetVersion,
                         dataKind: packet.dataKind,
-                        records: journalRecords(packet, entries, appliedAt)
+                        records: journalRecords(packet, entries, appliedAt, edits)
                       },
                       null,
                       2
@@ -86,17 +89,12 @@ export function IncidentJournal({
             <UiIcon name="close" />
           </button>
         </header>
-        <div className="response-work-context">
-          {packet.dataKind === 'synthetic'
-            ? t(
-                'Kịch bản mô phỏng. Cập nhật công việc lưu tại trình duyệt.',
-                'Simulated scenario. Work updates are stored in this browser.'
-              )
-            : t(
-                'Báo cáo nguồn và thao tác trong workspace',
-                'Source reports and workspace actions'
-              )}
-        </div>
+        {packet.dataKind === 'synthetic' && <div className="response-work-context">
+          {t(
+            'Bản mô phỏng · chỉnh sửa chỉ lưu trên thiết bị này.',
+            'Demo scenario · edits are saved on this device only.'
+          )}
+        </div>}
         <div className="modal-body">
           <fieldset className="revision-choices">
             <legend>{t('Thời điểm bản đồ', 'Map revision')}</legend>

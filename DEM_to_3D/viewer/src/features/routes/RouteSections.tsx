@@ -1,3 +1,4 @@
+import {roadHazardIds} from '../incident/roadHazards';
 import { useLayoutEffect, useRef } from 'react';
 import type { IncidentEvidence, Locale, ScenarioRoute } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
@@ -29,7 +30,7 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
       {route.segs.map((road, index) => {
         const name = t(...road.name);
         const title = name.startsWith(routeName + ', ') ? name.slice(routeName.length + 2).replace(/^./, c => c.toLocaleUpperCase()) : name;
-        const record = evidence.find(item => road.hz && item.hazardId === road.hz);
+        const ids=roadHazardIds(road),records=evidence.filter(item=>ids.includes(item.hazardId)),record=records[0];
         const expanded = selectedId === road.id;
         return <li key={road.id} className={expanded ? 'is-selected' : ''} data-road-id={road.id}>
           <button className="route-section-row" aria-expanded={expanded} aria-controls={`section-${road.id}`} onClick={() => onSelect(expanded ? null : road.id)}>
@@ -44,7 +45,7 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
             <p className={record || road.note ? 'route-section-finding' : 'route-section-empty'}>{record ? t(...record.finding) : road.note ? t(...road.note) : t('Chưa có báo cáo hiện trường.', 'No field report available.')}</p>
             {record && <EvidenceMetadata evidence={record} locale={locale}/>}
             <div className="route-section-tools">
-              {road.hz && <button className="button" onClick={() => onEvidence(road.hz!)}><UiIcon name="info" size={14}/>{record ? evidencePresentation(record.type, locale).action : t('Thông tin ảnh hưởng', 'Impact details')}</button>}
+              {ids.map(id=><button key={id} className="button" onClick={()=>onEvidence(id)}><UiIcon name="info" size={14}/>{records.find(r=>r.hazardId===id)?evidencePresentation(records.find(r=>r.hazardId===id)!.type,locale).action:t('Thông tin sự cố','Hazard details')}</button>)}
               <button className="button" onClick={onProfile} disabled={!hasProfile}><UiIcon name="profile" size={14}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>
             </div>
           </div>}

@@ -1,10 +1,10 @@
 """Verify local field photos, source integrity and GIS-to-response point mapping."""
+from gis_browser_actions import gis_task, download_geometry, published_records, reviewed_records_json
 import argparse, base64, hashlib, json, struct, tempfile
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 # Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
-LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
@@ -19,6 +19,7 @@ def run(url, chrome, captures):
         original_roads=page.locator('.map-road-target').count()
         original_road_box=page.locator('.map-road-target').first.bounding_box()
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         page.get_by_role('button',name='Thêm điểm tọa độ',exact=True).click()
         entry=page.locator('.field-point-entry');entry.get_by_label('Tên điểm',exact=True).fill('Điểm khảo sát A')
         entry.get_by_label('Vĩ độ (°)',exact=True).fill('21.782919');entry.get_by_label('Kinh độ (°)',exact=True).fill('104.053554')
@@ -44,7 +45,7 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-workspace')).to_be_visible()
         form.get_by_role('button',name='Lưu ghi nhận',exact=True).click()
         expect(form.get_by_role('button',name='Sửa ghi nhận',exact=True)).to_be_visible()
-        records=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"));record=records[0];oid=record['id'];obs=record['feature']['properties']['dearObservation'];photo=obs['photos'][0]
+        records=json.loads(reviewed_records_json(page));record=records[0];oid=record['id'];obs=record['feature']['properties']['dearObservation'];photo=obs['photos'][0]
         assert record['feature']['geometry']['coordinates']==[104.053554,21.782919]
         assert record['role']=='reference' and obs['status']=='unreviewed'
         assert obs['observedAt']=='' and obs['observedLocalTime']=='2026-09-29T08:30:15'
@@ -59,8 +60,9 @@ def run(url, chrome, captures):
         road_box=page.locator('.map-road-target').first.bounding_box()
         assert all(abs(road_box[k]-original_road_box[k])<1 for k in ['x','y','width','height']),(road_box,original_road_box)
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         form=page.locator('.field-observation')
-        form.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
+        page.locator('.geodata-inspector').get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
         expect(page.locator('.geodata-workspace')).to_have_count(0)
         expect(page.locator(f'[data-field-id="{oid}"]')).to_be_visible()
         expect(page.locator('.field-map-card')).to_contain_text('Chờ kiểm tra')
@@ -86,11 +88,17 @@ def run(url, chrome, captures):
         page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
         form=page.locator('.field-observation');expect(form).to_contain_text(obs['note'])
         form.get_by_role('button',name='Sửa ghi nhận',exact=True).click();form.get_by_text('Thông tin bổ sung',exact=True).click();form.get_by_label('Ghi chú hiện trường',exact=True).fill('This change must not be retained')
-        page.evaluate("""()=>{window.__fieldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='dear.geodata.v1')throw new Error('QuotaExceeded');return window.__fieldSet.call(this,k,v);};}""")
-        form.get_by_role('button',name='Lưu ghi nhận',exact=True).click();expect(form.get_by_role('alert')).to_be_visible()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))[0]['feature']['properties']['dearObservation']['note']==obs['note']
+        page.evaluate("""()=>{window.__fieldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='dear.gis.v2')throw new Error('QuotaExceeded');return window.__fieldSet.call(this,k,v);};}""")
+        form.get_by_role('button',name='Lưu ghi nhận',exact=True).click()
+        page.get_by_role('button',name='Áp dụng thay đổi',exact=True).click()
+        failure=page.get_by_role('dialog',name='Áp dụng thay đổi GIS?',exact=True)
+        failure.get_by_role('button',name='Áp dụng',exact=True).click()
+        expect(failure.get_by_role('alert')).to_be_visible()
+        assert published_records(page)[0]['feature']['properties']['dearObservation']['note']==obs['note']
+        failure.get_by_role('button',name='Hủy',exact=True).click()
         page.evaluate('()=>{Storage.prototype.setItem=window.__fieldSet;}')
-        form.get_by_role('button',name='Hủy',exact=True).click()
+        page.get_by_role('button',name='Bỏ bản nháp',exact=True).click()
+        page.get_by_role('dialog',name='Bỏ bản nháp GIS?',exact=True).get_by_role('button',name='Bỏ bản nháp',exact=True).click()
         form.get_by_role('button',name='Sửa ghi nhận',exact=True).click()
         expect(form.get_by_label('Ghi chú hiện trường',exact=True)).to_have_value(obs['note'])
         form.get_by_role('button',name='Hủy',exact=True).click()
@@ -98,10 +106,10 @@ def run(url, chrome, captures):
         expect(page.locator('.field-map-card')).to_contain_text(obs['note'],timeout=25000)
         expect(page.locator('.field-map-card img')).to_have_count(1)
         page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
-        with page.expect_download() as download:page.get_by_role('button',name='GeoJSON',exact=True).click()
+        with page.expect_download() as download:download_geometry(page, 'GeoJSON')
         exported=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert exported['features'][0]['properties']['dearObservation']==obs
-        with page.expect_download() as download:page.get_by_role('button',name='KML',exact=True).click()
+        with page.expect_download() as download:download_geometry(page, 'KML')
         kml=Path(temp)/'field-roundtrip.kml';kml.write_bytes(Path(download.value.path()).read_bytes())
         page.get_by_role('button',name='Nhập dữ liệu',exact=True).click()
         page.locator('.geodata-import input[type=file]').set_input_files(str(kml))
@@ -113,5 +121,5 @@ def run(url, chrome, captures):
         context.close();browser.close()
     print('Field observations passed: coordinate entry, pending annotation, real EXIF/camera GPS, thumbnail/hash, invalid-photo rollback, shared response map, visibility, storage failure, reload/export and responsive themes.')
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5174');parser.add_argument('--chrome',default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None);parser.add_argument('--captures',type=Path)
+    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5174');parser.add_argument('--chrome',default=None);parser.add_argument('--captures',type=Path)
     args=parser.parse_args();run(args.url.rstrip('/'),args.chrome,args.captures)

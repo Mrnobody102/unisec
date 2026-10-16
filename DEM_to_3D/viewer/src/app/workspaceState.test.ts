@@ -49,6 +49,13 @@ describe('workspace navigation', () => {
     expect(selectedMapObject(state)).toBe('aoi:AOI');
   });
 
+  it('opens other places in the road tab without switching tabs', () => {
+    const roads = navigate(initial, { type: 'view', view: 'impact' });
+    const site = navigate(roads, { type: 'inspect-object', id: 'poi:staging' });
+    expect(site.view).toBe('impact');
+    expect(selectedMapObject(site)).toBe('poi:staging');
+  });
+
   it('opens a road count as the exact list, clearing stale detail and query', () => {
     const state = navigate(navigate(initial, { type: 'inspect-object', id: 'hazard:B-2' }),
       { type: 'filters', values: { roadQuery: 'old query', impactTab: 'hazards' } });
@@ -68,6 +75,9 @@ describe('workspace interaction ownership', () => {
       expect(state.tool).toBe(tool); expect(state.dialog).toBeNull();
     }
     expect(state.mapMode).toBe('2d');
+    const help = interact(state, { type: 'dialog', dialog: 'help' });
+    expect(help.tool).toBe('measure');
+    expect(interact(help, { type: 'dialog', dialog: null }).tool).toBe('measure');
     state = interact(state, { type: 'dialog', dialog: 'layers' });
     expect(state.tool).toBe('browse');
     state = interact(state, { type: 'toggle-tool', tool: 'measure' });

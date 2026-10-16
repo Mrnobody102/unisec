@@ -1,3 +1,4 @@
+import { validVoice, type FieldVoice } from './voice';
 import { captureTime } from './captureMetadata';
 import type { GeometryRecord } from '../../geo/vector/types';
 
@@ -33,6 +34,7 @@ export type FieldObservation = {
   status: 'unreviewed';
   updatedAt: string;
   photos: FieldPhoto[];
+  voice?: FieldVoice;
 };
 export const photoLimits = {
   bytes: 8_000_000,
@@ -98,6 +100,7 @@ export function validateObservation(raw: unknown): FieldObservation {
     o.status !== 'unreviewed' ||
     typeof o.updatedAt !== 'string' ||
     !Number.isFinite(Date.parse(o.updatedAt)) ||
+    (o.voice !== undefined && !validVoice(o.voice)) ||
     !Array.isArray(o.photos) ||
     o.photos.length > photoLimits.count ||
     !o.photos.every(validPhoto) ||

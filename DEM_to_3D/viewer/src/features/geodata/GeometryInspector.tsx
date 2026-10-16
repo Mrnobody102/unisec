@@ -1,3 +1,7 @@
+import { GeometryNameEditor } from './GeometryNameEditor';
+import { LandslideAreaEditor, type PickedRoadInterval } from '../landslides/LandslideAreaEditor';
+import { landslideAreaOf, newLandslideArea, type LandslideArea } from '../landslides/landslideAreas';
+import type { RoadSegment } from '../../types/dear';
 import { PointCoordinatesDialog } from './PointCoordinatesDialog';
 import { ObservationEditor } from '../observations/ObservationEditor';
 import { observationOf } from '../observations/model';
@@ -31,14 +35,22 @@ type Props = {
   onUpdate: (
     id: string,
     patch: Partial<Pick<GeometryRecord, 'name' | 'visible' | 'role'>>
-  ) => void;
-  onCoordinates?: (id: string, coordinates: number[]) => void;
+  ) => boolean;
+  onCoordinates?: (id: string, coordinates: number[]) => boolean;
+  onPickCoordinates?: (id: string) => void;
+  onNotice: (message: [string, string]) => void;
   onRemove: (id: string) => void;
   onFit: (id: string) => void;
   onAnnotate?: (id: string, value: FieldObservation) => boolean;
   onResponse?: (id: string) => void;
   onDrawArea?: (id: string) => void;
   onEditArea?: (id: string) => void;
+  roads?: RoadSegment[];
+  onSaveLandslideArea?: (value: LandslideArea) => boolean;
+  onOpenRoad?: (id: string) => void;
+  networkVersion?: string;
+  pickedRoadInterval?: PickedRoadInterval | null;
+  onPickRoadInterval?: (roadId: string) => void;
 };
 
 export function GeometryInspector({
@@ -48,19 +60,22 @@ export function GeometryInspector({
   disabled,
   onRemove,
   onCoordinates,
+  onPickCoordinates,
   onUpdate,
+  onNotice,
   onFit,
   onAnnotate,
   onResponse,
   onDrawArea,
-  onEditArea
+  onEditArea,
+  roads = [], onSaveLandslideArea, onOpenRoad, networkVersion, pickedRoadInterval, onPickRoadInterval
 }: Props): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
+  const selected = records.find((record) => record.id === selectedId);
   const [editingPoint, setEditingPoint] = useState(false);
   const [metadata, setMetadata] = useState(false),
     [copied, setCopied] = useState<string | null>(null),
     [copyError, setCopyError] = useState(false);
-  const selected = records.find((record) => record.id === selectedId);
   const copy = async () => {
     if (!selected) return;
     try {
@@ -98,19 +113,10 @@ export function GeometryInspector({
           </button>
         </span>
       </h2>
-      <label className="geodata-field">
-        {t('Tên', 'Name')}
-        <input
-          maxLength={160}
-          aria-label={t('Tên đối tượng', 'Feature name')}
-          value={selected.name}
-          disabled={disabled}
-          onChange={(event) =>
-            onUpdate(selected.id, { name: event.target.value })
-          }
-        />
-      </label>
-      {isPolygon(selected.feature.geometry) && !fieldAreaOf(selected) && (
+      <GeometryNameEditor key={selected.id} name={selected.name} label={t('Tên', 'Name')}
+        inputLabel={t('Tên đối tượng', 'Feature name')} locale={locale} disabled={disabled}
+        onSave={name => onUpdate(selected.id, { name })} onNotice={onNotice} />
+      {isPolygon(selected.feature.geometry) && !fieldAreaOf(selected) && !landslideAreaOf(selected) && (
         <label className="geodata-field">
           {t('Sử dụng làm', 'Use as')}
           <select
@@ -159,6 +165,14 @@ export function GeometryInspector({
           </>
         )}
       </dl>
+      {landslideAreaOf(selected) && onSaveLandslideArea && <LandslideAreaEditor key={selected.id + landslideAreaOf(selected)!.updatedAt}
+        record={selected} records={records} roads={roads} networkVersion={networkVersion} locale={locale} disabled={disabled} onSave={onSaveLandslideArea}
+        onEditGeometry={() => onEditArea?.(selected.id)} onRoad={onOpenRoad} pickedInterval={pickedRoadInterval} onPickRoadInterval={onPickRoadInterval}/>}
+      {isPolygon(selected.feature.geometry) && selected.role === 'reference' && !landslideAreaOf(selected) && onSaveLandslideArea && <details className="geodata-section"><summary>{t('Phân loại vùng sạt lở', 'Classify landslide area')}</summary><div className="geodata-actions">
+        <button className="button" disabled={disabled} onClick={() => onSaveLandslideArea(newLandslideArea('potential',networkVersion))}>{t('Vùng có nguy cơ', 'Potential area')}</button>
+        <button className="button" disabled={disabled} onClick={() => onSaveLandslideArea(newLandslideArea('occurred',networkVersion))}>{t('Vết đã sạt lở', 'Observed landslide')}</button>
+      </div></details>}
+      {landslideAreaOf(selected) && onResponse && <button className="button" onClick={() => onResponse(selected.id)}>{t('Xem trên bản đồ ứng phó', 'Show on response map')}</button>}
       {selected.feature.geometry.type === 'Point' && onCoordinates && (
         <>
           <button
@@ -177,6 +191,7 @@ export function GeometryInspector({
               locale={locale}
               onClose={() => setEditingPoint(false)}
               onSave={(coordinates) => onCoordinates(selected.id, coordinates)}
+              onPick={onPickCoordinates ? () => onPickCoordinates(selected.id) : undefined}
             />
           )}
         </>

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import proj4 from 'proj4';
+import { imagerySource } from '../features/map/imagerySource';
+import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import type { TerrainMetadata } from '../types/terrain';
 import { pixelToProjected, projectedToScene } from './coordinate';
 
@@ -14,16 +16,17 @@ export function tileLonLat(x: number, y: number, z: number): [number, number] {
 }
 
 /** A bounded regional context around the DEM, never a global tile prefetch. */
-export function planRegionalTiles(metadata: TerrainMetadata): MapTile[] {
+export function planRegionalTiles(metadata: TerrainMetadata, options: { padding?: number; maxZoom?: number; budget?: number } = {}): MapTile[] {
   if (metadata.crs.linear_unit !== 'metre') throw new Error('Regional basemap requires a metric projected terrain CRS');
   const [rows, columns] = metadata.grid.shape;
   const gridCorners = [0, columns - 1].flatMap(col => [0, rows - 1].map(row => pixelToProjected(metadata, col, row)));
   const minX = Math.min(...gridCorners.map(p => p.x)), maxX = Math.max(...gridCorners.map(p => p.x));
   const minY = Math.min(...gridCorners.map(p => p.y)), maxY = Math.max(...gridCorners.map(p => p.y));
-  const radius = Math.max(maxX - minX, maxY - minY) * 2.4;
+  const radiusX = (maxX - minX) / 2 + Math.max(maxX - minX, maxY - minY) * (options.padding ?? 1.9);
+  const radiusY = (maxY - minY) / 2 + Math.max(maxX - minX, maxY - minY) * (options.padding ?? 1.9);
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  const corners = [-1, 1].flatMap(dx => [-1, 1].map(dy => proj4(sourceCrs(metadata), 'EPSG:4326', [cx + dx * radius, cy + dy * radius])));
-  for (let z = 11; z >= 0; z--) {
+  const corners = [-1, 1].flatMap(dx => [-1, 1].map(dy => proj4(sourceCrs(metadata), 'EPSG:4326', [cx + dx * radiusX, cy + dy * radiusY])));
+  for (let z = Math.max(0, Math.min(22, Math.floor(options.maxZoom ?? 11))); z >= 0; z--) {
     const n = 2 ** z;
     const xy = corners.map(([lon, lat]) => {
       const r = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(lat, -85.0511, 85.0511));
@@ -31,12 +34,24 @@ export function planRegionalTiles(metadata: TerrainMetadata): MapTile[] {
     });
     const minX = Math.max(0, Math.min(...xy.map(p => p.x))), maxX = Math.min(n - 1, Math.max(...xy.map(p => p.x)));
     const minY = Math.max(0, Math.min(...xy.map(p => p.y))), maxY = Math.min(n - 1, Math.max(...xy.map(p => p.y)));
-    if ((maxX - minX + 1) * (maxY - minY + 1) > 64) continue;
+    if ((maxX - minX + 1) * (maxY - minY + 1) > (options.budget ?? 64)) continue;
     const tiles: MapTile[] = [];
     for (let x = minX; x <= maxX; x++) for (let y = minY; y <= maxY; y++) tiles.push({ x, y, z });
     return tiles.sort((a, b) => Math.hypot(a.x - (minX + maxX) / 2, a.y - (minY + maxY) / 2) - Math.hypot(b.x - (minX + maxX) / 2, b.y - (minY + maxY) / 2));
   }
   return [];
+}
+
+/** Coarse context stays visible while a bounded, finer DEM footprint arrives. */
+export function planBasemapTiles(metadata: TerrainMetadata, maxZoom: number): MapTile[] {
+  const context = planRegionalTiles(metadata, { maxZoom: Math.min(11, maxZoom), budget: 32 });
+  const detail = planRegionalTiles(metadata, { padding: .05, maxZoom, budget: 64 });
+  const seen = new Set<string>();
+  return [...context.slice(0, 4), ...detail, ...context.slice(4)].filter(tile => {
+    const key = `${tile.z}/${tile.x}/${tile.y}`;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
 }
 
 export function tileScenePoint(metadata: TerrainMetadata, tile: MapTile, u: number, v: number): THREE.Vector3 {
@@ -63,16 +78,19 @@ function tileGeometry(metadata: TerrainMetadata, tile: MapTile): THREE.BufferGeo
   return geometry;
 }
 
-export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void) {
+export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1) {
   const group = new THREE.Group();
   group.name = 'regional-basemap'; group.matrix.copy(transform); group.matrixAutoUpdate = false;
-  let tiles: MapTile[] = [];
-  try { tiles = planRegionalTiles(metadata); } catch { /* Unlocated/custom models remain usable without a basemap. */ }
+  const tilesFor = (nextStyle: BasemapStyle): MapTile[] => {
+    try { return planBasemapTiles(metadata, nextStyle === 'satellite' ? imagerySource.maxNativeZoom : 14); }
+    catch { return []; } // Unlocated/custom models remain usable without a basemap.
+  };
+  let tiles = tilesFor('satellite');
   let style: BasemapStyle = 'satellite', enabled = false, disposed = false, generation = 0;
   let controller: AbortController | null = null;
   const cached = new Map<string, { mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>; bitmap: ImageBitmap; style: BasemapStyle }>();
   const key = (tile: MapTile, nextStyle = style) => `${nextStyle}/${tile.z}/${tile.x}/${tile.y}`;
-  const publish = (status: BasemapState['status']) => { if (!disposed) onState({ status, style, loaded: tiles.filter(t => cached.has(key(t))).length, total: tiles.length }); };
+  const publish = (status: BasemapState['status']) => { if (!disposed) onState({ status, style, provider: style === 'satellite' ? 'configured' : 'eox', loaded: tiles.filter(t => cached.has(key(t))).length, total: tiles.length }); };
   const load = async (): Promise<void> => {
     controller?.abort(); const run = ++generation;
     if (!enabled || disposed) { publish('off'); return; }
@@ -94,12 +112,17 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
         let bitmap: ImageBitmap | undefined;
         try {
           const layer = runStyle === 'satellite' ? 's2cloudless_3857' : 'terrain-light_3857';
-          const response = await fetch(`https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/${tile.z}/${tile.y}/${tile.x}.jpg`, { signal: request.signal });
+          const template = runStyle === 'satellite' ? imagerySource.url : `https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/{z}/{y}/{x}.jpg`;
+          const url = template.replaceAll('{z}', String(tile.z)).replaceAll('{y}', String(tile.y)).replaceAll('{x}', String(tile.x));
+          const response = await fetch(url, { signal: request.signal });
           if (!response.ok) throw new Error(`Basemap tile ${response.status}`);
           bitmap = await createImageBitmap(await response.blob(), { imageOrientation: 'flipY' });
           if (disposed || run !== generation) { bitmap.close(); continue; }
-          const texture = new THREE.Texture(bitmap); texture.flipY = false; texture.colorSpace = THREE.SRGBColorSpace; texture.needsUpdate = true;
-          const mesh = new THREE.Mesh(tileGeometry(metadata, tile), new THREE.MeshBasicMaterial({ map: texture }));
+          const texture = new THREE.Texture(bitmap); texture.flipY = false; texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = anisotropy; texture.needsUpdate = true;
+          const mesh = new THREE.Mesh(tileGeometry(metadata, tile), new THREE.MeshBasicMaterial({ map: texture, depthWrite: false }));
+          // The DEM writes depth first. Tiles test against it, but do not occlude
+          // finer tiles in the same flat context plane.
+          mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
           group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle });
           loadedInBatch = true;
           publish('loading');
@@ -122,7 +145,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
     group,
     setOptions(nextEnabled: boolean, nextStyle: BasemapStyle): void {
       if (enabled === nextEnabled && style === nextStyle) return;
-      enabled = nextEnabled; style = nextStyle; group.visible = enabled;
+      enabled = nextEnabled; style = nextStyle; tiles = tilesFor(style); group.visible = enabled;
       cached.forEach(item => { item.mesh.visible = item.style === style; });
       void load();
     },

@@ -9,7 +9,7 @@ export function reportReviewLabel(
 ): string {
   const review = submissionOf(record)?.review;
   const m = accessMessages[locale];
-  if (!review) return locale === 'vi' ? 'Chưa xác minh' : 'Unverified';
+  if (!review) return m.awaitingReview;
   return review.status === 'checked'
     ? m.reviewed
     : review.status === 'needs-info'

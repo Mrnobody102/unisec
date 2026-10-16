@@ -1,4 +1,5 @@
 """Check transactional geometry editing and the offline prepared imagery catalog."""
+from gis_browser_actions import gis_task, apply_boundary, download_geometry, publish_draft, reviewed_records, reviewed_records_json
 import argparse
 import json
 from pathlib import Path
@@ -21,46 +22,47 @@ def run(url, chrome, captures):
         page.get_by_role('button',name='Tìm ảnh',exact=True).click()
         expect(page.get_by_role('alert')).to_contain_text('AOI')
         paste(page,AOI,'aoi')
-        before=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        before=json.loads(reviewed_records_json(page))
         surface=page.locator('.geodata-map-surface')
         initial=surface.bounding_box()
+        gis_task(page, 'aoi')
         page.get_by_role('button',name='Vẽ hình chữ nhật',exact=True).click()
         assert surface.bounding_box() == initial, 'Starting a drawing moved the map'
         surface.click(position={'x':180,'y':140})
         surface.click(position={'x':330,'y':260})
         expect(page.locator('.geodata-drawing-bar')).not_to_be_visible()
-        after=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        after=json.loads(reviewed_records_json(page))
         assert len(after)==1 and after[0]['id']==before[0]['id'], 'Redraw must update the current AOI'
         assert after[0]['feature']['geometry']!=before[0]['feature']['geometry']
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))[0]['feature']['geometry']==before[0]['feature']['geometry']
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page)
+        assert json.loads(reviewed_records_json(page))[0]['feature']['geometry']==before[0]['feature']['geometry']
         page.get_by_role('button',name='Làm lại GIS',exact=True).click()
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page)
         # Edit through precise coordinates. Invalid geometry never overwrites the saved AOI.
-        page.get_by_role('tab',name='AOI',exact=True).click()
+        page.get_by_role('tab',name='Vùng quan tâm',exact=True).click()
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
         expect(page.locator('.geodata-vertex')).to_have_count(4)
         page.get_by_role('spinbutton',name='Kinh độ',exact=True).fill('103.95')
         page.get_by_role('button',name='Cập nhật đỉnh',exact=True).click()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))==before
+        assert json.loads(reviewed_records_json(page))==before
         page.get_by_role('button',name='Hủy',exact=True).click()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))==before
+        assert json.loads(reviewed_records_json(page))==before
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
         page.get_by_role('spinbutton',name='Kinh độ',exact=True).fill('103.95')
         page.get_by_role('button',name='Cập nhật đỉnh',exact=True).click()
-        page.get_by_role('button',name='Áp dụng',exact=True).click()
-        edited=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))[0]
+        apply_boundary(page)
+        edited=json.loads(reviewed_records_json(page))[0]
         assert edited['feature']['geometry']['coordinates'][0][0][0]==103.95
         assert edited['feature']['geometry']['coordinates'][0][-1]==edited['feature']['geometry']['coordinates'][0][0]
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page)
         # Invalid edits must remain a draft, with the original record available after Cancel.
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
         page.get_by_role('spinbutton',name='Kinh độ',exact=True).fill('104.15')
         page.get_by_role('spinbutton',name='Vĩ độ',exact=True).fill('21.95')
         page.get_by_role('button',name='Cập nhật đỉnh',exact=True).click()
-        page.get_by_role('button',name='Áp dụng',exact=True).click()
+        apply_boundary(page)
         expect(page.get_by_role('alert')).to_be_visible()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))==before
+        assert json.loads(reviewed_records_json(page))==before
         page.get_by_role('button',name='Hủy',exact=True).click()
         # Dragging a vertex changes only the draft; draft undo restores it.
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
@@ -68,12 +70,12 @@ def run(url, chrome, captures):
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down()
         page.mouse.move(box['x']+30,box['y']+25,steps=8);page.mouse.up()
         expect(page.get_by_role('button',name='Hoàn tác GIS',exact=True)).to_be_enabled()
-        assert json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))==before
+        assert json.loads(reviewed_records_json(page))==before
         page.keyboard.press('Control+z')
         expect(page.get_by_role('button',name='Làm lại GIS',exact=True)).to_be_enabled()
         page.keyboard.press('Control+Shift+z')
         expect(page.get_by_role('button',name='Làm lại GIS',exact=True)).to_be_disabled()
-        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click()
+        page.get_by_role('button',name='Hoàn tác GIS',exact=True).click(); reviewed_records(page)
         page.keyboard.press('Escape')
         # Selected scenes remain selected when visibility, filters and panel widths change.
         page.get_by_role('tab',name='Ảnh vệ tinh',exact=True).click()
@@ -147,6 +149,7 @@ def run(url, chrome, captures):
         assert separator.get_attribute('aria-valuenow')!=initial_width
         # A failed repository can be retried; AOI and saved geometry remain intact.
         context.route('**/catalog/che-tao.json',lambda route:route.fulfill(status=503,body='Unavailable'))
+        publish_draft(page)
         page.reload()
         page.get_by_role('tab',name='Ảnh vệ tinh',exact=True).click()
         expect(page.get_by_role('alert')).to_contain_text('Không tải được danh mục ảnh')
@@ -167,16 +170,16 @@ def run(url, chrome, captures):
         if page.locator('.geodata-import > button').get_attribute('aria-expanded') != 'true': page.locator('.geodata-import > button').click()
         page.locator('input[type=file]').set_input_files({'name':'survey.kml','mimeType':'application/vnd.google-earth.kml+xml','buffer':kml.encode()})
         expect(page.locator('.geodata-layers li')).to_have_count(count+1)
-        stored=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        stored=json.loads(reviewed_records_json(page))
         assert stored[-1]['role']=='footprint' and stored[-1]['feature']['geometry']['coordinates'][0][0]==[104,21,0]
         # Export and reimport with From file preserves roles, rather than silently treating all data as AOI.
         with page.expect_download() as output:
-            page.get_by_role('button',name='GeoJSON',exact=True).click()
+            download_geometry(page, 'GeoJSON')
         exported=Path(output.value.path()).read_bytes()
         if page.locator('.geodata-import > button').get_attribute('aria-expanded') != 'true': page.locator('.geodata-import > button').click()
         page.locator('input[type=file]').set_input_files({'name':'roundtrip.geojson','mimeType':'application/geo+json','buffer':exported})
         expect(page.locator('.geodata-layers li')).to_have_count(2*(count+1))
-        stored=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        stored=json.loads(reviewed_records_json(page))
         assert sum(record['role']=='aoi' for record in stored)==1
         assert sum(record['role']=='footprint' for record in stored)==6
         # Snap uses screen pixels and also applies to dragged vertices.
@@ -185,16 +188,17 @@ def run(url, chrome, captures):
         page.locator(f'[data-geodata-id="{aoi_id}"] .geodata-feature').click()
         page.get_by_role('button',name='Xem trên bản đồ',exact=True).click()
         page.wait_for_function("!document.querySelector('.leaflet-zoom-anim')")
+        gis_task(page, 'aoi')
         page.get_by_role('checkbox',name='Hút vào điểm gần',exact=True).check()
-        page.get_by_role('tab',name='AOI',exact=True).click()
+        page.get_by_role('tab',name='Vùng quan tâm',exact=True).click()
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
         box=settled_box(page,'.geodata-vertex')
         target=settled_box(page,'.leaflet-points-pane path')
         page.mouse.move(box['x']+6,box['y']+6);page.mouse.down()
         page.mouse.move(target['x']+target['width']/2+5,target['y']+target['height']/2,steps=8)
         page.mouse.up()
-        page.get_by_role('button',name='Áp dụng',exact=True).click()
-        stored=json.loads(page.evaluate("localStorage.getItem('dear.geodata.v1')"))
+        apply_boundary(page)
+        stored=json.loads(reviewed_records_json(page))
         assert next(record for record in stored if record['role']=='aoi')['feature']['geometry']['coordinates'][0][0]==[103.96,21.64], {'actual':next(record for record in stored if record['role']=='aoi')['feature']['geometry']['coordinates'][0][0], 'target':target, 'handle':box}
         assert not errors, errors
         browser.close()

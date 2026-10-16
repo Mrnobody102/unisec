@@ -57,7 +57,7 @@ def run(url, chrome=None):
         expect(page.locator('[data-map-object="community:KM"]')).to_have_count(0)
         page.locator('.incident-priority-row').click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
-        expect(page.locator('.decision-overview')).to_have_text('Các tuyến đã biết đều bị chặn')
+        expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         # Inspect a road and return to the original community without resetting it.
         page.locator('#response-details').get_by_role('button', name='Xem đoạn cần kiểm tra', exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
@@ -68,7 +68,7 @@ def run(url, chrome=None):
         page.locator('#response-details .panel-parent').click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
         expect(page.locator('.route-section-row[aria-expanded="true"]')).to_contain_text('vượt khe')
-        page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+        page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
         page.locator('.export-formats summary').click()
         with page.expect_download() as download:
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()

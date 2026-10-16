@@ -1,4 +1,9 @@
+import { useMapPreview } from '../features/map/useMapPreview';
+import { landslideAreaOf } from '../features/landslides/landslideAreas';
+import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
 import type { ScenarioEdits } from '../features/access/scenarioEdits';
+import { deriveIncidentWorkspace } from '../features/incident/deriveIncidentWorkspace';
+import { scenarioProperties } from '../features/access/scenarioProperties';
 import { UiIcon } from '../shared/ui/UiIcon';
 import type { ScenarioRevision } from '../features/access/useScenarioRevision';
 import {
@@ -9,6 +14,7 @@ import { RoadJourneyPanel } from '../features/routes/RoadJourneyPanel';
 import { gisJourneyPlaces } from '../features/routes/journeyPlaces';
 import type { RenameScenario } from '../features/access/ScenarioLabels';
 import type { DemoIdentity } from '../features/access/demoSession';
+import { submissionOf } from '../features/access/submissions';
 import React, {
   useCallback,
   useEffect,
@@ -31,6 +37,8 @@ import { PointGroupCard } from '../features/observations/PointGroupCard';
 import { ResponsePanel } from './ResponsePanel';
 import { ResponseDetails } from './ResponseDetails';
 import { useResponseDetailLayout } from './useResponseDetailLayout';
+import { useNotice } from '../shared/hooks/useNotice';
+import { NoticeToast } from '../shared/ui/NoticeToast';
 import { WorkspaceDialogs } from './WorkspaceDialogs';
 import { AppHeader } from '../components/dear/AppHeader';
 import { WorkspaceNav } from '../components/dear/WorkspaceNav';
@@ -51,7 +59,9 @@ import {
   type ContextMenuRequest
 } from '../shared/ui/ContextMenu';
 import { roadProjected } from '../features/routes/selectedRoadJourney';
-import { measurementPoint } from '../features/measurement/measurement';
+import { measurementPoint, useMeasurementSession } from '../features/measurement';
+import { useDrawSession } from '../features/drawing';
+import { drawingMessages } from '../features/drawing/locales';
 import { Map2D } from '../features/map/Map2D';
 import { MapLocationPanel } from '../features/map/MapLocationPanel';
 import {
@@ -59,7 +69,6 @@ import {
   readTerrainLocation,
   type MapLocation
 } from '../features/map/mapLocation';
-import { useMeasurementSession } from '../features/measurement/useMeasurementSession';
 import type { useTerrainWorkspace } from '../features/terrain/useTerrainWorkspace';
 import type { IncidentPacket } from '../data/incidentPacket';
 import type { useWorkspacePreferences } from './useWorkspacePreferences';
@@ -75,7 +84,6 @@ import { useResponseWork } from '../features/incident/useResponseWork';
 import { responseWork } from '../features/incident/responseWork';
 import type { ComparisonPair } from '../features/comparison/comparison';
 import { defaultLayerAppearance } from '../features/map/layerAppearance';
-import { LayerDetails } from '../features/map/LayerDetails';
 import { MapSearch } from '../features/search/MapSearch';
 import { searchWorkspace } from '../features/search/searchIndex';
 import {
@@ -139,6 +147,7 @@ export function ResponseWorkspace({
     preferences;
   const navigation = useWorkspaceNavigation();
   const gis = useGeometrySession();
+  const [gisScenarioRequest, setGisScenarioRequest] = useState<ScenarioTarget | null>(null);
   const [gisCardId, setGisCardId] = useState<string | null>(() =>
     new URLSearchParams(location.search).get('gisPoint')
   );
@@ -194,6 +203,7 @@ export function ResponseWorkspace({
   const {
     showProfile,
     measurementOpen,
+    drawOpen,
     locationOpen,
     activeDialog,
     mapMode,
@@ -207,6 +217,7 @@ export function ResponseWorkspace({
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const { session: measureSession, dispatch: dispatchMeasureSession } =
     useMeasurementSession(mapMode, measurementOpen);
+  const { session: drawSession, dispatch: dispatchDrawSession } = useDrawSession(mapMode, drawOpen);
   const [mobileView, setMobileView] = useState<'map' | 'info'>('map');
   const [basemapState, setBasemapState] = useState<BasemapState>({
     status: 'off',
@@ -220,9 +231,7 @@ export function ResponseWorkspace({
     document.querySelector<HTMLButtonElement>('.map-location-trigger')?.focus();
   }, [interaction.dispatch]);
   const [evidenceModalId, setEvidenceModalId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<[string, string] | null>(
-    null
-  );
+  const { notice, notify: showToast, dismiss: dismissToast } = useNotice();
   const [layers, setLayers] = useState<Record<string, boolean>>(() => ({
     ...defaultLayers,
     context: !runtime.offline
@@ -233,6 +242,8 @@ export function ResponseWorkspace({
     zoom: number;
   } | null>(null);
   const viewControlRef = useRef<ViewControls | null>(null);
+  const [viewReadyVersion, setViewReadyVersion] = useState(0);
+  const onViewReady = useCallback(() => setViewReadyVersion(version => version + 1), []);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const detailReturnTarget = useRef<HTMLElement | null>(null);
   const profileReturnTarget = useRef<HTMLElement | null>(null);
@@ -241,17 +252,6 @@ export function ResponseWorkspace({
   useModalFocus(workspaceRef, modalKey, () => {
     setActiveDialog(null);
   });
-
-  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const showToast = useCallback((msg: [string, string]) => {
-    clearTimeout(toastTimer.current);
-    setToastMessage(msg);
-    toastTimer.current = setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
-  }, []);
 
   const shownFallback = useRef(0);
   useEffect(() => {
@@ -285,10 +285,28 @@ export function ResponseWorkspace({
     changeMode: handleUploadModeChange,
     changeGeographicMerge: handleGeographicMergeChange
   } = runtime;
-  const incidentSnapshot = useIncidentWorkspace(packet, updated);
+  const incidentSnapshot = useIncidentWorkspace(packet, updated, historical ? undefined : scenarioEdits?.edits, appliedAt);
+  // Undo restores the status the road would have without that edit (including a field report
+  // applied since), not the stored "from", which can be stale.
+  const revertRoadStatus = (edits: ScenarioEdits, id: string): boolean => {
+    const edit = edits.edits.find(item => item.id === id);
+    if (edit?.change.kind !== 'status') return false;
+    const current = incidentSnapshot.roads.find(road => road.id === edit.target.id)?.status;
+    const previous = deriveIncidentWorkspace(packet, updated, edits.edits.filter(item => item.id !== id), appliedAt)
+      .roads.find(road => road.id === edit.target.id)?.status;
+    if (!current || !previous || current === previous) return false;
+    return edits.record({ target: edit.target, change: { kind: 'status', from: current, to: previous },
+      note: locale === 'vi' ? 'Hoàn tác thay đổi trước' : 'Undo previous change', reverts: id });
+  };
+  // Published landslide areas drawn on this road network; their road links can raise checks.
+  const areaLinks = useMemo(() => gis.records.flatMap(record => {
+    const area = landslideAreaOf(record);
+    return area && area.networkVersion === packet.datasetVersion
+      ? area.roadLinks.map(link => ({ areaId: record.id, areaName: record.name, roadId: link.roadId, relation: link.relation })) : [];
+  }), [gis.records, packet.datasetVersion]);
   const workTasks = useMemo(
-    () => responseWork(packet, incidentSnapshot, reportApplied),
-    [packet, incidentSnapshot, reportApplied]
+    () => responseWork(packet, incidentSnapshot, reportApplied, areaLinks),
+    [packet, incidentSnapshot, reportApplied, areaLinks]
   );
   const {
     roads,
@@ -300,6 +318,7 @@ export function ResponseWorkspace({
     incident,
     responseSites
   } = incidentSnapshot;
+  useMapPreview(workspaceRef,key=>{const [kind,...rest]=key.split(':'),id=rest.join(':');const f=kind==='community'?communities.find(f=>f.id===id):kind==='hazard'?hazards.find(f=>f.id===id):kind==='poi'?responseSites.find(f=>f.id===id):roads.find(f=>f.id===id);if(f)return {point:'projected' in f?f.projected:f.points[Math.floor(f.points.length/2)],name:typeof f.name==='string'?f.name:f.name[locale==='vi'?0:1]};const r=gis.records.find(r=>r.id===id);if(r?.feature.geometry.type==='Point'){const [lon,lat]=r.feature.geometry.coordinates;return {point:roadProjected(lat,lon),name:r.name};}return null;});
   useEffect(() => {
     if (offlineMode) setLayers((previous) => ({ ...previous, context: false }));
   }, [offlineMode]);
@@ -627,6 +646,11 @@ export function ResponseWorkspace({
     setMapMenu({ x: request.clientX, y: request.clientY, title: name, items });
   };
 
+  const reportRoad = roads.find((road) => road.id === packet.report.roadId);
+  const pendingReport: [string, string] = [
+    [packet.report.hazard.name[0], reportRoad?.name[0]].filter(Boolean).join(' · '),
+    [packet.report.hazard.name[1], reportRoad?.name[1]].filter(Boolean).join(' · ')
+  ];
   // Simulate U-1 Incoming Field Update
   const handleSimulateUpdate = useCallback(() => {
     if (reportApplied && !historical) return;
@@ -693,6 +717,8 @@ export function ResponseWorkspace({
         hazards,
         evidence,
         communities,
+        responseSites,
+        manualUpdatedAt: incidentSnapshot.manualUpdatedAt,
         terrainAssets: defaultTerrainData
           ? scenarioManifest?.terrain
           : undefined
@@ -717,13 +743,14 @@ export function ResponseWorkspace({
       !detailLayout.fitsProfile
     ) &&
     !measurementOpen &&
+    !drawOpen &&
     !locationOpen &&
     !journey.open &&
     !gisCard &&
     gisGroup.length < 2 &&
     activeDialog !== 'layers';
   useEffect(() => {
-    if (!responseDetailVisible || mapMode !== '2d') return;
+    if (!responseDetailVisible) return;
     if (detailLayout.mode !== 'dock') return;
     let firstFrame = 0,
       secondFrame = 0;
@@ -767,6 +794,7 @@ export function ResponseWorkspace({
     selectedCommunityId,
     selectedObjectId,
     mapMode,
+    viewReadyVersion,
     roads,
     communities,
     hazards,
@@ -785,6 +813,7 @@ export function ResponseWorkspace({
       data-response-profile={showProfile && !!profileTarget}
     >
       <AppHeader
+        locked={activeDialog === 'geodata'}
         locale={locale}
         incident={incident}
         areaName={packet.aoi.name}
@@ -794,6 +823,7 @@ export function ResponseWorkspace({
         theme={theme}
         fontChoice={fontChoice}
         onOpenReports={() => setActiveDialog('fieldReports')}
+        reportsPending={gis.records.some(record => { const submission = submissionOf(record); return submission?.role === 'resident' && submission.review.status === 'pending'; })}
         identityName={identity.name}
         onSignOut={onSignOut}
         onOpenHelp={() => setActiveDialog('help')}
@@ -822,6 +852,7 @@ export function ResponseWorkspace({
         onReset={() => {
           work.reset();
           dispatchMeasureSession({ type: 'reset' });
+          dispatchDrawSession({ type: 'discard' });
           setPanelCollapsed(false);
           setLocationPoint(null);
           setReportApplied(false);
@@ -855,6 +886,8 @@ export function ResponseWorkspace({
           workTasks={workTasks}
           workEntries={work.entries}
           reportPending={!reportApplied}
+          pendingReport={pendingReport}
+          onApplyReport={handleSimulateUpdate}
           historical={historical && reportApplied}
           onOpenWork={(id) => {
             setWorkTaskId(id ?? null);
@@ -872,8 +905,21 @@ export function ResponseWorkspace({
 
         <ResponseDetails
           locale={locale}
-          onRename={identity.role === 'manager' ? onRename : undefined}
-          scenarioEdits={scenarioEdits?.edits}
+          mappedAreas={gis.records.filter(record => landslideAreaOf(record)?.networkVersion === packet.datasetVersion)}
+          onOpenMappedArea={id => {setGisCardId(id);setGisGroupIds([]);}}
+          onEditScenario={!historical ? target => {setGisScenarioRequest(target);setActiveDialog('geodata');} : undefined}
+          scenarioEdits={historical ? undefined : scenarioEdits?.edits}
+          onRename={!historical ? onRename : undefined}
+          signals={packet.signals}
+          workTasks={workTasks}
+          workEntries={work.entries}
+          onOpenWork={(id) => {
+            setWorkTaskId(id ?? null);
+            setActiveDialog('responseWork');
+          }}
+          onSetRoadStatus={!historical && scenarioEdits?.canEdit ? (road, status, note) => scenarioEdits.record({
+            target: { type: 'road', id: road.id, name: road.name[0] }, change: { kind: 'status', from: road.status, to: status }, note }) : undefined}
+          onRevertEdit={!historical && scenarioEdits?.canEdit ? id => revertRoadStatus(scenarioEdits, id) : undefined}
           navigation={navigation}
           onNavigate={navigation.dispatch}
           snapshot={incidentSnapshot}
@@ -963,6 +1009,22 @@ export function ResponseWorkspace({
                     .querySelector<HTMLButtonElement>('.map-measure-trigger')
                     ?.focus();
                 }}
+                drawOpen={drawOpen}
+                drawSession={drawSession}
+                dispatchDrawSession={dispatchDrawSession}
+                onCloseDraw={() => {
+                  interaction.dispatch({ type: 'close-tool', tool: 'draw' });
+                  document.querySelector<HTMLButtonElement>('.map-draw-trigger')?.focus();
+                }}
+                onSaveDrawing={(record) => {
+                  // A drawing is GIS reference data: it is listed and exported with imported layers.
+                  gis.add([record]);
+                  setLayers((previous) => ({ ...previous, gis: true }));
+                  showToast([
+                    drawingMessages.vi.saved.replace('{name}', record.name),
+                    drawingMessages.en.saved.replace('{name}', record.name)
+                  ]);
+                }}
                 imageUrl={
                   defaultTerrainData
                     ? scenarioManifest?.terrain.image?.url
@@ -976,6 +1038,7 @@ export function ResponseWorkspace({
                 scenarioProps={
                   snapshotReady && scenarioTerrainCompatible
                     ? {
+                        datasetVersion: packet.datasetVersion,
                         aoi: packet.aoi,
                         communities: communities,
                         responseSites: responseSites,
@@ -984,8 +1047,8 @@ export function ResponseWorkspace({
                         selectedRoute: journey.open
                           ? journey.route
                           : activeRoute,
-                        selectedCommunityId,
-                        selectedObjectId,
+                        selectedCommunityId: gisCard ? null : selectedCommunityId,
+                        selectedObjectId: gisCard ? null : selectedObjectId,
                         layers,
                         appearance: layerAppearance
                       }
@@ -993,6 +1056,7 @@ export function ResponseWorkspace({
                 }
                 onSelectOverlayHit={handleOverlayHit}
                 viewControlRef={viewControlRef}
+                onViewReady={onViewReady}
               />
             ) : (
               <Map3DBoundary onUnavailable={handle3DUnavailable}>
@@ -1001,6 +1065,9 @@ export function ResponseWorkspace({
                 >
                   <TerrainViewer
                     models={models}
+                    gisRecords={layers.gis ? gis.records : undefined}
+                    gisSelectedId={gisCardId}
+                    onGisSelect={id => {gis.select(id);setGisCardId(id);setGisGroupIds([]);}}
                     geographicPlacements={geographicPlacements}
                     measureMode={locationOpen}
                     onPick={handlePick}
@@ -1020,14 +1087,15 @@ export function ResponseWorkspace({
                     scenarioProps={
                       snapshotReady && scenarioTerrainCompatible
                         ? {
+                            datasetVersion: packet.datasetVersion,
                             aoi: packet.aoi,
                             communities: communities,
                             responseSites: responseSites,
                             hazards,
                             roads: roads,
                             selectedRoute: activeRoute,
-                            selectedCommunityId: selectedCommunityId,
-                            selectedObjectId: selectedObjectId,
+                            selectedCommunityId: gisCard ? null : selectedCommunityId,
+                            selectedObjectId: gisCard ? null : selectedObjectId,
                             layers: layers,
                             appearance: layerAppearance
                           }
@@ -1035,6 +1103,7 @@ export function ResponseWorkspace({
                     }
                     onSelectOverlayHit={handleOverlayHit}
                     viewControlRef={viewControlRef}
+                    onViewReady={onViewReady}
                     onUnavailable={handle3DUnavailable}
                   />
                 </React.Suspense>
@@ -1104,6 +1173,8 @@ export function ResponseWorkspace({
               responseSites.some((site) => site.kind === 'hlz')
             }
             measuring={measurementOpen}
+            drawing={drawOpen}
+            onDraw={() => interaction.dispatch({ type: 'toggle-tool', tool: 'draw' })}
             locating={locationOpen}
             onLocation={() =>
               interaction.dispatch({ type: 'toggle-tool', tool: 'location' })
@@ -1199,14 +1270,17 @@ export function ResponseWorkspace({
               }
             />
           )}
-          {mapMode === '2d' &&
+          {(mapMode === '2d' || !!gisCard && !!landslideAreaOf(gisCard)) &&
             !journey.open &&
             layers.gis &&
             gisCard &&
             !locationOpen &&
-            !measurementOpen && (
+            !measurementOpen &&
+            !drawOpen && (
               <ResponseObservationCard
                 record={gisCard}
+                roads={landslideAreaOf(gisCard)?.networkVersion === packet.datasetVersion ? roads : []}
+                onRoad={id => inspectObject('road:'+id)}
                 locale={locale}
                 onClose={() => {
                   setGisCardId(null);
@@ -1229,7 +1303,8 @@ export function ResponseWorkspace({
             !gisCard &&
             gisGroup.length > 1 &&
             !locationOpen &&
-            !measurementOpen && (
+            !measurementOpen &&
+            !drawOpen && (
               <PointGroupCard
                 records={gisGroup}
                 locale={locale}
@@ -1263,18 +1338,6 @@ export function ResponseWorkspace({
               mapMode={mapMode}
               onAppearance={setLayerAppearance}
               onCompare={() => setActiveDialog('comparison')}
-              renderInfo={(id) => (
-                <LayerDetails
-                  id={id}
-                  locale={locale}
-                  packet={packet}
-                  updated={updated}
-                  evidence={evidence}
-                  terrain={mapTerrain?.metadata}
-                  route={activeRoute}
-                  imagery={layers.imagery}
-                />
-              )}
               hasFloodData={hazards.some((hazard) => hazard.kind === 'flood')}
               hasHLZData={responseSites.some((site) => site.kind === 'hlz')}
               hasSelectedRoute={Boolean(activeRoute)}
@@ -1320,7 +1383,12 @@ export function ResponseWorkspace({
       <WorkspaceDialogs
         identity={identity}
         onRename={onRename}
-        scenarioEdits={scenarioEdits}
+        scenarioEdits={historical ? undefined : scenarioEdits}
+        scenarioRequest={gisScenarioRequest}
+        onResponseScenario={target => {
+          inspectObject(`${target.type === 'site' ? 'poi' : target.type}:${target.id}`);
+          setMapMode('2d');setMobileView('map');setActiveDialog(null);setGisScenarioRequest(null);
+        }}
         onEditGis={(id) => {
           gis.select(id);
           setActiveDialog('geodata');
@@ -1340,6 +1408,20 @@ export function ResponseWorkspace({
         workEntries={work.entries}
         workStorageError={work.error}
         onRecordWork={work.record}
+        onVerifyRoad={!historical && scenarioEdits?.canEdit ? (roadId, status, note) => {
+          const road = incidentSnapshot.roads.find(item => item.id === roadId);
+          return !!road && scenarioEdits.record({ target: { type: 'road', id: road.id, name: road.name[0] },
+            change: { kind: 'status', from: road.status, to: status }, note });
+        } : undefined}
+        onVerifyHazard={!historical && scenarioEdits?.canEdit ? (hazardId, confirmed, note) => {
+          // "Not found" is recorded in the work log only; the hazard keeps its suspected status.
+          if (!confirmed) return true;
+          const hazard = incidentSnapshot.hazards.find(item => item.id === hazardId);
+          if (!hazard) return false;
+          const from = scenarioProperties(hazard);
+          return scenarioEdits.record({ target: { type: 'hazard', id: hazard.id, name: hazard.name[0] },
+            change: { kind: 'properties', from, to: { ...from, observation: 'reported' } }, note });
+        } : undefined}
         appliedAt={appliedAt}
         comparisonPair={comparisonPair}
         onComparisonPair={setComparisonPair}
@@ -1359,7 +1441,7 @@ export function ResponseWorkspace({
           onFiles: handleUpload,
           onClear: clearUploadedModels
         }}
-        onClose={() => setActiveDialog(null)}
+        onClose={() => {setActiveDialog(null);setGisScenarioRequest(null);}}
         onOpenReport={() => setActiveDialog('alerts')}
         onApplyReport={handleSimulateUpdate}
         onRevision={(value) => {
@@ -1376,11 +1458,7 @@ export function ResponseWorkspace({
           onClose={closeMapMenu}
         />
       )}
-      {toastMessage && (
-        <div className="toast" role="status">
-          {toastMessage[locale === 'vi' ? 0 : 1]}
-        </div>
-      )}
+      <NoticeToast notice={notice} locale={locale} onDismiss={dismissToast} />
     </div>
   );
 }

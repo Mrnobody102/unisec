@@ -1,5 +1,7 @@
 import { useScenarioRevision } from './features/access/useScenarioRevision';
 import { useScenarioLabels } from './features/access/ScenarioLabels';
+import { scenarioProperties } from './features/access/scenarioProperties';
+import type { ScenarioTargetType } from './features/access/scenarioEdits';
 import { useScenarioEdits } from './features/access/scenarioEdits';
 import { useDemoSession } from './features/access/demoSession';
 import { DemoSignIn } from './features/access/DemoSignIn';
@@ -33,7 +35,7 @@ function ResponseEntry({
   });
   const labels = useScenarioLabels(runtime.packet);
   const edits = useScenarioEdits(labels.packet, session.identity);
-  const packet = edits.packet ?? labels.packet;
+  const packet = labels.packet;
   const published = useScenarioRevision(runtime.packet?.datasetVersion ?? '');
   if (!runtime.packet || !packet)
     return (
@@ -59,20 +61,16 @@ function ResponseEntry({
         identity={session.identity}
         onSignOut={session.signOut}
         runtime={{ ...runtime, packet }}
+        scenarioEdits={edits.edits}
       />
     );
-  const rename = (type: 'community' | 'road', id: string, names: [string, string]) => {
-    const before =
-      type === 'community'
-        ? packet?.communities.find((c) => c.id === id)?.name
-        : packet?.roads.find((r) => r.id === id)?.name[0];
-    if (!labels.rename(type, id, names)) return false;
-    edits.record({
-      target: { type, id, name: names[0] },
-      change: { kind: 'rename', from: before ?? '', to: names[0] },
-      note: ''
-    });
-    return true;
+  const rename = (type: ScenarioTargetType, id: string, names: [string, string]) => {
+    const current = edits.packet ?? packet;
+    const feature = (type === 'community' ? current.communities : type === 'road' ? current.roads : type === 'hazard' ? current.hazards : current.responseSites).find(f => f.id === id);
+    if (!feature) return false;
+    const before = scenarioProperties(feature);
+    return edits.record({ target: { type, id, name: names[0] },
+      change: { kind: 'properties', from: before, to: { ...before, names } }, note: 'Cập nhật tên hiển thị' });
   };
   return (
     <ResponseWorkspace

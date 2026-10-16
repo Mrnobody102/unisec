@@ -1,0 +1,11 @@
+/* Segmented single choice built on native radios. */
+.choice-group { display: grid; grid-template-columns: repeat(var(--choice-columns, 3), minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.choice-group legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.choice-group-option { position: relative; display: flex; min-width: 0; }
+.choice-group-option input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.choice-group-option span { flex: 1; min-width: 0; padding: 6px 4px; border: 1px solid var(--ws-line); border-radius: var(--radius-xs); background: var(--ws-raised); color: var(--ws-text); font-size: 12px; line-height: 16px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+.choice-group-option:hover span { border-color: var(--ws-muted); }
+.choice-group-option input:checked + span { border-color: var(--ws-brand); background: var(--ws-tint); color: var(--ws-brand); font-weight: 600; }
+.choice-group-option input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
+.choice-group:disabled .choice-group-option span { opacity: .55; }
+@media (forced-colors: active) { .choice-group-option input:checked + span { border-width: 2px; } }

@@ -6,6 +6,9 @@ export const defaultImagerySource = {
   maxNativeZoom: 14,
   custom: false
 };
+/** Load tiles while panning and keep a wider ring of loaded tiles, so a drag never
+ * reveals an empty background while the next tiles are still idle-deferred. */
+export const basemapTileOptions = { keepBuffer: 4, updateWhenIdle: false, updateWhenZooming: false } as const;
 const env = import.meta.env;
 const customUrl = String(env.VITE_DEAR_IMAGERY_URL ?? '');
 const enabled =
@@ -25,7 +28,7 @@ export const imagerySource = {
       ? String(env.VITE_DEAR_IMAGERY_LINK)
       : defaultImagerySource.link,
   maxNativeZoom: enabled
-    ? Math.max(1, Math.min(22, Number(env.VITE_DEAR_IMAGERY_MAX_ZOOM) || 18))
+    ? Math.max(1, Math.min(22, Math.floor(Number(env.VITE_DEAR_IMAGERY_MAX_ZOOM) || 18)))
     : 14,
   custom: enabled
 };

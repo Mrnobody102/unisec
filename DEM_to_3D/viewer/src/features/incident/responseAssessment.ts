@@ -1,3 +1,4 @@
+import {roadHazardIds} from './roadHazards';
 import type { Hazard, ScenarioRoutePair } from '../../types/dear';
 import { routeNextAction } from '../routes/routeReview';
 
@@ -17,7 +18,7 @@ export type ResponseAssessment = {
 export function assessCommunity(pair: ScenarioRoutePair | undefined, hazards: Hazard[], signal: CommunitySignal): ResponseAssessment {
   const routes = [pair?.direct, pair?.candidate].filter(route => route != null);
   const affected = [...new Map(routes.flatMap(route => route.segs).filter(road => road.status !== 'open').map(road => [road.id, road])).values()];
-  const hazardIds = [...new Set(affected.flatMap(road => road.hz ? [road.hz] : []))];
+  const hazardIds = [...new Set(affected.flatMap(roadHazardIds))];
   const reportedHazard = hazards.find(hazard => hazardIds.includes(hazard.id) && hazard.observation === 'reported');
   const reportedImpact = Boolean(reportedHazard);
   const reportedReason: ResponseAssessment['reason'] = reportedHazard?.kind === 'bridge'

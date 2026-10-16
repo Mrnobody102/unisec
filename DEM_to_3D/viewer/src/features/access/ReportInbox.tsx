@@ -9,6 +9,8 @@ import type { useGeometrySession } from '../geodata/useGeometrySession';
 import type { DemoIdentity } from './demoSession';
 import { submissionOf, submissionKey } from './submissions';
 import { observationOf } from '../observations/model';
+import { VoicePlayback } from '../observations/VoicePlayback';
+import { submissionLocationLabel } from './submissions';
 import { PhotoGallery } from '../observations/PhotoGallery';
 import { observationTimeLabel } from '../observations/captureMetadata';
 import { UiIcon } from '../../shared/ui/UiIcon';
@@ -133,7 +135,9 @@ export function ReportInbox({
                       </dd>
                     </div>
                   </dl>
-                  <p className="field-note">{observation?.note}</p>
+                  {submissionLocationLabel(record,locale)&&<p className="field-hint">{submissionLocationLabel(record,locale)}</p>}
+                  {observation?.note&&<p className="field-note">{observation.note}</p>}
+                  <VoicePlayback voice={observation?.voice} locale={locale}/>
                   {observation && (
                     <PhotoGallery
                       photos={observation.photos}

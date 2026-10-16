@@ -535,9 +535,9 @@
 .hazard-detail .hazard-observation { margin: 16px 0 4px; color: var(--ws-text); font-size: 14px; line-height: 1.55; }
 
 /* One attribute table style for every label/value list in the panel. */
-.fact-rows { margin: 12px 0 0; border-bottom: 1px solid var(--ws-line); }
+.fact-rows { margin: 12px 0 0; }
 .fact-rows.area-facts { display: block; margin-top: 0; }
-.fact-rows > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: baseline; margin: 0; padding: 10px 0; border: 0; border-top: 1px solid var(--ws-line); border-radius: 0; background: none; }
+.fact-rows > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: baseline; margin: 0; padding: 8px 0; border: 0; border-radius: 0; background: none; }
 .fact-rows dt { min-height: 0; margin: 0; color: var(--ws-muted); font-size: 12px; line-height: 1.5; }
 .fact-rows dd { margin: 0; color: var(--ws-text); font-size: 13px; font-weight: 400; line-height: 1.5; white-space: normal; }
 .fact-rows.area-facts dd small { font-size: 12px; }
@@ -560,3 +560,23 @@
 @container (max-width: 340px) {
   .workspace-nav button { gap: 6px; font-size: 12px; }
 }
+.detail-next .road-status-switch { margin: 0 0 12px; }
+.road-status-change { display: grid; gap: 8px; margin: 0 0 12px; }
+.road-status-change label { display: grid; gap: 4px; color: var(--ws-muted); font-size: 12px; }
+.road-status-change textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--ws-raised); color: var(--ws-text); font: inherit; font-size: 13px; resize: vertical; }
+.road-status-actions { display: flex; gap: 8px; }
+.detail-next .road-status-error { margin: 0 0 10px; color: var(--critical-ink); font-size: 12px; }
+.manual-edit-note > span { display: grid; gap: 2px; min-width: 0; }
+.manual-edit-note small { color: var(--ws-muted); }
+.manual-edit-note .text-button { margin-left: auto; flex: none; font-size: 12px; }
+/* Key facts: the numbers read first, under the title. */
+.key-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 12px 16px; margin: 12px 0 4px; }
+.key-facts > div { display: grid; gap: 2px; min-width: 0; }
+.key-facts dt { color: var(--ws-muted); font-size: 12px; }
+.key-facts dd { margin: 0; color: var(--ws-text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.key-facts > .is-critical dd { color: var(--critical-ink); }
+.key-facts > .is-warning dd { color: var(--warning-ink); }
+.evidence-limitation { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; color: var(--ws-muted); font-size: 13px; line-height: 1.5; }
+.evidence-limitation svg { flex: none; margin-top: 3px; color: var(--warning-ink); }
+.detail-empty { margin: 0 0 8px; color: var(--ws-muted); font-size: 13px; }
+.hazard-detail .hazard-observation { margin: 0 0 10px; }

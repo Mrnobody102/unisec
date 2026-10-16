@@ -1,3 +1,4 @@
+import type { ScenarioTargetType } from './scenarioEdits';
 import { useEffect, useMemo, useState } from 'react';
 import type { IncidentPacket } from '../../data/incidentPacket';
 export type ScenarioLabels = {
@@ -74,7 +75,7 @@ export function useScenarioLabels(packet: IncidentPacket | null) {
 }
 
 export type RenameScenario = (
-  type: 'community' | 'road',
+  type: ScenarioTargetType,
   id: string,
   names: [string, string]
 ) => boolean;

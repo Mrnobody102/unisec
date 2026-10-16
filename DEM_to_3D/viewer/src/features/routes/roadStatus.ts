@@ -1,8 +1,15 @@
 import type { RoadSegment } from '../../types/dear';
 
-/** `open` means no reported blockage in this snapshot, not verified passage. */
+/** One wording for road status across the app. `open` means no reported blockage in this
+ * snapshot, not verified passage. */
 export const roadStatusLabels: Record<RoadSegment['status'], [vi: string, en: string]> = {
   blocked: ['Bị chặn', 'Blocked'],
-  uncertain: ['Cần xác minh', 'Needs verification'],
-  open: ['Chưa ghi nhận đường bị chặn', 'No blockage reported']
+  uncertain: ['Cần xác minh', 'To verify'],
+  open: ['Chưa ghi nhận chặn', 'No blockage reported']
 };
+/** Kept for status switches; identical to `roadStatusLabels` so every screen reads the same. */
+export const roadStatusShortLabels = roadStatusLabels;
+export const roadStatusTone = (status: RoadSegment['status']) =>
+  status === 'blocked' ? 'critical' as const : status === 'uncertain' ? 'warning' as const : 'neutral' as const;
+export const roadStatusIcon = (status: RoadSegment['status']) =>
+  status === 'blocked' ? 'blocked' as const : status === 'uncertain' ? 'uncertain' as const : undefined;

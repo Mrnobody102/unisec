@@ -126,12 +126,13 @@ def run(url, chrome, captures):
         legend = page.locator('.map-bottom-bar')
         assert legend.bounding_box()['width'] <= 342, 'Compact legend should not stretch across the map'
         assert legend.evaluate('node => node.scrollWidth <= node.clientWidth')
-        legend.get_by_role('button', name='Minimize legend', exact=True).click()
         expect(legend.locator('.legend-item')).to_have_count(0)
         assert legend.bounding_box()['height'] <= 42
         legend.get_by_role('button', name='Legend', exact=True).click()
         assert legend.locator('.legend-item').count() >= 5
         assert legend.evaluate('node => node.scrollWidth <= node.clientWidth')
+        legend.get_by_role('button', name='Minimize legend', exact=True).click()
+        expect(legend.locator('.legend-item')).to_have_count(0)
 
         def drag(handle, dx, dy):
             box = handle.bounding_box()
@@ -236,8 +237,8 @@ def run(url, chrome, captures):
         assert layers.bounding_box()['y'] == original['y'] + 70
         assert layers.locator('summary').evaluate("node => getComputedStyle(node).listStyleType") == 'none'
         for row in layers.locator('.layer-source-row:has(label)').all():
-            label, info = row.locator('label').bounding_box(), row.locator('.layer-info-button').bounding_box()
-            assert abs(label['y'] + label['height'] / 2 - info['y'] - info['height'] / 2) < 1, (label, info)
+            label, checkbox = row.locator('label').bounding_box(), row.locator('input[type=checkbox]').bounding_box()
+            assert abs(label['y'] + label['height'] / 2 - checkbox['y'] - checkbox['height'] / 2) < 2, (label, checkbox)
         # Geographic marker anchors do not move when their labels are hidden.
         positions = page.locator('[data-map-object]').evaluate_all('(nodes) => Object.fromEntries(nodes.map(n => [n.dataset.mapObject, n.style.transform]))')
         layers.get_by_role('combobox', name='Place labels', exact=True).select_option('none')
@@ -273,6 +274,9 @@ def run(url, chrome, captures):
         expect(location.locator('dd')).to_have_count(3)
         assert location.locator('dd').last.text_content().endswith(' m')
         geographic = location.locator('dd').first.text_content()
+        location.get_by_role('button', name='Copy coordinates', exact=True).click()
+        copied_pair = page.evaluate('navigator.clipboard.readText()')
+        assert copied_pair == f"{geographic.removesuffix('°')}, {location.locator('dd').nth(1).text_content().removesuffix('°')}"
         location.get_by_role('combobox', name='Coordinate system').select_option('projected')
         assert location.locator('dd').first.text_content() != geographic
         location.get_by_role('button', name='Copy coordinates', exact=True).click()

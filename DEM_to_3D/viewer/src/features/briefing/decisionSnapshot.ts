@@ -1,5 +1,5 @@
 import type { IncidentPacket } from '../../data/incidentPacket';
-import type { Community, Hazard, IncidentEvidence, RoadSegment, ScenarioRoute } from '../../types/dear';
+import type { Community, Hazard, IncidentEvidence, ResponseSite, RoadSegment, ScenarioRoute } from '../../types/dear';
 import type { ResponseAssessment } from '../incident/responseAssessment';
 import type { ScenarioManifest } from '../../data/scenarioManifest';
 import { routingPolicy } from '../routes/networkRouting';
@@ -11,6 +11,10 @@ export function createDecisionSnapshot(input: {
   packet: IncidentPacket; updated: boolean; community: Community; assessment: ResponseAssessment;
   route: ScenarioRoute | null; roads: RoadSegment[]; hazards: Hazard[]; evidence: IncidentEvidence[]; communities: Community[];
   terrainAssets?: ScenarioManifest['terrain'];
+  /** Sites after manual edits; the packet holds only the prepared positions. */
+  responseSites?: ResponseSite[];
+  /** Time of the latest manual edit included in this snapshot. */
+  manualUpdatedAt?: string;
 }) {
   const { packet, updated, community, assessment, route, roads, hazards, evidence } = input;
   return structuredClone({
@@ -21,11 +25,12 @@ export function createDecisionSnapshot(input: {
     reviewStatus: packet.reviewStatus,
     asOf: updated ? packet.incident.asOfUpdated : packet.incident.asOf,
     appliedReportIds: updated ? [packet.report.id] : [],
+    manualUpdatedAt: input.manualUpdatedAt ?? null,
     crs: packet.crs,
     community, assessment, route, roads, hazards, evidence,
     aoi: packet.aoi,
     communities: input.communities,
-    responseSites: packet.responseSites,
+    responseSites: input.responseSites ?? packet.responseSites,
     routingAssumptions: packet.routingAssumptions,
     routingMethod: { ...routingPolicy, candidateCalculation: 'exclude-blocked-edges',
       inspectionGeometry: 'retain-known-routes-even-if-blocked' },

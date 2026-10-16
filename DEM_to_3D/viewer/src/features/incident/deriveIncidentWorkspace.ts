@@ -1,3 +1,4 @@
+import { applyScenarioEdits, type ScenarioEdit } from '../access/scenarioEdits';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { assessCommunity } from './responseAssessment';
 import { buildNetworkRoutes } from '../routes/networkRouting';
@@ -8,12 +9,16 @@ import { withinArea } from '../../terrain/areaGeometry';
 /** Deterministic prepared-snapshot calculation, independent of React and map engines.
  * The optional report belongs to the demo packet, not a publication workflow.
  */
-export function deriveIncidentWorkspace(packet: IncidentPacket, updated: boolean) {
-  const roads = packet.roads.map(road => updated && road.id === packet.report.roadId ? {
-    ...road, status: 'blocked' as const, note: packet.report.evidence.finding
-  } : road);
-  const hazards = packet.hazards.map(hazard => updated && hazard.id === packet.report.hazard.id ? packet.report.hazard : hazard);
-  const evidence = packet.evidence.map(item => updated && item.hazardId === packet.report.evidence.hazardId ? packet.report.evidence : item);
+export function deriveIncidentWorkspace(source: IncidentPacket, updated: boolean, edits: ScenarioEdit[] = [], reportAt: string | null = null) {
+  const applied = effectiveEdits(source, updated, edits, reportAt);
+  // Latest manual status per road: a road set back to "uncertain" needs a new check.
+  const statusEditIds = new Map(applied.filter(edit => edit.change.kind === 'status').map(edit => [edit.target.id, edit.id]));
+  const packet = applyScenarioEdits({ ...source,
+    roads: source.roads.map(road => updated && road.id === source.report.roadId ? { ...road, status: 'blocked', note: source.report.evidence.finding } : road),
+    hazards: source.hazards.map(h => updated && h.id === source.report.hazard.id ? source.report.hazard : h),
+    evidence: source.evidence.map(e => updated && e.hazardId === source.report.evidence.hazardId ? source.report.evidence : e)
+  }, applied);
+  const { roads, hazards, evidence } = packet;
   const staging = packet.responseSites.find(site => site.kind === 'staging');
   if (!staging) throw new Error('Incident workspace requires a staging site');
   const baseline: Community[] = packet.communities.filter(community => withinArea(community.projected, packet.aoi.points)).map(community => ({ ...community, prio: 2 }));
@@ -25,7 +30,17 @@ export function deriveIncidentWorkspace(packet: IncidentPacket, updated: boolean
     assessCommunity(routes.get(community.id), hazards, packet.signals[community.id])
   ]));
   const communities = baseline.map(community => ({ ...community, prio: assessments.get(community.id)!.priority }));
-  return { roads, hazards, evidence, routes, assessments, communities, incident: packet.incident, responseSites: packet.responseSites };
+  const manualUpdatedAt = edits.map(e=>e.at).sort((a,b)=>Date.parse(a)-Date.parse(b)).at(-1);
+  return { roads, hazards, evidence, routes, assessments, communities, incident: packet.incident, responseSites: packet.responseSites, manualUpdatedAt, statusEditIds };
 }
 
 export type IncidentWorkspaceSnapshot = ReturnType<typeof deriveIncidentWorkspace>;
+
+/** Later evidence wins: a manual status set before the field report was applied does not
+ * override the report's status for that road. Status edits made after it still apply. */
+export function effectiveEdits(source: IncidentPacket, updated: boolean, edits: ScenarioEdit[], reportAt: string | null): ScenarioEdit[] {
+  if (!updated || !reportAt) return edits;
+  const applied = Date.parse(reportAt);
+  return edits.filter(edit => !(edit.change.kind === 'status' && edit.target.type === 'road' &&
+    edit.target.id === source.report.roadId && Date.parse(edit.at) < applied));
+}

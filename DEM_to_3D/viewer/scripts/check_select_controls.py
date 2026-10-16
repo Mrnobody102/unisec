@@ -1,4 +1,5 @@
 """Check rendered select alignment, keyboard selection and native fallbacks."""
+from gis_browser_actions import gis_task
 import argparse
 from pathlib import Path
 from playwright.sync_api import Error, expect, sync_playwright
@@ -46,6 +47,8 @@ def check_controls(page):
                 box = cdp.send('DOM.getBoxModel', {'nodeId': node['nodeId']})['model']['border']
             except Error:  # Hidden controls have no layout box.
                 continue
+            if max(box[::2]) - min(box[::2]) < 1 or max(box[1::2]) - min(box[1::2]) < 1:
+                continue  # Hidden/closed controls may have a zero-size CDP box.
             for value in descendants(node):
                 if '-internal-select-inner-element' not in value.get('attributes', []):
                     continue
@@ -97,6 +100,7 @@ def run(url, chrome, captures):
                 page.keyboard.press('Escape')
                 expect(basemap).to_be_focused()
                 basemap.select_option('satellite')
+        gis_task(page, 'aoi')
         page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
         expect(page.locator('.geodata-drawing-bar')).to_be_visible()
         page.set_viewport_size({'width': 320, 'height': 960})
@@ -147,7 +151,7 @@ def run(url, chrome, captures):
             if captures:
                 home.screenshot(path=str(captures / f'long-community-{width}.png'))
         home.evaluate('(s, text) => s.options[0].textContent = text', original)
-        page.get_by_label('Tên hiển thị', exact=True).fill('Kiểm tra giao diện')
+        page.get_by_label('Tên của bạn', exact=True).fill('Kiểm tra giao diện')
         page.get_by_role('button', name='Vào ứng dụng', exact=True).click()
         expect(page.locator('.citizen-workspace')).to_be_visible()
         for width in [1440, 390, 320]:

@@ -68,9 +68,9 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
                 page.get_by_role('button', name='Xem chi tiết', exact=True).click()
                 page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
                 page.locator('.decision-tabs button').first.click()
-                expect(page.locator('.decision-overview')).to_contain_text('Các tuyến đã biết đều bị chặn')
+                expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
                 if cycle % 3 == 1:
-                    t = time.monotonic(); page.get_by_role('button', name='Lưu đánh giá', exact=True).click()
+                    t = time.monotonic(); page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
                     expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
                     with page.expect_download() as download:
                         page.get_by_role('button', name='Tải bản đồ PNG', exact=True).click()

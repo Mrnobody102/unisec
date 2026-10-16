@@ -18,7 +18,7 @@ export const vi: GuideContent = {
         {
           icon: 'history',
           title: 'Vùng và thời điểm dữ liệu',
-          text: 'Bấm tên vùng trên header để xem sự kiện, nguồn dữ liệu và lịch sử cập nhật. Thời gian này là mốc dữ liệu đang dùng, không phải đồng hồ trực tiếp.'
+          text: 'Bấm tên vùng ở đầu màn hình để xem sự kiện, nguồn dữ liệu và lịch sử cập nhật. “Dữ liệu đến” cho biết thời điểm cập nhật của thông tin trên bản đồ.'
         },
         {
           icon: 'people',
@@ -51,7 +51,7 @@ export const vi: GuideContent = {
         {
           icon: 'image',
           title: 'Xem ghi nhận gửi đến',
-          text: 'Bấm Ghi nhận trên header. Chọn một ghi nhận trong danh sách để xem ảnh và vị trí; bấm ảnh để xem lớn.'
+          text: 'Bấm Ghi nhận ở đầu màn hình. Chọn một ghi nhận trong danh sách để xem ảnh và vị trí; bấm ảnh để xem lớn.'
         },
         {
           icon: 'location',
@@ -61,7 +61,7 @@ export const vi: GuideContent = {
         {
           icon: 'check',
           title: 'Lưu kết quả kiểm tra',
-          text: 'Trong Kiểm tra ghi nhận, chọn Kết quả, bổ sung ghi chú nếu cần rồi lưu. Việc kiểm tra ghi nhận chưa tự kết luận đường an toàn hoặc thay đánh giá tiếp cận.'
+          text: 'Trong Kiểm tra ghi nhận, chọn kết quả rồi bấm Lưu. Kết quả kiểm tra được lưu vào ghi nhận. Muốn đổi tình trạng đường, mở hồ sơ đoạn đường và cập nhật riêng.'
         },
         {
           icon: 'area',
@@ -115,14 +115,29 @@ export const vi: GuideContent = {
           text: 'Bấm GIS trên thanh công cụ bản đồ.'
         },
         {
+          icon: 'edit',
+          title: 'Sửa đối tượng ứng phó',
+          text: 'Chọn sự cố, bãi đáp, địa bàn hoặc đoạn đường trên bản đồ ứng phó rồi bấm Sửa trong GIS. Trong GIS, chọn đối tượng từ danh sách thu gọn; các điểm chưa xác minh hoặc bãi đáp chưa khảo sát có thể lọc riêng. Đổi tên, nhãn, loại sự cố hoặc vị trí; ghi lý do và xác nhận trước khi lưu.'
+        },
+        {
           icon: 'plus',
-          title: 'Nhập dữ liệu',
-          text: 'Kéo thả tệp KML, GeoJSON hoặc WKT vào ô Nhập dữ liệu, hoặc dán tọa độ.'
+          title: 'Thêm sự cố và bãi đáp',
+          text: 'Trong Đối tượng ứng phó, bấm Thêm sự cố hoặc Thêm bãi đáp. Chọn vị trí trên bản đồ, hoặc dán vĩ độ, kinh độ WGS84; ghi tên và nguồn. Bãi đáp mới chưa khảo sát. Thêm sự cố không tự đổi tình trạng đường: kiểm tra và cập nhật đoạn đường riêng.'
+        },
+        {
+          icon: 'plus',
+          title: 'Nhập dữ liệu tham chiếu',
+          text: 'Thêm điểm bằng cách chọn trên bản đồ hoặc nhập tọa độ. Cũng có thể nhập KML, GeoJSON, WKT. Dữ liệu nhập và đối tượng ứng phó nằm trong hai nhóm riêng; điểm tham chiếu không tự trở thành sự cố đã xác minh.'
         },
         {
           icon: 'image',
           title: 'Nhóm điểm gần nhau',
-          text: 'Trong Lớp hoặc GIS, chọn Gom điểm gần nhau để bấm một nhóm và xem các ảnh cùng lúc. Chọn Hiện từng điểm để xem từng tọa độ gốc.'
+          text: 'Ở mục Hiển thị điểm, chọn Gom điểm gần nhau rồi bấm nhóm điểm để xem danh sách và ảnh. Chọn Hiện từng điểm để xem từng tọa độ gốc.'
+        },
+        {
+          icon: 'area',
+          title: 'Khoanh vùng sạt lở',
+          text: 'Trong mục Vùng sạt lở, chọn Khoanh vùng nguy cơ hoặc Khoanh vết sạt lở. Vẽ ranh giới, ghi nguồn và căn cứ, rồi chọn đường liên quan. Chọn hai đầu trên bản đồ nếu chỉ một phần đường bị ảnh hưởng. Tình trạng đường được đánh giá riêng; bấm Áp dụng thay đổi để dùng chung bản nháp.'
         },
         {
           icon: 'area',
@@ -139,8 +154,8 @@ export const vi: GuideContent = {
       steps: [
         {
           icon: 'download',
-          title: 'Lưu đánh giá',
-          text: 'Trong panel địa bàn, chọn Lưu đánh giá để xem trước và tải tệp đánh giá.'
+          title: 'Xuất đánh giá',
+          text: 'Trong hồ sơ địa bàn, chọn Xuất đánh giá để xem trước và tải tệp đánh giá.'
         },
         {
           icon: 'download',
@@ -172,13 +187,13 @@ export const vi: GuideContent = {
         },
         {
           icon: 'blocked',
-          title: 'Đọc tình trạng tuyến',
-          text: 'Đoạn màu đỏ đang bị chặn, đoạn màu cam cần kiểm tra trước khi đi.'
+          title: 'Xem đường nên đi',
+          text: 'App chọn sẵn đường nên đi. Xanh: đi được. Cam: chưa ai kiểm tra, hỏi trước khi đi. Đỏ: chưa đi được.'
         },
         {
           icon: 'route',
-          title: 'Chọn hành trình khác',
-          text: 'Đặt điểm đầu và điểm cuối bất kỳ để xem quãng đường theo mạng đường.'
+          title: 'Tìm đường giữa hai nơi khác',
+          text: 'Chọn nơi đi và nơi đến để xem đường và quãng đường.'
         }
       ]
     },

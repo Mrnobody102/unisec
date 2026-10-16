@@ -18,7 +18,7 @@ export const en: GuideContent = {
         {
           icon: 'history',
           title: 'Area and data revision',
-          text: 'Click the area name in the header for the incident, data sources and update history. The timestamp identifies the data in use; it is not a live clock.'
+          text: 'Click the area name at the top for the incident, data sources and update history. “Data as of” is the update time of the information shown on the map.'
         },
         {
           icon: 'people',
@@ -93,7 +93,7 @@ export const en: GuideContent = {
         },
         {
           icon: 'location',
-          title: 'Identify',
+          title: 'Location',
           text: 'Click the map to read coordinates and elevation.'
         },
         {
@@ -115,14 +115,29 @@ export const en: GuideContent = {
           text: 'Press GIS on the map toolbar.'
         },
         {
+          icon: 'edit',
+          title: 'Edit response features',
+          text: 'Select a hazard, landing site, community or road on the response map and choose Edit in GIS. The compact feature list can filter unverified hazards and unsurveyed landing sites. Change the name, map label, hazard type or position; give a reason and confirm before saving.'
+        },
+        {
           icon: 'plus',
-          title: 'Import data',
-          text: 'Drop KML, GeoJSON or WKT files on the import area, or paste coordinates.'
+          title: 'Add a hazard or landing site',
+          text: 'Under Response features, choose Add hazard or Add landing site. Pick a map position or paste WGS84 latitude, longitude, then record a name and source. A new landing site is unsurveyed. A new hazard does not change road status automatically; review the road separately.'
+        },
+        {
+          icon: 'plus',
+          title: 'Import reference data',
+          text: 'Add a point by clicking the map or entering coordinates, or import KML, GeoJSON or WKT. Imported references and response features are separate: a reference point is not a verified hazard.'
         },
         {
           icon: 'image',
           title: 'Grouped points',
           text: 'In Layers or GIS, choose Group nearby points to open their photos together, or Show original points to inspect each original coordinate.'
+        },
+        {
+          icon: 'area',
+          title: 'Map landslide areas',
+          text: 'Under Landslide areas, choose Map potential area or Map landslide scar. Draw the extent, record its evidence and link relevant roads. Pick section ends on the map for a partial impact. Assess road status separately, then Apply changes to publish the draft together.'
         },
         {
           icon: 'area',
@@ -139,8 +154,8 @@ export const en: GuideContent = {
       steps: [
         {
           icon: 'download',
-          title: 'Save assessment',
-          text: 'In a community panel, choose Save assessment to preview and export it.'
+          title: 'Export assessment',
+          text: 'In a community panel, choose Export assessment to preview and export it.'
         },
         {
           icon: 'download',
@@ -172,13 +187,13 @@ export const en: GuideContent = {
         },
         {
           icon: 'blocked',
-          title: 'Read the route',
-          text: 'Red sections are blocked; orange sections need checking before you travel.'
+          title: 'See the best way in',
+          text: 'The app picks the route to take. Green: passable. Orange: not checked yet, ask before you go. Red: not passable yet.'
         },
         {
           icon: 'route',
-          title: 'Another journey',
-          text: 'Set any start and end to see the distance along the road network.'
+          title: 'Route between two other places',
+          text: 'Choose where you start and where you are going to see the road and distance.'
         }
       ]
     },
