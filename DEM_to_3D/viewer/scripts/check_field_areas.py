@@ -1,5 +1,5 @@
 """Exercise the selected-point inspector and linked manual extents in the real Demo UI."""
-from gis_browser_actions import apply_boundary, download_geometry
+from gis_browser_actions import gis_task, apply_boundary, download_geometry
 import argparse, json, tempfile, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -21,6 +21,7 @@ def run(url, chrome, captures):
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         page.evaluate('(records)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(records))',[point,aoi]);page.reload()
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         page.locator(f'[data-geodata-id="{pid}"] .geodata-feature').click()
         expect(page.locator('.geodata-inspector')).to_be_visible()
         assert page.locator('.geodata-sidebar .geodata-detail').count()==0

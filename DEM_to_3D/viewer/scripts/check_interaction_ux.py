@@ -1,4 +1,5 @@
 """Check stable map hover, modal entry and GIS/response edit continuity."""
+from gis_browser_actions import gis_task
 import argparse, json
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -31,6 +32,7 @@ def run(url, chrome, captures=None):
         expect(options.nth(1)).to_have_attribute('aria-selected','true')
         search.press('Escape')
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        gis_task(page)
         for width in [1440,390,320]:
             page.set_viewport_size({'width':width,'height':960})
             trigger = page.get_by_role('button',name='Thêm điểm tọa độ',exact=True)

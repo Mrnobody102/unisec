@@ -16,6 +16,30 @@ def run(url, chrome, captures):
         expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
         workspace = page.locator('.geodata-workspace')
+        tasks = workspace.locator('.geodata-task-nav')
+        expect(tasks.get_by_role('button', name='Vùng sạt lở', exact=True)).to_have_attribute('aria-pressed', 'true')
+        expect(workspace.get_by_role('button', name='Nhập dữ liệu', exact=True)).not_to_be_visible()
+        expect(workspace.get_by_role('button', name='Vẽ vùng quan tâm', exact=True)).to_have_count(0)
+        tasks.get_by_role('button', name='Đường', exact=True).click()
+        roads_task = workspace.locator('.geodata-task-panel').filter(has=page.get_by_role('heading', name='Đánh giá đường', exact=True))
+        road_search = roads_task.get_by_role('searchbox')
+        first_road = roads_task.locator('.scenario-feature-row').first.locator('span').inner_text()
+        road_search.fill(first_road)
+        expect(roads_task.locator('.scenario-feature-row')).to_have_count(1)
+        expect(roads_task.locator('.scenario-feature-row small')).not_to_be_empty()
+        road_search.fill('')
+        tasks.get_by_role('button', name='Dữ liệu', exact=True).click()
+        expect(workspace.get_by_role('button', name='Nhập dữ liệu', exact=True)).to_be_visible()
+        expect(workspace.get_by_role('button', name='Khoanh vùng nguy cơ', exact=True)).not_to_be_visible()
+        tasks.get_by_role('button', name='Vùng sạt lở', exact=True).click()
+        if captures:
+            captures.mkdir(parents=True, exist_ok=True)
+            for width in [1440, 390, 320]:
+                page.set_viewport_size({'width': width, 'height': 900})
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
+                expect(tasks.get_by_role('button', name='Vùng sạt lở', exact=True)).to_be_visible()
+                page.screenshot(path=str(captures / f'gis-tasks-{width}.png'))
+            page.set_viewport_size({'width': 1440, 'height': 960})
         for _ in range(3):
             page.get_by_role('button', name='Phóng to GIS', exact=True).click()
         def draw(label, offset=0):
@@ -77,6 +101,13 @@ def run(url, chrome, captures):
         assert potential['role'] == 'reference' and metadata['state'] == 'potential'
         assert metadata['roadLinks'][0]['fromM'] == 100 and metadata['roadLinks'][0]['toM'] == 250
         assert all(not changes for changes in saved['scenarios'].values()), 'A potential polygon must not close a road automatically'
+        # A selected polygon must not remain editable after switching to a road task.
+        tasks.get_by_role('button', name='Đường', exact=True).click()
+        expect(workspace.get_by_role('button', name='Sửa ranh giới', exact=True)).to_have_count(0)
+        roads_task.locator('.scenario-feature-row').first.click()
+        expect(workspace.locator('.scenario-card')).to_be_visible()
+        expect(workspace.get_by_role('button', name='Sửa ranh giới', exact=True)).to_have_count(0)
+        tasks.get_by_role('button', name='Vùng sạt lở', exact=True).click()
         editor = draw('Khoanh vết sạt lở', offset=25)
         editor.get_by_label('Ảnh vệ tinh / ảnh bay', exact=True).check()
         editor.get_by_label('Căn cứ khoanh vùng', exact=True).fill('TEST: Delineated a fresh scar and visible debris deposit on dated imagery; field passage requires confirmation.')

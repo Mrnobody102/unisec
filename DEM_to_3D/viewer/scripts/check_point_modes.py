@@ -1,4 +1,5 @@
 """Check grouped/original-point display, direct photo montage and cross-map preference."""
+from gis_browser_actions import gis_task
 import argparse
 import base64
 import hashlib
@@ -9,7 +10,6 @@ from playwright.sync_api import sync_playwright, expect
 from field_photo_fixture import create_field_photo
 
 # Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
-LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 
 def run(url, chrome, captures):
@@ -43,6 +43,7 @@ def run(url, chrome, captures):
         page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))', records)
         page.reload()
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        gis_task(page)
         mode = page.get_by_role('combobox', name='Hiển thị điểm', exact=True)
         expect(mode).to_have_value('group')
         symbol = page.locator('.geodata-map .map-point-cluster')
@@ -74,6 +75,7 @@ def run(url, chrome, captures):
         expect(page.locator('.map-2d .map-point-cluster')).to_have_count(1)
         page.get_by_role('button', name='Đóng lớp bản đồ', exact=True).click()
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        gis_task(page)
         expect(mode).to_have_value('group')
         symbol.focus()
         symbol.press('Space')
@@ -84,6 +86,7 @@ def run(url, chrome, captures):
         mode.select_option('individual')
         page.reload()
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        gis_task(page)
         expect(mode).to_have_value('individual')
         expect(page.locator('.geodata-map .map-point-cluster')).to_have_count(0)
         assert not errors, errors
@@ -94,7 +97,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:5174')
-    parser.add_argument('--chrome', default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None)
+    parser.add_argument('--chrome', default=None)
     parser.add_argument('--captures', type=Path)
     args = parser.parse_args()
     run(args.url.rstrip('/'), args.chrome, args.captures)

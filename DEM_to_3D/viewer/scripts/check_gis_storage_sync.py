@@ -45,6 +45,31 @@ def run(url, chrome):
         expect(fixture.locator('output')).to_contain_text('External report')
         expect(fixture.get_by_role('button', name='Undo fixture')).to_be_disabled()
         page.evaluate('fixtureRoot.unmount()')
+        # The published scenario snapshot also reaches resident/manager hooks without reload.
+        page.evaluate("""async () => {
+            const {default: React} = await import('/node_modules/.vite/deps/react.js');
+            const {default: {createRoot}} = await import('/node_modules/.vite/deps/react-dom_client.js');
+            const {useScenarioRevision} = await import('/src/features/access/useScenarioRevision.ts');
+            const host = document.createElement('div'); host.id = 'revision-fixture'; Object.assign(host.style, {position:'fixed',top:'100px',left:'400px',zIndex:10000,background:'white'}); document.body.append(host);
+            function Fixture() {
+                const s = useScenarioRevision('sync-fixture');
+                return React.createElement('div', null,
+                    React.createElement('button', {onClick: () => s.change(true)}, 'Apply revision fixture'),
+                    React.createElement('output', null, JSON.stringify(s.revision)));
+            }
+            window.revisionRoot = createRoot(host);
+            revisionRoot.render(React.createElement(React.Fragment, null, React.createElement(Fixture), React.createElement(Fixture)));
+        }""")
+        revision = page.locator('#revision-fixture')
+        revision.get_by_role('button', name='Apply revision fixture').first.click()
+        for output in revision.locator('output').all(): expect(output).to_contain_text('"applied":true')
+        second.evaluate("localStorage.setItem('dear.scenario-revision.v1:sync-fixture', JSON.stringify({applied:false,at:null}))")
+        for output in revision.locator('output').all(): expect(output).to_contain_text('"applied":false')
+        second.evaluate("localStorage.setItem('dear.scenario-revision.v1:sync-fixture', JSON.stringify({applied:true,at:'2026-09-29T03:00:00Z'}))")
+        for output in revision.locator('output').all(): expect(output).to_contain_text('2026-09-29T03:00:00Z')
+        second.evaluate("localStorage.removeItem('dear.scenario-revision.v1:sync-fixture')")
+        for output in revision.locator('output').all(): expect(output).to_contain_text('"applied":false')
+        page.evaluate('revisionRoot.unmount()')
         browser.close()
     print('GIS storage sync passed: external records reset stale Undo; scenario-only events retain it.')
 

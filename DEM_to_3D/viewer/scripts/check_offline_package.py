@@ -67,7 +67,6 @@ def run(archive, chrome):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('archive', type=Path)
-    windows_chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-    parser.add_argument('--chrome', default=windows_chrome if Path(windows_chrome).is_file() else None)
+    parser.add_argument('--chrome', default=None)
     args = parser.parse_args()
     run(args.archive, args.chrome)

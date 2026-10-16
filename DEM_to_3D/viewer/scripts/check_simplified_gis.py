@@ -1,5 +1,5 @@
 """Verify batch edits, live AOI dragging, minimal reports and optional HEIC decoding."""
-from gis_browser_actions import apply_boundary, reviewed_records
+from gis_browser_actions import gis_task, apply_boundary, reviewed_records
 import argparse, base64, hashlib, json, uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -22,6 +22,7 @@ def run(url, chrome, heic, captures):
         page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
         page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))',records);page.reload()
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         expect(page.locator('.app-header')).to_be_visible()
         assert page.locator('.geodata-workspace').bounding_box()['y'] >= page.locator('.app-header').bounding_box()['height']
         read=lambda:reviewed_records(page)

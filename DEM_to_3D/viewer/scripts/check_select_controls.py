@@ -1,4 +1,5 @@
 """Check rendered select alignment, keyboard selection and native fallbacks."""
+from gis_browser_actions import gis_task
 import argparse
 from pathlib import Path
 from playwright.sync_api import Error, expect, sync_playwright
@@ -99,6 +100,7 @@ def run(url, chrome, captures):
                 page.keyboard.press('Escape')
                 expect(basemap).to_be_focused()
                 basemap.select_option('satellite')
+        gis_task(page, 'aoi')
         page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
         expect(page.locator('.geodata-drawing-bar')).to_be_visible()
         page.set_viewport_size({'width': 320, 'height': 960})

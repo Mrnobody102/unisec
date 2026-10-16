@@ -1,4 +1,5 @@
 """Verify one GIS detail surface, replacement/close transitions and stable map points."""
+from gis_browser_actions import gis_task
 import argparse
 import json
 from pathlib import Path
@@ -19,6 +20,7 @@ def run(url, chrome, captures=None):
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        gis_task(page)
         workspace = page.locator('.geodata-workspace')
         details = workspace.locator(DETAILS)
         inspector = workspace.locator('.geodata-inspector')

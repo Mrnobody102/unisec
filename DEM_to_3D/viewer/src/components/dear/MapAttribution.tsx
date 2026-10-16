@@ -102,6 +102,8 @@ export function MapAttribution({
                 <dd>
                   {state.status === 'off'
                     ? t('Đã tắt', 'Off')
+                    : state.status === 'loading' && !state.loaded
+                      ? t('Đang tải…', 'Loading…')
                     : state.loaded > 0
                       ? state.style === 'satellite'
                         ? imagery.name
@@ -109,6 +111,9 @@ export function MapAttribution({
                       : t('Chưa tải được', 'Unavailable')}
                 </dd>
               </div>
+              {state.style === 'satellite' && !imagery.custom && state.status !== 'off' && <div>
+                <dt>{t('Độ phân giải nền', 'Basemap resolution')}</dt><dd>Sentinel-2 · 10 m/pixel</dd>
+              </div>}
             </dl>
             {unavailable && (
               <div className="map-source-status" role="status">

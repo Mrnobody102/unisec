@@ -70,7 +70,7 @@ type Props = {
   scenarioRequest?: ScenarioTarget | null;
   onResponseScenario?: (target: ScenarioTarget) => void;
 };
-type Tab = 'layers' | 'aoi' | 'scenes';
+type Tab = 'areas' | 'roads' | 'layers' | 'aoi' | 'scenes';
 const selectionKey = 'dear.imagery-selection.v1';
 function readSelection(): string[] {
   try {
@@ -134,8 +134,12 @@ function GeometryWorkspaceView({
   const [pickedReference, setPickedReference] = useState<{latitude:number;longitude:number}|null>(null);
   const [pickedImportEdit, setPickedImportEdit] = useState<{id:string;latitude:number;longitude:number}|null>(null);
   const [scenarioFocus, setScenarioFocus] = useState<ScenarioTarget | null>(scenarioRequest ?? null);
-  const [tab, setTab] = useState<Tab>('layers'),
-    [mobileTab, setMobileTab] = useState<'data' | 'map'>('data');
+  const [tab, setTab] = useState<Tab>(() => {
+    if (scenarioRequest?.type === 'road') return 'roads';
+    const areaSelected = session.records.some(record => record.id === session.selectedId && landslideAreaOf(record));
+    return areaSelected || scenario && !session.selectedId ? 'areas' : 'layers';
+  });
+  const [mobileTab, setMobileTab] = useState<'data' | 'map'>('data');
   const [snapping, setSnapping] = useState(false),
     [exportScope, setExportScope] = useState('all');
   const [selectedScenes, setSelectedScenes] = useState(readSelection),
@@ -150,8 +154,8 @@ function GeometryWorkspaceView({
     session.selectedId ? { kind: 'feature' } : null
   );
   const selectScenario = (target: ScenarioTarget) => {
-    if (editor.active) return;
-    setTab('layers'); setDetail({kind:'scenario',target,moving:false,pending:null}); setScenarioFocus({...target}); setMobileTab('map');
+    if (editor.active || pickTask) return;
+    setTab(target.type === 'road' ? 'roads' : target.type === 'hazard' ? 'areas' : 'layers'); setDetail({kind:'scenario',target,moving:false,pending:null}); setScenarioFocus({...target}); setMobileTab('map');
   };
   useEffect(() => { if (scenarioRequest) selectScenario(scenarioRequest); }, [scenarioRequest]);
   const inspecting = detail?.kind === 'feature';
@@ -164,6 +168,7 @@ function GeometryWorkspaceView({
   const selected = session.records.find(
     (record) => record.id === session.selectedId
   );
+  const editTarget = tab === 'aoi' ? aoi : inspecting ? selected : undefined;
   const scene = repository.catalog?.scenes.find(
     (record) => record.id === sceneId
   );
@@ -265,7 +270,7 @@ function GeometryWorkspaceView({
     session.select(record && landslideAreaOf(record) ? id : owner?.id ?? id);
     setDetail({ kind: 'feature' });
     setMobileTab('data');
-    setTab('layers');
+    setTab(record && landslideAreaOf(record) ? 'areas' : 'layers');
   };
   const start = (mode: GeometryMode) => {
     setAreaPointId(null);
@@ -274,9 +279,10 @@ function GeometryWorkspaceView({
     session.setError(null);
     setSceneView(null);
     setMobileTab('map');
-    if (mode === 'edit' && selected) {
-      editor.start(mode, selected.id, selected.feature.geometry);
-      setTab('aoi');
+    if (mode === 'edit' && editTarget) {
+      session.select(editTarget.id);
+      editor.start(mode, editTarget.id, editTarget.feature.geometry);
+      setTab(landslideAreaOf(editTarget) ? 'areas' : 'aoi');
     } else editor.start(mode);
   };
   const applyGeometry = (geometry: VectorGeometry): boolean => {
@@ -324,7 +330,7 @@ function GeometryWorkspaceView({
       editor.cancel();
       session.setError(null);
       const isMapped = !!mappedAreaId || !!session.records.find(r => r.id === editor.recordId && landslideAreaOf(r));
-      setTab(fieldOwner || isMapped ? 'layers' : 'aoi');
+      setTab(isMapped ? 'areas' : fieldOwner ? 'layers' : 'aoi');
       setDetail(fieldOwner || isMapped ? { kind: 'feature' } : null);
       setAreaPointId(null);
       setDrawingLandslide(null);
@@ -337,6 +343,16 @@ function GeometryWorkspaceView({
     }
   };
   // Save on the map is the decision; undo reverts it, so no second confirmation.
+  const cancelGeometry = () => {
+    editor.cancel();
+    if (areaPointId) {
+      setDetail({ kind: 'feature' });
+      setMobileTab('data');
+    }
+    setAreaPointId(null);
+    setDrawingLandslide(null);
+    session.setError(null);
+  };
   const finish = () => {
     try { applyGeometry(editor.result()); } catch (error) { session.setError(error); }
   };
@@ -429,12 +445,14 @@ function GeometryWorkspaceView({
           </div>
         }
         editor={editor}
+        showAoiTools={tab === 'aoi' || tab === 'scenes'}
+        drawingLabel={drawingLandslide === 'potential' ? t('Khoanh vùng nguy cơ', 'Map potential area') : drawingLandslide === 'occurred' ? t('Khoanh vết sạt lở', 'Map landslide scar') : undefined}
         busy={session.busy}
         canUndo={session.canUndo}
         canRedo={session.canRedo}
         onUndo={session.undo}
         onRedo={session.redo}
-        hasSelection={!!selected && isPolygon(selected.feature.geometry)}
+        hasSelection={!!editTarget && isPolygon(editTarget.feature.geometry)}
         aoiName={aoi?.name}
         fieldAreaName={
           areaPointId
@@ -445,10 +463,7 @@ function GeometryWorkspaceView({
         onSnap={setSnapping}
         onStart={start}
         onFinish={finish}
-        onCancel={() => {
-          editor.cancel();
-          session.setError(null);
-        }}
+        onCancel={cancelGeometry}
       />
       {publication}
       <nav
@@ -488,13 +503,22 @@ function GeometryWorkspaceView({
         <aside
           className="geodata-sidebar"
           data-inspecting={
-            inspecting && !!selected && tab === 'layers' && !editor.active
+            inspecting && !!selected && !editor.active
               ? 'true'
               : undefined
           }
           aria-label={t('Quản lý dữ liệu GIS', 'GIS data controls')}
         >
+          <nav className="geodata-task-nav" aria-label={t('Nghiệp vụ GIS', 'GIS workflow')}>
+            {(['areas', ...(scenario ? ['roads' as const] : []), 'layers'] as const).map(id => <button key={id} type="button"
+              aria-pressed={id === 'layers' ? !['areas', 'roads'].includes(tab) : tab === id}
+              disabled={editor.active || !!pickTask}
+              onClick={() => { setDetail(null); setTab(id); }}>
+              {id === 'areas' ? t('Vùng sạt lở', 'Landslide areas') : id === 'roads' ? t('Đường', 'Roads') : t('Dữ liệu', 'Data')}
+            </button>)}
+          </nav>
           <nav
+            hidden={tab === 'areas' || tab === 'roads'}
             className="geodata-tabs"
             role="tablist"
             aria-label={t('Công việc GIS', 'GIS tasks')}
@@ -507,6 +531,7 @@ function GeometryWorkspaceView({
                 aria-selected={tab === id}
                 aria-controls={`geo-panel-${id}`}
                 tabIndex={tab === id ? 0 : -1}
+                disabled={editor.active || !!pickTask}
                 onClick={() => {
                   setDetail(null);
                   setTab(id);
@@ -532,17 +557,25 @@ function GeometryWorkspaceView({
             ))}
           </nav>
           <div className="geodata-sidebar-scroll">
+            <div hidden={tab !== 'areas'} className="geodata-task-panel" aria-label={t('Vùng sạt lở', 'Landslide areas')}>
+              <LandslideAreaList records={session.records} selectedId={session.selectedId} locale={locale} disabled={working}
+                onCreate={state => {setAreaPointId(null);setDrawingLandslide(state);setDetail(null);setMobileTab('map');session.setError(null);editor.start('polygon');}}
+                onSelect={select} onVisible={(id, visible) => display([id], visible)}/>
+              {scenario && <ScenarioFeatureList scenario={scenario} types={['hazard']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale}
+                onSelect={selectScenario} onCreate={scenarioEdits?.canEdit ? type => {setNewDraft(newPointDraft(type));setInputTask('scenario');setDetail(null);} : undefined} />}
+            </div>
+            <div hidden={tab !== 'roads'} className="geodata-task-panel" aria-label={t('Đánh giá đường', 'Road assessment')}>
+              {scenario && <ScenarioFeatureList scenario={scenario} types={['road']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale} onSelect={selectScenario} />}
+              <p className="geodata-task-note">{t('Chọn đoạn đường để cập nhật khả năng đi lại, căn cứ và vùng sạt lở liên quan.', 'Select a road segment to update passability, evidence and linked landslide areas.')}</p>
+            </div>
             <div
               id="geo-panel-layers"
               role="tabpanel"
               aria-labelledby="geo-tab-layers"
               hidden={tab !== 'layers'}
             >
-              {scenario && <ScenarioFeatureList scenario={scenario} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale}
+              {scenario && <ScenarioFeatureList scenario={scenario} types={['site', 'community']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale}
                 onSelect={selectScenario} onCreate={scenarioEdits?.canEdit ? type => {setNewDraft(newPointDraft(type));setInputTask('scenario');setDetail(null);} : undefined} />}
-              <LandslideAreaList records={session.records} selectedId={session.selectedId} locale={locale} disabled={working}
-                onCreate={state => {setAreaPointId(null);setDrawingLandslide(state);setDetail(null);setMobileTab('map');session.setError(null);editor.start('polygon');}}
-                onSelect={select} onVisible={(id, visible) => display([id], visible)}/>
               {scenario && <h2 className="geodata-source-heading">{t('Dữ liệu nhập', 'Imported data')}</h2>}
               <div className="geodata-add-actions">
                 <PointEntry
@@ -714,7 +747,7 @@ function GeometryWorkspaceView({
               />
             </div>
           </div>
-          {tab !== 'scenes' && (
+          {(tab === 'layers' || tab === 'aoi') && (
             <GeometryExport
               locale={locale}
               exportRecords={exportRecords}
@@ -773,19 +806,10 @@ function GeometryWorkspaceView({
           snapping={snapping}
           drawingColor={drawingLandslide === 'occurred' ? '#b45147' : drawingLandslide || areaPointId ? '#b77b28' : undefined}
           onFinish={finish}
-          onCancel={() => {
-            editor.cancel();
-            if (areaPointId) {
-              setDetail({ kind: 'feature' });
-              setMobileTab('data');
-            }
-            setAreaPointId(null);
-            setDrawingLandslide(null);
-            session.setError(null);
-          }}
+          onCancel={cancelGeometry}
           intersection={analysis.result?.intersection ?? null}
         />
-        {inspecting && selected && tab === 'layers' && !scene && (
+        {inspecting && selected && !scene && (
           <aside
             className="geodata-inspector"
             hidden={editor.active || !!pickTask}

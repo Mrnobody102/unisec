@@ -1,11 +1,12 @@
 """GIS edits stay local until one publication, and map names focus their actual point."""
+from gis_browser_actions import gis_task
 import argparse
 import json
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 
-def run(url: str, chrome: str, captures: Path | None = None):
+def run(url: str, chrome: str | None, captures: Path | None = None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
         page = browser.new_page(viewport={"width": 1440, "height": 960})
@@ -19,7 +20,7 @@ def run(url: str, chrome: str, captures: Path | None = None):
         expect(workspace.locator(".gis-draft-bar")).to_have_count(0)
         row = workspace.locator(".scenario-feature-row").first
         group = row.locator("xpath=..")
-        if group.get_attribute("open") is None:
+        if group.evaluate("node => node.tagName === 'DETAILS'") and group.get_attribute("open") is None:
             group.locator("summary").click()
         row.hover()
         expect(workspace.locator(".map-pin.is-preview:visible, .map-hover-target:visible")).to_have_count(1)
@@ -58,6 +59,7 @@ def run(url: str, chrome: str, captures: Path | None = None):
         page.get_by_role("dialog", name="Bỏ bản nháp GIS?").get_by_role("button", name="Bỏ bản nháp", exact=True).click()
         assert json.loads(page.evaluate("localStorage.getItem('dear.gis.v2')")) == saved
         expect(card.get_by_role("heading", level=2)).to_have_text("Sạt lở thử bản nháp")
+        gis_task(page)
         workspace.get_by_role("button", name="Thêm điểm tọa độ", exact=True).click()
         point = page.get_by_role("dialog", name="Thêm điểm tọa độ", exact=True)
         point.get_by_label("Tên điểm", exact=True).fill("Điểm GIS kiểm thử")
@@ -84,7 +86,7 @@ def run(url: str, chrome: str, captures: Path | None = None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:5342")
-    parser.add_argument("--chrome", default=r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+    parser.add_argument("--chrome", help="Optional installed Chromium/Chrome executable; defaults to Playwright Chromium")
     parser.add_argument("--captures", type=Path)
     args = parser.parse_args()
     run(args.url, args.chrome, args.captures)

@@ -1,5 +1,5 @@
 """Exercise local vector import, AOI coverage, drawing, persistence and GIS export."""
-from gis_browser_actions import download_geometry, publish_draft, published_records, reviewed_records, reviewed_records_json
+from gis_browser_actions import gis_task, download_geometry, publish_draft, published_records, reviewed_records, reviewed_records_json
 import argparse
 import json
 import tempfile
@@ -21,11 +21,15 @@ KML = '''<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Docum
 
 
 def open_import(page):
+    if page.locator('.geodata-import > button').get_attribute('aria-expanded') == 'true': return
+    gis_task(page)
+    page.get_by_role('tab', name='Lớp', exact=True).click()
     trigger = page.locator('.geodata-import > button')
     if trigger.get_attribute('aria-expanded') != 'true': trigger.click()
 
 
 def check_controls(page, theme):
+    gis_task(page)
     close_record = page.get_by_role('button', name='Đóng hồ sơ đối tượng', exact=True)
     if close_record.is_visible(): close_record.click()
     trigger = page.locator('.geodata-import > button')
@@ -47,6 +51,7 @@ def check_controls(page, theme):
 def paste(page, text, role='reference'):
     dialog = page.locator('.geometry-input-dialog[open]')
     if dialog.count(): page.keyboard.press('Escape')
+    gis_task(page)
     page.get_by_role('tab', name='Lớp', exact=True).click()
     panel = page.locator('.geodata-import')
     toggle = panel.get_by_role('button', name='Nhập dữ liệu', exact=True)
@@ -291,6 +296,7 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-layers li')).to_have_count(3)
         expect(page.get_by_role('checkbox', name='Hiện Left', exact=True)).not_to_be_checked()
         # Drawing owns map input; Enter closes a valid ring, Escape cancels only the drawing.
+        gis_task(page, 'aoi')
         page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
         surface = page.locator('.geodata-map-surface')
         for x,y in [(170,130),(270,130),(270,230),(190,240)]:
@@ -306,6 +312,7 @@ def run(url, chrome, captures):
         assert len([r for r in records if r['role'] == 'aoi']) == 1
         drawn=next(record for record in records if record['role'] == 'aoi')
         assert drawn['feature']['geometry']['coordinates'][0][0] == drawn['feature']['geometry']['coordinates'][0][-1]
+        gis_task(page, 'aoi')
         page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
         surface.click(position={'x':160,'y':130})
         page.get_by_role('button', name='Hoàn tác GIS', exact=True).focus()
@@ -348,6 +355,7 @@ def run(url, chrome, captures):
             check_controls(page, page.locator('html').get_attribute('data-theme'))
             assert page.locator('.geodata-title button').count() == 1, 'Duplicate exit controls'
             if iteration == 0:
+                gis_task(page, 'aoi')
                 page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
                 surface.click(position={'x':100,'y':100});page.keyboard.press('Escape')
                 expect(page.locator('.geodata-workspace')).to_be_visible()
@@ -362,6 +370,7 @@ def run(url, chrome, captures):
         drawing_page.goto(url + '/?map=2d&workspace=geodata&offline=1')
         draw_surface = drawing_page.locator('.geodata-map-surface')
         for mode in ['double','first']:
+            gis_task(drawing_page, 'aoi')
             drawing_page.get_by_role('button', name='Vẽ vùng quan tâm', exact=True).click()
             for x,y in [(170,130),(270,130),(270,230)]:
                 draw_surface.click(position={'x':x,'y':y})

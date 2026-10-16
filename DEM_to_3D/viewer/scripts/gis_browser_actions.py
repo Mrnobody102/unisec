@@ -2,6 +2,16 @@
 from playwright.sync_api import expect
 
 
+def gis_task(page, task='data'):
+    """Choose a business task before using its controls, including on a narrow screen."""
+    mobile = page.locator('.geodata-mobile-tabs')
+    if mobile.is_visible(): mobile.get_by_role('button', name='Dữ liệu', exact=True).click()
+    names = {'data': 'Dữ liệu', 'areas': 'Vùng sạt lở', 'roads': 'Đường'}
+    primary = page.locator('.geodata-task-nav').get_by_role('button', name=names.get(task, 'Dữ liệu'), exact=True)
+    if primary.get_attribute('aria-pressed') != 'true': primary.click()
+    if task == 'aoi': page.get_by_role('tab', name='Vùng quan tâm', exact=True).click()
+
+
 def apply_boundary(page):
     # Saving on the drawing bar applies the boundary; a finished rectangle is already saved.
     toolbar=page.locator('.geodata-drawing-bar')

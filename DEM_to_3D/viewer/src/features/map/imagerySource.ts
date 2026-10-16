@@ -28,7 +28,7 @@ export const imagerySource = {
       ? String(env.VITE_DEAR_IMAGERY_LINK)
       : defaultImagerySource.link,
   maxNativeZoom: enabled
-    ? Math.max(1, Math.min(22, Number(env.VITE_DEAR_IMAGERY_MAX_ZOOM) || 18))
+    ? Math.max(1, Math.min(22, Math.floor(Number(env.VITE_DEAR_IMAGERY_MAX_ZOOM) || 18)))
     : 14,
   custom: enabled
 };

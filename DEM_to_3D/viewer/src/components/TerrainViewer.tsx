@@ -133,7 +133,7 @@ export function TerrainViewer({
     }
     const onContextLost = (event: Event): void => { event.preventDefault(); propsUnavailableRef.current?.(); };
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setSize(host.clientWidth, host.clientHeight, false);
     renderer.domElement.className = 'terrain-canvas';
@@ -179,7 +179,7 @@ export function TerrainViewer({
     scene.updateMatrixWorld(true);
     const primary = entries[0];
     const basemap = primary?.model.metadata
-      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => onBasemapStateRef.current?.(state))
+      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => onBasemapStateRef.current?.(state), Math.min(8, renderer.capabilities.getMaxAnisotropy()))
       : null;
     if (basemap) scene.add(basemap.group);
 

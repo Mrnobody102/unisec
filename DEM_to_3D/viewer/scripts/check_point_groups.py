@@ -1,4 +1,5 @@
 """Regression for clustered-point cards, inspector exclusivity and photo modal stacking."""
+from gis_browser_actions import gis_task
 import argparse,base64,hashlib,tempfile,uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -15,6 +16,7 @@ def run(url,chrome,captures):
   context=browser.new_context(viewport={'width':1440,'height':960});context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
   page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
   page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))',records);page.reload();page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  gis_task(page)
   symbol=page.locator('.geodata-map .map-point-cluster')
   expect(symbol).to_have_attribute('aria-label','3 điểm gần cùng vị trí')
   assert symbol.inner_text()=='','Aggregate markers must not replace coordinates with count labels'

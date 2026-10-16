@@ -14,6 +14,8 @@ type Props = {
   hasSelection: boolean;
   aoiName: string | undefined;
   fieldAreaName?: string;
+  showAoiTools?: boolean;
+  drawingLabel?: string;
   snapping: boolean;
   onSnap: (enabled: boolean) => void;
   onStart: (mode: GeometryMode) => void;
@@ -33,6 +35,8 @@ export function GeometryToolbar({
   hasSelection,
   aoiName,
   fieldAreaName,
+  showAoiTools = true,
+  drawingLabel,
   snapping,
   onSnap,
   onStart,
@@ -62,7 +66,7 @@ export function GeometryToolbar({
         >
           <UiIcon name="pointer" />
         </button>
-        {tools.map(([mode, icon, name]) => (
+        {tools.filter(([mode]) => showAoiTools || mode === 'edit' && hasSelection).map(([mode, icon, name]) => (
           <button
             key={mode}
             className="icon-button"
@@ -98,7 +102,7 @@ export function GeometryToolbar({
           <UiIcon name="redo" />
         </button>
       </div>
-      <div className="geodata-tool-group">
+      <div className="geodata-tool-group" hidden={!editor.active && !showAoiTools}>
         <label className="geodata-snap">
           <input
             type="checkbox"
@@ -110,7 +114,7 @@ export function GeometryToolbar({
       </div>
       <div className="geodata-drawing-bar" hidden={!editor.active}>
         <strong>
-          {fieldAreaName
+          {drawingLabel ? `${drawingLabel} · ${editor.draft.vertices.length} ${t('đỉnh', 'vertices')}` : fieldAreaName
             ? t('Vùng nghi ảnh hưởng: ', 'Suspected affected area: ') +
               fieldAreaName
             : editor.mode === 'edit'
@@ -135,7 +139,7 @@ export function GeometryToolbar({
             : t('Kết thúc', 'Finish')}
         </button>
       </div>
-      {!editor.active && (
+      {!editor.active && showAoiTools && (
         <span className="geodata-tool-status" data-empty={!aoiName || undefined} title={aoiName}>
           {aoiName ? `${t('Vùng quan tâm', 'AOI')}: ${aoiName}` : t('Chưa có vùng quan tâm', 'No AOI')}
         </span>

@@ -1,5 +1,5 @@
 """Coordinator map -> GIS editing, new response features and operational state checks."""
-from gis_browser_actions import publish_draft, published_edits
+from gis_browser_actions import gis_task, publish_draft, published_edits
 import argparse,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -17,8 +17,10 @@ def run(url,chrome,captures=None):
   workspace=page.locator('.geodata-workspace');card=workspace.locator('.scenario-card')
   def choose(name):
    row=workspace.locator('.scenario-feature-row').filter(has_text=name).first
+   task=row.evaluate("node => node.closest('#geo-panel-layers') ? 'data' : node.closest('[aria-label=\"Đánh giá đường\"]') ? 'roads' : 'areas'")
+   gis_task(page, task)
    group=row.locator('xpath=..')
-   if group.get_attribute('open') is None:group.locator('summary').click()
+   if group.evaluate("node => node.tagName === 'DETAILS'") and group.get_attribute('open') is None:group.locator('summary').click()
    row.click()
    expect(card).to_be_visible()
   choose(hazard['name'][0])
@@ -71,7 +73,8 @@ def run(url,chrome,captures=None):
   move.get_by_role('button',name='Cập nhật',exact=True).click()
   expect(card.locator('.scenario-properties').get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
   # Add a real response hazard via map picking; Cancel retains the data-entry draft.
-  workspace.get_by_role('button',name='Thêm sự cố',exact=True).click()
+  gis_task(page, 'areas')
+  workspace.get_by_role('button',name='Thêm điểm ghi nhận',exact=True).click()
   form=page.get_by_role('dialog',name='Thêm sự cố',exact=True)
   form.get_by_label('Tên trên bản đồ',exact=True).fill('Sạt lở mới từ kiểm tra')
   form.get_by_label('Nguồn ghi nhận',exact=True).fill('Tổ kiểm tra A')
@@ -94,6 +97,7 @@ def run(url,chrome,captures=None):
   page.mouse.click(surface['x']+surface['width']*0.48,surface['y']+surface['height']*0.55)
   expect(card.get_by_role('button',name='Lưu vị trí',exact=True)).to_be_visible()
   card.get_by_role('button',name='Hủy',exact=True).click()
+  gis_task(page)
   workspace.get_by_role('button',name='Thêm điểm tọa độ',exact=True).click()
   ref=page.get_by_role('dialog',name='Thêm điểm tọa độ',exact=True)
   ref.get_by_label('Tên điểm',exact=True).fill('Điểm nhập thử')
@@ -164,7 +168,7 @@ def run(url,chrome,captures=None):
   expect(page.locator('.revision-notice')).to_be_visible()
   page.keyboard.press('Escape')
   page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
-  expect(workspace.get_by_role('button',name='Thêm sự cố',exact=True)).to_have_count(0)
+  expect(workspace.get_by_role('button',name='Thêm điểm ghi nhận',exact=True)).to_have_count(0)
   expect(workspace.locator('.scenario-feature-list').get_by_role('button',name='Bãi đáp đề xuất mới',exact=True)).to_have_count(0)
   choose(hazard['name'][0])
   expect(card.get_by_role('button',name='Sửa tọa độ',exact=True)).to_have_count(0)
@@ -187,7 +191,7 @@ def run(url,chrome,captures=None):
   resident.add_init_script("localStorage.setItem('dear.demo-session.v1',JSON.stringify({id:'demo:resident:test',name:'Người kiểm tra',role:'resident',communityId:'NK'}))")
   resident.goto(url+'/?map=2d&offline=1')
   expect(resident.get_by_role('button',name='Dữ liệu GIS',exact=True)).to_have_count(0)
-  expect(resident.get_by_role('button',name='Thêm sự cố',exact=True)).to_have_count(0)
+  expect(resident.get_by_role('button',name='Thêm điểm ghi nhận',exact=True)).to_have_count(0)
   expect(resident.get_by_role('button',name='Sửa trong GIS',exact=True)).to_have_count(0)
   browser.close()
  print('Passed: response/GIS links, names, symbol/label review, landing-site reset, map picking, creation evidence, cancel, local reload, failed storage and mobile layout.')

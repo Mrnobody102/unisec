@@ -13,6 +13,14 @@ flowchart LR
   E --> F[Xuất GeoJSON / KML]
 ```
 
+## Công việc của người ứng phó
+
+GIS mở theo ba công việc: **Vùng sạt lở**, **Đường**, **Dữ liệu**. Vùng sạt lở có hai thao tác khoanh vùng nguy cơ và vết đã sạt, bộ lọc loại vùng/mức rà soát; điểm ghi nhận là tư liệu bổ sung. Đường hiển thị tình trạng từng đoạn, tìm theo tên và mở hồ sơ để cập nhật căn cứ, quan hệ với vùng. Dữ liệu chứa điểm cứu trợ, thôn bản, nhập/xuất file và các tab kỹ thuật Lớp/AOI/Ảnh. Công cụ vẽ AOI chỉ hiện trong AOI/Ảnh; không dùng nút AOI để khoanh sạt lở.
+
+Luồng làm việc: khoanh vùng → ghi nguồn/căn cứ → chọn đoạn đường liên quan (có thể chọn khoảng đầu–cuối trên bản đồ) → đánh giá khả năng đi lại trong hồ sơ đường → xem lại và áp dụng toàn bộ bản nháp. Polygon gần đường hoặc đè lên đường không tự kết luận đường bị chặn. Tab Đường hiện chỉnh tình trạng/thuộc tính/liên kết; chưa phải công cụ biên tập hình học và topology mạng đường.
+
+Áp dụng GIS chỉ cập nhật dữ liệu trên thiết bị. Các tab cùng origin nhận thay đổi tình huống mà không cần tải lại trang; đây không phải đồng bộ giữa các thiết bị. Cảnh báo công khai cần một luồng riêng: người có thẩm quyền duyệt, địa bàn/đường chịu ảnh hưởng, thời gian hiệu lực, thông tin kiểm chứng và hành động người dân cần làm; có cập nhật, hết hiệu lực và thu hồi. Việc lưu polygon hoặc một phản ánh chưa xác minh không tự phát cảnh báo. Kênh gửi thật, xác nhận nhận tin và phân quyền thuộc dịch vụ chia sẻ; demo chưa có các chức năng này. Tham chiếu nguyên tắc [WMO CAP](https://wmo.int/site/wmo-common-alerting-protocol/about-cap), không tuyên bố demo tuân thủ CAP.
+
 ## Thao tác
 
 | Tác vụ | Cách dùng |

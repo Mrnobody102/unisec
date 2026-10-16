@@ -1,11 +1,10 @@
 """Verify local field photos, source integrity and GIS-to-response point mapping."""
-from gis_browser_actions import download_geometry, published_records, reviewed_records_json
+from gis_browser_actions import gis_task, download_geometry, published_records, reviewed_records_json
 import argparse, base64, hashlib, json, struct, tempfile
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 # Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
-LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
@@ -20,6 +19,7 @@ def run(url, chrome, captures):
         original_roads=page.locator('.map-road-target').count()
         original_road_box=page.locator('.map-road-target').first.bounding_box()
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         page.get_by_role('button',name='Thêm điểm tọa độ',exact=True).click()
         entry=page.locator('.field-point-entry');entry.get_by_label('Tên điểm',exact=True).fill('Điểm khảo sát A')
         entry.get_by_label('Vĩ độ (°)',exact=True).fill('21.782919');entry.get_by_label('Kinh độ (°)',exact=True).fill('104.053554')
@@ -60,6 +60,7 @@ def run(url, chrome, captures):
         road_box=page.locator('.map-road-target').first.bounding_box()
         assert all(abs(road_box[k]-original_road_box[k])<1 for k in ['x','y','width','height']),(road_box,original_road_box)
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         form=page.locator('.field-observation')
         page.locator('.geodata-inspector').get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
         expect(page.locator('.geodata-workspace')).to_have_count(0)
@@ -120,5 +121,5 @@ def run(url, chrome, captures):
         context.close();browser.close()
     print('Field observations passed: coordinate entry, pending annotation, real EXIF/camera GPS, thumbnail/hash, invalid-photo rollback, shared response map, visibility, storage failure, reload/export and responsive themes.')
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5174');parser.add_argument('--chrome',default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None);parser.add_argument('--captures',type=Path)
+    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5174');parser.add_argument('--chrome',default=None);parser.add_argument('--captures',type=Path)
     args=parser.parse_args();run(args.url.rstrip('/'),args.chrome,args.captures)

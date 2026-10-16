@@ -1,5 +1,5 @@
 """GIS edits, deletion and export must be reviewed and report only persisted success."""
-from gis_browser_actions import published_records, reviewed_records
+from gis_browser_actions import gis_task, published_records, reviewed_records
 import argparse, json
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -16,6 +16,7 @@ def run(url, chrome, captures=None):
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
         page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        gis_task(page)
         read=lambda:reviewed_records(page)
         def confirmation(title):
             dialog=page.get_by_role('dialog',name=title,exact=True)
@@ -94,6 +95,7 @@ def run(url, chrome, captures=None):
         assert exported['features'][0]['geometry']==read()[0]['feature']['geometry']
         notice('Đã tạo tệp dear-all.geojson')
         # The second rectangle corner saves the boundary at once; Undo GIS reverts it.
+        gis_task(page, 'aoi')
         page.get_by_role('button',name='Vẽ hình chữ nhật',exact=True).click()
         surface=page.locator('.geodata-map-surface').bounding_box()
         page.mouse.click(surface['x']+150,surface['y']+150)

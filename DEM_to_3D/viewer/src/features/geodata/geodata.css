@@ -216,3 +216,23 @@
 .geodata-input-error p { flex: 1; margin: 0; overflow-wrap: anywhere; }
 
 .geodata-map .map-marker-layer { z-index: 600; }
+
+/* Workflows remain separate from the technical layer/AOI/catalog controls. */
+.geodata-task-nav { display:flex; flex:none; gap:0; padding:0 16px; border-bottom:1px solid var(--ws-line); }
+.geodata-task-nav button { flex:1; min-height:44px; padding:10px 4px; border:0; border-bottom:2px solid transparent; border-radius:0; background:transparent; color:var(--ws-text); }
+.geodata-task-nav button[aria-pressed=true] { border-bottom-color:var(--ws-brand); color:var(--ws-brand); font-weight:600; }
+.geodata-task-nav + .geodata-tabs button { font-size:12px; padding-block:8px; }
+.geodata-task-panel { min-width:0; flex:1; overflow:auto; }
+.geodata-task-note { padding:0 20px; margin:16px 0; color:var(--ws-muted); font-size:12px; }
+.scenario-feature-search { display:grid; gap:6px; font-size:12px; margin-block:12px; color:var(--ws-muted); }
+.scenario-feature-row small { flex:none; }
+@media(max-width:760px) { .geodata-task-nav button { min-height:44px; } }
+
+@media(max-width:760px) {
+  .geodata-workbench-toolbar { display:flex; flex-wrap:wrap; min-height:48px; height:auto; gap:4px; }
+  .geodata-workbench-toolbar .geodata-drawing-bar { flex-basis:100%; }
+  .geodata-workbench-toolbar .geodata-title { padding-right:4px; }
+}
+
+.scenario-feature-row { border-radius:0; padding:10px 0; }
+.scenario-feature-row + .scenario-feature-row { border-top:1px solid var(--ws-line); }

@@ -34,7 +34,9 @@ def check_symbols(page):
 
 def run(url, chrome, captures, prepared=False):
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'], **({'executable_path': chrome} if chrome else {}))
+        def launch_browser():
+            return playwright.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'], **({'executable_path': chrome} if chrome else {}))
+        browser = launch_browser()
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         context.add_init_script("""const original = HTMLCanvasElement.prototype.getContext;
@@ -289,6 +291,10 @@ def run(url, chrome, captures, prepared=False):
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
         context.close()
 
+        # Isolate this destructive GPU check from earlier fixtures that disable WebGL
+        # or abort model requests. Keep the actual context-loss and selection assertions.
+        browser.close()
+        browser = launch_browser()
         # Losing an active GPU context also falls back without losing selection.
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())

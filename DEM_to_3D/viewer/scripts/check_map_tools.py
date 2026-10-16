@@ -4,7 +4,6 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 # Local Windows convenience only; CI (Linux) uses the Playwright-managed Chromium.
-LOCAL_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 
 def run(url, chrome, captures):
@@ -90,7 +89,7 @@ def run(url, chrome, captures):
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
     args.add_argument('--url', default='http://127.0.0.1:5212')
-    args.add_argument('--chrome', default=LOCAL_CHROME if Path(LOCAL_CHROME).is_file() else None)
+    args.add_argument('--chrome', default=None)
     args.add_argument('--captures', type=Path)
     options = args.parse_args()
     if options.captures:

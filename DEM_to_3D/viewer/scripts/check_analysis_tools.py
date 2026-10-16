@@ -1,5 +1,5 @@
 """Check transactional geometry editing and the offline prepared imagery catalog."""
-from gis_browser_actions import apply_boundary, download_geometry, publish_draft, reviewed_records, reviewed_records_json
+from gis_browser_actions import gis_task, apply_boundary, download_geometry, publish_draft, reviewed_records, reviewed_records_json
 import argparse
 import json
 from pathlib import Path
@@ -25,6 +25,7 @@ def run(url, chrome, captures):
         before=json.loads(reviewed_records_json(page))
         surface=page.locator('.geodata-map-surface')
         initial=surface.bounding_box()
+        gis_task(page, 'aoi')
         page.get_by_role('button',name='Vẽ hình chữ nhật',exact=True).click()
         assert surface.bounding_box() == initial, 'Starting a drawing moved the map'
         surface.click(position={'x':180,'y':140})
@@ -187,6 +188,7 @@ def run(url, chrome, captures):
         page.locator(f'[data-geodata-id="{aoi_id}"] .geodata-feature').click()
         page.get_by_role('button',name='Xem trên bản đồ',exact=True).click()
         page.wait_for_function("!document.querySelector('.leaflet-zoom-anim')")
+        gis_task(page, 'aoi')
         page.get_by_role('checkbox',name='Hút vào điểm gần',exact=True).check()
         page.get_by_role('tab',name='Vùng quan tâm',exact=True).click()
         page.get_by_role('button',name='Sửa ranh giới',exact=True).first.click()
