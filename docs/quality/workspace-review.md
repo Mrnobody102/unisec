@@ -1,71 +1,26 @@
 # Kiểm tra workspace
 
-Mốc đối chiếu: 12/10/2026; GIS/catalog prepared và dữ liệu ứng phó mô phỏng Chế Tạo v0.2. Đây là kết quả kiểm tra phần mềm, chưa phải nghiệm thu dữ liệu hoặc thử với cán bộ trực.
+Đây là phạm vi kiểm tra phần mềm bằng dữ liệu mô phỏng, không thay nghiệm thu dữ liệu hoặc thử với cán bộ trực.
 
-## Phạm vi đã kiểm
+## Kiểm tra tự động
 
-| Nhóm | Phạm vi |
-|---|---|
-| Nghiệp vụ | Sự kiện → địa bàn → tuyến/căn cứ → áp dụng tin → bản xuất; cùng snapshot giữa map, panel và file |
-| Công cụ | Đo, tọa độ, mặt cắt, lớp/nguồn, tổng quan, so ảnh; nhập/xuất GIS, vẽ/chỉnh AOI theo bản nháp, bắt đỉnh/hoàn tác; catalog prepared, metadata, bộ chọn và độ phủ |
-| Giao diện | Sáng/tối, Việt/Anh, các bộ chữ, desktop/mobile, bàn phím, giữ lựa chọn và vị trí panel |
-| Khi lỗi | Thiếu dữ liệu, API/file/GPU lỗi, khôi phục 2D, gói offline giải nén sạch |
-| Phát hành | Cài sạch, unit/Python/browser tests, audit, build và đóng gói đạt trên Linux/Node 22 |
+[Workflow DEAR web](../../.github/workflows/dear-web.yml) là nguồn lệnh và cấu hình duy nhất. Kết quả từng commit ở [GitHub Actions](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml); kết quả local không thay xác nhận trên runner Linux.
 
-Lệnh và môi trường kiểm tra lấy từ [workflow](../../.github/workflows/dear-web.yml), không chép số lượng test hoặc phiên bản dependency vào tài liệu. Kết quả GitHub nằm ở [Actions](https://github.com/hoxuanphu/UNISEC_Demo/actions/workflows/dear-web.yml); chạy cục bộ không thay xác nhận trên GitHub.
+- Mỗi push/PR: kiểm dữ liệu, unit/Python tests, audit, build, gói offline và các luồng browser chính: ứng phó, nhập GIS, duyệt bản nháp, vùng sạt lở, người dân mobile, nền bản đồ, ký hiệu, chọn bộ dữ liệu và mở gói offline. Kiểm tra chọn từng điểm và đồng bộ liên tab chạy với Vite.
+- Khi thay đổi nhiều về giao diện hoặc trước bàn giao: chọn **Run workflow → Run extended UI and session checks**. Bộ mở rộng kiểm font/theme, bàn phím, khoảng cách, công cụ phụ và phiên 2D/3D. Có thể chạy riêng script liên quan khi sửa lỗi.
+- Kiểm tra nghiệp vụ giữ riêng vùng nguy cơ/vết đã sạt, AOI, điểm báo cáo và tình trạng đường. Khoanh polygon không tự kết luận đường bị chặn. Thay đổi GIS chỉ áp dụng sau khi duyệt toàn bộ bản nháp.
 
-## Đối chiếu viễn thám và proposal
+## Tài liệu và ảnh
 
-Đọc lại S01 (proposal, tr. 1–5), S02 (phạm vi phần mềm) và S03 (WebApp direction, tr. 1–12) tại [nguồn gốc](../sources.md#tài-liệu-gốc). Chuỗi nghiệp vụ được đối chiếu tại [walkthrough](../operations/walkthrough.md#đối-chiếu-proposal); không đưa toàn bộ mục tiêu nghiên cứu của S01 vào phạm vi demo SIC.
+Chỉ sửa tài liệu sản phẩm khi thay đổi quy tắc, hợp đồng dữ liệu hoặc cách sử dụng. Không ghi lại log, số lượng test, danh sách lỗi theo ngày hay phiên bản dependency vào docs.
 
-| Phần | Kết luận |
-|---|---|
-| Điểm nhập | Hiển thị vị trí tham chiếu là phù hợp; chưa có căn cứ để gọi là sạt lở, đường bị chặn hay điểm đã khảo sát. Đã sửa polygon style ghi đè CircleMarker gây vòng rỗng, thêm chú giải và nhãn trục tọa độ |
-| KML | Đã sửa mất mô tả/thuộc tính khi xuất và mất altitudeMode khi nhập. Giữ mode riêng từng hình học, kể cả MultiGeometry có nhiều mode. Map là 2D; giới hạn Style/Folder và điểm chồng ở [GIS](../product/geodata-workspace.md#giới-hạn) |
-| AOI/cảnh ảnh | Hợp footprint trước khi tính giao, không đếm trùng. Ghi rõ độ phủ hình học; footprint, mây toàn cảnh và ảnh nền cũ không chứng minh chất lượng ảnh trong AOI hoặc hiện trạng thiên tai |
-| Ứng phó | Giữ địa bàn–tuyến–đoạn–căn cứ trong cùng snapshot; tin mới chỉ áp dụng khi người dùng chọn. Không suy đường đi được từ trạng thái chưa có báo cáo hoặc từ KML giao với đường |
-| Phân tích tự động | Chưa có chuỗi SAR trước/sau → QA → phát hiện → duyệt sản phẩm; chưa có GPM/DMC, CIS hoặc GeoPackage. Không tuyên bố đạt xử lý 3–6 giờ |
-| Kiểm chứng | Unit/build và E2E GIS, AOI/catalog, ứng phó, công việc đạt cục bộ trên Windows/Node 22. Kiểm tra trực tiếp SVG và vòng KML có thuộc tính/Z/mode. Chưa có tệp 081026.kml gốc để đối chiếu từng điểm với nguồn |
+Ảnh hướng dẫn đang dùng nằm tại `viewer/public/guide`; chỉ thay khi hướng dẫn không còn đúng. Ảnh kiểm thử tùy chọn qua `--captures` lưu ở thư mục tạm, log/build/gói offline ở `viewer/dist-release` đã được Git bỏ qua. Không lưu ảnh kiểm chứng lặp hoặc báo cáo mỗi task trong docs/src.
 
-Ưu tiên cho SIC là duyệt bộ dữ liệu, bằng chứng và hai tuyến theo [G3](../tasks/sic-2026.md), rồi tập toàn luồng trên máy trình chiếu. Những phần xử lý EO và quản lý sản phẩm tiếp tục ở platform. Khi hiệu chỉnh proposal, giữ riêng pixel spacing và độ phân giải SAR; mốc 3–6 giờ phải tách chờ thu nhận/cấp ảnh, xử lý, kiểm tra và công bố theo [đối chiếu nguồn kỹ thuật](../sources.md#đối-chiếu-nguồn-kỹ-thuật).
+## Giới hạn cần nghiệm thu
 
-## Giới hạn còn lại
+- Dữ liệu demo chưa chứng minh độ chính xác của ranh sạt lở, tuyến, DEM/ảnh hay thời gian xử lý thiên tai.
+- Catalog prepared và mây toàn cảnh không thay chất lượng pixel hoặc tỷ lệ mây trong AOI. Ảnh nền không phải bằng chứng hiện trạng.
+- Lưu cục bộ và đồng bộ các tab cùng trình duyệt không phải dịch vụ chia sẻ nhiều người dùng. Chưa có feed cảnh báo công khai hoặc chuỗi xử lý SAR/AI được nghiệm thu.
+- Fixture ảnh, tọa độ và polygon chỉ để kiểm phần mềm; thử trên máy trình chiếu và dữ liệu thực vẫn cần RS/PO xác nhận.
 
-| Nội dung | Chưa xác nhận |
-|---|---|
-| Dữ liệu và phương pháp | Nguồn/quyền dùng ảnh và DEM, bằng chứng gốc, tuyến và chính sách được duyệt |
-| Phạm vi GIS | Fixture thứ hai dùng lại địa hình Chế Tạo; chưa kiểm khu vực thực hoặc nhiều CRS |
-| Vận hành | Feed, xử lý SAR/AI, công bố dùng chung và backend mới ở mức kế hoạch |
-| Bàn giao | URL Vercel, tốc độ/GPU, bản in PDF và thao tác trên máy trình chiếu |
-
-Việc còn làm ở [công việc SIC](../tasks/sic-2026.md), điều kiện bàn giao ở [nghiệm thu](acceptance.md). Thiết kế và cách sử dụng ở [giao diện](../product/interface.md), [design system](../product/design-system.md), [công cụ GIS](../product/geodata-workspace.md).
-
-## Tham chiếu
-
-[Tiếp cận](assets/workspace-summary.png), [mặt cắt](assets/workspace-profile.png), [đo](assets/workspace-measurement.png) và [PNG xuất](assets/decision-map.png) là ảnh của bản trước, không phải bộ ảnh cần cập nhật sau mỗi lần sửa UI.
-
-[Log phiên 30 phút](assets/session-30min.json) giữ browser, hash build, lỗi và số liệu của lần đo đó. Cách chạy lại ở [nghiệm thu](acceptance.md).
-
-Chỉ cập nhật mốc kiểm tra khi chốt bản demo/phát hành hoặc có thay đổi đáng kể về phạm vi kiểm chứng. Lịch sử sửa lỗi và log từng lần chạy nằm trong Git/CI.
-
-## Hồ sơ thực địa và vùng khoanh vẽ
-
-Các kiểm tra mới nằm tại `scripts/check_field_observations.py` và `scripts/check_field_areas.py`: EXIF giờ chụp/GPS, ảnh lớn và Escape, lưu lỗi không mất hồ sơ, file timestamp, vùng gắn điểm, sửa/hủy/hoàn tác, AOI giữ nguyên, vòng KML đổi ID, bản nháp giữ khi vẽ, sáng/tối và 320–1440 px, hướng dẫn và trả focus. Kiểm tra GIS cũ mở hồ sơ bằng lựa chọn rõ ràng, phù hợp bố cục danh sách–hồ sơ mới.
-
-Ảnh fixture có nhãn TEST PHOTO và metadata tự dựng để kiểm phần mềm. Polygon fixture không phải sản phẩm giải đoán hoặc đo đạc hiện trường. Chưa có kiểm chứng ảnh gốc 081026.kml hoặc đồng bộ nhiều thiết bị. Luồng hai vai trò trong cùng trình duyệt được kiểm tại `check_resident_workflow.py`; GIS hàng loạt và ranh giới tại `check_simplified_gis.py`. HEIC kiểm bằng tệp mẫu libheif, không phải ảnh hiện trường đã xác minh.
-
-Kiểm tra gom cụm ở `check_point_groups.py` bao gồm chọn từng điểm cùng vị trí, ảnh lớn, chuyển ảnh bằng bàn phím, Escape, bảng thuộc tính không chồng thẻ nhóm và quay lại nhóm từ bản đồ ứng phó. Kiểm tra trên các chiều rộng 320–1440 px. Luồng cư dân kiểm việc gửi ảnh có EXIF/GPS khi phần thông tin bổ sung vẫn đóng; nguồn nền EOX vẫn có giới hạn 10 m và việc gửi ghi nhận chỉ lưu tại trình duyệt.
-
-`check_basemap_recovery.py` mô phỏng một ô ảnh lỗi hai lần trước khi tải được, kiểm tra cảnh báo được gỡ và ảnh trực tuyến thay lớp dự phòng. Tiến trình tải đếm theo từng ô, loại ô đã rời khung nhìn, tránh giữ lớp ảnh mờ sau khi đổi zoom hoặc tải lại thành công.
-
-Dropdown được kiểm bằng `check_select_controls.py`: đo vị trí chữ thực trong trình duyệt, font của ô và danh sách mở, khoảng chừa biểu tượng, tên địa bàn dài, ba bộ chữ, sáng/tối, Việt/Anh và 320–1440 px. Escape đóng danh sách trước khi đóng GIS hoặc cài đặt, không hủy thao tác vẽ đang làm. Thiết bị cảm ứng và chế độ tương phản cao giữ bộ chọn gốc của trình duyệt. Kiểm tra này chạy cùng luồng browser trong CI.
-
-## Kiểm tra vùng sạt lở và tương tác bản đồ
-
-`check_landslide_areas.py` kiểm tra vẽ vùng nguy cơ/vết đã sạt độc lập với AOI và điểm nguồn, chặn áp dụng khi thiếu căn cứ, liên kết khoảng đường, trạng thái đường chỉ đổi qua đánh giá rõ ràng, công bố cùng bản nháp và xem ở 2D/3D. Unit test miền nghiệp vụ kiểm tra nguồn, mức rà soát, thứ tự từ–đến, phiên bản mạng đường, ID sau nhập/xuất và giữ vùng khi xóa nguồn điểm độc lập. Polygon thử nghiệm không phải ranh thiên tai đã được kiểm chứng.
-
-Các kiểm tra `check_map_motion.py`, `check_marker_stability.py`, `check_map_labels.py`, `check_map_group_selection.py` và `check_map_symbol_consistency.py` bao phủ pan/zoom/chuyển 2D/3D, neo mũi đúng tọa độ, hover/chọn, nhãn/cụm điểm, tránh bảng chi tiết và không thay đổi DOM marker khi đứng yên. `check_gis_detail_ownership.py`, `check_gis_draft_publish.py` và `check_map_tools.py` kiểm tra một bảng chi tiết, bản nháp/áp dụng, giới hạn lưu và giữ phép đo khi mở Hướng dẫn. Quy tắc sản phẩm được giữ tại [bản đồ](../product/cartography.md) và [GIS](../product/geodata-workspace.md).
-
-Các review theo ngày và ảnh chụp lặp đã được gộp vào trang này. Không tạo tài liệu review hoặc thư mục ảnh theo mỗi lượt sửa; log và ảnh kiểm thử tạm nằm ngoài tài liệu, lịch sử thay đổi nằm trong Git/CI.
-
-`check_gis_storage_sync.py` dùng hook lưu trữ thật trong trình duyệt để kiểm tra cập nhật liên tab và lịch sử Hoàn tác. Các kiểm tra hình học cũ dùng `reviewed_records` làm bước xác nhận toàn bộ bản nháp trước khi đọc dữ liệu đã lưu; kiểm tra nháp riêng vẫn xác nhận rằng lưu từng đối tượng chưa ghi vào dữ liệu đang dùng. Unit test xuất bản phân biệt đổi thứ tự trường JSON với đổi tọa độ thật. CI chạy cả các luồng này và kiểm tra di động/2D/3D.
+Chi tiết bền vững nằm ở [bản đồ](../product/cartography.md), [GIS](../product/geodata-workspace.md), [hợp đồng dữ liệu](../architecture/data-contract.md) và [nghiệm thu](acceptance.md). Đối chiếu proposal tại [walkthrough](../operations/walkthrough.md#đối-chiếu-proposal), nguồn tại [tài liệu gốc](../sources.md#tài-liệu-gốc).
