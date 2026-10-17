@@ -64,6 +64,7 @@ type Props = {
   onRenameScenario?: RenameScenario;
   scenarioFocus?: ScenarioTarget | null;
   onResponseScenario?: (target: ScenarioTarget) => void;
+  onSelectScenario: (target: ScenarioTarget) => void;
   onScenarioNotice?: (message: [string,string]) => void;
   onPickPoint?: (point: {latitude:number;longitude:number}) => void;
   onCancelPick?: () => void;
@@ -820,6 +821,7 @@ export function GeometryMap(props: Props): JSX.Element {
           scenario={props.scenario}
           mappedAreas={props.records.filter(record => landslideAreaOf(record)?.networkVersion === props.scenario?.datasetVersion)}
           onOpenMappedArea={props.onSelect}
+          onSelectRelated={props.onSelectScenario}
           target={scenarioTarget}
           edits={props.scenarioEdits?.edits ?? []}
           readOnly={!props.scenarioEdits?.canEdit}

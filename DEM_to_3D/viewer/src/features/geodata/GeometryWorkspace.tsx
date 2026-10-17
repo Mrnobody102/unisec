@@ -566,7 +566,6 @@ function GeometryWorkspaceView({
             </div>
             <div hidden={tab !== 'roads'} className="geodata-task-panel" aria-label={t('Đánh giá đường', 'Road assessment')}>
               {scenario && <ScenarioFeatureList scenario={scenario} types={['road']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale} onSelect={selectScenario} />}
-              <p className="geodata-task-note">{t('Chọn đoạn đường để cập nhật khả năng đi lại, căn cứ và vùng sạt lở liên quan.', 'Select a road segment to update passability, evidence and linked landslide areas.')}</p>
             </div>
             <div
               id="geo-panel-layers"
@@ -764,6 +763,7 @@ function GeometryWorkspaceView({
           storageKey="dear.geodata.panel-width"
         />
         <GeometryMap
+          onSelectScenario={selectScenario}
           scenarioFocus={scenarioFocus}
           onResponseScenario={onResponseScenario}
           onScenarioNotice={notify}

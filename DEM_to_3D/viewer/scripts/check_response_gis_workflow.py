@@ -1,5 +1,5 @@
 """Coordinator map -> GIS editing, new response features and operational state checks."""
-from gis_browser_actions import gis_task, publish_draft, published_edits
+from gis_browser_actions import gis_task, publish_draft, published_edits, scenario_properties
 import argparse,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -24,6 +24,34 @@ def run(url,chrome,captures=None):
    row.click()
    expect(card).to_be_visible()
   choose(hazard['name'][0])
+  # Inspection starts without editors; cancel must preserve both the data and trigger focus.
+  expect(card.locator('.scenario-properties')).not_to_be_visible()
+  expect(card.locator('.scenario-history')).to_have_count(0)
+  card.get_by_role('button',name='Sửa liên kết',exact=True).click()
+  links=page.get_by_role('dialog',name='Sửa liên kết',exact=True)
+  option=links.get_by_role('checkbox').first
+  option.set_checked(not option.is_checked())
+  links.get_by_role('button',name='Lưu vào bản nháp',exact=True).click()
+  expect(links.get_by_role('alert')).to_have_text('Ghi căn cứ liên kết.')
+  page.keyboard.press('Escape')
+  expect(card.get_by_role('button',name='Sửa liên kết',exact=True)).to_be_focused()
+  expect(workspace.locator('.gis-draft-bar')).to_have_count(0)
+  gis_task(page,'roads')
+  roads=workspace.locator('.scenario-feature-list:visible')
+  road_name=roads.locator('.scenario-feature-row').first.locator('span').inner_text()
+  query=roads.get_by_label('Tìm theo tên',exact=True)
+  query.fill(road_name)
+  roads.locator('.scenario-feature-row').first.click()
+  expect(query).to_have_value(road_name)
+  expect(card.get_by_role('radio')).to_have_count(0)
+  original_status=card.locator('.status-text').inner_text()
+  card.get_by_role('button',name='Cập nhật tình trạng',exact=True).click()
+  status=page.get_by_role('dialog',name='Cập nhật tình trạng đường',exact=True)
+  status.get_by_role('radio',name='Bị chặn',exact=True).check()
+  page.keyboard.press('Escape')
+  expect(card.locator('.status-text')).to_have_text(original_status)
+  expect(workspace.locator('.gis-draft-bar')).to_have_count(0)
+  choose(hazard['name'][0])
   card.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
   details=page.locator('.response-detail-dock')
   expect(details).to_be_visible()
@@ -37,7 +65,7 @@ def run(url,chrome,captures=None):
   card.get_by_label('Tên tiếng Anh',exact=True).fill('GIS checked landslide')
   card.get_by_role('button',name='Lưu',exact=True).click()
   expect(card.get_by_role('heading',level=2)).to_have_text('Sạt lở kiểm tra GIS')
-  properties=card.locator('.scenario-properties')
+  properties=scenario_properties(card)
   properties.get_by_label('Nhãn trên bản đồ',exact=True).select_option('hide')
   properties.get_by_label('Loại sự cố và ký hiệu',exact=True).select_option('flood')
   properties.get_by_label('Lý do thay đổi',exact=True).fill('Điều chỉnh phân loại theo ghi nhận mới.')
@@ -54,7 +82,7 @@ def run(url,chrome,captures=None):
    captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'hazard-in-gis.png'))
   # Record a survey, then move the landing site: the new position must be unassessed.
   choose(site['name'][0])
-  card.locator('.scenario-properties').get_by_label('Tình trạng khảo sát',exact=True).select_option('assessed')
+  scenario_properties(card).get_by_label('Tình trạng khảo sát',exact=True).select_option('assessed')
   card.get_by_label('Nguồn và kết quả khảo sát',exact=True).fill('Tổ khảo sát A, kiểm tra vị trí ban đầu.')
   card.get_by_role('button',name='Lưu thay đổi',exact=True).click()
   page.get_by_role('dialog',name='Cập nhật đối tượng?',exact=True).get_by_role('button',name='Cập nhật',exact=True).click()
@@ -71,7 +99,7 @@ def run(url,chrome,captures=None):
   move=page.get_by_role('dialog',name='Cập nhật vị trí?',exact=True)
   expect(move).to_contain_text('chưa khảo sát')
   move.get_by_role('button',name='Cập nhật',exact=True).click()
-  expect(card.locator('.scenario-properties').get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
+  expect(scenario_properties(card).get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
   # Add a real response hazard via map picking; Cancel retains the data-entry draft.
   gis_task(page, 'areas')
   workspace.get_by_role('button',name='Thêm điểm ghi nhận',exact=True).click()
@@ -143,9 +171,9 @@ def run(url,chrome,captures=None):
   page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
   choose('Sạt lở mới từ kiểm tra')
   choose('Sạt lở kiểm tra GIS')
-  expect(card.locator('.scenario-properties').get_by_label('Nhãn trên bản đồ',exact=True)).to_have_value('hide')
+  expect(scenario_properties(card).get_by_label('Nhãn trên bản đồ',exact=True)).to_have_value('hide')
   choose(site['name'][0])
-  expect(card.locator('.scenario-properties').get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
+  expect(scenario_properties(card).get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
   # Add a second landing-site proposal; it cannot start as an approved/surveyed site.
   workspace.get_by_role('button',name='Thêm bãi đáp',exact=True).click()
   landing=page.get_by_role('dialog',name='Thêm bãi đáp đề xuất',exact=True)
@@ -157,7 +185,7 @@ def run(url,chrome,captures=None):
   landing.get_by_role('button',name='Thêm vào bản đồ',exact=True).click()
   page.get_by_role('dialog',name='Thêm đối tượng ứng phó?',exact=True).get_by_role('button',name='Thêm',exact=True).click()
   expect(card.get_by_role('heading',level=2)).to_have_text('Bãi đáp đề xuất mới')
-  expect(card.locator('.scenario-properties').get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
+  expect(scenario_properties(card).get_by_label('Tình trạng khảo sát',exact=True)).to_have_value('candidate')
   # A past revision must not show later edits or expose a coordinate/metadata write flow.
   publish_draft(page)
   page.get_by_role('button',name='Đóng dữ liệu GIS',exact=True).click()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { GeometryRecord } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 import { areaLabel } from './areaLabels';
@@ -12,7 +12,6 @@ export function LandslideAreaList({ records, selectedId, locale, disabled, onCre
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const [state, setState] = useState<'all' | LandslideArea['state']>('all');
   const [unreviewed, setUnreviewed] = useState(false);
-  useEffect(() => { setState('all'); setUnreviewed(false); }, [selectedId]);
   const filtered = areas.filter(record => { const area = landslideAreaOf(record)!; return (state === 'all' || area.state === state) && (!unreviewed || area.review === 'unreviewed'); });
   return <section className="landslide-area-list" aria-label={t('Vùng sạt lở', 'Landslide areas')}><h2>{t('Vùng sạt lở', 'Landslide areas')}<span>{areas.length || ''}</span></h2>
     <div className="geodata-actions"><button className="button" disabled={disabled} onClick={() => onCreate('potential')}>{t('Khoanh vùng nguy cơ', 'Map potential area')}</button><button className="button" disabled={disabled} onClick={() => onCreate('occurred')}>{t('Khoanh vết sạt lở', 'Map landslide scar')}</button></div>

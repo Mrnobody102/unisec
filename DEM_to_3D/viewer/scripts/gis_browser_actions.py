@@ -64,3 +64,11 @@ def reviewed_records(page):
 def reviewed_records_json(page):
     import json
     return json.dumps(reviewed_records(page), ensure_ascii=False)
+
+
+def scenario_properties(card):
+    panel = card.locator('.scenario-properties')
+    disclosure = panel.locator('xpath=..')
+    if disclosure.get_attribute('open') is None:
+        disclosure.locator('summary').click()
+    return panel
