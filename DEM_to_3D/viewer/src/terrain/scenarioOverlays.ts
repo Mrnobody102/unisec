@@ -13,7 +13,7 @@ import type {
 import type { TerrainMetadata } from '../types/terrain';
 import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
-import { roadColors } from './roadStyle';
+import { roadColors, roadStroke } from './roadStyle';
 import { routeRoadDisplay } from './routeRoadDisplay';
 import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../features/map/layerAppearance';
@@ -126,7 +126,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       // Route selection must preserve the warning on blocked or uncertain segments.
       if (layers.status && road.status === 'blocked') lineColor = roadColors.blocked;
       if (layers.status && road.status === 'uncertain') lineColor = roadColors.uncertain;
-      const lineWidth = routeVisible || isRoadSelected ? 4 : 2.5;
+      const lineWidth = routeVisible || isRoadSelected ? roadStroke.emphasis : roadStroke.normal;
       const addLine = (color: THREE.ColorRepresentation, width: number, casing: boolean): void => {
         const geometry = new LineGeometry();
         geometry.setPositions(positions);
@@ -143,7 +143,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       };
       const hasWarning = layers.status && road.status !== 'open';
       // A route-colored casing under warning dashes looks like two overlapping routes.
-      addLine(isRoadSelected ? roadColors.inspectedCasing : routeVisible && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + (isRoadSelected ? 4 : 2), true);
+      addLine(isRoadSelected ? roadColors.inspectedCasing : routeVisible && !hasWarning ? roadColors.selectedCasing : roadColors.neutralCasing, lineWidth + (isRoadSelected ? roadStroke.inspectedCasing : roadStroke.casing), true);
       addLine(lineColor, lineWidth, false);
     });
 

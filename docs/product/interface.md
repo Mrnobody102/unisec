@@ -28,7 +28,7 @@ Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và
 
 ## Màn hình và thông tin
 
-Bản đồ chiếm phần lớn màn hình, bảng thông tin nằm bên phải. Chọn đối tượng thay nội dung bảng; đóng chi tiết trở lại danh sách và vị trí cuộn trước đó. Thanh diễn biến ở dưới chỉ chọn các bản đánh giá đã có; báo cáo chờ kiểm tra mở hồ sơ, không tự công bố dữ liệu. Không có chế độ hoặc các bước trình chiếu riêng. Nguồn và tính chất dữ liệu được trình bày trong Nguồn dữ liệu và các tệp xuất.
+Danh sách và bộ lọc ở panel trái; bản đồ ở giữa; chi tiết đối tượng ở panel phải khi đủ chỗ. Panel trái giữ danh sách và vị trí cuộn; màn hình hẹp dùng một panel thông tin. Thanh diễn biến ở dưới chỉ chọn các bản đánh giá đã có; báo cáo chờ kiểm tra mở hồ sơ, không tự công bố dữ liệu. Không có chế độ hoặc các bước trình chiếu riêng. Nguồn và tính chất dữ liệu được trình bày trong Nguồn dữ liệu và các tệp xuất.
 
 | Vị trí | Thông tin chính | Mở khi cần |
 |---|---|---|

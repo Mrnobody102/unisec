@@ -89,7 +89,15 @@ export function remapLandslideEvidence(records: GeometryRecord[]): GeometryRecor
   });
 }
 export function landslideAreaStyle(a: LandslideArea, selected = false) {
-  return { color: a.state === 'potential' ? '#b77b28' : '#b45147', weight: selected ? 2.5 : 1.5, dashArray: a.state === 'potential' ? '6 4' : undefined, fillOpacity: selected ? .19 : .1 };
+  return {
+    color: a.state === 'potential' ? '#bd914f' : '#b85b4b',
+    weight: selected ? 2.2 : 1.4,
+    // Long dashes: potential extent; short dashes: observed extent awaiting review.
+    dashArray: a.state === 'potential' ? '6 4' : a.review === 'unreviewed' ? '2 3' : undefined,
+    fillOpacity: selected ? .16 : .09,
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const
+  };
 }
 
 /** Review applies to the mapped boundary that was checked, not to later geometry edits. */

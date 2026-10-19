@@ -19,12 +19,12 @@ export function terrainLandslideAreas(records: GeometryRecord[], metadata: Terra
   const spacing = Math.max(40, Math.hypot(metadata.grid_transform.a, metadata.grid_transform.d), Math.hypot(metadata.grid_transform.b, metadata.grid_transform.e));
   let remaining = 36000;
   const surface = (p: XY) => { const z = bilinearElevation(grid, metadata, p.x, p.y).elevation; return z === undefined ? null : projectedToScene(metadata, p, z + 3); };
-  const line = (points: XY[], color: string, width: number, dashed: boolean, id: string, opacity = 1) => {
+  const line = (points: XY[], color: string, width: number, dashed: boolean, id: string, opacity = 1, dash: [number, number] = [60, 40]) => {
     let positions: number[] = [];
     const flush = () => {
       if (positions.length >= 6) {
         const geometry = new LineGeometry(); geometry.setPositions(positions);
-        const material = new LineMaterial({ color, linewidth: width, transparent: true, opacity, depthTest: true, depthWrite: false, dashed, dashSize: 60, gapSize: 40 });
+        const material = new LineMaterial({ color, linewidth: width, transparent: true, opacity, depthTest: true, depthWrite: false, dashed, dashSize: dash[0], gapSize: dash[1] });
         material.resolution.set(resolution.width, resolution.height);
         const object = new Line2(geometry, material); object.computeLineDistances(); object.userData.recordId = id; object.renderOrder = mapLayerOrder.boundary * 2 + 1; root.add(object);
       }
@@ -47,7 +47,8 @@ export function terrainLandslideAreas(records: GeometryRecord[], metadata: Terra
     for (const polygon of polygons) {
       const rings = polygon.map(r => r.map(p => { const [x, y] = proj4('EPSG:4326', crs, [p[0], p[1]]); return { x, y }; }));
       if (rings.some(ring => ring.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y)))) continue;
-      rings.forEach(r => line(r, style.color, style.weight, value.state === 'potential', record.id));
+      const dash = style.dashArray?.split(' ').map(Number).map(size => size * 10) as [number, number] | undefined;
+      rings.forEach(r => line(r, style.color, style.weight, Boolean(dash), record.id, 1, dash));
       const contour = rings[0].slice(0, -1), holes = rings.slice(1).map(r => r.slice(0, -1));
       const vertices = [contour, ...holes].flat();
       const triangles = THREE.ShapeUtils.triangulateShape(contour.map(p => new THREE.Vector2(p.x, p.y)), holes.map(h => h.map(p => new THREE.Vector2(p.x, p.y))));

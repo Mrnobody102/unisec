@@ -1,4 +1,4 @@
-/* One map and one contextual information panel, with recorded assessments below. */
+/* Existing list and detail panels, with recorded assessments below. */
 .assessment-timeline { display:flex; align-items:center; min-width:0; gap:20px; padding:8px 20px; border-top:1px solid var(--ws-line); background:var(--ws-surface); z-index:26; }
 .assessment-timeline-title { flex:none; font-size:12px; color:var(--ws-muted); }
 .assessment-timeline-track { display:flex; flex:1; min-width:0; align-items:center; }
@@ -21,23 +21,9 @@
 .incident-overview-item svg { grid-column:2; grid-row:1/3; align-self:center; }
 .incident-overview-item:hover strong { text-decoration:underline; text-underline-offset:4px; }
 @media(min-width:901px) {
- .workspace.workspace-shell { --response-detail-width:336px; --response-detail-reserve:0px; grid-template-rows:var(--size-header) minmax(0,1fr) 62px; }
- .workspace.workspace-shell .work-area { grid-template-columns:minmax(0,1fr) var(--response-detail-width); }
- .workspace.workspace-shell .work-area > .map-area { grid-column:1; grid-row:1/3; }
- .workspace.workspace-shell .work-area > :is(.sidebar,.workspace-nav,.response-detail-dock) { grid-column:2; border-left:1px solid var(--ws-line); border-right:0; }
- .workspace.workspace-shell .work-area > .workspace-nav { grid-row:1; }
- .workspace.workspace-shell .work-area > .sidebar { grid-row:2; }
- .workspace.workspace-shell[data-response-detail="true"] .work-area > .sidebar,
- .workspace.workspace-shell[data-response-gis-detail="true"] .work-area > .sidebar { visibility:hidden; }
- .workspace.workspace-shell .work-area > .response-detail-dock { position:relative; grid-row:2; inset:auto; width:auto; min-width:0; border-radius:0; box-shadow:none; animation:none; z-index:6; }
- .workspace.workspace-shell .panel-resize-handle { display:none; }
- .workspace.workspace-shell .sidebar-top { padding:22px 20px 16px; }
- .workspace.workspace-shell .sidebar-scroll { padding-inline:20px; }
- .workspace.workspace-shell[data-panel-collapsed="true"] .work-area { grid-template-columns:minmax(0,1fr); }
- .workspace.workspace-shell[data-panel-collapsed="true"] :is(.response-detail-dock,.field-map-card) { display:none; }
- .workspace.workspace-shell[data-response-profile="true"] .response-detail-dock { bottom:auto; }
- .workspace.workspace-shell .map-overview { display:none; }
- .workspace.workspace-shell .map-area > .field-map-card { right:calc(-1 * var(--response-detail-width)); top:var(--size-workspace-toolbar); bottom:0; width:var(--response-detail-width); max-height:none; border-radius:0; box-shadow:none; }
+ .workspace.workspace-shell { grid-template-rows:var(--size-header) minmax(0,1fr) 62px; }
+ .workspace.workspace-shell[data-response-gis-detail="true"] .field-map-card { z-index:19; }
+ .workspace.workspace-shell[data-panel-collapsed="true"] .field-map-card { display:none; }
 }
 @media(max-width:900px) {
  .workspace.workspace-shell { grid-template-rows:var(--size-header) minmax(0,1fr) 56px auto; }

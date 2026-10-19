@@ -1,3 +1,4 @@
+import { Color } from 'three';
 import { describe, expect, it } from 'vitest';
 import {
   cheTaoIncident,
@@ -61,9 +62,9 @@ describe('DEAR Scenario & Overlays', () => {
   });
 
   it.each([
-    { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: 0xf59e0b, dashed: true },
-    { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: 0xef4444, dashed: false },
-    { routeType: 'candidate' as const, roadsVisible: false, warningId: 'E13', color: 0xf59e0b, dashed: true }
+    { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: new Color(roadColors.uncertain).getHex(), dashed: true },
+    { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: new Color(roadColors.blocked).getHex(), dashed: false },
+    { routeType: 'candidate' as const, roadsVisible: false, warningId: 'E13', color: new Color(roadColors.uncertain).getHex(), dashed: true }
   ])('preserves road warnings on $routeType route with network visible=$roadsVisible', ({ routeType, roadsVisible, warningId, color, dashed }) => {
     const dummyMetadata: TerrainMetadata = {
       schema_version: 1,

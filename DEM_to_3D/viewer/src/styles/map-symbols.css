@@ -45,7 +45,7 @@
 .map-pin.has-overlap::after {content:'';position:absolute;right:0;top:23px;width:7px;height:7px;border:1px solid #fff;border-radius:50%;background:var(--sym-ink);box-sizing:border-box;}
 .map-pin.has-overlap.has-hazard::after {background:var(--sym-landslide);}
 /* Same face as the GIS map, whose markers inherit Leaflet's container font. */
-.map-pin-label {position:absolute;left:31px;top:4px;padding:1px 0;color:#fff;font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;font-weight:500;white-space:nowrap;pointer-events:auto;cursor:pointer;text-shadow:0 1px 2px #1b2a30,0 0 3px #1b2a30,0 0 1px #1b2a30;}
+.map-pin-label {position:absolute;left:31px;top:4px;padding:1px 0;color:#fff;font-family:var(--font-sans);font-size:13px;line-height:1.4;font-weight:500;white-space:nowrap;pointer-events:auto;cursor:pointer;text-shadow:0 1px 1px #1b2a30,0 0 2px #1b2a30,1px 0 1px #1b2a30,-1px 0 1px #1b2a30;}
 .map-pin.is-selected .map-pin-label {font-weight:600;}
 .map-marker-layer[data-basemap="terrain"] .map-pin .map-pin-label {color:#24363b;text-shadow:0 0 2px #fff,0 0 4px #fff;}
 .map-pin.is-label-hidden .map-pin-label {display:none;}

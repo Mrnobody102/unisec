@@ -59,11 +59,21 @@ def run(url, chrome, captures, prepared=False):
         if captures:
             page.screenshot(path=str(captures / 'workspace-flat-2d.png'))
 
-        expect(page.get_by_role('separator')).to_have_count(0)
-        map_box = page.locator('.map-area').bounding_box()
-        panel_box = page.locator('.sidebar').bounding_box()
-        assert panel_box['x'] >= map_box['x'] + map_box['width'] - 1
-        assert map_box['width'] >= 1440 * .7
+        handle = page.get_by_role('separator')
+        handle.focus()
+        before = int(handle.get_attribute('aria-valuenow'))
+        page.keyboard.press('ArrowRight')
+        expect(handle).to_have_attribute('aria-valuenow', str(before + 16))
+        rect = handle.bounding_box()
+        page.mouse.move(rect['x'] + 4, rect['y'] + 200)
+        page.mouse.down(); page.mouse.move(rect['x'] + 84, rect['y'] + 200, steps=8); page.mouse.up()
+        assert int(handle.get_attribute('aria-valuenow')) == before + 96
+        assert abs(page.locator('.sidebar').bounding_box()['width'] - (before + 96)) < 2
+        page.reload()
+        expect(page.get_by_role('separator')).to_have_attribute('aria-valuenow', str(before + 96))
+        expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
+        page.wait_for_function("document.querySelector('.leaflet-image-layer')?.complete")
+        page.get_by_role('separator').dblclick()
 
         page.locator('.incident-priority-row').first.click()
         expect(page.locator('.assessment-action')).to_contain_text('Kiểm tra')
@@ -196,7 +206,7 @@ def run(url, chrome, captures, prepared=False):
             page.set_viewport_size({'width': width, 'height': height})
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             if width < 900:
-                expect(page.get_by_role('separator')).to_have_count(0)
+                expect(page.get_by_role('separator')).to_be_hidden()
                 page.get_by_role('button', name='Bản đồ', exact=True).click()
             page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
             panel = page.locator('.layers-panel').bounding_box()
@@ -298,7 +308,7 @@ def run(url, chrome, captures, prepared=False):
         expect(page.locator('.map-2d-surface')).to_be_visible(timeout=25000)
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
         context.close(); browser.close()
-        print('Workspace passed: incident/AOI/access/route/evidence/report, search, PNG/JSON export, conditional ETA, independent offline 2D, GPU/file recovery, API error boundary, single information pane, symbols and responsive layout')
+        print('Workspace passed: incident/AOI/access/route/evidence/report, search, PNG/JSON export, conditional ETA, independent offline 2D, GPU/file recovery, API error boundary, panel resize, symbols and responsive layout')
 
 
 if __name__ == '__main__':

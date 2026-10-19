@@ -9,7 +9,7 @@ Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 | Đường bị chặn | Đỏ, nét liền | Có báo cáo đoạn bị chặn |
 | Đường chưa rõ | Vàng, nét đứt | Cần kiểm tra khả năng đi qua |
 | Chưa ghi nhận tắc đường | Nét trung tính | Không suy ra là đường đi được |
-| Tuyến đang xem | Xanh dương | Đoạn bị chặn/chưa rõ vẫn giữ màu cảnh báo, viền trung tính |
+| Tuyến đang xem | Xanh lam xám | Đoạn bị chặn/chưa rõ vẫn giữ màu cảnh báo, viền trung tính |
 | Cộng đồng | POI đầu bo tròn, mũi neo ngắn, nền trắng và nét xanh xám | Có tọa độ địa bàn |
 | Cộng đồng ưu tiên | Ký hiệu nâu trầm có viền sáng mảnh | Mức ưu tiên, không phải kết luận cô lập |
 | Sạt lở được báo | Núi/đá màu đỏ | Báo cáo hiện trường có thời điểm |
@@ -17,7 +17,7 @@ Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 | Cầu, điểm vượt khe, điểm tập kết | Ký hiệu riêng | Không dùng cùng dấu chấm than cho mọi loại điểm |
 | Bãi đáp H | Chữ H trong cùng khung POI trung tính | Vị trí mô phỏng ở trạng thái đề xuất, chưa khảo sát |
 | Vùng nguy cơ sạt lở | Polygon hổ phách, nét đứt, tô nhẹ | Khoanh vùng có căn cứ, lưu nguồn và mức rà soát; chưa phải xác suất sạt lở |
-| Vết sạt lở đã xảy ra | Polygon đỏ nâu, nét liền, tô nhẹ | Dấu vết được khoanh từ tư liệu hoặc thực địa; mức rà soát hiển thị riêng |
+| Vết sạt lở đã xảy ra | Polygon đỏ đất, tô nhẹ; nét ngắt ngắn khi chưa rà soát, nét liền sau rà soát | Dấu vết được khoanh từ tư liệu hoặc thực địa; mức rà soát hiển thị riêng |
 | AOI | Ranh giới nét đứt mảnh | Phạm vi đánh giá, không phải phạm vi ngập hoặc footprint DEM |
 
 - POI thường có vùng bấm 28 × 28 px, khung đầu tròn thuôn về mũi ngắn, nền trắng, viền màu trầm mảnh và glyph khoảng 16 px. Cả POI và pin đỏ khi chọn đều neo mũi vào tọa độ. Hover dùng chính ký hiệu và nhãn hiện có. Không thêm vòng hover, màu nền sặc sỡ hoặc hiệu ứng nảy. Glyph được lưu kèm nguồn tại `viewer/vendor/material/ROUNDED_SOURCE.json`; icon công cụ ngoài bản đồ giữ nguyên.
@@ -36,6 +36,8 @@ Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
 
 Phạm vi và cách kiểm tra nằm trong [kiểm tra workspace](../quality/workspace-review.md).
+
+Chú giải dùng đúng khung POI trắng và nét của marker, không dùng huy hiệu tròn màu thay thế. Các vùng khoanh chỉ có trong chú giải khi lớp tương ứng đang hiện và có dữ liệu. Màu và độ rộng đường được dùng chung giữa GIS, bản đồ 2D/3D và bản xuất; dung sai bấm không phụ thuộc độ mảnh của nét.
 
 ## Ảnh nền và bản đồ tổng quan
 

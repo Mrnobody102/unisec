@@ -29,7 +29,7 @@ def run(url, chrome, captures=None):
         expect(details).to_be_visible()
         expect(details.locator('h1')).to_have_text('Nậm Khắt')
         expect(page.locator('#response-panel .community')).to_have_count(7)
-        expect(row).to_be_hidden()
+        expect(row).to_be_visible()
         expect(details.locator('h1')).to_be_focused()
         bounds = detail_bounds()
         assert bounds['x'] >= page.locator('.map-area').bounding_box()['x'] + 100, bounds
@@ -49,7 +49,7 @@ def run(url, chrome, captures=None):
         expect(details).to_be_visible()
         detail_box = detail_bounds()
         profile_box = page.locator('.profile-panel').bounding_box()
-        assert detail_box['x'] >= profile_box['x'] + profile_box['width'] - 1
+        assert detail_box['y'] + detail_box['height'] <= profile_box['y'] - 10
         if captures:
             page.screenshot(path=str(captures / 'profile-1440.png'))
         page.locator('.map-measure-trigger').click()
@@ -69,11 +69,7 @@ def run(url, chrome, captures=None):
             expect(details.locator('h1')).to_have_text('Nậm Khắt')
             expect(page.locator('#response-panel')).not_to_be_visible()
             box = detail_bounds()
-            assert box['width'] <= width, box
-            if width > 900:
-                assert box['x'] >= page.locator('.map-area').bounding_box()['width'] - 1, box
-            else:
-                assert box['x'] < 2, box
+            assert box['x'] < 2 and box['width'] <= width, box
             assert details.evaluate('node => node.scrollWidth <= node.clientWidth + 1')
             if captures:
                 page.screenshot(path=str(captures / f'community-{width}.png'))
@@ -97,22 +93,26 @@ def run(url, chrome, captures=None):
         expect(details.locator('h1')).to_have_text('Nậm Khắt')
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
 
-        # The fixed information panel keeps the rest of the map unobstructed.
+        # Resizing the list must not squeeze the usable map behind a fixed dock.
         page.set_viewport_size({'width': 1101, 'height': 960})
         row.click()
-        expect(page.get_by_role('separator')).to_have_count(0)
-        assert page.locator('.map-canvas').bounding_box()['width'] >= 700
+        separator = page.get_by_role('separator')
+        separator.focus()
+        separator.press('End')
+        expect(page.locator('.workspace')).to_have_attribute('data-response-layout', 'pane')
+        assert page.locator('.map-canvas').bounding_box()['width'] >= 360
         expect(details).to_be_visible()
-        assert detail_bounds()['x'] >= 700
+        assert detail_bounds()['x'] < 2
+        separator.press('Home')
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
 
-        # The profile uses map space while the detail stays in the separate panel.
+        # On a short screen the profile owns the map; details return when it closes.
         page.set_viewport_size({'width': 1440, 'height': 600})
         row.click()
         profile = details.get_by_role('button', name='Mặt cắt địa hình', exact=True)
         profile.click()
         expect(page.locator('.profile-panel')).to_be_visible()
-        expect(details).to_be_visible()
+        expect(details).not_to_be_visible()
         page.get_by_role('button', name='Đóng mặt cắt', exact=True).click()
         expect(details).to_be_visible()
         expect(profile).to_be_focused()

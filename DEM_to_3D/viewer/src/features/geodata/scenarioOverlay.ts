@@ -9,7 +9,7 @@ import type {
   RoadSegment
 } from '../../types/dear';
 import { roadGeographic } from '../routes/selectedRoadJourney';
-import { roadColors } from '../../terrain/roadStyle';
+import { roadColors, roadStroke } from '../../terrain/roadStyle';
 import type { ScenarioTargetType } from '../access/scenarioEdits';
 
 /** Incident-scenario features drawn under GIS data. Managers can select, move and restatus them. */
@@ -93,8 +93,8 @@ export function scenarioOverlayLayer(
       pane: options.pane,
       interactive,
       color:
-        roadColors[road.status === 'open' ? 'networkImagery' : road.status],
-      weight: selected ? 6 : road.status === 'open' ? 2 : 3,
+        road.status === 'open' ? roadColors[options.imagery ? 'networkImagery' : 'networkTerrain'] : roadColors[road.status],
+      weight: selected ? roadStroke.emphasis : roadStroke.normal,
       opacity: 0.9,
       dashArray: road.status === 'uncertain' ? '6 5' : undefined
     }).addTo(group);
@@ -103,7 +103,7 @@ export function scenarioOverlayLayer(
         pane: options.pane,
         interactive: false,
         color: '#fff',
-        weight: 10,
+        weight: roadStroke.emphasis + roadStroke.inspectedCasing,
         opacity: 0.35
       })
         .addTo(group)

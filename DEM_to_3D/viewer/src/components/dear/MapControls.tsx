@@ -1,3 +1,6 @@
+import type { GeometryRecord } from '../../geo/vector/types';
+import { landslideAreaOf, landslideAreaStyle } from '../../features/landslides/landslideAreas';
+import { POI_FRAME_PATH } from '../../terrain/poiFrame';
 import type { ObservationKind } from '../../features/observations/model';
 import type { Hazard, Locale } from '../../types/dear';
 import { useState, type ReactNode } from 'react';
@@ -20,15 +23,16 @@ type Props = {
   layersOpen: boolean; layers: Record<string, boolean>; hasSelectedRoute: boolean; hazards: Hazard[];
   hasHLZData?: boolean; gisObservations?: ObservationKind[];
   affectedOnly?: boolean;
+  mappedAreas?: GeometryRecord[];
   children?: ReactNode; onMeasure: () => void; measuring: boolean; onDraw: () => void; drawing: boolean;
 };
 
-export function MapControls({ locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
+export function MapControls({ mappedAreas = [], locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
   const [legendMinimized, setLegendMinimized] = useState(true);
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const routeVisible = hasSelectedRoute && layers.route;
-  const legend: Array<{ kind: string; label: string; symbol?: MapSymbolName; uiSymbol?: 'layers'; fieldSymbol?: boolean }> = [];
+  const legend: Array<{ kind: string; label: string; symbol?: MapSymbolName; uiSymbol?: 'layers'; fieldSymbol?: boolean; area?: ReturnType<typeof landslideAreaStyle> }> = [];
   if (layers.roads && !affectedOnly) legend.push({ kind: 'network', label: layers.status ? t(...roadStatusLabels.open) : t('Mạng đường', 'Road network') });
   if (layers.aoi) legend.push({ kind: 'aoi', label: t('Vùng đánh giá', 'Assessment area') });
   if ((layers.roads || routeVisible) && layers.status) legend.push({ kind: 'blocked', label: t('Đường bị chặn', 'Blocked road') }, { kind: 'uncertain', label: t('Đường cần xác minh', 'Road to verify') });
@@ -44,6 +48,15 @@ export function MapControls({ locale, mapMode, onChangeMapMode, onZoomIn, onZoom
   if (layers.communities || layers.landslide || layers.status) legend.push({ kind: 'overlap', uiSymbol: 'layers', label: t('Nhóm đối tượng', 'Overlapping points') });
   if (gisObservations.some(kind=>kind!=='survey')) legend.push({kind:'field-warning',fieldSymbol:true,label:t('Ghi nhận chưa xác minh','Unreviewed observations')});
   if (gisObservations.includes('survey')) legend.push({kind:'field-survey',fieldSymbol:true,label:t('Điểm khảo sát','Survey points')});
+  if (layers.landslide) {
+    const areas = mappedAreas.flatMap(record => { const area = record.visible && landslideAreaOf(record); return area ? [area] : []; });
+    const potential = areas.find(area => area.state === 'potential');
+    const observed = areas.find(area => area.state === 'occurred' && area.review !== 'unreviewed');
+    const unreviewed = areas.find(area => area.state === 'occurred' && area.review === 'unreviewed');
+    if (potential) legend.push({kind:'potential-area', label:t('Vùng có nguy cơ sạt lở','Potential landslide extent'), area:landslideAreaStyle(potential)});
+    if (observed) legend.push({kind:'observed-area', label:t('Vết sạt lở đã rà soát','Reviewed landslide extent'), area:landslideAreaStyle(observed)});
+    if (unreviewed) legend.push({kind:'unreviewed-area', label:t('Vết sạt lở chưa rà soát','Unreviewed landslide extent'), area:landslideAreaStyle(unreviewed)});
+  }
   const visibleLegend = legendExpanded ? legend : legend.filter(item => ['network', 'blocked', 'uncertain', 'selected', 'field-warning', 'field-survey'].includes(item.kind));
 
   return <>
@@ -79,8 +92,8 @@ export function MapControls({ locale, mapMode, onChangeMapMode, onZoomIn, onZoom
         {!legendMinimized && <button className="icon-button legend-minimize" aria-label={t('Thu gọn chú giải', 'Minimize legend')} title={t('Thu gọn chú giải', 'Minimize legend')} onClick={() => setLegendMinimized(true)}><UiIcon name="minus" size={14}/></button>}
       </div>
       {!layersOpen && !measuring && !drawing && !legendMinimized && visibleLegend.length > 0 && <div className="map-legend" id="map-legend-items" aria-label={t('Chú giải', 'Legend')}>
-        {visibleLegend.map(({ kind, label, symbol, uiSymbol, fieldSymbol }) => <span className="legend-item" key={kind}>
-          {fieldSymbol ? <i className={'field-legend-symbol'+(kind==='field-survey'?' is-survey':'')} aria-hidden="true">{kind==='field-survey'?'i':'!'}</i> : symbol ? <i className={'legend-symbol ' + kind}><MapSymbol name={symbol} size={15} /></i> : uiSymbol ? <UiIcon name={uiSymbol} size={18}/> : <i className={'line ' + kind} style={{ borderColor: kind === 'network' ? (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain) : swatchColors[kind] }} aria-hidden="true"/>}{label}
+        {visibleLegend.map(({ kind, label, symbol, uiSymbol, fieldSymbol, area }) => <span className="legend-item" key={kind}>
+          {area ? <i className="legend-area" aria-hidden="true"><svg viewBox="0 0 28 22"><rect x="2" y="3" width="24" height="16" rx="1" fill={area.color} fillOpacity={area.fillOpacity} stroke={area.color} strokeWidth={area.weight} strokeDasharray={area.dashArray}/></svg></i> : fieldSymbol ? <i className={'field-legend-symbol'+(kind==='field-survey'?' is-survey':'')} aria-hidden="true">{kind==='field-survey'?'i':'!'}</i> : symbol ? <i className={'legend-symbol ' + kind}><svg viewBox="0 0 28 28" aria-hidden="true"><path d={POI_FRAME_PATH}/></svg><MapSymbol name={symbol} size={14} /></i> : uiSymbol ? <UiIcon name={uiSymbol} size={18}/> : <i className={'line ' + kind} style={{ borderColor: kind === 'network' ? (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain) : swatchColors[kind] }} aria-hidden="true"/>}{label}
         </span>)}
       </div>}
     </div>

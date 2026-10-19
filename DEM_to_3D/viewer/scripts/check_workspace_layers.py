@@ -33,7 +33,7 @@ def run(url, chrome):
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         expect(page.get_by_role('button',name='Trình chiếu',exact=True)).to_have_count(0)
         expect(page.locator('.assessment-timeline')).to_be_visible()
-        assert page.locator('.map-area').bounding_box()['width'] >= 1280*.7
+        assert page.locator('.sidebar').bounding_box()['x'] < page.locator('.map-area').bounding_box()['x']
         expect(page.locator('.landslide-area')).to_have_count(1)
         expect(page.locator('.map-reference-point')).to_have_count(1)
         page.locator('.landslide-area').click()
@@ -66,7 +66,8 @@ def run(url, chrome):
         page.keyboard.press('Escape')
         page.locator('.incident-overview-hazard').first.click()
         expect(page.locator('.map-pin.landslide.is-selected')).to_have_count(1)
-        expect(page.locator('#response-panel')).to_have_css('visibility','hidden')
+        if page.locator('.workspace').get_attribute('data-response-layout') == 'dock':
+            expect(page.locator('#response-panel')).to_have_css('visibility','visible')
         page.get_by_role('button',name='Đóng chi tiết đối tượng',exact=True).click()
         page.locator('.incident-priority-row').first.click()
         expect(page.locator('#response-details')).to_contain_text('Nậm Khắt')
@@ -101,7 +102,7 @@ def run(url, chrome):
         expect(page.locator('.landslide-area')).to_have_count(1)
         assert not errors,errors
         browser.close()
-    print('Workspace layers passed: single pane, recorded assessments, explicit report update, historical map, mobile layout and shared resident/coordinator layers.')
+    print('Workspace layers passed: context/detail panels, recorded assessments, explicit report update, historical map, mobile layout and shared resident/coordinator layers.')
 
 
 if __name__=='__main__':

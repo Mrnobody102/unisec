@@ -40,6 +40,7 @@ import { PointGroupCard } from '../features/observations/PointGroupCard';
 import { ResponsePanel } from './ResponsePanel';
 import { ResponseDetails } from './ResponseDetails';
 import { useResponseDetailLayout } from './useResponseDetailLayout';
+import { PanelResizeHandle } from '../shared/ui/PanelResizeHandle';
 import { useNotice } from '../shared/hooks/useNotice';
 import { NoticeToast } from '../shared/ui/NoticeToast';
 import { WorkspaceDialogs } from './WorkspaceDialogs';
@@ -755,6 +756,7 @@ export function ResponseWorkspace({
   const responseDetailVisible =
     responseDetailSelected &&
     !panelCollapsed &&
+    !(showProfile && detailLayout.mode === 'dock' && !detailLayout.fitsProfile) &&
     !measurementOpen &&
     !drawOpen &&
     !locationOpen &&
@@ -972,6 +974,8 @@ export function ResponseWorkspace({
         />
 
 
+        <PanelResizeHandle locale={locale} />
+
         <section
           className="map-area"
           aria-label={locale === 'vi' ? 'Bản đồ ứng phó' : 'Response map'}
@@ -1157,6 +1161,7 @@ export function ResponseWorkspace({
           )}
 
           <MapControls
+            mappedAreas={displayedGis}
             panelCollapsed={panelCollapsed}
             onTogglePanel={() => setPanelCollapsed((value) => !value)}
             locale={locale}

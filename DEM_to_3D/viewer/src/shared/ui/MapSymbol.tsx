@@ -15,8 +15,8 @@ export function MapSymbol({
       fill={artwork.filled ? "currentColor" : "none"}
       stroke={artwork.filled ? "none" : "currentColor"}
       strokeWidth="1.6"
-      strokeLinecap="butt"
-      strokeLinejoin="miter"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       <path d={artwork.path} />

@@ -2,7 +2,7 @@ import proj4 from 'proj4';
 import type { Locale } from '../../types/dear';
 import type { TerrainData } from '../../types/terrain';
 import { createRaster2d } from '../map/raster2d';
-import { roadColors } from '../../terrain/roadStyle';
+import { roadColors, roadStroke } from '../../terrain/roadStyle';
 import { roadStatusLabels } from '../routes/roadStatus';
 import {drawPoiMarker} from '../../terrain/poiFrame';
 import { type MapSymbolName } from '../../terrain/mapSymbols';
@@ -63,8 +63,8 @@ export async function renderDecisionMap(snapshot: DecisionSnapshot, terrain: Ter
   for (const road of snapshot.roads) {
     const selected = snapshot.route?.segs.some(s => s.id === road.id);
     const color = road.status === 'blocked' ? roadColors.blocked : road.status === 'uncertain' ? roadColors.uncertain : selected ? roadColors.selected : roadColors.networkImagery;
-    line(road.points, '#243f4570', selected ? 6 : 4);
-    line(road.points, color, selected ? 4 : 2.5, road.status === 'uncertain' ? [7, 5] : []);
+    line(road.points, roadColors.neutralCasing, (selected ? roadStroke.emphasis : roadStroke.normal) + roadStroke.casing);
+    line(road.points, color, selected ? roadStroke.emphasis : roadStroke.normal, road.status === 'uncertain' ? [7, 5] : []);
   }
   // Symbols use the same geometry as the interactive map. Labels avoid symbols.
   const occupied: Array<{ x: number; y: number; w: number; h: number }> = [];
