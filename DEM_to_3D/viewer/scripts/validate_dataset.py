@@ -92,6 +92,44 @@ def main(prepare: bool = False, manifest_path: Path | None = None) -> None:
     paths = set()
     assets = {}
     copies = []
+
+    def additional_asset(asset, name, pattern, canonical=False):
+        if not isinstance(asset, dict):
+            fail(f'invalid {name} contract')
+        url = asset.get('url', '')
+        if not isinstance(url, str) or not re.fullmatch(pattern, url) or '..' in url:
+            fail(f'invalid {name} URL')
+        if url in paths:
+            fail(f'duplicate asset path: {url}')
+        if type(asset.get('byteLength')) is not int or asset['byteLength'] <= 0 or not isinstance(asset.get('sha256'), str) or not re.fullmatch(r'[0-9a-f]{64}', asset['sha256']):
+            fail(f'invalid {name} contract')
+        paths.add(url)
+        path = PUBLIC / url.lstrip('/')
+        source = PUBLIC.parents[1] / path.name if prepare and canonical else path
+        if error := check_asset(source, asset):
+            fail(error)
+        if prepare and canonical and check_asset(path, asset):
+            copies.append((source, path))
+        assets[name] = path
+        return source
+
+    if manifest.get('fieldData') is not None:
+        additional_asset(manifest['fieldData'], 'fieldData', r'/scenarios/[A-Za-z0-9._/-]+\.kml')
+
+    contexts = manifest.get('terrainContext', [])
+    if not isinstance(contexts, list) or len(contexts) > 3:
+        fail('invalid terrainContext')
+    for index, group in enumerate(contexts):
+        if not isinstance(group, dict):
+            fail('invalid terrainContext')
+        sources = {key: additional_asset(group.get(key), f'terrainContext.{index}.{key}', r'/terrain/[A-Za-z0-9._-]+', canonical=True)
+                   for key in ('glb', 'grid', 'metadata')}
+        context_metadata = json.loads(sources['metadata'].read_text(encoding='utf-8'))
+        if manifest['crs'] != f"{context_metadata['crs']['authority']}:{context_metadata['crs']['code']}":
+            fail('terrainContext CRS mismatch')
+        if context_metadata['mesh']['file'] != sources['glb'].name or context_metadata['grid']['file'] != sources['grid'].name:
+            fail('terrainContext reference mismatch')
+
     for key in ("glb", "grid", "metadata"):
         asset = manifest.get("terrain", {}).get(key)
         if not isinstance(asset, dict):

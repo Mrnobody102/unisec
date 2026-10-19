@@ -1,5 +1,5 @@
 """Verify one GIS detail surface, replacement/close transitions and stable map points."""
-from gis_browser_actions import gis_task
+from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse
 import json
 from pathlib import Path
@@ -19,6 +19,7 @@ def run(url, chrome, captures=None):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        baseline=clear_prepared_survey(page)
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
         gis_task(page)
         workspace = page.locator('.geodata-workspace')
@@ -59,7 +60,7 @@ def run(url, chrome, captures=None):
         ) + '</Document></kml>'
         import_file('081026.kml', kml)
         expect(workspace.locator('.geodata-feature')).to_have_count(3)
-        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") == baseline
         for _ in range(5):
             page.get_by_role('button', name='Thu nhỏ GIS', exact=True).click()
             page.wait_for_timeout(280)
@@ -123,7 +124,7 @@ def run(url, chrome, captures=None):
         expect(details).to_have_count(0)
         page.get_by_role('combobox', name='Hiển thị điểm', exact=True).select_option('group')
         expect(workspace.locator('.geodata-feature')).to_have_count(3)
-        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") == baseline
 
         # Cursor updates must not recreate GIS points or restart their interactions.
         page.wait_for_timeout(500)

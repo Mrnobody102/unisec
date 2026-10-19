@@ -1,3 +1,4 @@
+import { loadFieldDataset } from '../landslides/fieldDataset';
 import { apiRepository, preparedRepository, workspaceConfiguration } from '../../data/ScenarioRepository';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { loadScenarioManifest, type ScenarioManifest } from '../../data/scenarioManifest';
@@ -23,10 +24,13 @@ export async function loadWorkspaceDataset(signal: AbortSignal, apiBase = '') {
     : preparedRepository(manifest.workspace);
   const packet = await repository.load(signal);
   validateWorkspaceManifest(manifest, packet);
-  const terrain = await loadTerrainData({ metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url }, signal);
+  const [terrain, fieldDataset] = await Promise.all([
+    loadTerrainData({ metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url }, signal),
+    manifest.fieldData ? loadFieldDataset(manifest.fieldData, packet.datasetVersion, signal) : undefined
+  ]);
   if (`${terrain.metadata.crs.authority}:${terrain.metadata.crs.code}` !== manifest.crs) {
     throw new Error('Terrain CRS does not match its manifest');
   }
   signal.throwIfAborted();
-  return { manifest, packet, terrain, offline: configuration.offline };
+  return { manifest, packet, terrain, fieldDataset, offline: configuration.offline };
 }

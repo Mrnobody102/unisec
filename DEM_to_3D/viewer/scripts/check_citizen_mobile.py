@@ -35,7 +35,7 @@ def run(url,chrome,captures):
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'resident-mobile-photo.png'),full_page=True)
   form.get_by_role('button',name='Gửi báo cáo',exact=True).click()
   expect(page.locator('.citizen-submission')).to_have_count(1)
-  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records)'))
+  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records.filter(r=>r.feature.properties.dearSubmission))'))
   assert records[0]['feature']['properties']['dearObservation']['observedLocalTime']=='2026-09-29T08:30:15'
   assert records[0]['feature']['properties']['dearSubmission']['locationSource']=='photo'
   expect(page.locator('.citizen-feedback')).to_contain_text('Đã lưu ghi nhận trên thiết bị này')
@@ -51,7 +51,7 @@ def run(url,chrome,captures):
   village.select_option(village.locator('option').nth(1).get_attribute('value'))
   form.get_by_role('button',name='Gửi báo cáo',exact=True).click()
   expect(page.locator('.citizen-submission')).to_have_count(2)
-  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records)'))
+  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records.filter(r=>r.feature.properties.dearSubmission))'))
   approximate=next(r for r in records if r['feature']['properties']['dearSubmission']['locationSource']=='community')
   assert approximate['feature']['properties']['dearSubmission']['locationCommunityId']
   page.locator('.citizen-submission-head').nth(1).click()
@@ -67,7 +67,7 @@ def run(url,chrome,captures):
   expect(form.get_by_role('button',name='Gửi báo cáo',exact=True)).to_be_enabled()
   form.locator('.citizen-position select').select_option(form.locator('.citizen-position select option').nth(1).get_attribute('value'))
   form.get_by_role('button',name='Gửi báo cáo',exact=True).click()
-  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records)'))
+  records=json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records.filter(r=>r.feature.properties.dearSubmission))'))
   voice=next(r for r in records if r['feature']['properties']['dearObservation'].get('voice'))
   obs=voice['feature']['properties']['dearObservation']
   assert not obs['note'] and not obs['photos'] and obs['voice']['duration']>0
@@ -117,7 +117,7 @@ def run(url,chrome,captures):
   inbox=page.get_by_role('dialog',name='Ghi nhận gửi đến',exact=False)
   inbox.get_by_role('button',name=voice['name'],exact=False).click()
   expect(inbox.locator('audio')).to_be_visible()
-  assert len(json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records)')))==3
+  assert len(json.loads(page.evaluate('JSON.stringify(JSON.parse(localStorage.getItem("dear.gis.v2")).records.filter(r=>r.feature.properties.dearSubmission))')))==3
   assert not errors,errors
   browser.close()
  print('Resident mobile passed: explicit origin, GPS, camera input, photo/text/voice-only, approximate location, draft persistence, microphone cleanup, permission denial, responsive themes and coordinator playback.')

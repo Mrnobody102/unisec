@@ -51,6 +51,7 @@ export type ViewControls = {
   resetView: () => void;
   frameProjected?: (points: Array<{x:number;y:number}>, inset?: {right?:number}) => void;
   retryBasemap: () => void;
+  setOrbit?: (enabled: boolean) => void;
   /** Centre a point in the part of the map not covered by floating panels (`inset` in px). */
   focusProjected: (point: { x: number; y: number }, inset?: { right?: number }) => void;
 };
@@ -61,6 +62,7 @@ export type MapDisplayProps = {
   onSelectOverlayHit?: (hit: OverlayHit) => void;
   viewControlRef?: MutableRefObject<ViewControls | null>;
   onViewReady?: () => void;
+  onOrbitChange?: (enabled: boolean) => void;
   onBasemapState?: (state: BasemapState) => void;
   focusPoint?: { x: number; y: number; z: number } | null;
   profileMetadata?: TerrainMetadata;

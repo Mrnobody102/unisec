@@ -72,3 +72,16 @@ def scenario_properties(card):
     if disclosure.get_attribute('open') is None:
         disclosure.locator('summary').click()
     return panel
+
+
+def clear_prepared_survey(page):
+    """Isolate drawing/edit fixtures; shipped survey coverage is checked by check_workspace_layers."""
+    page.evaluate("""() => {
+        const data=JSON.parse(localStorage.getItem('dear.gis.v2'));
+        if (!data) return;
+        data.records=data.records.filter(r=>!r.feature.properties.sourceDatasetId);
+        localStorage.setItem('dear.gis.v2',JSON.stringify(data));
+    }""")
+    page.reload()
+    expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+    return page.evaluate("localStorage.getItem('dear.gis.v2')")

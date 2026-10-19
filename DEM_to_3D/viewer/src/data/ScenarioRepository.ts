@@ -10,13 +10,16 @@ export async function workspaceDataSource(): Promise<'prepared' | 'api'> {
   return (await workspaceConfiguration()).dataSource;
 }
 
+export async function verifiedAssetBytes(asset: ScenarioAsset, signal?: AbortSignal): Promise<ArrayBuffer> {
+  const bytes = await (await request(asset.url, signal)).arrayBuffer();
+  if (bytes.byteLength !== asset.byteLength) throw new Error('Dataset asset size mismatch');
+  const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  if (digest !== asset.sha256) throw new Error('Dataset asset checksum mismatch');
+  return bytes;
+}
 export function preparedRepository(asset: ScenarioAsset): ScenarioRepository {
   return { async load(signal) {
-    const bytes = await (await request(asset.url, signal)).arrayBuffer();
-    if (bytes.byteLength !== asset.byteLength) throw new Error('Incident packet size mismatch');
-    const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(byte => byte.toString(16).padStart(2, '0')).join('');
-    if (digest !== asset.sha256) throw new Error('Incident packet checksum mismatch');
-    return validateIncidentPacket(JSON.parse(new TextDecoder().decode(bytes)));
+    return validateIncidentPacket(JSON.parse(new TextDecoder().decode(await verifiedAssetBytes(asset, signal))));
   } };
 }
 

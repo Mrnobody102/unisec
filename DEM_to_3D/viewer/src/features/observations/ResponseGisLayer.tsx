@@ -1,3 +1,4 @@
+import {selectedPinSvg, surveyPointSvg} from '../../terrain/poiFrame';
 import { areaMapLabel } from '../landslides/areaMapLabel';
 import { usePointRendering } from '../map/usePointRendering';
 import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
@@ -82,6 +83,13 @@ export function ResponseGisLayer({
                   dashArray: record.role === 'footprint' ? '7 4' : undefined
                 },
           pointToLayer: (_, position) => {
+            if (!observation && (selected || record.feature.properties.sourceDatasetId)) {
+              return L.marker(position, {pane:mapPane('selection'), interactive, keyboard:interactive,
+                zIndexOffset:selected ? 1000 : 0,
+                icon:L.divIcon({html:selected ? selectedPinSvg() : surveyPointSvg(),
+                  className:'survey-reference-point '+(selected ? 'map-selected-reference' : 'map-reference-point'),
+                  iconSize:[28,selected ? 32 : 28],iconAnchor:[14,selected ? 28.8 : 25.2],tooltipAnchor:[0,-28]})});
+            }
             if (!observation)
               return L.circleMarker(position, {
                 pane: mapPane('selection'),

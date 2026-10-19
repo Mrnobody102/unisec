@@ -37,5 +37,29 @@
     "url": "/scenarios/che-tao/v0.2/incident.json",
     "byteLength": 25069,
     "sha256": "8c5f59f894d99ea46d65040ad1cdf4abebf3d75716192d33ffed8066a691f8c1"
-  }
+  },
+  "fieldData": {
+    "url": "/scenarios/che-tao/field/CheTao-Landslide-Scars.kml",
+    "byteLength": 65490,
+    "sha256": "3dd477505b94592e8d147410ed0c51c39d7e66636f65c76e7fd2a8105830fafc"
+  },
+  "terrainContext": [
+    {
+      "glb": {
+        "url": "/terrain/lao_chai_v2_tex.glb",
+        "byteLength": 11257376,
+        "sha256": "fbca1d43880f61ef521799e5809eb434d45d8bf62fde78f5029bb554df514cb9"
+      },
+      "grid": {
+        "url": "/terrain/lao_chai_v2_tex.grid.bin",
+        "byteLength": 1331180,
+        "sha256": "4e951bbd2c1e11689f8c567f34a7c990818716f19189fb05759e155cb1a8d1e1"
+      },
+      "metadata": {
+        "url": "/terrain/lao_chai_v2_tex.terrain.json",
+        "byteLength": 2348,
+        "sha256": "a0df270411619fe31d4be35a41e962348290fd7bf54013d63ace6bc3956f0344"
+      }
+    }
+  ]
 }

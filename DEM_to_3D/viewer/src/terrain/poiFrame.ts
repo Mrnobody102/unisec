@@ -7,6 +7,10 @@ export const SELECTED_PIN_PATH =
 export function selectedPinSvg(): string {
   return `<svg width="28" height="32" viewBox="0 -960 960 960" aria-hidden="true"><path d="${SELECTED_PIN_PATH}" fill-rule="evenodd"/></svg>`;
 }
+/** Survey station, using the same white POI frame as incident map symbols. */
+export function surveyPointSvg(): string {
+  return `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="${POI_FRAME_PATH}" fill="#fbfcfa" stroke="#7b6953" stroke-width=".9"/><path d="M14 6.5v11M8.5 12h11" fill="none" stroke="#7b6953" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+}
 export function poiFrameSvg(selected = false): string {
   if (selected) return selectedPinSvg();
   return `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="${POI_FRAME_PATH}"/></svg>`;

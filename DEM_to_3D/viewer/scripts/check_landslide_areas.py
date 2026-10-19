@@ -14,6 +14,10 @@ def run(url, chrome, captures):
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(url + '/?offline=1&map=2d&demoRole=manager')
         expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
+        page.evaluate("const d=JSON.parse(localStorage.getItem('dear.gis.v2'));d.records=[];localStorage.setItem('dear.gis.v2',JSON.stringify(d))")
+        page.reload()
+        expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
+        baseline = page.evaluate("localStorage.getItem('dear.gis.v2')")
         page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
         workspace = page.locator('.geodata-workspace')
         tasks = workspace.locator('.geodata-task-nav')
@@ -62,7 +66,7 @@ def run(url, chrome, captures):
         review = page.get_by_role('dialog', name='Áp dụng thay đổi GIS?', exact=True)
         review.get_by_role('button', name='Áp dụng', exact=True).click()
         expect(review).to_contain_text('Chọn nguồn và ghi căn cứ')
-        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") == baseline
         review.get_by_role('button', name='Hủy', exact=True).click()
         editor.get_by_label('Phản ánh người dân', exact=True).check()
         editor.get_by_label('Căn cứ khoanh vùng', exact=True).fill('TEST: Residents reported new ground cracks and cracking sounds on the slope. Extent is provisional.')

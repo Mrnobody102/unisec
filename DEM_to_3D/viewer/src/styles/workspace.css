@@ -198,7 +198,7 @@ h3 {
 }
 
 .text-button:hover {
-  text-decoration: underline;
+  color:var(--select-ink);
 }
 
 .text-button.back {
@@ -343,7 +343,6 @@ h3 {
 .sidebar .community.active:hover { background:var(--hover); }
 
 .sidebar .community.active {background:transparent;}
-.sidebar .community.active .community-heading strong {text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;}
 .sidebar .community.active .community-heading strong { color: var(--select-ink); }
 
 .community-heading {

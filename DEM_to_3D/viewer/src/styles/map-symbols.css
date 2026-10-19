@@ -62,3 +62,19 @@
 .leaflet-tooltip-bottom:has(> .landslide-map-label)::before { border-bottom-color:#242820ed; }
 .leaflet-tooltip-left:has(> .landslide-map-label)::before { border-left-color:#242820ed; }
 .leaflet-tooltip-right:has(> .landslide-map-label)::before { border-right-color:#242820ed; }
+
+.terrain-reference-layer {position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:4;}
+.terrain-reference-point {position:absolute;top:0;left:0;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;background:transparent;color:#7b5737;pointer-events:auto;}
+.terrain-reference-point[hidden] {display:none;}
+.terrain-reference-point.is-selected {height:32px;color:#d93025;}
+.terrain-reference-point.is-selected svg {fill:currentColor;stroke:white;stroke-width:.6;}
+.terrain-reference-label {display:none;position:absolute;left:28px;top:4px;padding:3px 6px;border-radius:2px;background:#242820ed;color:#f6f5ed;font:500 12px/1.4 var(--font-sans);white-space:nowrap;}
+.terrain-reference-point:is(:hover,:focus-visible,.is-selected) .terrain-reference-label {display:block;}
+.terrain-reference-point:focus-visible {outline:2px solid white;outline-offset:2px;}
+.terrain-detail-status {position:absolute;left:16px;bottom:12px;z-index:5;padding:4px 8px;background:var(--ws-surface);color:var(--ws-muted);font:11px/1.5 var(--font-sans);border:1px solid var(--ws-line);border-radius:2px;pointer-events:none;}
+.terrain-detail-status[hidden] {display:none;}
+
+.survey-reference-point { background:transparent; border:0; color:#d93025; }
+.survey-reference-point svg { display:block; fill:currentColor; }
+
+.terrain-reference-point.label-left .terrain-reference-label { left:auto; right:32px; }

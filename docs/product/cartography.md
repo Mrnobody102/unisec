@@ -144,3 +144,12 @@ Chọn tuyến hoặc đoạn đường đưa toàn hình học vào phần bả
 3D chỉ vẽ khi camera, lớp, ảnh hoặc vị trí đọc thay đổi; dừng khi đứng yên và khi tab ẩn. Nhãn vùng được chọn ghi loại vùng và diện tích tính từ polygon; không suy diện tích từ điểm ảnh chụp. Công cụ lớp có mẫu nét/ký hiệu trùng với bản đồ.
 
 Timeline phân biệt bản đánh giá đã công bố với thời điểm nhận báo cáo; nhận báo cáo không tự đổi bản đánh giá. Giờ chỉ nằm trên timeline, ngày nằm trên tiêu đề và thời gian đầy đủ trong thông tin sự kiện. Attribution đầy đủ ở menu nguồn bản đồ, không lặp thêm dải chữ bên ngoài.
+
+
+## Khảo sát Chế Tạo – Lao Chải
+
+`CheTao-Landslide-Scars.kml` cung cấp 47 vùng khoanh và 3 điểm khảo sát. Giữ nguyên tọa độ, Z và tên nguồn; tên polygon trống được đánh số để dễ tìm. Ngày khảo sát, sai số ranh giới và liên hệ với đường chưa được cung cấp, nên không suy diễn từ giờ trong tên điểm hoặc thời điểm nhập file. Các vùng ở trạng thái chưa rà soát và không tự đổi tình trạng đường.
+
+Hai DEM có sẵn của Chế Tạo và Lao Chải được ghép theo CRS và gốc tọa độ. Polygon Z=0 trong KML được phủ lên DEM khi hiển thị; dữ liệu gốc vẫn được giữ để xuất lại. Năm lớp ảnh trong KML chỉ chứa GIF trong suốt và liên kết tile riêng của Google Earth, không chứa raster để đưa lên bản đồ.
+
+Ảnh trực tuyến thay thế theo từng mức phủ đầy đủ; chọn vùng nhỏ mới tải cửa sổ ảnh chi tiết, tối đa 48 tile. Trong lúc tải hoặc khi lỗi mạng, ảnh mức trước vẫn được giữ. Mức zoom tile không phải độ phân giải hay độ chính xác đo đạc. Xoay địa hình do người xem chủ động bật, dừng khi kéo/cuộn/chọn vị trí và tôn trọng thiết lập giảm chuyển động.

@@ -1,3 +1,5 @@
+import proj4 from 'proj4';
+import { geometryPositions } from '../geo/vector/types';
 import { AssessmentTimeline } from '../features/incident/AssessmentTimeline';
 import './workspace-layout.css';
 import { visibleMapRecords } from '../features/map/visibleMapRecords';
@@ -150,7 +152,7 @@ export function ResponseWorkspace({
   const { locale, setLocale, theme, setTheme, fontChoice, setFontChoice } =
     preferences;
   const navigation = useWorkspaceNavigation();
-  const gis = useGeometrySession();
+  const gis = useGeometrySession({prepared: runtime.fieldDataset});
   const [gisScenarioRequest, setGisScenarioRequest] = useState<ScenarioTarget | null>(null);
   const [gisCardId, setGisCardId] = useState<string | null>(() =>
     new URLSearchParams(location.search).get('gisPoint')
@@ -255,9 +257,23 @@ export function ResponseWorkspace({
     center: [number, number];
     zoom: number;
   } | null>(null);
+  const [orbiting, setOrbiting] = useState(false);
   const viewControlRef = useRef<ViewControls | null>(null);
   const [viewReadyVersion, setViewReadyVersion] = useState(0);
   const onViewReady = useCallback(() => setViewReadyVersion(version => version + 1), []);
+  useEffect(() => {
+    if (mapMode !== '3d' || !gisCard || !models[0]?.metadata) return;
+    const metadata = models[0].metadata;
+    const points = geometryPositions(gisCard.feature.geometry).map(([lon,lat]) => {
+      const [x,y] = proj4('EPSG:4326', metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`, [lon,lat]);return {x,y};
+    });
+    const timer = requestAnimationFrame(() => {
+      const reserve = parseFloat(getComputedStyle(document.querySelector('.workspace')!).getPropertyValue('--response-detail-reserve')) || 0;
+      viewControlRef.current?.frameProjected?.(points,{right:reserve});
+    });
+    return () => cancelAnimationFrame(timer);
+  }, [gisCardId, gisCard?.feature.geometry, mapMode, viewReadyVersion]);
+
   const workspaceRef = useRef<HTMLDivElement>(null);
   const detailReturnTarget = useRef<HTMLElement | null>(null);
   const profileReturnTarget = useRef<HTMLElement | null>(null);
@@ -823,7 +839,7 @@ export function ResponseWorkspace({
     <div
       ref={workspaceRef}
       className="workspace workspace-shell"
-      data-response-gis-detail={!journey.open && !locationOpen && !measurementOpen && !drawOpen && (mapMode === '2d' || !!gisCard && !!landslideAreaOf(gisCard)) && (Boolean(gisCard) || gisGroup.length > 1)}
+      data-response-gis-detail={!journey.open && !locationOpen && !measurementOpen && !drawOpen && (mapMode === '2d' || !!gisCard && (!!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId)) && (Boolean(gisCard) || gisGroup.length > 1)}
       data-gis-open={activeDialog === 'geodata'}
       data-mobile={mobileView}
       data-panel-collapsed={panelCollapsed}
@@ -897,6 +913,14 @@ export function ResponseWorkspace({
       <main className="work-area">
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
         <ResponsePanel
+          survey={!historical && runtime.fieldDataset ? {areas:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type !== 'Point').length,points:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type === 'Point').length} : undefined}
+          onShowSurvey={() => {
+            resetTools(); navigation.dispatch({type:'reset'}); setGisCardId(null); setGisGroupIds([]);
+            setMobileView('map');
+            setLayers(previous => ({...previous,landslide:true,gis:true}));
+            const points = gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset?.id).flatMap(r => geometryPositions(r.feature.geometry)).map(([lon,lat]) => {const [x,y]=proj4('EPSG:4326','EPSG:32648',[lon,lat]);return {x,y};});
+            requestAnimationFrame(() => viewControlRef.current?.frameProjected?.(points));
+          }}
           locale={locale}
           navigation={navigation}
           onNavigate={navigation.dispatch}
@@ -1088,6 +1112,7 @@ export function ResponseWorkspace({
                 >
                   <TerrainViewer
                     models={models}
+                    onOrbitChange={setOrbiting}
                     gisRecords={displayedGis}
                     gisSelectedId={gisCardId}
                     onGisSelect={id => {setPanelCollapsed(false);gis.select(id);setGisCardId(id);setGisGroupIds([]);}}
@@ -1188,6 +1213,8 @@ export function ResponseWorkspace({
             onOpenLayers={() =>
               setActiveDialog(activeDialog === 'layers' ? null : 'layers')
             }
+            orbiting={orbiting}
+            onToggleOrbit={() => viewControlRef.current?.setOrbit?.(!orbiting)}
             layersOpen={activeDialog === 'layers'}
             layers={scenarioTerrainCompatible ? layers : {}}
             hazards={scenarioTerrainCompatible ? hazards : []}
@@ -1267,6 +1294,7 @@ export function ResponseWorkspace({
             />
           </MapControls>
           <MapAttribution
+            fieldSource={runtime.fieldDataset?.records[0]?.source.name}
             terrainDisplay={mapMode === '3d' && models[0]?.metadata ? {exaggeration:models[0].metadata.elevation.exaggeration * (geographicPlacements?.[0]?.scaleY ?? 1)} : undefined}
             locale={locale}
             state={basemapState}
@@ -1274,7 +1302,7 @@ export function ResponseWorkspace({
             localSource={
               mapTerrain
                 ? defaultTerrainData
-                  ? ['Ảnh nền và địa hình', 'Imagery and terrain']
+                  ? (models.length > 1 ? ['DEM Chế Tạo và Lao Chải', 'Chế Tạo and Lao Chải DEMs'] : ['Ảnh nền và địa hình', 'Imagery and terrain'])
                   : [
                       'Lưới độ cao từ mô hình đã tải lên',
                       'Elevation grid from the uploaded model'
@@ -1295,10 +1323,10 @@ export function ResponseWorkspace({
               }
             />
           )}
-          {(mapMode === '2d' || !!gisCard && !!landslideAreaOf(gisCard)) &&
+          {(mapMode === '2d' || !!gisCard && (!!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId)) &&
             !journey.open &&
             gisCard &&
-            (layers.gis || !!landslideAreaOf(gisCard)) &&
+            (layers.gis || !!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId) &&
             !locationOpen &&
             !measurementOpen &&
             !drawOpen && (

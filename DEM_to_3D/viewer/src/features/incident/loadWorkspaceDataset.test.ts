@@ -42,6 +42,8 @@ describe('configured dataset loading', () => {
     const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(byte => byte.toString(16).padStart(2, '0')).join('');
     const manifest = { ...structuredClone(manifestJson), datasetVersion: raw.datasetVersion, incidentId: raw.incident.id,
       workspace: { url: '/scenarios/alternate/v1/incident.json', byteLength: bytes.byteLength, sha256: hash } };
+    delete (manifest as {fieldData?: unknown}).fieldData;
+    delete (manifest as {terrainContext?: unknown}).terrainContext;
     const fetch = vi.fn(async (url: string) => {
       if (url === '/workspace-config.json') return Response.json({ dataSource, manifestUrl: '/scenarios/alternate/v1/manifest.json' });
       if (url === '/scenarios/alternate/v1/manifest.json') return Response.json(manifest);

@@ -1,6 +1,6 @@
 import { areaMapLabel } from '../landslides/areaMapLabel';
 import { removeLeafletMap } from '../map/removeLeafletMap';
-import { selectedPinSvg } from '../../terrain/poiFrame';
+import { selectedPinSvg, surveyPointSvg } from '../../terrain/poiFrame';
 import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
 import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
 import type { RenameScenario } from '../access/ScenarioLabels';
@@ -401,7 +401,11 @@ export function GeometryMap(props: Props): JSX.Element {
                     keyboard: !props.editor.active && !props.onPickPoint, zIndexOffset: 1000,
                     icon: L.divIcon({ html: selectedPinSvg(), className: 'geodata-selected-point map-selected-reference',
                       iconSize: [28, 32], iconAnchor: [14, 28.8], tooltipAnchor: [0, -30] }) })
-                : L.circleMarker(position, pointStyle)
+                : record.feature.properties.sourceDatasetId
+                  ? L.marker(position,{pane:'points',interactive:!props.editor.active && !props.onPickPoint,
+                      keyboard:!props.editor.active && !props.onPickPoint,
+                      icon:L.divIcon({html:surveyPointSvg(),className:'survey-reference-point map-reference-point',iconSize:[28,28],iconAnchor:[14,25.2],tooltipAnchor:[0,-28]})})
+                  : L.circleMarker(position, pointStyle)
         });
         const label = mappedArea ? areaMapLabel(record,props.locale) : document.createElement('span');
         if (!mappedArea) label.textContent = record.name;

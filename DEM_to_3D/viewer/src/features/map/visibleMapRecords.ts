@@ -9,6 +9,7 @@ export function visibleMapRecords(records: GeometryRecord[], layers: Record<stri
     if (!record.visible) return false;
     const area = landslideAreaOf(record);
     if (area) return layers.landslide !== false && (!area.networkVersion || area.networkVersion === networkVersion);
+    if (record.feature.properties.sourceDatasetId && record.feature.geometry.type === 'Point') return layers.landslide !== false;
     if (layers.gis === false) return false;
     const owner = fieldAreaOwner(record, records);
     return !owner || owner.visible;

@@ -157,7 +157,6 @@
 .scenario-feature-row small { margin-top: 2px; color: var(--ws-muted); font-size: 11px; }
 .scenario-feature-row:hover { background: var(--hover); }
 .scenario-feature-row[aria-pressed='true'] { background: transparent; color: var(--select-ink); font-weight: 600; }
-.scenario-feature-row[aria-pressed='true'] strong {text-decoration:underline;text-underline-offset:3px;}
 .scenario-properties select { width: 100%; min-height: 34px; padding: 5px 8px; border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--ws-surface); color: var(--ws-text); font: inherit; }
 .coordinate-entry { display: grid; gap: 0; }
 .coordinate-map-pick { justify-self: start; margin-bottom: 14px; }
@@ -183,7 +182,6 @@
 .scenario-status-options legend { font-size:12px; font-weight:600; }
 .scenario-links .confirm-dialog .scenario-card-hint { margin-top:12px; }
 .scenario-card .confirm-dialog .scenario-card-field { margin-top:12px; }
-.scenario-feature-row[aria-pressed='true'] > span { text-decoration:underline; text-underline-offset:3px; }
 
 .scenario-status-evidence { font-size:12px; line-height:1.5; }
 .scenario-status-evidence p { margin:0 0 4px; overflow-wrap:anywhere; }

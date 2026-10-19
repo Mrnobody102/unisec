@@ -1,4 +1,5 @@
-import { gisValueKey, publishedGisKey, readPublishedGis, writePublishedRecords } from './publishedGis';
+import type { FieldDataset } from '../landslides/fieldDataset';
+import { installPreparedRecords, gisValueKey, publishedGisKey, readPublishedGis, writePublishedRecords } from './publishedGis';
 import { landslideAreaKey, landslideAreaOf, revisedLandslideBoundary } from '../landslides/landslideAreas';
 import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
@@ -26,9 +27,9 @@ import { annotateRecord, type FieldObservation } from '../observations/model';
 import { removeWithFieldAreas, fieldAreaOf } from '../observations/fieldAreas';
 
 
-function read() {
+function read(prepared?: FieldDataset) {
   try {
-    const text = JSON.stringify(readPublishedGis().records);
+    const text = JSON.stringify((prepared ? installPreparedRecords(prepared) : readPublishedGis()).records);
     if (text && textBytes(text) > GEOMETRY_LIMITS.storageBytes)
       throw new GeometryError('storage');
     return {
@@ -36,15 +37,20 @@ function read() {
       error: null as unknown
     };
   } catch {
-    return {
-      records: [] as GeometryRecord[],
-      error: new GeometryError('storage')
-    };
+    // A failed source installation must not hide records that were already saved.
+    let records = prepared?.records ?? [] as GeometryRecord[];
+    try {
+      const saved = readPublishedGis();
+      const ids = new Set(saved.records.map(record => record.id));
+      const pending = prepared && !saved.installedSources?.includes(prepared.id) ? prepared.records : [];
+      records = [...saved.records, ...pending.filter(record => !ids.has(record.id))];
+    } catch { /* Invalid or inaccessible storage remains read-only. */ }
+    return {records, error: new GeometryError('storage')};
   }
 }
 
-export function useGeometrySession(options: {draft?:boolean;initialRecords?:GeometryRecord[];initialSelectedId?:string|null} = {}) {
-  const [initial] = useState(()=>options.initialRecords?{records:options.initialRecords,error:null}:read());
+export function useGeometrySession(options: {draft?:boolean;initialRecords?:GeometryRecord[];initialSelectedId?:string|null;prepared?:FieldDataset} = {}) {
+  const [initial] = useState(()=>options.initialRecords?{records:options.initialRecords,error:null}:read(options.prepared));
   // Records as last read from or written to storage; writes merge against it (see mergeRecords).
   const synced = useRef(initial.records);
   // Set when a write had to merge in another tab's changes; the next commit adopts it.

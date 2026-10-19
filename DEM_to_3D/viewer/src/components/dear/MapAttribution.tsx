@@ -13,13 +13,15 @@ export function MapAttribution({
   state,
   onRetry,
   localSource,
-  terrainDisplay
+  terrainDisplay,
+  fieldSource
 }: {
   locale: Locale;
   state: BasemapState;
   onRetry: () => void;
   localSource?: [string, string];
   terrainDisplay?: {exaggeration: number};
+  fieldSource?: string;
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const imagery =
@@ -83,6 +85,7 @@ export function MapAttribution({
                   <dd>{t(...localSource)}</dd>
                 </div>
               )}
+              {fieldSource && <div><dt>{t('Khảo sát thực địa', 'Field survey')}</dt><dd>{fieldSource}<br/>{t('Lớp ảnh Google Earth không kèm dữ liệu ảnh.', 'Google Earth image layers contain no raster data.')}</dd></div>}
               {terrainDisplay && (
                 <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{terrainDisplay.exaggeration}</dd></div>
               )}

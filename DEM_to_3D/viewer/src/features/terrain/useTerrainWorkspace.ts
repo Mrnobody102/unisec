@@ -1,3 +1,5 @@
+import { loadTerrainData } from '../../terrain/loadTerrain';
+import type { FieldDataset } from '../landslides/fieldDataset';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UploadMode } from '../../components/ModelUploadPanel';
 import type { IncidentPacket } from '../../data/incidentPacket';
@@ -12,6 +14,7 @@ type Props = { mapMode: '2d' | '3d'; on3DUnavailable: () => void };
 
 /** Owns dataset loading and model resources. It does not choose panels or map tools. */
 export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
+  const [fieldDataset, setFieldDataset] = useState<FieldDataset>();
   const [packet, setPacket] = useState<IncidentPacket | null>(null);
   const [manifest, setManifest] = useState<ScenarioManifest | null>(null);
   const [defaultTerrain, setDefaultTerrain] = useState<TerrainData | null>(null);
@@ -78,7 +81,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
       if (mapModeRef.current === '3d') startMesh(dataset.manifest.terrain.glb);
       if (controller.signal.aborted) return;
       preparedTerrain.current = dataset.terrain;
-      setPacket(dataset.packet); setManifest(dataset.manifest); setDefaultTerrain(dataset.terrain);
+      setFieldDataset(dataset.fieldDataset); setPacket(dataset.packet); setManifest(dataset.manifest); setDefaultTerrain(dataset.terrain);
       setOffline(dataset.offline || new URLSearchParams(location.search).get('offline') === '1'); setSnapshotReady(true);
     }).catch(reason => {
       if (!controller.signal.aborted) {
@@ -95,12 +98,25 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     setLoading3D(true);
     const download = startMesh(manifest.terrain.glb);
     const finish = () => { meshDownload.current = null; setProgress3D(null); };
-    void loadTerrain3D({
+    const primary = loadTerrain3D({
       glb: manifest.terrain.glb.url, metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url
-    }, defaultTerrain, controller.signal, download).then(terrain => {
-      const model: LoadedModel = { id: manifest.datasetVersion, name: manifest.terrain.glb.url.split('/').pop()!, ...terrain, objectUrls: [] };
-      if (controller.signal.aborted) releaseModels([model]);
-      else { replaceModels([model]); finish(); }
+    }, defaultTerrain, controller.signal, download);
+    const contexts = (manifest.terrainContext ?? []).map(async asset => {
+      const data = await loadTerrainData({metadata:asset.metadata.url, grid:asset.grid.url}, controller.signal);
+      return loadTerrain3D({glb:asset.glb.url, metadata:asset.metadata.url, grid:asset.grid.url}, data, controller.signal);
+    });
+    void Promise.allSettled([primary, ...contexts]).then(results => {
+      if (results.some(result => result.status === 'rejected')) {
+        releaseModels(results.flatMap((result,index) => result.status === 'fulfilled' ? [{id:String(index),name:'terrain',...result.value,objectUrls:[]}] : []));
+        throw new Error('Terrain coverage unavailable');
+      }
+      const terrains = results.map(result => (result as PromiseFulfilledResult<Awaited<ReturnType<typeof loadTerrain3D>>>).value);
+      const assets = [manifest.terrain, ...(manifest.terrainContext ?? [])];
+      const loaded: LoadedModel[] = terrains.map((terrain,index) => ({id: `${manifest.datasetVersion}:${index}`, name:assets[index].glb.url.split('/').pop()!, ...terrain, objectUrls:[]}));
+      try { createGeographicPlacements(loaded); }
+      catch (reason) { releaseModels(loaded); throw reason; }
+      if (controller.signal.aborted) releaseModels(loaded);
+      else { replaceModels(loaded); finish(); }
     }).catch(() => { if (!controller.signal.aborted) { finish(); on3DUnavailable(); } })
       .finally(() => { if (!controller.signal.aborted) setLoading3D(false); });
     return () => { controller.abort(); setLoading3D(false); };
@@ -152,11 +168,11 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   }, [geographicMerge, models]);
 
   const placements = useMemo(() => {
-    if (mode !== 'merge' || !geographicMerge || !models.length) return undefined;
+    if ((!models.every(model => model.id.startsWith(manifest?.datasetVersion + ':')) && (mode !== 'merge' || !geographicMerge)) || !models.length) return undefined;
     try { return createGeographicPlacements(models); } catch { return undefined; }
-  }, [mode, geographicMerge, models]);
+  }, [mode, geographicMerge, models, manifest]);
 
-  return { packet, manifest, defaultTerrain, snapshotReady, startupError, offline, models,
+  return { packet, manifest, fieldDataset, defaultTerrain, snapshotReady, startupError, offline, models,
     mode, geographicMerge, fileNames, busy, error, loading3D, progress3D, placements,
     retry, reload, clear, upload, changeMode, changeGeographicMerge };
 }

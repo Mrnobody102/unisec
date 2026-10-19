@@ -1,5 +1,5 @@
 """Check stable map hover, modal entry and GIS/response edit continuity."""
-from gis_browser_actions import gis_task
+from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse, json
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -14,6 +14,7 @@ def run(url, chrome, captures=None):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        baseline=clear_prepared_survey(page)
         def fixed_hover(marker):
             before = marker.bounding_box()
             marker.hover()
@@ -64,7 +65,7 @@ def run(url, chrome, captures=None):
         coordinates.get_by_label('Kinh độ (°)',exact=True).fill('104.051')
         coordinates.get_by_role('button',name='Lưu tọa độ',exact=True).click()
         expect(inspector.locator('.geodata-coordinate').first).to_have_text('21.781000°')
-        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") == baseline
         page.get_by_role('button', name='Áp dụng thay đổi', exact=True).click()
         page.get_by_role('dialog', name='Áp dụng thay đổi GIS?', exact=True).get_by_role('button', name='Áp dụng', exact=True).click()
         records = json.loads(page.evaluate("localStorage.getItem('dear.gis.v2')"))['records']
@@ -104,7 +105,7 @@ def run(url, chrome, captures=None):
         page.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
         expect(page.locator('.map-marker-layer')).to_contain_text('Khau Mang kiểm tra')
         expect(page.locator('.field-map-card')).to_contain_text('Điểm đã đổi tên')
-        expect(page.locator('.leaflet-dear-selection-pane svg path.leaflet-interactive').first).to_be_visible()
+        expect(page.locator('.leaflet-dear-selection-pane .map-selected-reference').first).to_be_visible()
         if captures:
             captures.mkdir(parents=True,exist_ok=True)
             page.screenshot(path=str(captures/'gis-response-reference.png'),animations='disabled')

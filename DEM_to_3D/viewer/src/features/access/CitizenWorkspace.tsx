@@ -74,7 +74,7 @@ export function CitizenWorkspace({
       scenarioEdits,
       published.at,
     ),
-    gis = useGeometrySession();
+    gis = useGeometrySession({prepared: runtime.fieldDataset});
   const [openSubmission, setOpenSubmission] = useState<string | null>(null);
   const [tab, setTab] = useState<"roads" | "report" | "mine">("roads"),
     [community, setCommunity] = useState(

@@ -77,6 +77,19 @@ class PreparedDatasetTests(unittest.TestCase):
             self.run_validator(prepare=True)
         self.assertFalse((self.public / 'terrain').exists())
 
+    def test_bad_context_fails_before_any_copy(self):
+        context = {}
+        for key, asset in self.manifest['terrain'].items():
+            name = 'context.' + Path(asset['url']).name
+            contents = (self.canonical / Path(asset['url']).name).read_bytes()
+            (self.canonical / name).write_bytes(contents)
+            context[key] = {**asset, 'url': '/terrain/' + name}
+        self.manifest['terrainContext'] = [context]
+        (self.canonical / Path(context['grid']['url']).name).write_bytes(b'broken')
+        with self.assertRaisesRegex(SystemExit, 'mismatch'):
+            self.run_validator(prepare=True)
+        self.assertFalse((self.public / 'terrain').exists())
+
     def test_invalid_date_and_parent_paths_are_rejected(self):
         self.manifest['snapshotAt'] = '2026-02-30T09:31:00+07:00'
         with self.assertRaisesRegex(SystemExit, 'snapshotAt'):

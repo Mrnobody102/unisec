@@ -11,16 +11,20 @@ export function LandslideAreaSummary({ record, roads = [], locale, onRoad }: { r
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   return <div className="landslide-area-summary">
     <p><strong>{areaLabel(value.state, locale)}</strong><br/>{areaLabel(value.review, locale)}</p>
-    {value.basis && <p className="field-note">{value.basis}</p>}
     <dl className="field-metadata">
-      <div><dt>{t('Phần khoanh', 'Mapped part')}</dt><dd>{areaLabel(value.part, locale)}</dd></div>
+      {value.part !== 'undifferentiated' && <div><dt>{t('Phần khoanh', 'Mapped part')}</dt><dd>{areaLabel(value.part, locale)}</dd></div>}
       <div><dt>{t('Diện tích', 'Area')}</dt><dd>≈ {formatArea(area(record.feature), locale)}</dd></div>
+    </dl>
+    <details className="landslide-source-details"><summary>{t('Căn cứ và nguồn', 'Evidence and source')}</summary>
+      {value.basis && <p className="field-note">{value.basis}</p>}
+      <dl className="field-metadata">
       <div><dt>{t('Nguồn', 'Sources')}</dt><dd>{value.sources.map(s => areaLabel(s, locale)).join(', ') || t('Chưa bổ sung', 'Not supplied')}</dd></div>
       <div><dt>{t('Thời điểm tư liệu', 'Evidence time')}</dt><dd>{value.observedAt ? new Date(value.observedAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB') : t('Chưa rõ', 'Unknown')}</dd></div>
       {value.imageReference && <div><dt>{t('Ảnh sử dụng', 'Imagery')}</dt><dd>{value.imageReference}{value.imageResolutionM ? ` (${value.imageResolutionM} m)` : ''}</dd></div>}
       <div><dt>{t('Sai số ranh giới', 'Boundary accuracy')}</dt><dd>{value.boundaryAccuracyM ? `±${value.boundaryAccuracyM} m` : t('Chưa đánh giá', 'Not assessed')}</dd></div>
       {value.reviewer && <div><dt>{t('Người rà soát', 'Reviewer')}</dt><dd>{value.reviewer}</dd></div>}
-    </dl>
+      </dl>
+    </details>
     {value.roadLinks.length > 0 && <section className="landslide-road-links"><h3>{t('Đoạn đường liên quan', 'Linked road sections')}</h3>{value.roadLinks.map(link => {
       const road = roads.find(r => r.id === link.roadId);
       return <div key={link.roadId}><strong>{road ? road.name[locale === 'vi' ? 0 : 1] : link.roadId}</strong>

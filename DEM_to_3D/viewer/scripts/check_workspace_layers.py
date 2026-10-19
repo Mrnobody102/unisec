@@ -26,10 +26,19 @@ def run(url, chrome):
         browser = p.chromium.launch(headless=True, **({'executable_path':chrome} if chrome else {}))
         context = browser.new_context(viewport={'width':1280,'height':720})
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-        value = json.dumps(dict(schema='dear-gis/v2',records=fixture_records(),scenarios={}),ensure_ascii=False)
-        context.add_init_script('if (!localStorage.getItem("dear.gis.v2")) localStorage.setItem("dear.gis.v2",'+json.dumps(value)+');')
         page = context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?map=2d&offline=1&demoRole=manager')
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        # Verify the shipped survey before isolating the semantic visibility fixture.
+        survey=page.evaluate('JSON.parse(localStorage.getItem("dear.gis.v2"))')
+        assert len(survey['records'])==50
+        assert len([r for r in survey['records'] if r['feature']['geometry']['type']=='Polygon'])==47
+        assert len([r for r in survey['records'] if r['feature']['geometry']['type']=='Point'])==3
+        assert len(survey['installedSources'])==1
+        assert all(not r['feature']['properties'].get('dearLandslideArea',{}).get('roadLinks') for r in survey['records'])
+        survey['records']=fixture_records()
+        page.evaluate('(d)=>localStorage.setItem("dear.gis.v2",JSON.stringify(d))',survey)
+        page.reload()
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         expect(page.get_by_role('button',name='Trình chiếu',exact=True)).to_have_count(0)
         expect(page.locator('.assessment-timeline')).to_be_visible()

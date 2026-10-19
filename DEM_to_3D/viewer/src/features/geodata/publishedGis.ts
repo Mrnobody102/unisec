@@ -17,6 +17,7 @@ export type PublishedGis = {
   schema: "dear-gis/v2";
   records: GeometryRecord[];
   scenarios: Record<string, ScenarioEdit[]>;
+  installedSources?: string[];
 };
 const legacyRecords = "dear.geodata.v1",
   prefix = "dear.scenario-edits.v1:";
@@ -32,7 +33,8 @@ export function readPublishedGis(
       !raw.scenarios ||
       typeof raw.scenarios !== "object" ||
       Array.isArray(raw.scenarios) ||
-      !Object.values(raw.scenarios).every(Array.isArray)
+      !Object.values(raw.scenarios).every(Array.isArray) ||
+      (raw.installedSources !== undefined && (!Array.isArray(raw.installedSources) || !raw.installedSources.every(id => typeof id === 'string' && /^[0-9a-f]{64}$/.test(id))))
     )
       throw new Error("Invalid GIS workspace");
     return { ...raw, records: restoreGeometryRecords(raw.records) };
@@ -72,6 +74,17 @@ export function writePublishedGis(
     /* Canonical publication succeeded. */
   }
 }
+/** One atomic installation per source revision. Later edits/deletions are retained on reload. */
+export function installPreparedRecords(source: {id: string; records: GeometryRecord[]}, storage: Storage = localStorage): PublishedGis {
+  const current = readPublishedGis(storage);
+  if (current.installedSources?.includes(source.id)) return current;
+  const ids = new Set(current.records.map(record => record.id));
+  const next = {...current, records: [...current.records, ...source.records.filter(record => !ids.has(record.id))],
+    installedSources: [...(current.installedSources ?? []), source.id]};
+  writePublishedGis(next, storage);
+  return next;
+}
+
 /** Another tab (e.g. a resident submitting a report) may have written since `base` was
  * read. Keep its changes and apply only what this tab added, changed or removed. */
 export function mergeRecords(

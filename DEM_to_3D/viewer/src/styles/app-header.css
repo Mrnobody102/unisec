@@ -123,7 +123,7 @@
 .settings-workspace-actions { display: grid; gap: 6px; padding: 0 16px 12px; }
 .settings-workspace-actions small { display: block; overflow-wrap: anywhere; color: var(--ws-muted); font-size: 11px; }
 .settings-link { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: var(--select-ink); font-size: 12px; text-align: left; }
-.settings-link:hover { text-decoration: underline; }
+.settings-link:hover { color:var(--select-ink); }
 
 @media(max-width:900px) {
   .incident-context { flex: 1; border: 0; padding-left: 0; }

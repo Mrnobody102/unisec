@@ -2,9 +2,9 @@ name: DEAR web
 
 on:
   push:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', 'DEM_to_3D/lao_chai_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
   pull_request:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', 'DEM_to_3D/lao_chai_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
   workflow_dispatch:
     inputs:
       extended:

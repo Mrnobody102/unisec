@@ -25,4 +25,11 @@
 .landslide-area-list li>button {flex:1;text-align:left;padding:9px 0;border:0;background:transparent;color:var(--ws-text);min-width:0;}
 .landslide-area-list li>button small {display:block;color:var(--ws-muted);font-size:11px;margin-top:3px;}
 .landslide-area-list li>button[aria-pressed=true] {color:var(--select-ink);}
-.landslide-area-list li>button[aria-pressed=true] strong {text-decoration:underline;text-underline-offset:3px;}
+
+.landslide-area-list li { padding-inline:8px; margin-inline:-8px; border-radius:2px; }
+.landslide-area-list li:hover, .landslide-area-list li:has(>button[aria-pressed=true]) { background:var(--hover); }
+.landslide-area-list li>button { padding:11px 8px; }
+.landslide-show-more { margin-top:12px; width:100%; }
+.landslide-source-details { margin:16px 0; padding-top:12px; border-top:1px solid var(--ws-line); }
+.landslide-source-details summary { cursor:pointer; font-size:12px; }
+.landslide-source-details .field-note { margin:12px 0; font-size:12px; line-height:1.5; }

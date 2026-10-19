@@ -17,6 +17,7 @@ type Props = {
   panelCollapsed: boolean; onTogglePanel: () => void;
   locating: boolean; onLocation: () => void;
   locale: Locale; mapMode: '3d' | '2d';
+  orbiting?: boolean; onToggleOrbit?: () => void;
   onChangeMapMode: (mode: '2d' | '3d') => void; onZoomIn: () => void; onZoomOut: () => void;
   onResetView: () => void; onOpenLayers: () => void; onOpenGis:()=>void;
   layersOpen: boolean; layers: Record<string, boolean>; hasSelectedRoute: boolean; hazards: Hazard[];
@@ -26,7 +27,7 @@ type Props = {
   children?: ReactNode; onMeasure: () => void; measuring: boolean; onDraw: () => void; drawing: boolean;
 };
 
-export function MapControls({ mappedAreas = [], locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
+export function MapControls({ orbiting = false, onToggleOrbit, mappedAreas = [], locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
   const [legendExpanded, setLegendExpanded] = useState(false);
   const [legendMinimized, setLegendMinimized] = useState(true);
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
@@ -81,6 +82,7 @@ export function MapControls({ mappedAreas = [], locale, mapMode, onChangeMapMode
       <button className="icon-button" onClick={onResetView} aria-label={t('Xem toàn khu vực', 'Fit area')} title={t('Xem toàn khu vực', 'Fit area')}>
         <UiIcon name="fit" />
       </button>
+      {mapMode === '3d' && onToggleOrbit && <button className="icon-button map-orbit" aria-pressed={orbiting} onClick={onToggleOrbit} aria-label={t('Xoay địa hình', 'Orbit terrain')} title={t('Xoay địa hình; kéo bản đồ để dừng', 'Orbit terrain; drag the map to stop')}><UiIcon name="redo"/></button>}
       <div className="map-mode-group" role="group" aria-label={t('Góc nhìn bản đồ', 'Map view')}>
         {(['2d', '3d'] as const).map(mode => <button key={mode} className="icon-button map-mode" aria-pressed={mapMode === mode} onClick={() => onChangeMapMode(mode)} aria-label={t('Chuyển sang ', 'Switch to ') + mode.toUpperCase()} title={mode === '3d' ? t('Ctrl + kéo để nghiêng và xoay', 'Ctrl + drag to tilt and rotate') : t('Bản đồ 2D', '2D map')}>{mode.toUpperCase()}</button>)}
       </div>

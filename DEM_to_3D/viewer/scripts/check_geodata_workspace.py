@@ -351,7 +351,8 @@ def run(url, chrome, captures):
         for iteration in range(3):
             page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
             expect(page.locator('.geodata-workspace')).to_have_attribute('role','region')
-            expect(page.locator('.geodata-layers li')).to_have_count(6)
+            # Three prepared survey stations are installed when entering the response workspace.
+            expect(page.locator('.geodata-layers li')).to_have_count(9)
             check_controls(page, page.locator('html').get_attribute('data-theme'))
             assert page.locator('.geodata-title button').count() == 1, 'Duplicate exit controls'
             if iteration == 0:

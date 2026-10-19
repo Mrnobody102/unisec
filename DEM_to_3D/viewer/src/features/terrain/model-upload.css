@@ -11,7 +11,7 @@
 .upload-files { display: grid; margin-top: 12px; overflow-wrap: anywhere; }
 .upload-files span { padding: 8px 0; border-bottom: 1px solid var(--ws-line); font-size: 12px; }
 .upload-clear { margin-top: 12px; padding: 6px 0; border: 0; background: none; color: var(--ws-brand); font-size: 12px; }
-.upload-clear:hover { text-decoration: underline; }
+.upload-clear:hover { color:var(--select-ink); }
 .upload-error { margin-top: 16px; padding-left: 12px; border-left: 2px solid var(--critical); color: var(--critical-ink); font-size: 12px; white-space: pre-wrap; }
 .upload-requirements { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--ws-line); font-size: 12px; }
 .upload-requirements summary { color: var(--ws-muted); cursor: pointer; }

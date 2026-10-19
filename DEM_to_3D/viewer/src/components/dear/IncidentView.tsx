@@ -10,6 +10,8 @@ import {
 } from '../../features/incident/responseWork';
 
 type Props = {
+  survey?: {areas: number; points: number};
+  onShowSurvey?: () => void;
   incident: IncidentModel;
   hazards: Hazard[];
   onInspectObject: (id: string) => void;
@@ -39,7 +41,7 @@ type Props = {
 export function IncidentView({
   incident, locale, areaName, tasks, entries, communities, assessments,
   blockedRoadCount, onSelectCommunity, onOpenWork, onOpenArea,
-  hazards, onInspectObject
+  hazards, onInspectObject, survey, onShowSurvey
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const priorityCommunities = communities.filter(community => community.prio === 1);
@@ -59,6 +61,7 @@ export function IncidentView({
           <strong>{community.name}</strong><span>{t(...assessments.get(community.id)!.reason)}</span><UiIcon name="next" size={16}/>
         </button>)}
       </section>
+      {survey && survey.areas + survey.points > 0 && <section><h2>{t('Khảo sát thực địa', 'Field survey')}</h2><button className="incident-overview-item incident-survey-row" onClick={onShowSurvey}><strong>{t('Chế Tạo – Lao Chải', 'Che Tao – Lao Chai')}</strong><span>{survey.areas} {t('vùng khoanh', 'mapped areas')} · {survey.points} {t('điểm khảo sát', 'survey points')}</span><UiIcon name="next" size={16}/></button></section>}
       <section><h2>{t('Điểm sạt lở', 'Landslide observations')}</h2>
         {hazards.filter(hazard => hazard.kind === 'landslide').map(hazard => <button className="incident-overview-item incident-overview-hazard" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>
           <strong>{t(...hazard.name)}</strong><UiIcon name="next" size={16}/>
