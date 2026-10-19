@@ -101,7 +101,7 @@ Tham khảo mô hình đối tượng có vị trí, biểu mẫu và ảnh củ
 | Phương pháp | Giao/hợp polygon trong kinh/vĩ độ. Diện tích xấp xỉ mặt cầu R = 6.371.008,8 m, m²/km², `polygon-coverage-v1`. Không phải diện tích ellipsoid phục vụ địa chính hoặc diện tích bề mặt địa hình |
 | Z | Giữ giá trị và KML altitudeMode riêng từng hình học, kể cả mode sea-floor; thiếu mode dùng clampToGround. KML thiếu Z trong hình có Z nhận 0. Z không tham gia độ phủ/vị trí 2D. WKT/GeoJSON chưa rõ tham chiếu Z: ghi chưa xác định, xuất KML bám đất, không suy cao độ tuyệt đối hoặc DEM |
 | Footprint | Chỉ là biên hình học. Chưa xác nhận ảnh đã chụp, yêu cầu đặt chụp thành công, không mây hoặc đủ chất lượng phân tích |
-| Nền ảnh | EOX Sentinel-2 cloudless 2016, giữ attribution/giấy phép. Không dùng làm bằng chứng hiện trạng |
+| Nền ảnh | Esri World Imagery hoặc XYZ cấu hình riêng, giữ attribution/giấy phép. Không dùng làm bằng chứng hiện trạng |
 
 [OGC KML](https://docs.ogc.org/is/12-007r2/12-007r2.html) quy định thứ tự tọa độ KML là kinh độ, vĩ độ, độ cao. Luồng AOI tham khảo [Copernicus Browser](https://documentation.dataspace.copernicus.eu/Applications/Browser.html). Tính hợp/giao dùng [Turf union](https://turfjs.org/docs/api/union), [intersect](https://turfjs.org/docs/7.1.0/api/intersect); diện tích dùng [Turf area](https://turfjs.org/docs/api/area).
 

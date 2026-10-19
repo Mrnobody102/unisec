@@ -23,7 +23,7 @@ npm run build
 npm run serve:workspace
 ```
 
-Lệnh cuối phục vụ bản build và API snapshot chỉ đọc tại `http://127.0.0.1:5212`. Nền EOX cần Internet; dữ liệu khu vực nằm tại máy. 2D không cần WebGL; lỗi GLB/GPU có thể chuyển về 2D. Đây là dữ liệu mô phỏng, chưa phải phương án ứng phó được duyệt.
+Lệnh cuối phục vụ bản build và API snapshot chỉ đọc tại `http://127.0.0.1:5212`. Nền Esri/EOX cần Internet; dữ liệu khu vực nằm tại máy. 2D không cần WebGL; lỗi GLB/GPU có thể chuyển về 2D. Đây là dữ liệu mô phỏng, chưa phải phương án ứng phó được duyệt.
 
 ## Phần giữ trong demo
 

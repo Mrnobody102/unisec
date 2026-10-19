@@ -88,6 +88,6 @@ Không duy trì danh sách từng file, số dòng hoặc nhật ký refactor �
 
 ### Vai trò và tiếp nhận thực địa
 
-`features/access/` sở hữu phiên vai trò demo, màn người dân, tiếp nhận/kiểm tra và tên hiển thị của tình huống. `features/observations/` sở hữu ảnh, EXIF, ghi nhận và vùng gắn điểm. `features/routes/selectedRoadJourney.ts` tính đường giữa hai vị trí trên mạng prepared; panel chỉ nhận kết quả. `features/map/imagerySource.ts` giữ cấu hình nguồn ảnh 2D có attribution. Chữ mới của phần vai trò/hành trình có catalog Việt/Anh cạnh feature. Chưa có backend auth hoặc API ghi.
+`features/access/` sở hữu phiên vai trò demo, màn người dân, tiếp nhận/kiểm tra và tên hiển thị của tình huống. `features/observations/` sở hữu ảnh, EXIF, ghi nhận và vùng gắn điểm. `features/routes/selectedRoadJourney.ts` tính đường giữa hai vị trí trên mạng prepared; panel chỉ nhận kết quả. `features/map/imagerySource.ts` giữ cấu hình nguồn ảnh và attribution dùng chung cho 2D, GIS và nền ngữ cảnh 3D. Chữ mới của phần vai trò/hành trình có catalog Việt/Anh cạnh feature. Chưa có backend auth hoặc API ghi.
 
 Ranh giới Workbench/DEAR được ghi tại [nền tảng EO và DEAR](../../../vsp-eo-platform/docs/architecture/platform-and-dear.md). Hiện demo chưa dùng package EO hoặc adapter `reference-handoff/v1`; không coi Reference Viewer là app DEAR. Inbox chỉ sở hữu lựa chọn; `ReportReviewForm` giữ bản nháp kiểm tra. `photoSummary` so sánh metadata ảnh với thông tin đã trình bày, giữ sai khác và thời gian thiếu múi giờ để đối chiếu.

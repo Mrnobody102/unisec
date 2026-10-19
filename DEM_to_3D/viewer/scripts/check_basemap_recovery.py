@@ -17,7 +17,7 @@ def run(url, chrome):
             target = route.request.url
             if target.startswith(url+'/'):
                 route.continue_()
-            elif 'tiles.maps.eox.at/' in target:
+            elif 'server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' in target:
                 path = urlsplit(target).path
                 if first is None: first = path
                 if path == first and failures < 2:
@@ -36,6 +36,11 @@ def run(url, chrome):
         expect(page.locator('.map-2d img.leaflet-image-layer')).to_have_css('opacity', '1')
         assert page.locator('.leaflet-dear-imagery-pane').evaluate("p => +getComputedStyle(p).zIndex < +getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex")
         expect(page.locator('.map-source-warning')).to_have_count(0)
+        expect(page.locator('.map-credit')).to_contain_text('Esri')
+        page.get_by_role('button', name='Nguồn bản đồ', exact=True).click()
+        expect(page.locator('.map-source-popover')).to_contain_text('Esri World Imagery')
+        expect(page.locator('.map-source-popover')).not_to_contain_text('10 m/pixel')
+        expect(page.locator('.map-source-popover')).not_to_contain_text('CC BY 4.0')
         assert failures == 2 and not errors, errors
         browser.close()
     print('Basemap recovery passed: repeated tile failures recover, warning clears, detailed tiles draw above the retained local fallback.')

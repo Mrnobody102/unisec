@@ -30,13 +30,13 @@ describe('Regional basemap placement', () => {
       })).toBe(true);
     }
   });
-  it('adds detail around the DEM without unbounded regional requests or duplicate tiles', () => {
-    const tiles = planBasemapTiles(metadata, 14);
+  it.each([14, 19])('adds detail around the DEM without unbounded regional requests or duplicate tiles (native zoom=%s)', maxZoom => {
+    const tiles = planBasemapTiles(metadata, maxZoom);
     const context = planRegionalTiles(metadata, { budget: 32 });
     expect(tiles.length).toBeLessThanOrEqual(96);
     expect(new Set(tiles.map(t => `${t.z}/${t.x}/${t.y}`)).size).toBe(tiles.length);
     expect(Math.max(...tiles.map(t => t.z))).toBeGreaterThan(Math.max(...context.map(t => t.z)));
-    expect(tiles.every(t => t.z <= 14)).toBe(true);
+    expect(tiles.every(t => t.z <= maxZoom)).toBe(true);
     for (const t of context) expect(tiles).toContainEqual(t);
     expect(planBasemapTiles(metadata, 8).every(t => t.z <= 8)).toBe(true);
     expect(planBasemapTiles(metadata, 14.5).every(t => Number.isInteger(t.z) && t.z <= 14)).toBe(true);

@@ -22,6 +22,13 @@ export function MapAttribution({
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const imagery =
     state.provider === 'configured' ? imagerySource : defaultImagerySource;
+  const imageryCredit = imagery.link ? (
+    <a href={imagery.link} target="_blank" rel="noreferrer">
+      {imagery.credit}
+    </a>
+  ) : (
+    imagery.credit
+  );
   const anchor = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   useDismissiblePopover(anchor, open, () => setOpen(false));
@@ -35,9 +42,7 @@ export function MapAttribution({
         {state.loaded > 0 && (
           <span className="map-credit">
             {state.style === 'satellite' ? (
-              <a href={imagery.link} target="_blank" rel="noreferrer">
-                {imagery.credit}
-              </a>
+              imageryCredit
             ) : (
               <>
                 <a
@@ -111,9 +116,12 @@ export function MapAttribution({
                       : t('Chưa tải được', 'Unavailable')}
                 </dd>
               </div>
-              {state.style === 'satellite' && !imagery.custom && state.status !== 'off' && <div>
-                <dt>{t('Độ phân giải nền', 'Basemap resolution')}</dt><dd>Sentinel-2 · 10 m/pixel</dd>
-              </div>}
+              {state.style === 'satellite' && !imagery.custom && state.status !== 'off' && (
+                <div>
+                  <dt>{t('Độ phân giải nền', 'Basemap resolution')}</dt>
+                  <dd>{t('Thay đổi theo khu vực', 'Varies by location')}</dd>
+                </div>
+              )}
             </dl>
             {unavailable && (
               <div className="map-source-status" role="status">
@@ -139,35 +147,7 @@ export function MapAttribution({
             {state.loaded > 0 && (
               <p className="map-source-license">
                 {state.style === 'satellite' ? (
-                  imagery.custom ? (
-                    <a href={imagery.link} target="_blank" rel="noreferrer">
-                      {imagery.credit}
-                    </a>
-                  ) : (
-                    <>
-                      <a
-                        href="https://cloudless.eox.at"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        EOxCloudless
-                      </a>{' '}
-                      by EOX IT Services GmbH
-                      <br />
-                      {t(
-                        'Dữ liệu Copernicus Sentinel 2016 đã xử lý',
-                        'Contains modified Copernicus Sentinel data 2016'
-                      )}{' '}
-                      /{' '}
-                      <a
-                        href="https://creativecommons.org/licenses/by/4.0/"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        CC BY 4.0
-                      </a>
-                    </>
-                  )
+                  imageryCredit
                 ) : (
                   <>
                     <a

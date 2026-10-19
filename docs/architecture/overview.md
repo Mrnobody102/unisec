@@ -7,7 +7,7 @@ Cập nhật: 2026-10-07. Bản mặc định dùng sự kiện Chế Tạo mô 
 | Thành phần | Công nghệ và trách nhiệm | Giới hạn |
 |---|---|---|
 | Web | Vite, React 18, TypeScript strict, CSS token | Khởi động, điều hướng/công cụ và composition tách trong `app/` |
-| Bản đồ 2D | Leaflet, SVG và ảnh được chiếu lại trên CPU | Không cần WebGL hoặc GLB. Nền EOX ngoài khu vực cần mạng |
+| Bản đồ 2D | Leaflet, SVG và ảnh được chiếu lại trên CPU | Không cần WebGL hoặc GLB. Nền Esri/EOX cần mạng |
 | Bản đồ 3D | Three.js, DEM và GLB tải khi mở 3D | GPU hoặc GLB lỗi thì chuyển về 2D, giữ lựa chọn |
 | Dữ liệu | JSON Schema, Ajv, manifest và SHA-256 | Gói Chế Tạo v0.2 là dữ liệu mô phỏng, chưa được duyệt vận hành |
 | Đánh giá | Dijkstra trên mạng đường, quy tắc ưu tiên, ước tính di chuyển | Quy tắc thử nghiệm, chưa phải Community Isolation Score |
