@@ -78,7 +78,7 @@ function tileGeometry(metadata: TerrainMetadata, tile: MapTile): THREE.BufferGeo
   return geometry;
 }
 
-export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1) {
+export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1, onImageryTile?: (tile: MapTile, bitmap: ImageBitmap) => void) {
   const group = new THREE.Group();
   group.name = 'regional-basemap'; group.matrix.copy(transform); group.matrixAutoUpdate = false;
   const tilesFor = (nextStyle: BasemapStyle): MapTile[] => {
@@ -124,6 +124,9 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
           // finer tiles in the same flat context plane.
           mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
           group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle });
+          if (runStyle === 'satellite') {
+            try {onImageryTile?.(tile, bitmap);} catch { /* The prepared DEM texture remains the fallback. */ }
+          }
           loadedInBatch = true;
           publish('loading');
         } catch {

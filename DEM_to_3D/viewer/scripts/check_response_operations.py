@@ -13,6 +13,11 @@ def run(url, chrome, captures):
         context.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
         page=context.new_page();errors=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
+        def open_work():
+            section = page.locator('.incident-overview-work')
+            if not section.evaluate('node => node.open'):
+                section.locator('summary').click()
+            section.get_by_role('button').click()
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-work')).to_be_visible(timeout=25000)
         expect(page.get_by_role('button',name='Sự kiện đang xem',exact=True)).to_contain_text('09:31')
@@ -41,7 +46,7 @@ def run(url, chrome, captures):
         expect(page.locator('.route-section-row[aria-expanded="true"]')).to_have_count(1)
         page.locator('.workspace-nav button').first.click()
         page.set_viewport_size({'width':1440,'height':900})
-        page.locator('.incident-work .road-count-row').click()
+        open_work()
         page.locator('.response-work-row[data-task-id^="contact:"]').first.click()
         expect(page.locator('.response-work-edit')).to_be_visible()
         edit=page.locator('.response-work-edit')
@@ -65,7 +70,7 @@ def run(url, chrome, captures):
         expect(page.locator('#place-title')).to_have_text('Nậm Khắt')
         expect(page.locator('#object-title')).to_have_count(0)
         page.locator('.workspace-nav button').first.click()
-        page.get_by_role('button',name='Nhật ký sự kiện',exact=True).click()
+        page.get_by_role('button',name='Mở nhật ký',exact=True).click()
         page.get_by_role('button',name='Công việc',exact=True).click()
         expect(page.locator('.journal-list > li')).to_have_count(1)
         page.locator('.journal-list summary').first.click()
@@ -86,7 +91,7 @@ def run(url, chrome, captures):
         page.get_by_role('radio',name='Đánh giá ban đầu').click()
         expect(page.locator('.revision-notice')).to_be_visible()
         page.locator('.workspace-nav button').first.click()
-        page.locator('.incident-work .road-count-row').click()
+        open_work()
         page.locator('.response-work-row').filter(has_text='Xác minh').first.click()
         expect(page.locator('.response-work-edit select')).to_be_disabled()
         assert page.locator('.response-work-notices').evaluate('node=>node.getBoundingClientRect().bottom<=document.querySelector(".response-work-body").getBoundingClientRect().top+1'), 'Historical notice overlaps work editor'
@@ -94,7 +99,7 @@ def run(url, chrome, captures):
         page.get_by_role('button',name='Về dữ liệu mới nhất',exact=True).click()
         page.reload()
         expect(page.locator('.incident-work')).to_be_visible(timeout=25000)
-        page.locator('.incident-work .road-count-row').click()
+        open_work()
         page.get_by_role('button',name='Tất cả',exact=True).click()
         expect(page.locator('.response-work-list')).to_contain_text('Hoàn tất')
         if captures:captures.mkdir(parents=True,exist_ok=True)

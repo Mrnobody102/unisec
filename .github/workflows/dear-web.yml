@@ -66,6 +66,7 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/wait_for_server.py http://127.0.0.1:5213
           python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
+          python scripts/check_workspace_layers.py --url http://127.0.0.1:5213
           python scripts/check_geodata_workspace.py --url http://127.0.0.1:5213
           python scripts/check_basemap_recovery.py --url http://127.0.0.1:5213
           python scripts/check_gis_draft_publish.py --url http://127.0.0.1:5213

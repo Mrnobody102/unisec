@@ -80,7 +80,7 @@ export function Map2D(props: Props): JSX.Element {
     // any tile not loaded yet; a faded basemap would show both, so it is hidden then.
     const localOpacity = () => { const opacity = propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1; return onlineImageryReady && opacity < 1 ? 0 : opacity; };
     const imageryPane = map.getPane(mapPane('imagery'))!;
-    let rasterAbort: AbortController | null = null, rasterKey = '', tileKey = '', frame = 0, disposed = false;
+    let rasterAbort: AbortController | null = null, rasterKey = '', tileKey = '', frame = 0, disposed = false, basemapGeneration = 0;
     let hasFit = Boolean(saved), localData: TerrainData | null = null;
     let lastSelection = '';
     const ll = (point: { x: number; y: number }) => {
@@ -105,11 +105,13 @@ export function Map2D(props: Props): JSX.Element {
     const setTiles = (imagery: boolean, enabled: boolean) => {
       const key = `${imagery}:${enabled}`;
       if (tileKey === key) return;
+      const generation = ++basemapGeneration;
       tileKey = key; tileLayer?.remove(); tileLayer = null; onlineImageryReady = false; raster?.setOpacity(localOpacity());
       const style = imagery ? 'satellite' : 'terrain';
       // Satellite tiles draw over the local raster; the terrain basemap stays beneath it.
       imageryPane.style.zIndex = imagery && enabled ? '150' : String(200 + mapLayerOrder.imagery * 30);
       const publish = (status: 'off' | 'loading' | 'ready' | 'partial' | 'error', loaded = 0, total = 0) => {
+        if (disposed || generation !== basemapGeneration) return;
         if (status === 'ready') onlineImageryReady = imagery && loaded > 0;
         else if (['off','partial','error'].includes(status)) onlineImageryReady = false;
         raster?.setOpacity(localOpacity());

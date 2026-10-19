@@ -1,3 +1,6 @@
+import { CitizenAreaCard } from "./CitizenAreaCard";
+import { visibleMapRecords } from "../map/visibleMapRecords";
+import { landslideAreaOf } from "../landslides/landslideAreas";
 import type { ScenarioEdit } from "./scenarioEdits";
 import { UiIcon } from "../../shared/ui/UiIcon";
 import { observationCode } from "../observations/recordIdentity";
@@ -77,6 +80,9 @@ export function CitizenWorkspace({
     [community, setCommunity] = useState(
       identity.communityId ?? packet.communities[0]?.id ?? "",
     );
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  const [layerOptions, setLayerOptions] = useState({landslide:true,status:true,communities:true,imagery:true});
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [mapOnMobile, setMapOnMobile] = useState(false),
     [picking, setPicking] = useState(false),
     [help, setHelp] = useState(false),
@@ -117,20 +123,19 @@ export function CitizenWorkspace({
   reportPosition.current = { lat, lon };
   const citizenLayers = useMemo(
     () => ({
-      aoi: true,
+      aoi: false,
+      gis: true,
+      crossings: true,
       roads: true,
-      status: true,
-      communities: true,
       route: true,
-      landslide: true,
       flood: true,
       staging: true,
       hlz: false,
-      imagery: true,
       context: !offline,
       hillshade: true,
+      ...layerOptions,
     }),
-    [offline],
+    [offline, layerOptions],
   );
   const draft: GeometryRecord = useMemo(
     () => ({
@@ -151,6 +156,12 @@ export function CitizenWorkspace({
     }),
     [draftId, lat, lon, identity.name, locale],
   );
+  const mapRecords = useMemo(() => visibleMapRecords(
+    gis.records.filter(record => landslideAreaOf(record) || own.some(item => item.id === record.id)),
+    citizenLayers, packet.datasetVersion
+  ), [gis.records, own, citizenLayers, packet.datasetVersion]);
+  const selectedArea = mapRecords.find(record => record.id === selectedAreaId && landslideAreaOf(record));
+  const roadView = tab === "roads";
   const position = (
     latitude: number,
     longitude: number,
@@ -212,10 +223,21 @@ export function CitizenWorkspace({
     gps.cancel();
     setPicking(false);
     journey.setPicking(null);
+    setMapOnMobile(false);
+    setSelectedAreaId(null);
     setTab(value);
   };
   const onHit = (hit: OverlayHit) => {
-    if (hit.type === "community") setCommunity(hit.id);
+    if (hit.type === "community") {
+      setSelectedAreaId(null);
+      journey.close();
+      setCommunity(hit.id);
+      setTab("roads");
+      setCatalogOpen(true);
+      const catalog = root.current?.querySelector<HTMLDetailsElement>(".citizen-road-catalog");
+      if (catalog) catalog.open = true;
+      setMapOnMobile(false);
+    }
   };
   return (
     <div
@@ -228,7 +250,6 @@ export function CitizenWorkspace({
           <strong>DEAR</strong>
           <span>{m.communityInformation}</span>
         </div>
-        <span className="citizen-demo-label">{m.demoScenario}</span>
         <button className="button" onClick={() => setHelp(true)}>
           {m.help}
         </button>
@@ -301,7 +322,7 @@ export function CitizenWorkspace({
                   }}
                   onMap={() => setMapOnMobile(true)}
                 />
-                <details className="citizen-road-catalog">
+                <details className="citizen-road-catalog" open={catalogOpen} onToggle={event => setCatalogOpen(event.currentTarget.open)}>
                   <summary>
                     {t("Xem đường vào thôn/bản", "View village access roads")}
                   </summary>
@@ -625,13 +646,13 @@ export function CitizenWorkspace({
               onCloseMeasurement={() => {}}
               measureSession={measure}
               dispatchMeasureSession={dispatch}
-              gisRecords={own}
-              gisSelectedId={ownSelected}
+              gisRecords={mapRecords}
+              gisSelectedId={selectedArea?.id ?? (tab === "mine" ? ownSelected : null)}
               gisRequest={ownView}
               onGisSelect={(id) => {
-                setOwnSelected(id);
-                setTab("mine");
-                setMapOnMobile(false);
+                if (gis.records.some(record => record.id === id && landslideAreaOf(record))) {
+                  setSelectedAreaId(id);
+                } else {setSelectedAreaId(null);setOwnSelected(id);setTab("mine");setMapOnMobile(false);}
               }}
               pointPickActive={picking || (journey.open && !!journey.picking)}
               onPointPick={(latitude, longitude) => {
@@ -640,21 +661,22 @@ export function CitizenWorkspace({
                   setMapOnMobile(false);
                 } else position(latitude, longitude, "map");
               }}
-              journeyEndpoints={journeyMarkers(journey)}
+              journeyEndpoints={roadView ? journeyMarkers(journey) : []}
               journeyFitRequest={journey.fitSequence}
               onSelectOverlayHit={onHit}
               scenarioProps={{
+                datasetVersion: packet.datasetVersion,
                 aoi: packet.aoi,
                 communities: snapshot.communities,
                 responseSites: snapshot.responseSites,
                 hazards: snapshot.hazards,
                 roads: snapshot.roads,
-                selectedRoute: journey.open ? journey.route : route,
-                selectedCommunityId: journey.open
+                selectedRoute: roadView ? journey.open ? journey.route : catalogOpen ? route : null : null,
+                selectedCommunityId: !roadView ? null : journey.open
                   ? journey.end?.source.startsWith("community:")
                     ? journey.end.source.slice(10)
                     : null
-                  : community,
+                  : catalogOpen ? community : null,
                 selectedObjectId: null,
                 layers: citizenLayers,
                 appearance: defaultLayerAppearance,
@@ -728,6 +750,13 @@ export function CitizenWorkspace({
               </button>
             </div>
           )}
+          <details className="citizen-map-layers">
+            <summary><UiIcon name="layers" size={18}/>{t('Lớp', 'Layers')}</summary>
+            <fieldset aria-label={t('Lớp bản đồ người dân', 'Resident map layers')}>
+              {([['landslide',t('Vùng và điểm sạt lở','Landslide areas and points')],['status',t('Tình trạng đường','Road status')],['communities',t('Thôn, bản','Communities')],['imagery',t('Ảnh nền','Imagery')]] as const).map(([key,label]) => <label key={key}><input type="checkbox" checked={layerOptions[key]} onChange={() => setLayerOptions(previous => ({...previous,[key]:!previous[key]}))}/>{label}</label>)}
+            </fieldset>
+          </details>
+          {selectedArea && !picking && !journey.picking && <CitizenAreaCard record={selectedArea} locale={locale} onClose={() => setSelectedAreaId(null)}/>}
           <MapAttribution
             locale={locale}
             state={basemap}

@@ -89,12 +89,6 @@ export function IncidentJournal({
             <UiIcon name="close" />
           </button>
         </header>
-        {packet.dataKind === 'synthetic' && <div className="response-work-context">
-          {t(
-            'Bản mô phỏng · chỉnh sửa chỉ lưu trên thiết bị này.',
-            'Demo scenario · edits are saved on this device only.'
-          )}
-        </div>}
         <div className="modal-body">
           <fieldset className="revision-choices">
             <legend>{t('Thời điểm bản đồ', 'Map revision')}</legend>

@@ -11,6 +11,8 @@ import { buildBvh, disposeBvh, disposeObjectResources } from '../terrain/raycast
 import type { SurfaceProfile } from '../terrain/profile';
 import type { GeographicPlacement } from '../terrain/geographic';
 import { applyElevationColorRamp } from '../terrain/colorRamp';
+import { createTerrainImagery } from '../terrain/terrainImagery';
+import { imagerySource } from '../features/map/imagerySource';
 import { buildScenarioOverlays } from '../terrain/scenarioOverlays';
 import { createScenarioMarkers } from '../terrain/scenarioMarkers';
 import { createMapReference } from '../terrain/mapReference';
@@ -178,8 +180,9 @@ export function TerrainViewer({
     });
     scene.updateMatrixWorld(true);
     const primary = entries[0];
+    const terrainImagery = primary?.model.metadata ? createTerrainImagery(primary.model.metadata, primary.group, primary.meshes, imagerySource.maxNativeZoom, Math.min(8, renderer.capabilities.getMaxAnisotropy())) : null;
     const basemap = primary?.model.metadata
-      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => onBasemapStateRef.current?.(state), Math.min(8, renderer.capabilities.getMaxAnisotropy()))
+      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => onBasemapStateRef.current?.(state), Math.min(8, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => terrainImagery?.tile(tile, bitmap))
       : null;
     if (basemap) scene.add(basemap.group);
 
@@ -188,7 +191,7 @@ export function TerrainViewer({
     const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     entries.forEach(entry => entry.root.traverse(object => {
       const mesh = object as THREE.Mesh;
-      if (!mesh.isMesh) return;
+      if (!mesh.isMesh || mesh.parent === terrainImagery?.group) return;
       (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(material => {
         const surface = material as SurfaceMaterial;
         if (surface.color && 'map' in surface && !originalMaterials.has(surface)) {
@@ -202,6 +205,7 @@ export function TerrainViewer({
     const updateSurface = (): void => {
       const layers = scenarioPropsRef.current?.layers;
       basemap?.setOptions(layers?.context !== false, layers?.imagery === false ? 'terrain' : 'satellite');
+      terrainImagery?.setVisible(layers?.context !== false && layers?.imagery !== false);
       if (!basemap) onBasemapStateRef.current?.({ status: layers?.context === false || !models.length ? 'off' : 'unavailable', style: layers?.imagery === false ? 'terrain' : 'satellite', loaded: 0, total: 0 });
       scene.background = new THREE.Color(themeRef.current === 'dark' ? '#0b1720' : '#e7eeef');
       originalMaterials.forEach((original, material) => {
@@ -245,7 +249,7 @@ export function TerrainViewer({
       const sp = scenarioPropsRef.current;
       const primaryModel = entries[0]?.model;
       disposeTerrainAreas(mappedAreaGroup); mappedAreaGroup = null;
-      if (primaryModel?.metadata && primaryModel.grid && sp?.layers.gis !== false && mappedAreasRef.current.records) {
+      if (primaryModel?.metadata && primaryModel.grid && mappedAreasRef.current.records) {
         mappedAreaGroup = terrainLandslideAreas(mappedAreasRef.current.records, primaryModel.metadata, primaryModel.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion);
         mappedAreaGroup.position.copy(entries[0].group.position); mappedAreaGroup.scale.copy(entries[0].group.scale); scene.add(mappedAreaGroup);
       }
@@ -288,6 +292,19 @@ export function TerrainViewer({
 
     const bounds = new THREE.Box3();
     entries.forEach((entry) => bounds.expandByObject(entry.group));
+    // Frame the incident rather than the entire rectangular DEM and its surrounding tiles.
+    const incidentBounds = new THREE.Box3();
+    const initialScenario = scenarioPropsRef.current;
+    if (primary?.model.metadata && primary.model.grid && initialScenario) {
+      const metadata = primary.model.metadata;
+      for (const point of [...initialScenario.communities.map(community => community.projected), ...initialScenario.roads.flatMap(road => road.points)]) {
+        const elevation = bilinearElevation(primary.model.grid, metadata, point.x, point.y).elevation;
+        if (elevation === undefined) continue;
+        const p = projectedToScene(metadata, point, elevation);
+        incidentBounds.expandByPoint(primary.group.localToWorld(new THREE.Vector3(p.x, p.y, p.z)));
+      }
+    }
+    if (!incidentBounds.isEmpty()) bounds.copy(incidentBounds.expandByScalar(Math.max(incidentBounds.getSize(new THREE.Vector3()).length() * .035, 1)));
     const center = bounds.isEmpty() ? new THREE.Vector3() : bounds.getCenter(new THREE.Vector3());
     const size = bounds.isEmpty() ? new THREE.Vector3(1, 1, 1) : bounds.getSize(new THREE.Vector3());
     const maxDimension = Math.max(size.x, size.y, size.z, 1);
@@ -606,6 +623,7 @@ export function TerrainViewer({
       scenarioMarkers?.dispose();
       disposeTerrainAreas(mappedAreaGroup);
       mapReference.dispose();
+      terrainImagery?.dispose();
       basemap?.dispose();
       if (scenarioOverlayGroup) {
         scene.remove(scenarioOverlayGroup);

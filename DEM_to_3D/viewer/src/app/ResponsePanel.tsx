@@ -107,6 +107,8 @@ export function ResponsePanel({
     content = (
       <IncidentView
         incident={incident}
+        hazards={hazards}
+        onInspectObject={onInspectObject}
         areaName={aoi.name}
         onOpenArea={() => onInspectObject(`aoi:${aoi.id}`)}
         locale={locale}

@@ -112,3 +112,8 @@
 #response-panel .impact-row[aria-pressed='true'] strong {
   color: var(--select-ink);
 }
+
+@media(max-width:900px) {
+ .workspace .response-detail-dock { position:relative; grid-column:1; grid-row:2; inset:auto; width:auto; min-width:0; border-radius:0; box-shadow:none; }
+ .workspace[data-response-detail="true"] .work-area > .sidebar { visibility:hidden; }
+}

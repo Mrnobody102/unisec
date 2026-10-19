@@ -1,3 +1,4 @@
+import { hazardLayerVisible } from '../features/map/visibleMapRecords';
 import type { Community, Hazard, Locale, ResponseSite } from '../types/dear';
 import type { OverlayHit } from '../features/map/mapContracts';
 import {poiFrameSvg,poiMetrics,markerSize} from './poiFrame';
@@ -139,7 +140,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     : options.selectedCommunityId ? `community:${options.selectedCommunityId}` : null;
   if (layers.communities) communities.forEach(c => add({ type: 'community', id: c.id }, c.projected, c.name, `community${c.prio === 1 ? ' is-priority' : ''}`, 'community', selectedPin === `community:${c.id}`, c.labelMode !== 'hide'));
   hazards.forEach(h => {
-    const visible = h.kind === 'landslide' ? layers.landslide : h.kind === 'flood' ? layers.flood : layers.status;
+    const visible = hazardLayerVisible(h, layers);
     if (!visible) return;
     const name = locale === 'vi' ? h.name[0] : h.name[1];
     const selected = selectedPin === `hazard:${h.id}`;
@@ -176,7 +177,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   const controlRects = (): { controls: ScreenRect[]; labels: ScreenRect[] } => {
     const hostRect = host.getBoundingClientRect();
     const workspace = host.closest('.geodata-workspace, .workspace') ?? host.closest('.map-area') ?? host.parentElement;
-    const entries = Array.from(workspace?.querySelectorAll<HTMLElement>('#response-details,.geodata-detail,.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-tool-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin,.map-selected-reference,.notice-toast') ?? [])
+    const entries = Array.from(workspace?.querySelectorAll<HTMLElement>('#response-details,.geodata-detail,.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-tool-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin,.map-selected-reference, .notice-toast,.citizen-map-tools,.citizen-map-layers,.citizen-area-info,.citizen-pick-hint') ?? [])
       .filter(el => el.getBoundingClientRect().height > 0).map(el => {
         const r = el.getBoundingClientRect();
         return { tooltip: el.classList.contains('leaflet-tooltip'), rect: { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height } };

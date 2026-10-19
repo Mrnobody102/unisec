@@ -156,7 +156,7 @@ export function ResponseGisLayer({
     last.current = request.version;
     // Only an explicit cross-screen request changes the response map view.
     if (!request.id) return;
-    const record = records.find((r) => r.id === request.id);
+    const record = records.find((r) => r.id === request.id && r.visible);
     if (!record) return;
     const bounds = L.geoJSON(record.feature).getBounds();
     if (bounds.isValid())

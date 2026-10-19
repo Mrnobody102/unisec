@@ -1,3 +1,4 @@
+import { hazardLayerVisible } from '../features/map/visibleMapRecords';
 import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
@@ -203,12 +204,12 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
   }
 
   // 3. Hazards Layer
-  if (!options.screenMarkers && (layers.landslide || layers.flood || layers.status)) {
+  if (!options.screenMarkers && (layers.landslide || layers.flood || layers.crossings || layers.status)) {
     const hazardGroup = new THREE.Group();
     hazardGroup.name = 'scenario-hazards';
 
     hazards.forEach((hz) => {
-      if (!(hz.kind === 'landslide' ? layers.landslide : hz.kind === 'flood' ? layers.flood : layers.status)) return;
+      if (!hazardLayerVisible(hz, layers)) return;
       const elev = getSurfaceElevation(grid, metadata, hz.projected.x, hz.projected.y);
       const scenePos = projectedToScene(metadata, hz.projected, elev + 16);
 

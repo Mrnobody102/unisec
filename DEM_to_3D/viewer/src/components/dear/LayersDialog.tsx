@@ -28,7 +28,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
     return () => { document.removeEventListener('keydown', escape); document.removeEventListener('pointerdown', outside, true); if (panel?.contains(document.activeElement) || document.activeElement === document.body) previous?.focus(); };
   }, []);
   const groups = [
-    { name: t('Tình huống', 'Situation'), items: [['aoi', t('Vùng đánh giá', 'Assessment area')], ['landslide', t('Sạt lở', 'Landslides')], ['flood', t('Nghi ngập lũ quét', 'Possible flash flooding')], ['status', t('Tình trạng đường', 'Road status')]] },
+    { name: t('Tình huống', 'Situation'), items: [['aoi', t('Vùng đánh giá', 'Assessment area')], ['landslide', t('Sạt lở', 'Landslides')], ['flood', t('Nghi ngập lũ quét', 'Possible flash flooding')], ['status', t('Tình trạng đường', 'Road status')], ['crossings', t('Cầu, điểm vượt khe', 'Bridges and crossings')]] },
     { name: t('Tiếp cận', 'Access'), items: [['roads', t('Mạng đường', 'Road network')], ['communities', t('Thôn, bản', 'Communities')], ['staging', t('Điểm tập kết', 'Staging point')], ['hlz', t('Điểm hạ cánh trực thăng', 'Helicopter landing zones')], ['route', t('Tuyến đang xem', 'Selected route')]] }
   ];
   const bases: Array<[boolean, string]> = [[true, t('Ảnh nền', 'Imagery')], [false, t('Địa hình', 'Terrain')]];

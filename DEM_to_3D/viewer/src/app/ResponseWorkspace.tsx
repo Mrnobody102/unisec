@@ -1,3 +1,6 @@
+import { AssessmentTimeline } from '../features/incident/AssessmentTimeline';
+import './workspace-layout.css';
+import { visibleMapRecords } from '../features/map/visibleMapRecords';
 import { useMapPreview } from '../features/map/useMapPreview';
 import { landslideAreaOf } from '../features/landslides/landslideAreas';
 import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
@@ -76,7 +79,6 @@ import { Map3DBoundary } from '../features/map/Map3DBoundary';
 import { useRouteTerrainAnalysis } from '../features/routes/useRouteTerrainAnalysis';
 import { selectAccessRoute } from '../features/routes/routeReview';
 import { useModalFocus } from '../shared/hooks/useModalFocus';
-import { PanelResizeHandle } from '../shared/ui/PanelResizeHandle';
 import { useIncidentWorkspace } from '../features/incident/useIncidentWorkspace';
 import { effectiveRevision } from '../features/incident/workspaceRevision';
 import { RevisionNotice } from '../features/incident/RevisionNotice';
@@ -114,6 +116,7 @@ const defaultLayers = {
   flood: true,
   roads: true,
   status: true,
+  crossings: true,
   communities: true,
   staging: true,
   hlz: true,
@@ -166,7 +169,10 @@ export function ResponseWorkspace({
     gis.select(id);
     setGisCardId(id);
     setGisResponseView((previous) => ({ version: previous.version + 1, id }));
-    setLayers((previous) => ({ ...previous, gis: true }));
+    const area = gis.records.find(record => record.id === id);
+    setLayers((previous) => ({ ...previous, gis: true, ...(area && landslideAreaOf(area) ? {landslide: true} : {}) }));
+    setPanelCollapsed(false);
+    setGisGroupIds([]);
     setMapMode('2d');
     setMobileView('map');
     setActiveDialog(null);
@@ -236,6 +242,13 @@ export function ResponseWorkspace({
     ...defaultLayers,
     context: !runtime.offline
   }));
+
+  const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion), [gis.records, layers, historical, runtime.packet.datasetVersion]);
+
+  useEffect(() => {
+    if (gisCardId && !displayedGis.some(record => record.id === gisCardId)) setGisCardId(null);
+    setGisGroupIds(ids => ids.every(id => displayedGis.some(record => record.id === id)) ? ids : ids.filter(id => displayedGis.some(record => record.id === id)));
+  }, [displayedGis, gisCardId]);
 
   const map2DViewport = useRef<{
     center: [number, number];
@@ -463,6 +476,7 @@ export function ResponseWorkspace({
     sectionId?: string
   ) => {
     rememberDetailTrigger();
+    setLayers(previous => ({...previous, communities:true}));
     navigation.dispatch({ type: 'select-community', id });
     if (routeType)
       navigation.dispatch({
@@ -479,6 +493,10 @@ export function ResponseWorkspace({
       return;
     }
     rememberDetailTrigger();
+    const hazard = id.startsWith('hazard:') ? hazards.find(item => `hazard:${item.id}` === id) : undefined;
+    const layer = hazard ? hazard.kind === 'landslide' ? 'landslide' : hazard.kind === 'flood' ? 'flood' : 'crossings'
+      : id.startsWith('road:') ? 'roads' : id.startsWith('aoi:') ? 'aoi' : responseSites.find(item => `poi:${item.id}` === id)?.kind;
+    if (layer) setLayers(previous => ({ ...previous, [layer]: true }));
     navigation.dispatch({ type: 'inspect-object', id });
     revealPanel();
   };
@@ -651,7 +669,7 @@ export function ResponseWorkspace({
     [packet.report.hazard.name[0], reportRoad?.name[0]].filter(Boolean).join(' · '),
     [packet.report.hazard.name[1], reportRoad?.name[1]].filter(Boolean).join(' · ')
   ];
-  // Simulate U-1 Incoming Field Update
+  // Apply the reviewed field report as a new assessment.
   const handleSimulateUpdate = useCallback(() => {
     if (reportApplied && !historical) return;
     resetTools();
@@ -659,10 +677,10 @@ export function ResponseWorkspace({
     setHistorical(false);
     setActiveDialog(null);
     showToast(['Đã cập nhật bản đồ', 'Map updated']);
-  }, [showToast, reportApplied, historical, resetTools]);
+  }, [showToast, reportApplied, historical, resetTools, setReportApplied, setActiveDialog]);
 
   const changeView = (view: WorkspaceView) => {
-    navigation.dispatch({ type: 'view', view });
+    navigation.dispatch({ type: 'view', view, list: true });
     revealPanel();
   };
   const openList = (view: WorkspaceView) => {
@@ -737,11 +755,6 @@ export function ResponseWorkspace({
   const responseDetailVisible =
     responseDetailSelected &&
     !panelCollapsed &&
-    !(
-      showProfile &&
-      detailLayout.mode === 'dock' &&
-      !detailLayout.fitsProfile
-    ) &&
     !measurementOpen &&
     !drawOpen &&
     !locationOpen &&
@@ -804,7 +817,8 @@ export function ResponseWorkspace({
   return (
     <div
       ref={workspaceRef}
-      className="workspace"
+      className="workspace workspace-shell"
+      data-response-gis-detail={!journey.open && !locationOpen && !measurementOpen && !drawOpen && (mapMode === '2d' || !!gisCard && !!landslideAreaOf(gisCard)) && (Boolean(gisCard) || gisGroup.length > 1)}
       data-gis-open={activeDialog === 'geodata'}
       data-mobile={mobileView}
       data-panel-collapsed={panelCollapsed}
@@ -905,8 +919,8 @@ export function ResponseWorkspace({
 
         <ResponseDetails
           locale={locale}
-          mappedAreas={gis.records.filter(record => landslideAreaOf(record)?.networkVersion === packet.datasetVersion)}
-          onOpenMappedArea={id => {setGisCardId(id);setGisGroupIds([]);}}
+          mappedAreas={historical ? [] : gis.records.filter(record => landslideAreaOf(record)?.networkVersion === packet.datasetVersion)}
+          onOpenMappedArea={showGisOnResponse}
           onEditScenario={!historical ? target => {setGisScenarioRequest(target);setActiveDialog('geodata');} : undefined}
           scenarioEdits={historical ? undefined : scenarioEdits?.edits}
           onRename={!historical ? onRename : undefined}
@@ -957,7 +971,6 @@ export function ResponseWorkspace({
           onReturnFocus={returnDetailFocus}
         />
 
-        <PanelResizeHandle locale={locale} />
 
         <section
           className="map-area"
@@ -975,17 +988,19 @@ export function ResponseWorkspace({
           <div className="map-canvas">
             {mapMode === '2d' ? (
               <Map2D
-                gisEnabled={layers.gis}
-                gisRecords={gis.records}
+                gisEnabled={true}
+                gisRecords={displayedGis}
                 gisSelectedId={gisCardId}
                 gisRequest={gisResponseView}
                 onGisSelect={(id) => {
+                  setPanelCollapsed(false);
                   gis.select(id);
                   setGisCardId(id);
                   setGisGroupIds([]);
                 }}
                 gisGroupIds={gisGroupIds}
                 onGisGroup={(ids) => {
+                  setPanelCollapsed(false);
                   setGisGroupIds(ids);
                   setGisCardId(null);
                 }}
@@ -1065,9 +1080,9 @@ export function ResponseWorkspace({
                 >
                   <TerrainViewer
                     models={models}
-                    gisRecords={layers.gis ? gis.records : undefined}
+                    gisRecords={displayedGis}
                     gisSelectedId={gisCardId}
-                    onGisSelect={id => {gis.select(id);setGisCardId(id);setGisGroupIds([]);}}
+                    onGisSelect={id => {setPanelCollapsed(false);gis.select(id);setGisCardId(id);setGisGroupIds([]);}}
                     geographicPlacements={geographicPlacements}
                     measureMode={locationOpen}
                     onPick={handlePick}
@@ -1234,7 +1249,7 @@ export function ResponseWorkspace({
                             ? 'landslide'
                             : hazard?.kind === 'flood'
                               ? 'flood'
-                              : 'status'));
+                              : 'crossings'));
                 setLayers((previous) => ({ ...previous, [layer]: true }));
                 if (kind === 'community') selectCommunity(id);
                 else inspectObject(result.key);
@@ -1272,8 +1287,8 @@ export function ResponseWorkspace({
           )}
           {(mapMode === '2d' || !!gisCard && !!landslideAreaOf(gisCard)) &&
             !journey.open &&
-            layers.gis &&
             gisCard &&
+            (layers.gis || !!landslideAreaOf(gisCard)) &&
             !locationOpen &&
             !measurementOpen &&
             !drawOpen && (
@@ -1311,6 +1326,7 @@ export function ResponseWorkspace({
                 activeId={null}
                 openLabel={locale === 'vi' ? 'Xem chi tiết' : 'View details'}
                 onOpen={(id) => {
+                  setPanelCollapsed(false);
                   gis.select(id);
                   setGisCardId(id);
                 }}
@@ -1379,6 +1395,8 @@ export function ResponseWorkspace({
           {locale === 'vi' ? 'Bản đồ' : 'Map'}
         </button>
       </nav>
+
+      <AssessmentTimeline locale={locale} packet={packet} applied={reportApplied} historical={historical} onRevision={setHistorical} onReport={() => setActiveDialog('alerts')} onJournal={() => setActiveDialog('timeline')}/>
 
       <WorkspaceDialogs
         identity={identity}
