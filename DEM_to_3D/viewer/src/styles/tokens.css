@@ -72,22 +72,21 @@
   --shadow-float: 0 1px 2px rgba(0,0,0,0.18), 0 6px 20px rgba(0,0,0,0.16);
   --modal-backdrop: rgba(8, 11, 16, 0.70);
   --shadow-overlay: 0 3px 8px rgba(0,0,0,0.20), 0 14px 32px rgba(0,0,0,0.30);
-  --imagery-filter: saturate(0.82) brightness(0.96) contrast(1.04);
   --pin-label-halo: 0 0 1px #0b1a1d, 0 0 1px #0b1a1d, 0 0 2px #0b1a1d, 0 0 3px rgba(11, 26, 29, 0.9), 0 1px 5px rgba(11, 26, 29, 0.6);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --canvas: #edf1e9;
-  --glass: rgba(251, 252, 249, 0.96);
-  --glass-solid: #fbfcf9;
+  --canvas: #eeeee7;
+  --glass: rgba(248, 247, 241, 0.98);
+  --glass-solid: #f8f7f1;
   --glass-stroke: rgba(15, 23, 42, 0.09);
   --hover: rgba(38, 63, 47, 0.05);
   --fill: rgba(38, 63, 47, 0.06);
   --divider: rgba(15, 23, 42, 0.07);
   --control-border: #c4cec1;
-  --ink: #25332c;
-  --ink-2: #526157;
+  --ink: #292d29;
+  --ink-2: #535c54;
   --ink-3: #647168;
   --critical: #dc2626;
   --critical-soft: rgba(220, 38, 38, 0.09);
@@ -119,27 +118,27 @@
   --shadow-panel: 0 12px 32px -8px rgba(15,23,42,0.20), 0 2px 6px rgba(15,23,42,0.08);
   --shadow-pop: 0 4px 16px rgba(15,23,42,0.12);
 
-  --ws-bg: #f3f5f0;
-  --ws-surface: #fbfcf9;
-  --ws-raised: #f3f5f0;
-  --ws-text: #25332c;
+  --ws-bg: #efefe8;
+  --ws-surface: #f8f7f1;
+  --ws-raised: #efefe8;
+  --ws-text: #292d29;
   --ws-muted: #647168;
-  --ws-line: #e1e6de;
+  --ws-line: #dedfd5;
   --ws-brand: #275f45;
   --ws-tint: #edf3e9;
   --ws-map: #dce5d7;
   --shadow-map-control: 0 2px 8px rgba(15,23,42,0.10);
 
-  --header-bg: #fbfcf9;
-  --header-line: #e1e6de;
-  --header-ink: #25332c;
+  --header-bg: #f8f7f1;
+  --header-line: #dedfd5;
+  --header-ink: #292d29;
   --header-muted: var(--ws-muted);
   --header-hover: rgba(25, 64, 45, 0.06);
   --header-stroke: #dce3d8;
   --header-chip: rgba(25, 64, 45, 0.04);
   --header-brand: #275f45;
-  --map-chrome: #f0f3ed;
-  --map-chrome-line: #dce3d8;
+  --map-chrome: #eeeee5;
+  --map-chrome-line: #daddd1;
   --tool-data-ink: #386e50;
   --tool-measure-ink: #8b6b3b;
   --tool-location-ink: #536f7a;
@@ -148,7 +147,6 @@
   --shadow-float: 0 1px 2px rgba(28,44,31,0.07), 0 6px 20px rgba(28,44,31,0.08);
   --modal-backdrop: rgba(23, 34, 27, 0.38);
   --shadow-overlay: 0 4px 12px rgba(28,44,31,0.06), 0 20px 48px rgba(28,44,31,0.14);
-  --imagery-filter: saturate(0.74) brightness(0.92) contrast(1.05);
   --pin-label-halo: 0 0 1px #10292e, 0 0 1px #10292e, 0 0 2px #10292e, 0 0 3px rgba(16, 41, 46, 0.9), 0 1px 5px rgba(16, 41, 46, 0.6);
 }
 

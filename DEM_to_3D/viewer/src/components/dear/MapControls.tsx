@@ -1,13 +1,12 @@
 import type { GeometryRecord } from '../../geo/vector/types';
 import { landslideAreaOf, landslideAreaStyle } from '../../features/landslides/landslideAreas';
-import { POI_FRAME_PATH } from '../../terrain/poiFrame';
+import { MapPoiSample } from '../../features/map/MapLayerSample';
 import type { ObservationKind } from '../../features/observations/model';
 import type { Hazard, Locale } from '../../types/dear';
 import { useState, type ReactNode } from 'react';
 import { UiIcon } from './UiIcon';
 import { roadColors } from '../../terrain/roadStyle';
 import { roadStatusLabels } from '../../features/routes/roadStatus';
-import { MapSymbol } from '../../shared/ui/MapSymbol';
 import type { MapSymbolName } from '../../terrain/mapSymbols';
 import '../../styles/map-controls.css';
 import '../../features/map/map-legend.css';
@@ -93,7 +92,7 @@ export function MapControls({ mappedAreas = [], locale, mapMode, onChangeMapMode
       </div>
       {!layersOpen && !measuring && !drawing && !legendMinimized && visibleLegend.length > 0 && <div className="map-legend" id="map-legend-items" aria-label={t('Chú giải', 'Legend')}>
         {visibleLegend.map(({ kind, label, symbol, uiSymbol, fieldSymbol, area }) => <span className="legend-item" key={kind}>
-          {area ? <i className="legend-area" aria-hidden="true"><svg viewBox="0 0 28 22"><rect x="2" y="3" width="24" height="16" rx="1" fill={area.color} fillOpacity={area.fillOpacity} stroke={area.color} strokeWidth={area.weight} strokeDasharray={area.dashArray}/></svg></i> : fieldSymbol ? <i className={'field-legend-symbol'+(kind==='field-survey'?' is-survey':'')} aria-hidden="true">{kind==='field-survey'?'i':'!'}</i> : symbol ? <i className={'legend-symbol ' + kind}><svg viewBox="0 0 28 28" aria-hidden="true"><path d={POI_FRAME_PATH}/></svg><MapSymbol name={symbol} size={14} /></i> : uiSymbol ? <UiIcon name={uiSymbol} size={18}/> : <i className={'line ' + kind} style={{ borderColor: kind === 'network' ? (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain) : swatchColors[kind] }} aria-hidden="true"/>}{label}
+          {area ? <i className="legend-area" aria-hidden="true"><svg viewBox="0 0 28 22"><rect x="2" y="3" width="24" height="16" rx="1" fill={area.color} fillOpacity={area.fillOpacity} stroke={area.color} strokeWidth={area.weight} strokeDasharray={area.dashArray}/></svg></i> : fieldSymbol ? <i className={'field-legend-symbol'+(kind==='field-survey'?' is-survey':'')} aria-hidden="true">{kind==='field-survey'?'i':'!'}</i> : symbol ? <MapPoiSample symbol={symbol} kind={kind}/> : uiSymbol ? <UiIcon name={uiSymbol} size={18}/> : <i className={'line ' + kind} style={{ borderColor: kind === 'network' ? (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain) : swatchColors[kind] }} aria-hidden="true"/>}{label}
         </span>)}
       </div>}
     </div>

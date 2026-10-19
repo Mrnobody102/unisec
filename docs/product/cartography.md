@@ -132,4 +132,15 @@ CRS, datum, dữ liệu ảnh và định hướng engine: [nền tảng GIS và
 
 Chưa có cơ sở xác nhận tuân thủ toàn bộ quy chuẩn Việt Nam hoặc tiêu chuẩn quốc tế. Nghiệm thu bản đồ cần kiểm tra dữ liệu, hệ tọa độ, độ chính xác và mục đích công bố, bên cạnh chất lượng giao diện.
 
-Nền 3D tải trước một số tile ngữ cảnh, sau đó bổ sung lớp chi tiết quanh footprint DEM, tối đa 96 tile mỗi kiểu nền; giữ tile đã tải khi bổ sung chi tiết. Ảnh vệ tinh 2D/3D dùng cùng nguồn XYZ cấu hình, giới hạn zoom gốc và attribution; mặc định Esri World Imagery, DEAR yêu cầu tile tới zoom 19. Texture nền 3D có lọc anisotropic tối đa 8×. Nền ngoài không thay texture địa hình 840 × 502 hoặc tạo chi tiết thực địa mới. Muốn đọc địa vật nhỏ cần ảnh độ phân giải cao hơn với thời điểm/nguồn/giấy phép phù hợp; đổi thư viện bản đồ không thay độ phân giải dữ liệu. [Nguồn ảnh nền và cấu hình](../operations/vercel.md#nguồn-ảnh-nền-chi-tiết) sở hữu thông tin provider/attribution.
+Nền 3D tải trước một số tile ngữ cảnh, sau đó bổ sung lớp chi tiết quanh footprint DEM, tối đa 224 tile mỗi kiểu nền; giữ tile đã tải khi bổ sung chi tiết. Ảnh vệ tinh 2D/3D dùng cùng nguồn XYZ cấu hình, giới hạn zoom gốc và attribution; mặc định Esri World Imagery, DEAR yêu cầu tile tới zoom 19. Texture nền 3D có lọc anisotropic tối đa 8×. Ảnh trực tuyến được phủ lên DEM theo cùng tọa độ; chỉ thay texture dự phòng khi đã tải đủ toàn bộ phạm vi ở một mức zoom. Không nội suy thêm chi tiết địa hình. Muốn đọc địa vật nhỏ cần ảnh độ phân giải cao hơn với thời điểm/nguồn/giấy phép phù hợp; đổi thư viện bản đồ không thay độ phân giải dữ liệu. [Nguồn ảnh nền và cấu hình](../operations/vercel.md#nguồn-ảnh-nền-chi-tiết) sở hữu thông tin provider/attribution.
+
+
+## Chiều sâu và chuyển động
+
+Giữ bố cục danh sách/bản đồ/chi tiết. Three.js dựng bề mặt từ DEM và cùng hệ ký hiệu với 2D. Nền công cụ trung tính ấm, chữ và biểu đồ dùng màu mực; màu cảnh báo dành cho dữ liệu có ý nghĩa. Không đổi sắc ảnh theo theme. Ánh sáng trung tính dùng chung cho DEM và nền khu vực; ảnh phủ chuyển nguyên phạm vi từ mức thô sang chi tiết, không ghép từng mảng với texture dự phòng. Nét đường kiểm tra độ sâu để không xuyên qua sườn núi; đường và ranh giới 3D ngắt tại NoData, không thay độ cao thiếu bằng mặt phẳng đáy. Khi tắt nền khu vực, điểm ngoài DEM cũng không được đặt lên một độ cao giả. Không thêm bloom, hạt hoặc vách địa hình giả. Thông tin nguồn ghi hệ số phóng đại độ cao.
+
+Chọn tuyến hoặc đoạn đường đưa toàn hình học vào phần bản đồ còn nhìn được. Chọn điểm chuyển tâm trong khoảng nửa giây; kéo, cuộn hoặc lệnh mới ngắt chuyển động hiện tại. Tôn trọng giảm chuyển động của hệ điều hành. Không chạy dải sáng trên tuyến hoặc mô phỏng vùng sạt lở phát triển khi chưa có dữ liệu theo thời gian.
+
+3D chỉ vẽ khi camera, lớp, ảnh hoặc vị trí đọc thay đổi; dừng khi đứng yên và khi tab ẩn. Nhãn vùng được chọn ghi loại vùng và diện tích tính từ polygon; không suy diện tích từ điểm ảnh chụp. Công cụ lớp có mẫu nét/ký hiệu trùng với bản đồ.
+
+Timeline phân biệt bản đánh giá đã công bố với thời điểm nhận báo cáo; nhận báo cáo không tự đổi bản đánh giá. Giờ chỉ nằm trên timeline, ngày nằm trên tiêu đề và thời gian đầy đủ trong thông tin sự kiện. Attribution đầy đủ ở menu nguồn bản đồ, không lặp thêm dải chữ bên ngoài.

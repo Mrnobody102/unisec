@@ -1,4 +1,6 @@
-import { visibleCameraOffset } from '../terrain/visibleCameraTarget';
+import { terrainAreaLabel } from '../features/landslides/terrainAreaLabel';
+import { renderOnDemand } from '../terrain/renderOnDemand';
+import { cameraPoseBesideDock, frameCameraPoints } from '../terrain/cameraFraming';
 import { terrainLandslideAreas, disposeTerrainAreas } from '../features/landslides/terrainAreas';
 import type { GeometryRecord } from '../geo/vector/types';
 import { useEffect, useLayoutEffect, useRef } from 'react';
@@ -98,7 +100,7 @@ export function TerrainViewer({
   const onViewReadyRef = useRef(onViewReady);
   const mappedAreasRef = useRef({records:gisRecords,selectedId:gisSelectedId,onSelect:onGisSelect});
   const propsUnavailableRef = useRef(onUnavailable);
-  const runtimeRef = useRef<{ updateScenario: () => void; setMode: (mode: '2d' | '3d') => void; updateSurface: () => void } | null>(null);
+  const runtimeRef = useRef<{ updateScenario: () => void; setMode: (mode: '2d' | '3d') => void; updateSurface: () => void; invalidate: () => void } | null>(null);
 
   measureModeRef.current = measureMode;
   onPickRef.current = onPick;
@@ -120,8 +122,10 @@ export function TerrainViewer({
   useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
+    let invalidate = () => {};
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(themeRef.current === 'dark' ? '#0b1720' : '#e7eeef');
+    scene.background = new THREE.Color(themeRef.current === 'dark' ? '#151c1a' : '#e6e8df');
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1_000_000);
     camera.aspect = Math.max(host.clientWidth, 1) / Math.max(host.clientHeight, 1);
@@ -144,7 +148,7 @@ export function TerrainViewer({
 
     const controls = new ThreeMapControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.28;
+    controls.dampingFactor = 0.18;
     controls.panSpeed = 1;
     controls.rotateSpeed = 0.7;
     controls.zoomSpeed = 0.85;
@@ -152,14 +156,16 @@ export function TerrainViewer({
     let markerLayoutDirty = true;
     const onControlsChange = (): void => {
       markerLayoutDirty = true;
+      invalidate();
       host.parentElement?.style.setProperty('--map-bearing', `${THREE.MathUtils.radToDeg(controls.getAzimuthalAngle())}deg`);
     };
     controls.addEventListener('change', onControlsChange);
 
-    const ambient = new THREE.HemisphereLight('#f2f7ff', '#465748', 2.4);
+    // Lambert diffuse divides irradiance by PI; preserve imagery brightness at unit illumination.
+    const ambient = new THREE.AmbientLight('#ffffff', Math.PI * .78);
     scene.add(ambient);
-    const sun = new THREE.DirectionalLight('#ffffff', 2.8);
-    sun.position.set(1, 2, 1);
+    const sun = new THREE.DirectionalLight('#ffffff', Math.PI * .28);
+    sun.position.set(-1, 1.6, .5);
     scene.add(sun);
 
     const entries: ModelEntry[] = models.map((model, index) => {
@@ -182,11 +188,23 @@ export function TerrainViewer({
     const primary = entries[0];
     const terrainImagery = primary?.model.metadata ? createTerrainImagery(primary.model.metadata, primary.group, primary.meshes, imagerySource.maxNativeZoom, Math.min(8, renderer.capabilities.getMaxAnisotropy())) : null;
     const basemap = primary?.model.metadata
-      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => onBasemapStateRef.current?.(state), Math.min(8, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => terrainImagery?.tile(tile, bitmap))
+      ? createRegionalBasemap(primary.model.metadata, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); }, Math.min(8, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImagery?.tile(tile, bitmap); invalidate(); })
       : null;
     if (basemap) scene.add(basemap.group);
 
-    type SurfaceMaterial = THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
+    // Use the same neutral illumination for prepared imagery, online draping and context.
+    const sourceMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+    entries.forEach(entry => entry.meshes.forEach(mesh => {
+      sourceMaterials.set(mesh, mesh.material);
+      const convert = (source: THREE.Material): THREE.MeshLambertMaterial => {
+        const surface = source as THREE.MeshStandardMaterial;
+        return new THREE.MeshLambertMaterial({ map: surface.map ?? null, color: surface.color ?? '#ffffff',
+          vertexColors: surface.vertexColors, side: source.side, transparent: source.transparent,
+          opacity: source.opacity, alphaTest: source.alphaTest });
+      };
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(convert) : convert(mesh.material);
+    }));
+    type SurfaceMaterial = THREE.MeshLambertMaterial;
     const originalMaterials = new Map<SurfaceMaterial, { map: THREE.Texture | null; color: THREE.Color; vertexColors: boolean }>();
     const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     entries.forEach(entry => entry.root.traverse(object => {
@@ -207,7 +225,7 @@ export function TerrainViewer({
       basemap?.setOptions(layers?.context !== false, layers?.imagery === false ? 'terrain' : 'satellite');
       terrainImagery?.setVisible(layers?.context !== false && layers?.imagery !== false);
       if (!basemap) onBasemapStateRef.current?.({ status: layers?.context === false || !models.length ? 'off' : 'unavailable', style: layers?.imagery === false ? 'terrain' : 'satellite', loaded: 0, total: 0 });
-      scene.background = new THREE.Color(themeRef.current === 'dark' ? '#0b1720' : '#e7eeef');
+      scene.background = new THREE.Color(themeRef.current === 'dark' ? '#151c1a' : '#e6e8df');
       originalMaterials.forEach((original, material) => {
         const imagery = layers?.imagery !== false;
         const nextMap = imagery ? original.map : null;
@@ -215,8 +233,9 @@ export function TerrainViewer({
         material.color.copy(imagery ? original.color : new THREE.Color(themeRef.current === 'dark' ? '#354a50' : '#c8d5c4'));
         if (material.vertexColors !== (imagery && original.vertexColors)) { material.vertexColors = imagery && original.vertexColors; material.needsUpdate = true; }
       });
-      ambient.intensity = layers?.hillshade === false ? 3.2 : 2.4;
-      sun.intensity = layers?.hillshade === false ? 0 : 2.8;
+      ambient.intensity = Math.PI * (layers?.hillshade === false ? 1 : .78);
+      sun.intensity = Math.PI * (layers?.hillshade === false ? 0 : .28);
+      invalidate();
     };
     updateSurface();
 
@@ -226,6 +245,7 @@ export function TerrainViewer({
 
     let scenarioOverlayGroup: THREE.Group | null = null;
     let mappedAreaGroup: THREE.Group | null = null;
+    let mappedLabel: ReturnType<typeof terrainAreaLabel> = null;
     let scenarioMarkers: ReturnType<typeof createScenarioMarkers> | null = null;
     const rebuildScenarioOverlays = (): void => {
       const focused = document.activeElement as HTMLElement | null;
@@ -249,9 +269,12 @@ export function TerrainViewer({
       const sp = scenarioPropsRef.current;
       const primaryModel = entries[0]?.model;
       disposeTerrainAreas(mappedAreaGroup); mappedAreaGroup = null;
+      mappedLabel?.dispose();mappedLabel = null;
       if (primaryModel?.metadata && primaryModel.grid && mappedAreasRef.current.records) {
         mappedAreaGroup = terrainLandslideAreas(mappedAreasRef.current.records, primaryModel.metadata, primaryModel.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion);
         mappedAreaGroup.position.copy(entries[0].group.position); mappedAreaGroup.scale.copy(entries[0].group.scale); scene.add(mappedAreaGroup);
+        const chosen = mappedAreasRef.current.records.find(record => record.id === mappedAreasRef.current.selectedId);
+        if (chosen) mappedLabel = terrainAreaLabel(host,chosen,primaryModel.metadata,primaryModel.grid,entries[0].group.matrixWorld,localeRef.current);
       }
       if (sp && primaryModel?.metadata && primaryModel?.grid) {
         scenarioOverlayGroup = buildScenarioOverlays({
@@ -280,6 +303,7 @@ export function TerrainViewer({
         });
       }
       markerLayoutDirty = true;
+      invalidate();
     };
     rebuildScenarioOverlays();
 
@@ -312,7 +336,7 @@ export function TerrainViewer({
     type CameraTransition = {
       fromPosition: THREE.Vector3; fromTarget: THREE.Vector3;
       toPosition: THREE.Vector3; toTarget: THREE.Vector3;
-      startedAt: number; mode: '3d' | '2d';
+      startedAt: number; duration: number; mode: '3d' | '2d';
     };
     let cameraTransition: CameraTransition | null = null;
     const applyModeConstraints = (mode: '3d' | '2d'): void => {
@@ -340,7 +364,7 @@ export function TerrainViewer({
       controls.minDistance = Math.max(maxDimension * .04, size.y * .65);
       controls.maxDistance = Math.max(distance * 2.2, maxDimension * 2.5);
       camera.updateProjectionMatrix();
-      if (smooth && camera.position.distanceTo(nextPosition) > 1) {
+      if (smooth && !reducedMotion.matches && camera.position.distanceTo(nextPosition) > 1) {
         // Clear residual damping before interpolating, otherwise the old drag
         // continues to move the camera during a mode change.
         controls.enableDamping = false;
@@ -351,7 +375,7 @@ export function TerrainViewer({
         cameraTransition = {
           fromPosition: camera.position.clone(), fromTarget: controls.target.clone(),
           toPosition: nextPosition, toTarget: center.clone(),
-          startedAt: performance.now(), mode
+          startedAt: performance.now(), duration: 540, mode
         };
       } else {
         cameraTransition = null;
@@ -362,6 +386,7 @@ export function TerrainViewer({
         controls.update();
       }
       markerLayoutDirty = true;
+      invalidate();
     };
     setInitialCamera(mapModeRef.current);
     const interruptCameraTransition = (): void => {
@@ -374,38 +399,55 @@ export function TerrainViewer({
       controls.update();
       markerLayoutDirty = true;
     };
-    runtimeRef.current = { updateScenario: rebuildScenarioOverlays, setMode: mode => setInitialCamera(mode, true), updateSurface };
+    runtimeRef.current = { updateScenario: rebuildScenarioOverlays, setMode: mode => setInitialCamera(mode, true), updateSurface, invalidate: () => invalidate() };
 
+    const moveCamera = (position: THREE.Vector3, target: THREE.Vector3, duration = 480) => {
+      interruptCameraTransition();
+      if (reducedMotion.matches) {
+        camera.position.copy(position);controls.target.copy(target);controls.update();
+      } else {
+        controls.enableDamping = false;controls.update();
+        cameraTransition = {fromPosition:camera.position.clone(),fromTarget:controls.target.clone(),toPosition:position,toTarget:target,startedAt:performance.now(),duration,mode:mapModeRef.current};
+      }
+      markerLayoutDirty = true;invalidate();
+    };
+    const projectedWorld = (point: {x:number;y:number}) => {
+      if (!primary?.model.metadata || !primary.model.grid) return null;
+      const elevation = bilinearElevation(primary.model.grid, primary.model.metadata, point.x, point.y).elevation;
+      if (elevation === undefined) return null;
+      const p = projectedToScene(primary.model.metadata, point, elevation);
+      return primary.group.localToWorld(new THREE.Vector3(p.x,p.y,p.z));
+    };
     if (viewControlRef) {
       viewControlRef.current = {
         zoomIn: () => {
           interruptCameraTransition();
           const offset = camera.position.clone().sub(controls.target);
           offset.multiplyScalar(0.8);
-          camera.position.copy(controls.target).add(offset);
-          controls.update();
+          const position = controls.target.clone().add(offset);
+          moveCamera(position,controls.target.clone(),260);
         },
         zoomOut: () => {
           interruptCameraTransition();
           const offset = camera.position.clone().sub(controls.target);
           offset.multiplyScalar(1.25);
-          camera.position.copy(controls.target).add(offset);
-          controls.update();
+          const position = controls.target.clone().add(offset);
+          moveCamera(position,controls.target.clone(),260);
         },
         resetView: () => {
           setInitialCamera(mapModeRef.current, true);
         },
         retryBasemap: () => basemap?.retry(),
         focusProjected: (point, inset) => {
-          if (!primary?.model.metadata) return;
-          interruptCameraTransition();
-          const elevation = primary.model.grid ? bilinearElevation(primary.model.grid, primary.model.metadata, point.x, point.y).elevation : undefined;
-          const p = projectedToScene(primary.model.metadata, point, elevation ?? primary.model.metadata.elevation.base_elevation);
-          const target = primary.group.localToWorld(new THREE.Vector3(p.x, p.y, p.z));
-          const shift = target.clone().sub(controls.target);
-          camera.position.add(shift); controls.target.copy(target); controls.update();
-          const visibleOffset=visibleCameraOffset(camera,target,inset?.right ?? 0,host.clientWidth);
-          camera.position.add(visibleOffset);controls.target.add(visibleOffset);controls.update();markerLayoutDirty=true;
+          const target = projectedWorld(point);if (!target) return;
+          const position = camera.position.clone().add(target.clone().sub(controls.target));
+          const pose = cameraPoseBesideDock(camera,position,target,inset?.right ?? 0,host.clientWidth);
+          moveCamera(pose.position,pose.target);
+        },
+        frameProjected: (points, inset) => {
+          const worldPoints = points.map(projectedWorld).filter((point): point is THREE.Vector3 => point !== null);
+          const pose = frameCameraPoints(camera,controls.target,worldPoints,{width:host.clientWidth,height:host.clientHeight,right:inset?.right ?? 0,minDistance:controls.minDistance,maxDistance:controls.maxDistance});
+          if (pose) moveCamera(pose.position,pose.target,560);
         }
       };
     }
@@ -484,16 +526,24 @@ export function TerrainViewer({
       pointer.y = -((position.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
     };
+    const visibleIntersection = (objects: THREE.Object3D[]): THREE.Intersection | undefined => {
+      const hit = raycaster.intersectObjects(objects, true)[0];
+      if (!hit) return undefined;
+      const ground = raycaster.intersectObjects(terrainMeshes, false)[0];
+      // Match depth-tested layers: a hidden road/area must not intercept a ground click.
+      const tolerance = Math.max(1, maxDimension / Math.max(1, host.clientHeight));
+      return !ground || hit.distance <= ground.distance + tolerance ? hit : undefined;
+    };
     const pickOverlay = (): OverlayHit | null => {
       if (!scenarioOverlayGroup || !onSelectOverlayHitRef.current) return null;
-      const hit = raycaster.intersectObjects(scenarioOverlayGroup.children, true)[0];
+      const hit = visibleIntersection(scenarioOverlayGroup.children);
       let object: THREE.Object3D | null = hit?.object ?? null;
       while (object && !object.userData?.type) object = object.parent;
       return object?.userData?.type ? { type: object.userData.type, id: object.userData.id } as OverlayHit : null;
     };
     const pickMappedArea = (): string | null => {
       if (!mappedAreaGroup || !mappedAreasRef.current.onSelect) return null;
-      return raycaster.intersectObjects(mappedAreaGroup.children, true)[0]?.object.userData.recordId ?? null;
+      return visibleIntersection(mappedAreaGroup.children)?.object.userData.recordId ?? null;
     };
     const updateCursor = (): void => {
       hoverFrame = 0;
@@ -562,25 +612,24 @@ export function TerrainViewer({
       });
       mappedAreaGroup?.traverse(object => { const material=(object as THREE.Mesh).material as THREE.Material & {resolution?:THREE.Vector2}; material?.resolution?.set(width,height); });
       markerLayoutDirty = true;
+      invalidate();
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
-    const mapUiObserver = new MutationObserver(() => { markerLayoutDirty = true; });
+    const mapUiObserver = new MutationObserver(() => { markerLayoutDirty = true; invalidate(); });
     const mapArea = host.closest('.map-area');
-    const markLayoutDirty = () => { markerLayoutDirty = true; };
+    const markLayoutDirty = () => { markerLayoutDirty = true; invalidate(); };
     mapArea?.addEventListener('dear:map-layout', markLayoutDirty);
     const workspace = mapArea ?? host.parentElement;
     if (workspace) mapUiObserver.observe(workspace, { childList: true, subtree: true });
     resize();
 
-    let animationFrame = 0;
-    const animate = (): void => {
-      animationFrame = requestAnimationFrame(animate);
+    const loop = renderOnDemand(time => {
       controls.enabled = !measureModeRef.current && !cameraTransition;
       updateProfileOverlay();
       if (cameraTransition) {
         const transition = cameraTransition;
-        const progress = Math.min((performance.now() - transition.startedAt) / 220, 1);
+        const progress = Math.min((time - transition.startedAt) / transition.duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
         camera.position.lerpVectors(transition.fromPosition, transition.toPosition, eased);
         controls.target.lerpVectors(transition.fromTarget, transition.toTarget, eased);
@@ -592,21 +641,31 @@ export function TerrainViewer({
           controls.enabled = !measureModeRef.current;
         }
       }
-      controls.update();
+      const moved = controls.update();
       renderer.render(scene, camera);
       updateFocusMarker();
       if (markerLayoutDirty) {
         mapReference.update(camera, controls.target, controls.getAzimuthalAngle(), mapModeRef.current, localeRef.current, entries[0]?.model.metadata, entries[0]?.group.matrixWorld);
+        mappedLabel?.update(camera);
         scenarioMarkers?.update(camera);
         markerLayoutDirty = false;
       }
-    };
-    animate();
+      return Boolean(cameraTransition || moved);
+    });
+    invalidate = loop.invalidate;
+    const onVisibility = () => {if (!document.hidden) {markerLayoutDirty = true;invalidate();}};
+    document.addEventListener('visibilitychange',onVisibility);
+    const onReducedMotion = () => {if (reducedMotion.matches && cameraTransition) {camera.position.copy(cameraTransition.toPosition);controls.target.copy(cameraTransition.toTarget);interruptCameraTransition();invalidate();}};
+    reducedMotion.addEventListener('change',onReducedMotion);
+    invalidate();
     onViewReadyRef.current?.();
 
     return () => {
       runtimeRef.current = null;
-      cancelAnimationFrame(animationFrame);
+      loop.dispose();
+      document.removeEventListener('visibilitychange',onVisibility);
+      reducedMotion.removeEventListener('change',onReducedMotion);
+      if (viewControlRef) viewControlRef.current = null;
       cancelAnimationFrame(hoverFrame);
       resizeObserver.disconnect();
       mapUiObserver.disconnect();
@@ -622,6 +681,7 @@ export function TerrainViewer({
       clearOverlay();
       scenarioMarkers?.dispose();
       disposeTerrainAreas(mappedAreaGroup);
+      mappedLabel?.dispose();
       mapReference.dispose();
       terrainImagery?.dispose();
       basemap?.dispose();
@@ -630,6 +690,10 @@ export function TerrainViewer({
         scenarioOverlayGroup.traverse(object => { const mesh = object as THREE.Mesh; mesh.geometry?.dispose(); const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]; materials.forEach(material => material?.dispose()); });
       }
       originalMaterials.forEach((original, material) => { material.map = original.map; material.color.copy(original.color); material.vertexColors = original.vertexColors; material.needsUpdate = true; });
+      sourceMaterials.forEach((source, mesh) => {
+        (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(material => material.dispose());
+        mesh.material = source;
+      });
       focusMarker.remove();
       entries.forEach((entry) => {
         // A reused model must release this renderer's GPU allocations and dispose
@@ -652,6 +716,7 @@ export function TerrainViewer({
   useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.appearance, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale, gisRecords, gisSelectedId]);
   useLayoutEffect(() => { runtimeRef.current?.setMode(mapMode); }, [mapMode]);
   useEffect(() => { runtimeRef.current?.updateSurface(); }, [theme]);
+  useEffect(() => { runtimeRef.current?.invalidate(); }, [focusPoint, profile, measureMode, profileMetadata]);
 
   return <div ref={hostRef} className="terrain-viewer" aria-label={locale === 'vi' ? `Bản đồ địa hình ${mapMode.toUpperCase()}` : `${mapMode.toUpperCase()} terrain map`} />;
 }

@@ -23,6 +23,7 @@ type Props = {
   locale: Locale;
   incident: IncidentModel;
   areaName: [vi: string, en: string];
+  snapshotDisplay?: 'full' | 'date';
   report: IncidentPacket['report'];
   reportRoad?: RoadSegment;
   dataAvailable: boolean;
@@ -53,6 +54,7 @@ export const AppHeader: React.FC<Props> = ({
   locale,
   incident,
   areaName,
+  snapshotDisplay,
   report,
   reportRoad,
   dataAvailable,
@@ -115,6 +117,7 @@ export const AppHeader: React.FC<Props> = ({
         incident={incident}
         areaName={areaName}
         snapshot={snapshot}
+        snapshotDisplay={snapshotDisplay}
         available={dataAvailable}
         onOpenTimeline={onOpenTimeline}
         onOpenData={onOpenData}

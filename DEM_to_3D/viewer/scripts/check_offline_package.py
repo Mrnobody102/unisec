@@ -54,7 +54,7 @@ def run(archive, chrome):
                 page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
                 page.locator('.settings-workspace summary').click()
                 page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
-                expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
+                expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
                 assert not errors, errors
                 external = [request for request in requests if request.startswith(('http:', 'https:')) and not request.startswith(base)]
                 assert not external, external

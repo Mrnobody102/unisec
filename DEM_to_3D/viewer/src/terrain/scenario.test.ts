@@ -1,4 +1,6 @@
 import { Color } from 'three';
+import metadataJson from '../../public/terrain/che_tao_v2_tex.terrain.json';
+import { validateMetadata } from './validation';
 import { describe, expect, it } from 'vitest';
 import {
   cheTaoIncident,
@@ -61,6 +63,14 @@ describe('DEAR Scenario & Overlays', () => {
     expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('08:58 29/09/2026');
   });
 
+  it('does not invent road elevations where the DEM has no coverage', () => {
+    const metadata = validateMetadata(metadataJson);
+    const grid = new Float32Array(metadata.grid.shape[0] * metadata.grid.shape[1]).fill(NaN);
+    const overlays = buildScenarioOverlays({metadata, grid, communities: [], hazards: [], roads: initialRoadSegments,
+      selectedRoute: null, selectedCommunityId: null, selectedObjectId: null, layers: {roads: true, status: true}, screenMarkers: true});
+    expect(overlays.getObjectByName('scenario-roads')!.children).toHaveLength(0);
+  });
+
   it.each([
     { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: new Color(roadColors.uncertain).getHex(), dashed: true },
     { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: new Color(roadColors.blocked).getHex(), dashed: false },
@@ -86,11 +96,11 @@ describe('DEAR Scenario & Overlays', () => {
         byte_length: 400
       },
       grid_transform: {
-        a: 30,
+        a: 3000,
         b: 0,
         c: 390000,
         d: 0,
-        e: -30,
+        e: -3000,
         f: 2410000,
         convention: 'rasterio_affine',
         pixel_reference: 'center'

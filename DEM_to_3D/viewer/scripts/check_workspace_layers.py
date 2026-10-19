@@ -72,7 +72,7 @@ def run(url, chrome):
         page.locator('.incident-priority-row').first.click()
         expect(page.locator('#response-details')).to_contain_text('Nậm Khắt')
         timeline=page.locator('.assessment-timeline')
-        timeline.get_by_role('button',name='09:45 Báo cáo chờ kiểm tra',exact=True).click()
+        timeline.get_by_role('button',name='09:45 Nhận báo cáo',exact=True).click()
         page.keyboard.press('Escape')
         expect(timeline.locator('.assessment-pending')).to_be_visible()
         timeline.locator('.assessment-pending').click()

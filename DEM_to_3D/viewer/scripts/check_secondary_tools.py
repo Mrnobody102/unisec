@@ -144,7 +144,7 @@ def run(url, chrome, captures):
         page.locator('.settings-workspace summary').click()
         page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
         expect(page.locator('.incident-priority-row').first).to_be_visible()
-        expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
         assert not errors, errors
         browser.close()
         print('Secondary tools passed: revisions, notifications, layer display, GeoTIFF comparison, GeoJSON, print and reset.')

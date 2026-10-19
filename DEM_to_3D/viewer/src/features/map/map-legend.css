@@ -34,7 +34,7 @@
 .map-legend .line.aoi { border-color: #85aa9d; border-top-style: dashed; }
 /* Samples use the same white POI frame, outline and glyph as map markers. */
 .legend-symbol { position:relative; display:inline-block; flex:none; width:24px; height:24px; color:var(--sym-community); }
-.legend-symbol > svg:first-child { position:absolute; inset:0; width:24px; height:24px; fill:#fbfcfa; stroke:currentColor; stroke-width:1.1; stroke-linejoin:round; }
+.legend-symbol > svg:first-child { position:absolute; inset:0; width:24px; height:24px; fill:#fbfcfa; stroke:currentColor; stroke-width:.9; stroke-linejoin:round; }
 .legend-symbol > svg:last-child { position:absolute; left:5px; top:3.5px; width:14px; height:14px; }
 .legend-symbol.priority { color:var(--sym-priority); }
 .legend-symbol.landslide,.legend-symbol.suspected { color:var(--sym-landslide); }

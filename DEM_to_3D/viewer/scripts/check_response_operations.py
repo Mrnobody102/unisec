@@ -20,7 +20,7 @@ def run(url, chrome, captures):
             section.get_by_role('button').click()
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-work')).to_be_visible(timeout=25000)
-        expect(page.get_by_role('button',name='Sự kiện đang xem',exact=True)).to_contain_text('09:31')
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
         page.set_viewport_size({'width':1440,'height':600})
         page.locator('.incident-priority-row').first.click()
         page.locator('.map-road-target[data-road-id="E13"]').dispatch_event('click')

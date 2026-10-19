@@ -1,14 +1,18 @@
 /* Existing list and detail panels, with recorded assessments below. */
-.assessment-timeline { display:flex; align-items:center; min-width:0; gap:20px; padding:8px 20px; border-top:1px solid var(--ws-line); background:var(--ws-surface); z-index:26; }
-.assessment-timeline-title { flex:none; font-size:12px; color:var(--ws-muted); }
-.assessment-timeline-track { display:flex; flex:1; min-width:0; align-items:center; }
-.assessment-moment { position:relative; display:flex; gap:6px; align-items:baseline; justify-content:center; flex:1; min-width:0; padding:18px 12px 4px; color:var(--ws-muted); background:none; border:0; font-size:12px; }
-.assessment-moment::before { content:''; position:absolute; left:0; right:0; top:6px; height:1px; background:var(--ws-line); }
-.assessment-moment::after { content:''; position:absolute; top:2px; left:50%; width:9px; height:9px; border:1px solid var(--ws-muted); border-radius:50%; background:var(--ws-surface); }
+/* Time is read left to right; an incoming report is not a published assessment. */
+.assessment-timeline { display:flex; align-items:center; min-width:0; gap:24px; padding:6px 20px; border-top:1px solid var(--ws-line); background:var(--ws-surface); z-index:26; }
+.assessment-timeline-title { flex:none; font-size:12px; color:var(--ws-text); }
+.assessment-timeline-title small { display:block; margin-top:1px; color:var(--ws-muted); font-size:10px; font-weight:400; }
+.assessment-timeline-track { display:flex; flex:1; min-width:0; align-items:center; justify-content:space-between; position:relative; padding:0 5px; }
+.assessment-timeline-track::before { content:''; position:absolute; left:5px; right:5px; top:7px; height:1px; background:var(--ws-line); }
+.assessment-moment { position:relative; display:flex; gap:8px; align-items:baseline; min-width:0; padding:19px 0 2px; color:var(--ws-muted); background:none; border:0; font-size:12px; }
+.assessment-moment::after { content:''; position:absolute; top:3px; left:0; width:8px; height:8px; border:1px solid var(--ws-muted); border-radius:50%; background:var(--ws-surface); }
+.assessment-moment:last-child::after { left:auto; right:0; }
 .assessment-moment[aria-pressed="true"] { color:var(--ws-text); font-weight:600; }
-.assessment-moment[aria-pressed="true"]::after { background:var(--select); border-color:var(--select); }
+.assessment-moment[aria-pressed="true"]::after { background:var(--ws-text); border-color:var(--ws-text); }
+.assessment-moment:hover span { text-decoration:underline; text-underline-offset:3px; }
 .assessment-moment time { font-variant-numeric:tabular-nums; }
-.assessment-pending::after { border-color:var(--warning, #956a23); }
+.assessment-pending::after { border-radius:0; width:6px; height:6px; top:4px; transform:rotate(45deg); }
 .incident-overview-heading h1 { font-size:21px; line-height:1.35; margin:0; }
 .incident-overview-counts { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 24px; padding-bottom:20px; border-bottom:1px solid var(--ws-line); }
 .incident-overview-counts dt { font-size:12px; color:var(--ws-muted); }
@@ -29,7 +33,8 @@
  .workspace.workspace-shell { grid-template-rows:var(--size-header) minmax(0,1fr) 56px auto; }
  .assessment-timeline { gap:8px; padding:6px 8px; }
  .assessment-timeline-title { display:none; }
- .assessment-moment { flex-direction:column; align-items:center; gap:2px; padding:16px 4px 0; font-size:11px; }
+ .assessment-moment { flex-direction:column; align-items:flex-start; gap:0; padding:17px 0 0; font-size:11px; }
+ .assessment-moment:last-child { align-items:flex-end; }
  .workspace.workspace-shell .mobile-view-switch { bottom:68px; }
 }
 

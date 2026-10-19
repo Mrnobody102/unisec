@@ -206,7 +206,14 @@ export function Map2D(props: Props): JSX.Element {
     runtime.current = { refresh }; refresh();
     if (props.viewControlRef) props.viewControlRef.current = {
       zoomIn: () => map.zoomIn(0.5), zoomOut: () => map.zoomOut(0.5), resetView: fit,
-      focusProjected: (point, inset) => { const p = ll(point); if (!p) return; const shift = (inset?.right ?? 0) / 2; const target = shift ? map.unproject(map.project(p).add([shift, 0])) : p; map.panTo(target, { animate: true, duration: 0.3 }); },
+      focusProjected: (point, inset) => { const p = ll(point); if (!p) return; const shift = (inset?.right ?? 0) / 2; const target = shift ? map.unproject(map.project(p).add([shift, 0])) : p; map.stop(); map.panTo(target, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.45 }); },
+      frameProjected: (points, inset) => {
+        const positions = points.map(ll).filter((p): p is L.LatLng => p !== null);
+        if (!positions.length) return;
+        map.stop();
+        const right = Math.min(inset?.right ?? 0, Math.max(0, host.clientWidth - 240));
+        map.fitBounds(L.latLngBounds(positions), {paddingTopLeft:[65,90],paddingBottomRight:[right + 65,100],maxZoom:15.5,animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches,duration:.5});
+      },
       retryBasemap: () => { tileKey = ''; refresh(); }
     };
     propsRef.current.onViewReady?.();

@@ -49,6 +49,7 @@ export type ViewControls = {
   zoomIn: () => void;
   zoomOut: () => void;
   resetView: () => void;
+  frameProjected?: (points: Array<{x:number;y:number}>, inset?: {right?:number}) => void;
   retryBasemap: () => void;
   /** Centre a point in the part of the map not covered by floating panels (`inset` in px). */
   focusProjected: (point: { x: number; y: number }, inset?: { right?: number }) => void;

@@ -427,10 +427,8 @@ h3 {
 .map-location-panel dd { margin: 0; font-variant-numeric: tabular-nums; user-select: text; font-weight: 500; }
 .map-location-panel .text-button { font-size: 12px; }
 .map-2d .leaflet-container { background: var(--ws-map); }
-.map-2d:has(.map-marker-layer[data-basemap="imagery"]) :is(.leaflet-tile-pane, .leaflet-dear-imagery-pane) { filter: var(--imagery-filter); }
 .map-attribution { position: absolute; z-index: 22; bottom: 8px; right: 8px; display: flex; align-items: center; gap: 4px; max-width: calc(100% - 16px); color: var(--ws-muted); font-size: 10px; line-height: 1.5; }
 .map-attribution a { color: inherit; text-decoration: underline; }
-.map-credit { padding: 1px 6px; border-radius: var(--radius-xs); background: var(--glass); }
 .map-source-button { position: relative; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--map-control-line); border-radius: 50%; background: var(--ws-raised); color: var(--ws-text); box-shadow: var(--shadow-float); }
 .map-source-button:hover { background: var(--ws-tint); color: var(--ws-brand); }
 .map-source-warning { position: absolute; top: 0; right: 0; width: 6px; height: 6px; border-radius: 50%; background: #a6630b; }
@@ -515,9 +513,9 @@ h3 {
 .profile-panel .profile-svg { border-radius: 0; background: transparent; }
 .profile-panel .chart-grid { stroke: var(--ws-line); stroke-width: 1; }
 .profile-panel .chart-tick { fill: var(--ws-muted); font: 11px var(--font-sans); }
-.profile-panel .profile-area { fill: var(--ws-brand); opacity: .08; }
+.profile-panel .profile-area { fill: var(--ws-text); opacity: .08; }
 .profile-panel .profile-crosshair { stroke: var(--ws-muted); stroke-width: 1; stroke-dasharray: 3 3; }
-.profile-panel .profile-cursor { fill: var(--ws-brand); stroke: var(--ws-surface); stroke-width: 2; }
+.profile-panel .profile-cursor { fill: var(--ws-text); stroke: var(--ws-surface); stroke-width: 2; }
 .profile-readout { display: grid; gap: 7px; margin: 0; }
 .profile-readout div { display: flex; justify-content: space-between; gap: 12px; }
 .profile-controls input { width: 100%; accent-color: var(--ws-brand); margin: 0 0 5px; }
@@ -539,7 +537,7 @@ h3 {
 
 .profile-panel .profile-card { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .profile-panel .profile-svg { flex: 1; min-height: 0; height: 100%; margin: 0; background: transparent; }
-.profile-panel .profile-line { stroke: var(--ws-brand); }
+.profile-panel .profile-line { stroke: var(--ws-text); stroke-width:1.5; }
 .profile-panel .chart-axis { stroke: var(--ws-line); }
 .profile-chart-caption { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; color: var(--ws-muted); font-size: 11px; }
 

@@ -13,6 +13,7 @@ export function createScenarioMarkers(host: HTMLElement, options: ScreenMarkerOp
     update(camera: THREE.Camera): void {
       screen.update(position => {
         const sampled = bilinearElevation(options.grid, options.metadata, position.x, position.y);
+        if (sampled.elevation === undefined && options.layers.context === false) return null;
         const local = projectedToScene(options.metadata, position, (sampled.elevation ?? options.metadata.elevation.base_elevation) + 15);
         point.set(local.x, local.y, local.z).applyMatrix4(options.transform).project(camera);
         return point.z >= -1 && point.z <= 1 ? {

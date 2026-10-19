@@ -36,9 +36,8 @@ type ScenarioOverlayOptions = {
   resolution?: { width: number; height: number };
 };
 
-function getSurfaceElevation(grid: Float32Array, metadata: TerrainMetadata, x: number, y: number): number {
-  const result = bilinearElevation(grid, metadata, x, y);
-  return result.elevation ?? metadata.elevation.base_elevation;
+function getSurfaceElevation(grid: Float32Array, metadata: TerrainMetadata, x: number, y: number): number | undefined {
+  return bilinearElevation(grid, metadata, x, y).elevation;
 }
 
 function interpolateSegmentPoints(
@@ -73,24 +72,35 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
 
   const rootGroup = new THREE.Group();
   rootGroup.name = 'dear-scenario-overlays';
+  const interval = Math.max(5, Math.min(40, Math.hypot(metadata.grid_transform.a, metadata.grid_transform.d) / 2, Math.hypot(metadata.grid_transform.b, metadata.grid_transform.e) / 2));
+  const drapedRuns = (points: Array<{x: number; y: number}>, offset: number): number[][] => {
+    const runs: number[][] = []; let positions: number[] = [];
+    const flush = () => { if (positions.length >= 6) runs.push(positions); positions = []; };
+    for (const point of points) {
+      const elevation = getSurfaceElevation(grid, metadata, point.x, point.y);
+      if (elevation === undefined) { flush(); continue; }
+      const scene = projectedToScene(metadata, point, elevation + offset);
+      positions.push(scene.x, scene.y, scene.z);
+    }
+    flush(); return runs;
+  };
 
   if (options.aoi && layers.aoi) {
-    const positions: number[] = [];
+    const points: Array<{x: number; y: number}> = [];
     for (let i = 1; i < options.aoi.points.length; i++) {
-      const dense = interpolateSegmentPoints(options.aoi.points[i - 1], options.aoi.points[i], 80);
-      if (i > 1) dense.shift();
-      for (const point of dense) {
-        const scene = projectedToScene(metadata, point, getSurfaceElevation(grid, metadata, point.x, point.y) + 5);
-        positions.push(scene.x, scene.y, scene.z);
-      }
+      const dense = interpolateSegmentPoints(options.aoi.points[i - 1], options.aoi.points[i], interval);
+      if (i > 1) dense.shift(); points.push(...dense);
     }
-    const geometry = new LineGeometry(); geometry.setPositions(positions);
+    const runs = drapedRuns(points, 5);
     const selected = selectedObjectId === `aoi:${options.aoi.id}`;
-    const material = new LineMaterial({ color: selected ? 0x167b66 : 0x85aa9d, linewidth: selected ? 2 : 1.5,
-      dashed: true, dashSize: 120, gapSize: 100, depthTest: false, transparent: true, opacity: selected ? 0.9 : 0.6 });
-    material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
-    const outline = new Line2(geometry, material); outline.computeLineDistances();
-    outline.renderOrder = mapLayerOrder.boundary * 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
+    for (const positions of runs) {
+      const geometry = new LineGeometry(); geometry.setPositions(positions);
+      const material = new LineMaterial({ color: selected ? 0x167b66 : 0x85aa9d, linewidth: selected ? 2 : 1.5,
+        dashed: true, dashSize: 120, gapSize: 100, depthTest: true, transparent: true, opacity: selected ? 0.9 : 0.6 });
+      material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
+      const outline = new Line2(geometry, material); outline.computeLineDistances();
+      outline.renderOrder = mapLayerOrder.boundary * 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
+    }
   }
 
   // 1. Roads Layer
@@ -103,7 +113,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
 
       const densePoints: Array<{ x: number; y: number }> = [];
       for (let i = 0; i < road.points.length - 1; i += 1) {
-        const segPoints = interpolateSegmentPoints(road.points[i], road.points[i + 1], 40);
+        const segPoints = interpolateSegmentPoints(road.points[i], road.points[i + 1], interval);
         if (i > 0) segPoints.shift();
         densePoints.push(...segPoints);
       }
@@ -115,12 +125,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       const appearance = options.appearance ?? defaultLayerAppearance;
       if (!showRoad(road.status, Boolean(routeVisible || isRoadSelected), appearance.roads)) return;
 
-      const positions: number[] = [];
-      densePoints.forEach((pt) => {
-        const elev = getSurfaceElevation(grid, metadata, pt.x, pt.y);
-        const scenePt = projectedToScene(metadata, pt, elev + (isPartOfSelectedRoute ? 7 : 4));
-        positions.push(scenePt.x, scenePt.y, scenePt.z);
-      });
+      const runs = drapedRuns(densePoints, isPartOfSelectedRoute ? 7 : 4);
 
       let lineColor: THREE.ColorRepresentation = routeVisible ? roadColors.selected : (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain);
       // Route selection must preserve the warning on blocked or uncertain segments.
@@ -128,18 +133,20 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       if (layers.status && road.status === 'uncertain') lineColor = roadColors.uncertain;
       const lineWidth = routeVisible || isRoadSelected ? roadStroke.emphasis : roadStroke.normal;
       const addLine = (color: THREE.ColorRepresentation, width: number, casing: boolean): void => {
-        const geometry = new LineGeometry();
-        geometry.setPositions(positions);
-        const opacity = routeVisible || isRoadSelected || (layers.status && road.status !== 'open') ? 1 : appearance.networkOpacity;
-        const material = new LineMaterial({ color, linewidth: width, depthTest: false, transparent: true, opacity,
-          dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 });
-        material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
-        const line = new Line2(geometry, material);
-        line.computeLineDistances();
-        const order = layers.status && road.status !== 'open' ? mapLayerOrder.roadStatus : routeVisible || isRoadSelected ? mapLayerOrder.route : mapLayerOrder.roads;
-        line.renderOrder = order * 2 + (casing ? 0 : 1);
-        line.userData = { type: 'road', id: sourceId, segmentId: road.id, casing };
-        roadGroup.add(line);
+        for (const positions of runs) {
+          const geometry = new LineGeometry();
+          geometry.setPositions(positions);
+          const opacity = routeVisible || isRoadSelected || (layers.status && road.status !== 'open') ? 1 : appearance.networkOpacity;
+          const material = new LineMaterial({ color, linewidth: width, depthTest: true, depthWrite: false, transparent: true, opacity,
+            dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 });
+          material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
+          const line = new Line2(geometry, material);
+          line.computeLineDistances();
+          const order = layers.status && road.status !== 'open' ? mapLayerOrder.roadStatus : routeVisible || isRoadSelected ? mapLayerOrder.route : mapLayerOrder.roads;
+          line.renderOrder = order * 2 + (casing ? 0 : 1);
+          line.userData = { type: 'road', id: sourceId, segmentId: road.id, casing };
+          roadGroup.add(line);
+        }
       };
       const hasWarning = layers.status && road.status !== 'open';
       // A route-colored casing under warning dashes looks like two overlapping routes.
@@ -158,6 +165,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     communities.forEach((comm) => {
       const isSelected = selectedCommunityId === comm.id;
       const elev = getSurfaceElevation(grid, metadata, comm.projected.x, comm.projected.y);
+      if (elev === undefined) return;
       const scenePos = projectedToScene(metadata, comm.projected, elev + 12);
 
       const pinGroup = new THREE.Group();
@@ -211,6 +219,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     hazards.forEach((hz) => {
       if (!hazardLayerVisible(hz, layers)) return;
       const elev = getSurfaceElevation(grid, metadata, hz.projected.x, hz.projected.y);
+      if (elev === undefined) return;
       const scenePos = projectedToScene(metadata, hz.projected, elev + 16);
 
       const hzObj = new THREE.Group();
@@ -241,6 +250,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     stagingGroup.name = 'scenario-staging';
     const stagingCoords = { x: 399500, y: 2397000 };
     const elev = getSurfaceElevation(grid, metadata, stagingCoords.x, stagingCoords.y);
+    if (elev === undefined) return rootGroup;
     const scenePos = projectedToScene(metadata, stagingCoords, elev + 16);
 
     const fobObj = new THREE.Group();

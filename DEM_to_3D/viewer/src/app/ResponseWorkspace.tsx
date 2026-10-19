@@ -793,9 +793,11 @@ export function ResponseWorkspace({
       cancelAnimationFrame(firstFrame);
       cancelAnimationFrame(secondFrame);
       firstFrame = requestAnimationFrame(() => {
-        secondFrame = requestAnimationFrame(() =>
-          viewControlRef.current?.focusProjected(point, { right: reserve })
-        );
+        secondFrame = requestAnimationFrame(() => {
+          const frame = kind === 'road' ? road?.points : kind === 'community' ? activeRoute?.points : undefined;
+          if (frame?.length && viewControlRef.current?.frameProjected) viewControlRef.current.frameProjected(frame,{right:reserve});
+          else viewControlRef.current?.focusProjected(point, { right: reserve });
+        });
       });
     };
     focusSelection();
@@ -810,6 +812,7 @@ export function ResponseWorkspace({
     selectedObjectId,
     mapMode,
     viewReadyVersion,
+    activeRoute,
     roads,
     communities,
     hazards,
@@ -833,6 +836,7 @@ export function ResponseWorkspace({
         locale={locale}
         incident={incident}
         areaName={packet.aoi.name}
+        snapshotDisplay="date"
         report={packet.report}
         reportRoad={roads.find((road) => road.id === packet.report.roadId)}
         dataAvailable={snapshotReady}
@@ -1263,6 +1267,7 @@ export function ResponseWorkspace({
             />
           </MapControls>
           <MapAttribution
+            terrainDisplay={mapMode === '3d' && models[0]?.metadata ? {exaggeration:models[0].metadata.elevation.exaggeration * (geographicPlacements?.[0]?.scaleY ?? 1)} : undefined}
             locale={locale}
             state={basemapState}
             onRetry={() => viewControlRef.current?.retryBasemap()}

@@ -75,7 +75,7 @@ def run(url, chrome, captures):
             page.locator('.settings-workspace summary').click()
             page.get_by_role('button', name='Reset workspace', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
-            expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
+            expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
             assert not errors, errors
             context.close()
         # A restricted browser must retain a usable light interface.

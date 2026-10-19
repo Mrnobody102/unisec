@@ -1,3 +1,4 @@
+import { MapLayerSample } from '../../features/map/MapLayerSample';
 import { PointRenderingControl } from '../../features/map/PointRenderingControl';
 import { useEffect, useRef } from 'react';
 import type { Locale } from '../../types/dear';
@@ -46,7 +47,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
       <div className="layer-source-row"><label className="regional-basemap-toggle"><input type="checkbox" checked={Boolean(layers.context)} onChange={() => onToggleLayer('context')}/><span>{t('Nền bản đồ khu vực', 'Regional basemap')}</span></label></div>
       <fieldset className="map-layer-group"><legend>{t('Dữ liệu nhập', 'Imported data')}</legend><label><input type="checkbox" checked={layers.gis !== false} onChange={() => onToggleLayer('gis')}/><span>{t('Dữ liệu GIS đã nhập (2D)', 'Imported GIS data (2D)')}</span></label><PointRenderingControl locale={locale} disabled={mapMode !== '2d' || layers.gis === false}/></fieldset>
       {hasIncidentLayers && groups.map(group => <fieldset className="map-layer-group" key={group.name}><legend>{group.name}</legend>{group.items.filter(([id]) => (id !== 'flood' || hasFloodData) && (id !== 'hlz' || hasHLZData) && (id !== 'route' || hasSelectedRoute)).map(([id, label]) => (
-        <div key={id}><div className="layer-source-row"><label><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span></label></div></div>
+        <div key={id}><div className="layer-source-row"><label><input type="checkbox" checked={Boolean(layers[id])} onChange={() => onToggleLayer(id)}/><span>{label}</span><MapLayerSample kind={id} imagery={layers.imagery}/></label></div></div>
       ))}</fieldset>)}
       <div className="layer-source-row"><label className="terrain-shading"><input type="checkbox" checked={layers.hillshade} onChange={() => onToggleLayer('hillshade')}/>{t('Bóng địa hình', 'Terrain shading')}</label></div>
       <details className="layer-appearance"><summary>{t('Hiển thị', 'Display options')}</summary>

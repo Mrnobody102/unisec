@@ -119,3 +119,7 @@
 }
 
 .map-area .map-journey-trigger { width:34px; min-width:34px; height:34px; padding:7px; }
+
+.map-area .map-layer-group .layer-source-row label { display:flex; align-items:center; width:100%; gap:9px; }
+.layer-key-sample { display:inline-grid; place-items:center; flex:none; width:32px; height:24px; margin-left:auto; }
+.map-area .map-layer-group .layer-source-row:has(input:not(:checked)) .layer-key-sample { opacity:.45; }

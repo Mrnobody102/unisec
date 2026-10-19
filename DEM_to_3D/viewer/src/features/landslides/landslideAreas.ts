@@ -88,7 +88,7 @@ export function remapLandslideEvidence(records: GeometryRecord[]): GeometryRecor
     return {...record, feature:{...record.feature,properties:{...record.feature.properties,[landslideAreaKey]:{...value,observationIds:value.observationIds.map(id => ids.get(id) ?? (id.startsWith('external:') ? id : 'external:'+id))}}}};
   });
 }
-export function landslideAreaStyle(a: LandslideArea, selected = false) {
+export function landslideAreaStyle(a: Pick<LandslideArea, 'state' | 'review'>, selected = false) {
   return {
     color: a.state === 'potential' ? '#bd914f' : '#b85b4b',
     weight: selected ? 2.2 : 1.4,

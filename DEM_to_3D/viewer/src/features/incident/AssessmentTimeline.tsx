@@ -17,8 +17,8 @@ type Props = {
 export function AssessmentTimeline({ locale, packet, applied, historical, onRevision, onReport, onJournal }: Props) {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   return <footer className="assessment-timeline" aria-label={t('Diễn biến sự kiện', 'Incident timeline')}>
-    <span className="assessment-timeline-title">{t('Diễn biến', 'Timeline')}</span>
-    <div className="assessment-timeline-track" role="group" aria-label={t('Bản đánh giá', 'Assessments')}>
+    <span className="assessment-timeline-title">{t('Diễn biến', 'Timeline')}<small>UTC+7</small></span>
+    <div className="assessment-timeline-track" role="group" aria-label={t('Các mốc sự kiện', 'Incident events')}>
       <button className="assessment-moment" aria-pressed={!applied || historical} onClick={() => onRevision(applied)}>
         <time dateTime={packet.incident.asOf}>{localClock(packet.incident.asOf)}</time>
         <span>{t('Đánh giá ban đầu', 'Initial assessment')}</span>
@@ -26,9 +26,9 @@ export function AssessmentTimeline({ locale, packet, applied, historical, onRevi
       {applied ? <button className="assessment-moment" aria-pressed={!historical} onClick={() => onRevision(false)}>
         <time dateTime={packet.incident.asOfUpdated}>{localClock(packet.incident.asOfUpdated)}</time>
         <span>{t('Cập nhật thực địa', 'Field update')}</span>
-      </button> : <button className="assessment-moment assessment-pending" onClick={onReport}>
+      </button> : <button className="assessment-moment assessment-pending" title={t('Xem báo cáo hiện trường', 'View field report')} onClick={onReport}>
         <time dateTime={packet.report.evidence.receivedAt}>{localClock(packet.report.evidence.receivedAt)}</time>
-        <span>{t('Báo cáo chờ kiểm tra', 'Report awaiting review')}</span>
+        <span>{t('Nhận báo cáo', 'Report received')}</span>
       </button>}
     </div>
     <button className="icon-button" aria-label={t('Mở nhật ký', 'Open journal')} title={t('Nhật ký sự kiện', 'Incident journal')} onClick={onJournal}><UiIcon name="history" size={18}/></button>

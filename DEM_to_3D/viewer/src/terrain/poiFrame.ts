@@ -25,7 +25,7 @@ export function drawPoiMarker(
   ctx.translate(x - half, y - tip);
   ctx.scale(size / 28, size / 28);
   const frame = new Path2D(POI_FRAME_PATH);
-  ctx.fillStyle = '#fbfcfa'; ctx.strokeStyle = color; ctx.lineWidth = 1.1; ctx.lineJoin = 'round';
+  ctx.fillStyle = '#fbfcfa'; ctx.strokeStyle = color; ctx.lineWidth = .9; ctx.lineJoin = 'round';
   ctx.fill(frame); ctx.stroke(frame);
   ctx.globalAlpha = unconfirmed ? .8 : 1;
   drawMapSymbol(ctx, symbol, 6, 4, 16, color);

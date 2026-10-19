@@ -1,3 +1,4 @@
+import { areaMapLabel } from '../landslides/areaMapLabel';
 import { usePointRendering } from '../map/usePointRendering';
 import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
 import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
@@ -99,8 +100,8 @@ export function ResponseGisLayer({
             });
           }
         });
-        const label = document.createElement('span');
-        label.textContent = record.name;
+        const label = mappedArea ? areaMapLabel(record,locale) : document.createElement('span');
+        if (!mappedArea) label.textContent = record.name;
         // A drawn note is read on the map, so its text stays visible like a map label.
         const note = record.feature.properties.shape === 'note';
         layer.bindTooltip(label, {

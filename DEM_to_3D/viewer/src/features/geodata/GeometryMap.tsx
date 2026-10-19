@@ -1,3 +1,4 @@
+import { areaMapLabel } from '../landslides/areaMapLabel';
 import { removeLeafletMap } from '../map/removeLeafletMap';
 import { selectedPinSvg } from '../../terrain/poiFrame';
 import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
@@ -402,8 +403,8 @@ export function GeometryMap(props: Props): JSX.Element {
                       iconSize: [28, 32], iconAnchor: [14, 28.8], tooltipAnchor: [0, -30] }) })
                 : L.circleMarker(position, pointStyle)
         });
-        const label = document.createElement('span');
-        label.textContent = record.name;
+        const label = mappedArea ? areaMapLabel(record,props.locale) : document.createElement('span');
+        if (!mappedArea) label.textContent = record.name;
         if (!props.editor.active && !props.onPickPoint)
           layer
             .bindTooltip(label, {

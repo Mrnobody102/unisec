@@ -12,12 +12,14 @@ export function MapAttribution({
   locale,
   state,
   onRetry,
-  localSource
+  localSource,
+  terrainDisplay
 }: {
   locale: Locale;
   state: BasemapState;
   onRetry: () => void;
   localSource?: [string, string];
+  terrainDisplay?: {exaggeration: number};
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const imagery =
@@ -39,27 +41,6 @@ export function MapAttribution({
   return (
     <>
       <div className="map-attribution" ref={anchor}>
-        {state.loaded > 0 && (
-          <span className="map-credit">
-            {state.style === 'satellite' ? (
-              imageryCredit
-            ) : (
-              <>
-                <a
-                  href="https://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  © OSM
-                </a>{' '}
-                /{' '}
-                <a href="https://maps.eox.at" target="_blank" rel="noreferrer">
-                  EOX
-                </a>
-              </>
-            )}
-          </span>
-        )}
         <button
           className="map-source-button"
           aria-label={t('Nguồn bản đồ', 'Map sources')}
@@ -101,6 +82,9 @@ export function MapAttribution({
                   <dt>{t('Dữ liệu khu vực', 'Local data')}</dt>
                   <dd>{t(...localSource)}</dd>
                 </div>
+              )}
+              {terrainDisplay && (
+                <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{terrainDisplay.exaggeration}</dd></div>
               )}
               <div>
                 <dt>{t('Nền khu vực', 'Regional basemap')}</dt>
