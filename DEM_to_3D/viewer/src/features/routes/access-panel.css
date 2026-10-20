@@ -1,8 +1,9 @@
 /* Route choices, decision, then optional section inspection. */
 .decision-route { margin:0; border:0; background:transparent; }
-.access-route-choice h3 { margin:0 0 12px; color:var(--ws-text); font-size:13px; font-weight:600; }
-.route-options { display:grid; border-top:1px solid var(--ws-line); }
-.route-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px 12px; width:100%; min-width:0; padding:14px 0; border:0; border-bottom:1px solid var(--ws-line); border-radius:0; background:transparent; color:var(--ws-text); text-align:left; }
+.access-route-choice h3 { margin:0 -12px 4px; padding:7px 12px; background:var(--ws-raised); color:var(--ws-text); font-size:13px; font-weight:600; }
+.route-options { display:grid; margin-inline:-12px; }
+.route-card:last-child { border-bottom:0; }
+.route-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px 12px; width:100%; min-width:0; padding:8px 12px; border:0; border-bottom:1px solid var(--ws-line); border-radius:0; background:transparent; color:var(--ws-text); text-align:left; }
 .route-card:hover { background:var(--hover); }
 .route-card:focus-visible { outline-offset:-3px; }
 .route-option-heading { grid-column:1/-1; display:flex; align-items:flex-start; gap:10px; }
@@ -14,7 +15,7 @@
 .route-card .route-bottom { margin:0; font-size:12px; }
 .access-route-label { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; color:var(--ws-muted); }
 .decision-route > h2 { margin:8px 0 0; font-size:16px; line-height:1.45; }
-.next-action { display:grid; gap:12px; margin:20px 0 0; padding:16px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); }
+.next-action { display:grid; gap:8px; margin:10px 0 0; padding:10px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); }
 .next-action .route-action { display:flex; align-items:flex-start; gap:10px; margin:0; padding:0; border:0; background:none; }
 .next-action .route-action svg { flex:none; margin-top:3px; color:var(--warning-ink); }
 .next-action.is-blocked .route-action svg { color:var(--critical-ink); }

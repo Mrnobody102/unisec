@@ -77,7 +77,7 @@ export function ResponsePanel({
   const openCommunities = () => {
     onNavigate({
       type: 'filters',
-      values: { communityFilter: 'all', communityQuery: '' }
+      values: { communityFilter: 'priority', communityQuery: '' }
     });
     onNavigate({ type: 'view', view: 'priority', list: true });
     onRevealPanel();

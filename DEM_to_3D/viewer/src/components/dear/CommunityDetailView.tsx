@@ -13,6 +13,8 @@ import { StatusText } from '../../shared/ui/StatusText';
 import { AccessPanel } from '../../features/routes/AccessPanel';
 import type { CommunitySignal, ResponseAssessment } from '../../features/incident/responseAssessment';
 import { KeyFacts, peopleText } from './DetailFacts';
+import { communityNeedTopic } from '../../features/incident/communityNeeds';
+import { resolveCommunityFindings } from '../../features/incident/resolveCommunityFindings';
 import { CommunityEvidence } from '../../features/incident/CommunityEvidence';
 
 type Props = {
@@ -66,6 +68,8 @@ export const CommunityDetailView: React.FC<Props> = ({
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
 
+  const needsReported = resolveCommunityFindings(community.facts, evidence).some(finding => communityNeedTopic(finding) === 'assistance' && finding.kind === 'report');
+
   return (
     <>
       <div className="sidebar-top community-detail-heading">
@@ -73,17 +77,19 @@ export const CommunityDetailView: React.FC<Props> = ({
           <EditableTitle key={community.id} id="place-title" title={community.name} names={[community.name, community.name]} bilingual={false} locale={locale} onRename={onRename} />
           <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
         </div>
-        <div className="detail-priority">
+        <div className="detail-priority community-status-summary">
           <StatusText tone={community.prio === 1 ? 'priority' : 'neutral'} icon={community.prio === 1 ? 'priority' : undefined}>
             {community.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
           </StatusText>
+          <button className={'community-needs-link' + (signal?.urgentNeed ? ' is-urgent' : '')} onClick={() => onChangeDetailTab('evidence')} aria-label={t('Xem nhu cầu hỗ trợ', 'Review assistance needs')}>
+            {signal?.urgentNeed ? t('Cần hỗ trợ khẩn', 'Urgent support') : needsReported ? t('Có báo cáo nhu cầu', 'Needs reported') : t('Nhu cầu chưa rõ', 'Needs unconfirmed')}<UiIcon name="next" size={12}/>
+          </button>
         </div>
         <KeyFacts items={[
           { label: t('Dân cư', 'Residents'), value: peopleText(community, locale) },
           { label: t('Liên lạc', 'Contact'), value: signal?.communication === 'lost' ? t('Mất liên lạc', 'Lost')
             : signal?.communication === 'available' ? t('Có liên lạc', 'Available') : t('Chưa rõ', 'Unknown'),
-            tone: signal?.communication === 'lost' ? 'critical' : undefined },
-          ...(signal?.urgentNeed ? [{ label: t('Nhu cầu', 'Needs'), value: t('Cần hỗ trợ khẩn', 'Urgent support'), tone: 'critical' as const }] : [])
+            tone: signal?.communication === 'lost' ? 'critical' : undefined }
         ]}/>
 
 
@@ -98,7 +104,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             aria-pressed={detailTab === 'evidence'}
             onClick={() => onChangeDetailTab('evidence')}
           >
-            {t('Căn cứ', 'Evidence')}
+            {t('Tình hình', 'Situation')}
           </button>
         </div>
       </div>

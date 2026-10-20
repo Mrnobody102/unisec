@@ -59,6 +59,10 @@ def run(url, chrome, captures):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        page.get_by_role('button', name='Xem địa bàn ưu tiên', exact=True).click()
+        expect(page.locator('#response-panel .community')).to_have_count(2)
+        expect(page.locator('#response-panel .filters [aria-pressed="true"]')).to_have_text('Ưu tiên cao')
+        page.locator('.workspace-nav button').first.click()
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         page.wait_for_function("document.querySelector('.leaflet-image-layer')?.complete")
         # A priority village must not disappear into a nameless mixed group, and the reported
@@ -120,6 +124,12 @@ def run(url, chrome, captures):
             if captures and width == 1366:
                 page.screenshot(path=str(captures / 'workspace-community-hover.png'))
             page.locator('.sidebar .community').click()
+            page.get_by_role('button', name='Xem nhu cầu hỗ trợ', exact=True).click()
+            expect(page.locator('.community-needs')).to_contain_text('Chưa xác định nhu cầu y tế và cứu trợ.')
+            expect(page.locator('.community-needs')).not_to_contain_text('640')
+            expect(page.locator('.community-finding').filter(has_text='Chưa xác định nhu cầu y tế và cứu trợ.')).to_have_count(1)
+            expect(page.locator('.community-reference-section')).to_be_attached()
+            page.get_by_role('button', name='Tuyến đường', exact=True).click()
             expect(page.locator('.route-card').filter(has_text='Cần xác minh')).to_have_count(1)
             check_panel(page)
             if captures and width == 1366:
@@ -127,8 +137,8 @@ def run(url, chrome, captures):
             expect(page.locator('.decision-tabs button')).to_have_count(2)
             if width >= 900:
                 action = page.locator('.access-primary').bounding_box()
-                panel_box = page.locator('#response-details').bounding_box()
-                assert action['y'] + action['height'] <= panel_box['y'] + panel_box['height'], 'Primary action is below the initial viewport'
+                panel_box = page.locator('#response-details .sidebar-scroll').bounding_box()
+                assert action['y'] + action['height'] <= panel_box['y'] + panel_box['height'] - 8, 'Primary action is below the initial viewport'
                 route = page.locator('.access-route-choice').bounding_box()
                 assert route['y'] + route['height'] <= action['y'], 'Route choices must appear before their action'
                 assert page.locator('.route-metrics').bounding_box()['y'] >= action['y'] + action['height'], 'Travel estimates must follow the warning/action'
@@ -183,7 +193,9 @@ def run(url, chrome, captures):
             page.locator('.decision-tabs button').nth(1).click()
             expect(page.locator('.assessment-basis')).to_contain_text('Có tuyến bị chặn, phương án khác chưa xác minh. Mất liên lạc.')
             report = page.locator('.community-finding').filter(has_text='Đường chính vào Nậm Khắt')
-            expect(report.locator('.finding-source dt')).to_have_text(['Ghi nhận', 'Tiếp nhận'])
+            report.locator('.finding-provenance summary').click()
+            expect(report.locator('.finding-source dt')).to_have_text(['Báo cáo', 'Ghi nhận', 'Tiếp nhận'])
+            expect(report.locator('.finding-source')).to_be_visible()
             expect(report.locator('time')).to_have_count(2)
             report.get_by_role('button', name='Xem báo cáo', exact=True).click()
             expect(page.locator('.evidence-metadata')).to_contain_text('07:40')
@@ -288,7 +300,7 @@ def run(url, chrome, captures):
                     households = panel.locator('.community-finding').filter(has_text='Hộ bị ảnh hưởng')
                     expect(households.locator('p')).to_have_text('Chưa thống kê.')
                     expect(panel.locator('.finding-source')).to_have_count(0)
-                    expect(panel.locator('.community-findings')).not_to_contain_text('Tin hiện trường')
+                    expect(panel.locator('.community-evidence')).not_to_contain_text('Tin hiện trường')
                 check_panel(page)
         # The event overview and destination view must read the same updated snapshot.
         page.set_viewport_size({'width': 1366, 'height': 768})

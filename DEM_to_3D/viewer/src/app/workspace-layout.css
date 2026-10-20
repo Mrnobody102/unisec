@@ -14,11 +14,11 @@
 .assessment-moment time { font-variant-numeric:tabular-nums; }
 .assessment-pending::after { border-radius:0; width:6px; height:6px; top:4px; transform:rotate(45deg); }
 .incident-overview-heading h1 { font-size:21px; line-height:1.35; margin:0; }
-.incident-overview-counts { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 24px; padding-bottom:20px; border-bottom:1px solid var(--ws-line); }
+.incident-overview-counts { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 16px; padding-bottom:16px; border-bottom:1px solid var(--ws-line); }
 .incident-overview-counts dt { font-size:12px; color:var(--ws-muted); }
 .incident-overview-counts dd { margin:6px 0 0; font-size:21px; font-weight:600; }
-.incident-overview section + section { margin-top:28px; }
-.incident-overview h2 { font-size:13px; font-weight:600; margin:0 0 4px; }
+.incident-overview section + section { margin-top:16px; padding-top:12px; border-top:1px solid var(--ws-line); }
+.incident-overview h2 { margin:0 -12px 8px; padding:8px 12px; background:var(--ws-raised); color:var(--ws-text); font-size:13px; font-weight:600; line-height:1.5; }
 .incident-overview-item { position:relative; display:grid; grid-template-columns:minmax(0,1fr) 16px; align-items:center; gap:6px 12px; width:calc(100% + 24px); margin-inline:-12px; padding:14px 12px; text-align:left; background:transparent; border:0; border-radius:2px; color:var(--ws-text); }
 .incident-overview-item strong { grid-column:1; grid-row:1; min-width:0; font-size:14px; font-weight:600; line-height:1.5; }
 .incident-overview-item span { grid-column:1; grid-row:2; color:var(--ws-muted); font-size:13px; line-height:1.5; }
@@ -44,9 +44,7 @@
 .incident-overview-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .incident-overview-heading .icon-button { flex:none; }
 
-.incident-overview-work { margin-top:24px; font-size:14px; }
-.incident-overview-work summary { cursor:pointer; }
-.incident-overview-work .text-button { margin-top:12px; }
+.incident-overview-work { font-size:14px; }
 .incident-overview-item.incident-priority-row { width:calc(100% + 24px); margin-inline:-12px; padding:14px 12px; gap:6px 12px; border-radius:2px; }
 .incident-overview-item.incident-priority-row::before { content:none; }
 .incident-overview-item.incident-priority-row > strong { grid-column:1; grid-row:1; }
@@ -61,7 +59,7 @@
 /* Operational work leads; reference inventories remain available below it. */
 .incident-count-link { display:inline-flex; align-items:center; gap:8px; padding:0; border:0; background:none; color:inherit; font:inherit; }
 .incident-count-link:hover { text-decoration:none; color:var(--select-ink); }
-.incident-report-review { display:flex; align-items:center; gap:12px; width:100%; margin:0 0 24px; padding:14px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); color:var(--ws-text); text-align:left; }
+.incident-report-review { display:flex; align-items:center; gap:12px; width:100%; margin:0 0 16px; padding:12px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); color:var(--ws-text); text-align:left; }
 .incident-report-review > svg { flex:none; }
 .incident-report-review > span { flex:1; min-width:0; }
 .incident-report-review strong { display:block; font-size:14px; font-weight:600; line-height:1.4; }

@@ -42,7 +42,7 @@ export function IncidentView({
   incident, locale, areaName, tasks, entries, communities, assessments,
   blockedRoadCount, onSelectCommunity, onOpenWork, onOpenArea,
   hazards, onInspectObject, survey, onShowSurvey, reportPending, pendingReport,
-  onOpenReport, historical, onOpenRoads
+  onOpenReport, historical, onOpenRoads, onOpenCommunities
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const priorityCommunities = communities.filter(community => community.prio === 1);
@@ -56,13 +56,13 @@ export function IncidentView({
     <div className="sidebar-scroll incident-overview">
       <dl className="incident-overview-counts">
         <div><dt>{t('Đường bị chặn', 'Blocked roads')}</dt><dd><button className="incident-count-link" onClick={() => onOpenRoads('blocked')}>{blockedRoadCount} {t('đoạn', 'sections')}<UiIcon name="next" size={14}/></button></dd></div>
-        <div><dt>{t('Địa bàn ưu tiên', 'Priority communities')}</dt><dd>{priorityCommunities.length}</dd></div>
+        <div><dt>{t('Địa bàn ưu tiên', 'Priority communities')}</dt><dd><button className="incident-count-link" aria-label={t('Xem địa bàn ưu tiên', 'View priority communities')} onClick={onOpenCommunities}>{priorityCommunities.length}<UiIcon name="next" size={14}/></button></dd></div>
       </dl>
       {!historical && reportPending && <button className="incident-report-review" onClick={onOpenReport}>
         <UiIcon name="info" size={18}/><span><strong>{t('Báo cáo chờ kiểm tra', 'Report awaiting review')}</strong>
         {pendingReport && <small>{t(...pendingReport)}</small>}</span><UiIcon name="next" size={16}/>
       </button>}
-      <section><h2>{t('Địa bàn cần chú ý', 'Communities to review')}</h2>
+      <section className="incident-priorities"><h2>{t('Địa bàn cần chú ý', 'Communities to review')}</h2>
         {priorityCommunities.map(community => <button className="incident-overview-item incident-priority-row" data-map-preview={'community:' + community.id} key={community.id} onClick={() => onSelectCommunity(community.id)}>
           <strong>{community.name}</strong><span>{t(...assessments.get(community.id)!.reason)}</span><UiIcon name="next" size={16}/>
         </button>)}

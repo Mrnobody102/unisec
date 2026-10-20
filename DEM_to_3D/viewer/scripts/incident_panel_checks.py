@@ -11,7 +11,7 @@ def check_incident_layout(page):
             errors.push('incident panel overflow');
         const left = rect(heading).left;
         body.querySelectorAll('section > h2, .incident-overview-item > strong').forEach(node => {
-            if (rect(node).width && Math.abs(rect(node).left - left) > 1) errors.push('inconsistent content inset: ' + node.textContent);
+            if (rect(node).width && Math.abs(rect(node).left + parseFloat(getComputedStyle(node).paddingLeft) - left) > 1) errors.push('inconsistent content inset: ' + node.textContent);
         });
         body.querySelectorAll('.incident-overview-item').forEach(row => {
             if (!rect(row).width) return;

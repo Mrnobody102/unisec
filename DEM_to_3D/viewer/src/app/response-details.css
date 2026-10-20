@@ -29,19 +29,19 @@
 }
 .response-detail-dock .sidebar-top {
   flex: none;
-  padding: 20px var(--detail-inset) 16px;
+  padding: 16px var(--detail-inset);
   background: var(--ws-raised);
   border-bottom: 1px solid var(--ws-line);
 }
 .response-detail-dock .sidebar-scroll {
   flex: 1;
   min-height: 0;
-  padding: 20px var(--detail-inset);
+  padding: 16px var(--detail-inset);
 }
 .response-detail-dock h3 {
   margin: 0 0 12px;
-  color: var(--ws-muted);
-  font-size: 12px;
+  color: var(--ws-text);
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.5;
 }
@@ -125,16 +125,22 @@
 .response-detail-dock .detail-title h1 { font-size:20px; line-height:1.35; font-weight:600; }
 .response-detail-dock .detail-priority { margin:10px 0 0; }
 .response-detail-dock .key-facts { margin:16px 0 0; gap:12px 16px; }
-.response-detail-dock .community-detail-heading .key-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.response-detail-dock .community-detail-heading .key-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 16px; }
+.community-status-summary { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px; }
+.community-needs-link { display:inline-flex; align-items:center; gap:6px; padding:0; border:0; background:none; color:inherit; font:inherit; font-size:12px; text-align:right; }
+.community-needs-link.is-urgent { color:var(--critical-ink); }
+.community-needs-link:hover { color:var(--select-ink); }
 .response-detail-dock .key-facts dt { font-size:12px; }
 .response-detail-dock .key-facts dd { font-size:14px; line-height:1.45; }
-.response-detail-dock .decision-tabs { margin-top:20px; }
+.response-detail-dock .decision-tabs { margin-top:12px; }
 /* A rule belongs between populated groups, never above the first group. */
 .response-detail-dock :is(.sidebar-scroll,.hazard-detail,.site-detail) > .workflow-section { margin:0; padding:0; border:0; }
 .response-detail-dock :is(.sidebar-scroll,.hazard-detail,.site-detail) > * + .workflow-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--ws-line); }
+/* A section label is a quiet band; rows stay open, with one rule at the group boundary. */
+.response-detail-dock .workflow-section > h3 { margin:0 -12px 8px; padding:7px 12px; background:var(--ws-raised); color:var(--ws-text); font-size:13px; line-height:1.5; }
 .response-detail-dock .object-row strong { font-size:14px; font-weight:500; }
 .response-detail-dock .object-observation { gap:12px; padding:0; }
-.response-detail-dock .object-observation > h3 { color:var(--ws-text); font-size:13px; font-weight:600; }
+.response-detail-dock .object-observation > h3 { margin:0; color:var(--ws-text); font-size:13px; font-weight:600; }
 .response-detail-dock .object-observation > p { font-size:14px; line-height:1.6; }
 .object-evidence-details { color:var(--ws-muted); font-size:12px; }
 .object-evidence-details > summary { cursor:pointer; padding:4px 0; }
