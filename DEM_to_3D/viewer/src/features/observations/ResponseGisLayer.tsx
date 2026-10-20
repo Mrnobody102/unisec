@@ -61,7 +61,8 @@ export function ResponseGisLayer({
       const mappedArea = landslideAreaOf(record);
       const observation = observationOf(record),
         selected = record.id === selectedId || owner?.id === selectedId;
-      const color = mappedArea ? landslideAreaStyle(mappedArea).color : observation
+      const referenceRoad = record.feature.properties.referenceKind === 'road-corridor';
+      const color = referenceRoad ? '#eee5cf' : mappedArea ? landslideAreaStyle(mappedArea).color : observation
         ? observationColor(observation.kind)
         : record.role === 'aoi'
           ? '#219a7d'
@@ -78,7 +79,7 @@ export function ResponseGisLayer({
               ? {}
               : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state } : {
                   color,
-                  weight: selected ? 3 : 1.5,
+                  weight: referenceRoad ? selected ? 3 : 2 : selected ? 3 : 1.5,
                   fillOpacity: owner ? 0.18 : 0.03,
                   dashArray: record.role === 'footprint' ? '7 4' : undefined
                 },
@@ -137,6 +138,8 @@ export function ResponseGisLayer({
         });
         continue;
       }
+      if (referenceRoad) L.geoJSON(record.feature,{pane:mapPane('boundary'),interactive:false,
+        style:{color:'#343c36',weight:selected ? 5 : 4,opacity:.9,lineCap:'round',lineJoin:'round'}}).addTo(group);
       render().addTo(group);
       if (mappedArea && selected && mappedArea.networkVersion === networkVersion) addAreaRoadSections(group, mappedArea, roads, mapPane('boundary'));
     }

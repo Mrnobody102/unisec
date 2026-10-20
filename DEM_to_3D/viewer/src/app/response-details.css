@@ -162,3 +162,7 @@
 .response-detail-dock .verification-row::after { content:none; }
 .response-detail-dock .verification-row > span:first-child { display:grid; grid-column:1; grid-row:1; gap:4px; min-width:0; }
 .response-detail-dock .verification-row > .status-text { grid-column:2; grid-row:1; align-self:start; font-size:12px; }
+
+.map-reference-credit { position:absolute; right:44px; bottom:3px; width:max-content; max-width:calc(100vw - 88px); padding:2px 5px; background:var(--ws-surface); color:var(--ws-muted); font-size:10px; }
+
+.field-map-card-body .field-metadata a { color:var(--ws-text); text-decoration-color:var(--ws-muted); text-underline-offset:3px; overflow-wrap:anywhere; }

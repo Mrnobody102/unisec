@@ -29,6 +29,8 @@ export function ResponseObservationCard({
   onRoad?: (id: string) => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
+  const reference = record.feature.properties.referenceKind;
+  const sourceUrl = typeof record.feature.properties.sourceUrl === 'string' && /^https:\/\//.test(record.feature.properties.sourceUrl) ? record.feature.properties.sourceUrl : undefined;
   const observation = observationOf(record),
     point =
       record.feature.geometry.type === 'Point'
@@ -37,7 +39,7 @@ export function ResponseObservationCard({
   return (
     <section
       className="field-map-card"
-      aria-label={landslideAreaOf(record) ? t('Vùng sạt lở', 'Landslide area') : t('Điểm dữ liệu GIS', 'GIS data point')}
+      aria-label={reference === 'road-corridor' ? t('Tuyến đường tham chiếu', 'Reference road corridor') : landslideAreaOf(record) ? t('Vùng sạt lở', 'Landslide area') : t('Điểm dữ liệu GIS', 'GIS data point')}
     >
       <header>
         {onBack && (
@@ -61,6 +63,9 @@ export function ResponseObservationCard({
       </header>
       <div className="field-map-card-body">
       {landslideAreaOf(record) && <LandslideAreaSummary record={record} roads={roads} locale={locale} onRoad={onRoad}/>}
+      {reference === 'road-corridor' && <p className="field-note">{t('Đường tham chiếu OSM đến bản Chế Tạo. Chưa xác minh khả năng đi qua và vị trí trụ sở xã.', 'OSM reference road to Chế Tạo settlement. Passage and commune office location remain unverified.')}</p>}
+      {reference === 'destination-place' && <p className="field-note">{t('Mốc bản Chế Tạo từ GeoNames. Vị trí trụ sở xã chưa được xác minh.', 'Chế Tạo settlement reference from GeoNames. The commune office location has not been verified.')}</p>}
+      {reference === 'required-imagery-point' && <p className="field-note">{t('Ảnh tải về phải có pixel dữ liệu hợp lệ tại điểm này. Chưa xác nhận ảnh đáp ứng yêu cầu.', 'Downloaded imagery must contain valid pixels here. Coverage has not yet been confirmed.')}</p>}
       {observation && (
         <>
           <div className="field-record-heading">
@@ -87,9 +92,10 @@ export function ResponseObservationCard({
             </div>
           </>
         )}
+        {reference === 'road-corridor' && typeof record.feature.properties.lengthM === 'number' && <div><dt>{t('Chiều dài theo đường', 'Mapped length')}</dt><dd>{(record.feature.properties.lengthM/1000).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB',{maximumFractionDigits:2})} km</dd></div>}
         <div>
           <dt>{t('Nguồn', 'Source')}</dt>
-          <dd>{record.source.name}</dd>
+          <dd>{sourceUrl ? <a href={sourceUrl} target="_blank" rel="noreferrer">{record.source.name}</a> : record.source.name}</dd>
         </div>
         {observation &&
           (observation.observedAt || observation.observedLocalTime) && (

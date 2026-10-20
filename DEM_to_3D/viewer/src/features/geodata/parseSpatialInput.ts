@@ -21,7 +21,7 @@ function jsonFeatures(value: unknown, depth=0): VectorFeature[] {
   if (raw.type === 'Feature') {
     const features=jsonFeatures(raw.geometry,depth+1);
     const properties=raw.properties && typeof raw.properties === 'object' && !Array.isArray(raw.properties) ? raw.properties as Record<string,unknown> : {};
-    return features.map(feature=>({...feature,properties}));
+    return features.map(feature=>({...feature,...(typeof raw.id === 'string' || typeof raw.id === 'number' && Number.isFinite(raw.id) ? {id:raw.id} : {}),properties}));
   }
   if (raw.type === 'GeometryCollection') {
     if (!Array.isArray(raw.geometries) || raw.geometries.length > GEOMETRY_LIMITS.features) throw new GeometryError('feature-limit');

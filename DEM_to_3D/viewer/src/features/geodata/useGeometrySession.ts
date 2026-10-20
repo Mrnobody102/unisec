@@ -1,5 +1,5 @@
 import type { FieldDataset } from '../landslides/fieldDataset';
-import { installPreparedRecords, gisValueKey, publishedGisKey, readPublishedGis, writePublishedRecords } from './publishedGis';
+import { preparedSources, installPreparedRecords, gisValueKey, publishedGisKey, readPublishedGis, writePublishedRecords } from './publishedGis';
 import { landslideAreaKey, landslideAreaOf, revisedLandslideBoundary } from '../landslides/landslideAreas';
 import { GEOMETRY_LIMITS, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
@@ -38,11 +38,11 @@ function read(prepared?: FieldDataset) {
     };
   } catch {
     // A failed source installation must not hide records that were already saved.
-    let records = prepared?.records ?? [] as GeometryRecord[];
+    let records = prepared ? preparedSources(prepared).flatMap(source => source.records) : [] as GeometryRecord[];
     try {
       const saved = readPublishedGis();
       const ids = new Set(saved.records.map(record => record.id));
-      const pending = prepared && !saved.installedSources?.includes(prepared.id) ? prepared.records : [];
+      const pending = prepared ? preparedSources(prepared).filter(source => !saved.installedSources?.includes(source.id)).flatMap(source => source.records) : [];
       records = [...saved.records, ...pending.filter(record => !ids.has(record.id))];
     } catch { /* Invalid or inaccessible storage remains read-only. */ }
     return {records, error: new GeometryError('storage')};

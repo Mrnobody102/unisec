@@ -167,6 +167,11 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   };
   return {
     group,
+    surfacePoint(x:number,y:number):THREE.Vector3|undefined {
+      const height=relief?.sample(x,y);if(height===undefined)return undefined;
+      const p=projectedToScene(metadata,{x,y},height+3);
+      return new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(group.matrix);
+    },
     setDetail(atlas:ImageryDetailAtlas|null){viewAtlas=atlas;cached.forEach(item=>item.setDetail(item.style==='satellite'?atlas:null));},
     setOptions(nextEnabled: boolean, nextStyle: BasemapStyle): void {
       if (enabled === nextEnabled && style === nextStyle) return;

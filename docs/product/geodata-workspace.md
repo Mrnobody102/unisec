@@ -109,7 +109,7 @@ Tham khảo mô hình đối tượng có vị trí, biểu mẫu và ảnh củ
 
 | Phần | Giới hạn |
 |---|---|
-| Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 1.500 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
+| Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 10.000 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
 | Lỗi nhập | Một tệp trong lô bị lỗi: không thêm một phần lô, giữ nguyên bộ đang có |
 | Chưa hỗ trợ | KMZ, NetworkLink, lớp ảnh KML, Track/Model, vùng vượt kinh tuyến 180°, vĩ độ ngoài ±85,05112878° |
 | Trình bày KML | Dùng ký hiệu theo vai trò làm việc; không giữ Style/StyleMap, cây Folder, extrude/tessellate hoặc cảnh 3D gốc. Không phải trình xem KML đầy đủ như Google Earth |

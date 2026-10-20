@@ -116,6 +116,9 @@ def main(prepare: bool = False, manifest_path: Path | None = None) -> None:
     if manifest.get('fieldData') is not None:
         additional_asset(manifest['fieldData'], 'fieldData', r'/scenarios/[A-Za-z0-9._/-]+\.kml')
 
+    if manifest.get('referenceData') is not None:
+        additional_asset(manifest['referenceData'], 'referenceData', r'/scenarios/[A-Za-z0-9._/-]+\.geojson')
+
     contexts = manifest.get('terrainContext', [])
     if not isinstance(contexts, list) or len(contexts) > 3:
         fail('invalid terrainContext')

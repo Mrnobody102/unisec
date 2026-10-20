@@ -1,4 +1,6 @@
 import {describe,expect,it} from 'vitest';
+import {parseSpatialInput} from '../geodata/parseSpatialInput';
+import {referenceRecords} from '../geodata/referenceDataset';
 import {fieldRecords} from './fieldDataset';
 import {installPreparedRecords,publishGisDraft,readPublishedGis,publishedGisKey} from '../geodata/publishedGis';
 import {landslideAreaOf} from './landslideAreas';
@@ -24,6 +26,24 @@ describe('prepared field evidence',()=>{
   publishGisDraft('network',first.records,[],[{...first.records[0],name:'Renamed'}],[],s);
   expect(installPreparedRecords(source,s).records.map(r=>r.name)).toEqual(['Renamed']);
   expect(readPublishedGis(s).installedSources).toEqual([id]);
+ });
+ it('adds a separately sourced corridor without restoring deleted survey features or inventing a landslide AOI',()=>{
+  const s=storage(),source={id,records:fieldRecords(features,id,'survey.kml','network',time)};
+  const first=installPreparedRecords(source,s);
+  publishGisDraft('network',first.records,[],[{...first.records[0],name:'Renamed'}],[],s);
+  const reference=referenceRecords([{type:'Feature',id:'required',properties:{name:'Required imagery point',referenceKind:'required-imagery-point'},geometry:{type:'Point',coordinates:[104.03,21.74146]}},
+    {type:'Feature',id:'aoi',properties:{name:'Image coverage',referenceKind:'imagery-aoi'},geometry:features[1].geometry}], 'b'.repeat(64),time);
+  const next=installPreparedRecords({...source,additionalSources:[{id:'b'.repeat(64),records:reference}]},s);
+  expect(next.records.map(r=>r.name)).toEqual(['Renamed','Required imagery point','Image coverage']);
+  expect(next.installedSources).toEqual([id,'b'.repeat(64)]);
+  expect(next.records[1].feature.geometry).toEqual({type:'Point',coordinates:[104.03,21.74146]});
+  expect(landslideAreaOf(next.records[2])).toBeNull();
+  expect(next.records[2]).toMatchObject({role:'footprint',visible:false});
+ });
+ it('retains source feature identity before preparing a reference record',()=>{
+  const parsed=parseSpatialInput(JSON.stringify({type:'Feature',id:'source-road-12',properties:{name:'Road'},geometry:{type:'LineString',coordinates:[[104,21],[104.01,21.01]]}}));
+  expect(parsed.features[0].id).toBe('source-road-12');
+  expect(referenceRecords(parsed.features,id,time)[0].id).toContain('source-road-12');
  });
  it('never marks an installation complete when its atomic write fails',()=>{
   const s=storage();s.setItem=()=>{throw new Error('Quota');};

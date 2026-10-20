@@ -1,3 +1,4 @@
+import { terrainReferenceRoads } from '../../terrain/terrainReferenceRoads';
 import { describe, expect, it } from 'vitest';
 import proj4 from 'proj4';
 import * as THREE from 'three';
@@ -47,4 +48,17 @@ describe('landslide extent terrain display', () => {
     expect(matched.children.length).toBe(stale.children.length + 1);
     disposeTerrainAreas(matched); disposeTerrainAreas(stale);
   });
+});
+
+
+it('drapes reference roads without filling missing analysis elevations',()=>{
+  const record=area();record.feature={type:'Feature',properties:{referenceKind:'road-corridor'},geometry:{type:'LineString',coordinates:ring([[40,40],[360,40]])}};
+  const grid=new Float32Array(441).fill(NaN),surfaces=[{model:{metadata,grid},group:new THREE.Group()}],resolution={width:800,height:600};
+  const missing=terrainReferenceRoads([record],surfaces,record.id,resolution);
+  expect(missing.children).toHaveLength(0);
+  const context=terrainReferenceRoads([record],surfaces,record.id,resolution,(x,y)=>new THREE.Vector3(x,50,-y));
+  expect(context.children).toHaveLength(2);
+  expect(grid.every(Number.isNaN)).toBe(true);
+  expect(record.feature.geometry.coordinates).toEqual(ring([[40,40],[360,40]]));
+  disposeTerrainAreas(missing);disposeTerrainAreas(context);
 });

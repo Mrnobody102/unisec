@@ -28,7 +28,7 @@ type Props = Pick<
   | 'onInspectObject'
   | 'onRevealPanel'
   | 'onOpenDialog'
-> & {survey?: {areas:number;points:number};onShowSurvey?:()=>void};
+> & {survey?: {areas:number;points:number};onShowSurvey?:()=>void; onShowCorridor?:()=>void};
 
 /** Lists retain their context and scroll while a selected item opens in the detail surface. */
 export function ResponsePanel({
@@ -52,7 +52,7 @@ export function ResponsePanel({
   onSelectCommunity,
   onInspectObject,
   onRevealPanel,
-  onOpenDialog, survey, onShowSurvey
+  onOpenDialog, survey, onShowSurvey, onShowCorridor
 }: Props): JSX.Element {
   const {
     view,
@@ -108,6 +108,7 @@ export function ResponsePanel({
       <IncidentView
         survey={survey}
         onShowSurvey={onShowSurvey}
+        onShowCorridor={onShowCorridor}
         incident={incident}
         hazards={hazards}
         onInspectObject={onInspectObject}

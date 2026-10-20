@@ -146,6 +146,8 @@ def run(url, chrome, captures):
                 route = page.locator('.access-route-choice').bounding_box()
                 assert route['y'] + route['height'] <= action['y'], 'Route choices must appear before their action'
                 assert page.locator('.route-metrics').bounding_box()['y'] >= action['y'] + action['height'], 'Travel estimates must follow the warning/action'
+            expect(page.locator('.route-section-row')).to_have_count(3)
+            page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-section-row')).to_have_count(0)
             page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-section-row')).to_have_count(3)

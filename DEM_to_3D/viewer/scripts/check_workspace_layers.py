@@ -31,10 +31,21 @@ def run(url, chrome):
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         # Verify the shipped survey before isolating the semantic visibility fixture.
         survey=page.evaluate('JSON.parse(localStorage.getItem("dear.gis.v2"))')
-        assert len(survey['records'])==50
-        assert len([r for r in survey['records'] if r['feature']['geometry']['type']=='Polygon'])==47
-        assert len([r for r in survey['records'] if r['feature']['geometry']['type']=='Point'])==3
-        assert len(survey['installedSources'])==1
+        field=[r for r in survey['records'] if r['source']['format']=='KML']
+        reference=[r for r in survey['records'] if r['source']['format']=='GeoJSON']
+        assert len(field)==50
+        assert len(reference)==5
+        required=next(r for r in reference if r['feature']['properties'].get('requiredCoverage'))
+        assert required['feature']['geometry']['coordinates']==[104.03,21.74146]
+        road=next(r for r in reference if r['feature']['properties'].get('referenceKind')=='road-corridor')
+        assert len(road['feature']['geometry']['coordinates'])==1737
+        centre=next(r for r in reference if r['feature']['properties'].get('referenceKind')=='destination-place')
+        assert centre['feature']['geometry']['coordinates']==[104.03196,21.72206]
+        assert road['feature']['properties']['endGapM']<50
+        assert 'status' not in road['feature']['properties']
+        assert len([r for r in field if r['feature']['geometry']['type']=='Polygon'])==47
+        assert len([r for r in field if r['feature']['geometry']['type']=='Point'])==3
+        assert len(survey['installedSources'])==2
         assert all(not r['feature']['properties'].get('dearLandslideArea',{}).get('roadLinks') for r in survey['records'])
         survey['records']=fixture_records()
         page.evaluate('(d)=>localStorage.setItem("dear.gis.v2",JSON.stringify(d))',survey)

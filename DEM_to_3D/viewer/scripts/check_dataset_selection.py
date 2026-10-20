@@ -16,6 +16,7 @@ def run(url, chrome=None):
     packet = json.loads((folder / 'incident.json').read_text(encoding='utf-8'))
     manifest = json.loads((folder / 'manifest.json').read_text(encoding='utf-8'))
     manifest.pop('fieldData', None)
+    manifest.pop('referenceData', None)
     manifest.pop('terrainContext', None)
     packet['incident']['id'] = 'INC-ALTERNATE'
     packet['incident']['title'] = ['Sự kiện kiểm thử', 'Test incident']

@@ -12,6 +12,7 @@ import {
 type Props = {
   survey?: {areas: number; points: number};
   onShowSurvey?: () => void;
+  onShowCorridor?: () => void;
   incident: IncidentModel;
   hazards: Hazard[];
   onInspectObject: (id: string) => void;
@@ -41,7 +42,7 @@ type Props = {
 export function IncidentView({
   incident, locale, areaName, tasks, entries, communities, assessments,
   blockedRoadCount, onSelectCommunity, onOpenWork, onOpenArea,
-  hazards, onInspectObject, survey, onShowSurvey, reportPending, pendingReport,
+  hazards, onInspectObject, survey, onShowSurvey, onShowCorridor, reportPending, pendingReport,
   onOpenReport, historical, onOpenRoads, onOpenCommunities
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
@@ -80,6 +81,10 @@ export function IncidentView({
         {survey && survey.areas + survey.points > 0 && <button className="incident-overview-item incident-survey-row" onClick={onShowSurvey}>
           <strong>{t('Khảo sát Chế Tạo – Lao Chải', 'Che Tao – Lao Chai survey')}</strong>
           <span>{survey.areas} {t('vùng khoanh', 'mapped areas')} · {survey.points} {t('điểm khảo sát', 'survey points')}</span><UiIcon name="next" size={16}/>
+        </button>}
+        {onShowCorridor && <button className="incident-overview-item" onClick={onShowCorridor}>
+          <strong>{t('Tuyến Mù Cang Chải – Chế Tạo', 'Mu Cang Chai – Che Tao corridor')}</strong>
+          <span>{t('Đường tham chiếu OSM và điểm yêu cầu ảnh', 'OSM reference road and required imagery point')}</span><UiIcon name="next" size={16}/>
         </button>}
         <details className="incident-observations"><summary>{t('Ghi nhận sạt lở', 'Landslide observations')}<span>{hazards.filter(hazard => hazard.kind === 'landslide').length}</span></summary>
           {hazards.filter(hazard => hazard.kind === 'landslide').map(hazard => <button className="incident-overview-item incident-overview-hazard" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>

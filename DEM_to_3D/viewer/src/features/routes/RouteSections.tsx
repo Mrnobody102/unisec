@@ -14,17 +14,20 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
 }): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const routeName = t(...route.name);
-  const [listOpen, setListOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
   const expandedList = listOpen || selectedId !== null;
   const sectionRef = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const row = sectionRef.current?.querySelector('.is-selected > .route-section-row');
     const scroll = sectionRef.current?.closest('.sidebar-scroll');
     if (!row || !scroll) return;
-    const bounds = scroll.getBoundingClientRect(), target = row.getBoundingClientRect();
-    // Preserve the reading position; reveal only a selection outside the visible panel.
-    if (target.top < bounds.top) scroll.scrollTop += target.top - bounds.top;
-    else if (target.bottom > bounds.bottom - 64) scroll.scrollTop += target.bottom - bounds.bottom + 64;
+    const detail = row.nextElementSibling;
+    const bounds = scroll.getBoundingClientRect(), top = row.getBoundingClientRect().top;
+    const bottom = (detail ?? row).getBoundingClientRect().bottom;
+    const available = bounds.height - 24;
+    // Reveal the inline finding and tools, not just the row that was clicked.
+    if (bottom - top > available || top < bounds.top + 12) scroll.scrollTop += top - bounds.top - 12;
+    else if (bottom > bounds.bottom - 12) scroll.scrollTop += bottom - bounds.bottom + 12;
   }, [route.id, selectedId]);
   return <section ref={sectionRef} className="route-sections" aria-labelledby="route-sections-title">
     <h3><button id="route-sections-title" className="route-sections-toggle" type="button" aria-expanded={expandedList} onClick={() => {setListOpen(!expandedList);if (expandedList && selectedId) onSelect(null);}}>

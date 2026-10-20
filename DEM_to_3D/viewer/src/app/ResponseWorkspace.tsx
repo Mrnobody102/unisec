@@ -152,6 +152,7 @@ export function ResponseWorkspace({
   const { locale, setLocale, theme, setTheme, fontChoice, setFontChoice } =
     preferences;
   const navigation = useWorkspaceNavigation();
+  const [cameraIntent,setCameraIntent] = useState<{kind:'selection'|'route';version:number}>({kind:'selection',version:0});
   const gis = useGeometrySession({prepared: runtime.fieldDataset});
   const [gisScenarioRequest, setGisScenarioRequest] = useState<ScenarioTarget | null>(null);
   const [gisCardId, setGisCardId] = useState<string | null>(() =>
@@ -493,6 +494,7 @@ export function ResponseWorkspace({
     sectionId?: string
   ) => {
     rememberDetailTrigger();
+    setCameraIntent(previous=>({kind:'selection',version:previous.version+1}));
     setLayers(previous => ({...previous, communities:true}));
     navigation.dispatch({ type: 'select-community', id });
     if (routeType)
@@ -510,6 +512,7 @@ export function ResponseWorkspace({
       return;
     }
     rememberDetailTrigger();
+    setCameraIntent(previous=>({kind:'selection',version:previous.version+1}));
     const hazard = id.startsWith('hazard:') ? hazards.find(item => `hazard:${item.id}` === id) : undefined;
     const layer = hazard ? hazard.kind === 'landslide' ? 'landslide' : hazard.kind === 'flood' ? 'flood' : 'crossings'
       : id.startsWith('road:') ? 'roads' : id.startsWith('aoi:') ? 'aoi' : responseSites.find(item => `poi:${item.id}` === id)?.kind;
@@ -779,7 +782,7 @@ export function ResponseWorkspace({
     activeDialog !== 'layers';
   useEffect(() => {
     if (!responseDetailVisible) return;
-    if (detailLayout.mode !== 'dock') return;
+    if (window.matchMedia('(max-width:900px)').matches && mobileView !== 'map') return;
     let firstFrame = 0,
       secondFrame = 0;
     const focusSelection = () => {
@@ -797,17 +800,20 @@ export function ResponseWorkspace({
               : road?.points[Math.floor(road.points.length / 2)];
       if (!point) return;
       // The dock floats over the map: centre the selection in the uncovered part.
-      const reserve =
+      const reserve = detailLayout.mode === 'dock' ?
         parseFloat(
           getComputedStyle(workspaceRef.current ?? document.documentElement).getPropertyValue(
             '--response-detail-reserve'
           )
-        ) || 0;
+        ) || 0 : 0;
       cancelAnimationFrame(firstFrame);
       cancelAnimationFrame(secondFrame);
       firstFrame = requestAnimationFrame(() => {
         secondFrame = requestAnimationFrame(() => {
-          const frame = kind === 'road' ? road?.points : kind === 'community' && activeRoute ? [...activeRoute.points, point] : undefined;
+          const frame = kind === 'road' ? road?.points : kind === 'community' && cameraIntent.kind === 'route' && activeRoute ? activeRoute.points : kind === 'community' ? [
+            {x:point.x-450,y:point.y-450}, {x:point.x+450,y:point.y-450},
+            point, {x:point.x+450,y:point.y+450}, {x:point.x-450,y:point.y+450}
+          ] : undefined;
           if (frame?.length && viewControlRef.current?.frameProjected) viewControlRef.current.frameProjected(frame,{right:reserve});
           else viewControlRef.current?.focusProjected(point, { right: reserve });
         });
@@ -825,7 +831,9 @@ export function ResponseWorkspace({
     selectedObjectId,
     mapMode,
     viewReadyVersion,
+    cameraIntent,
     activeRoute,
+    mobileView,
     roads,
     communities,
     hazards,
@@ -911,6 +919,10 @@ export function ResponseWorkspace({
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
         <ResponsePanel
           survey={!historical && runtime.fieldDataset ? {areas:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type !== 'Point').length,points:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type === 'Point').length} : undefined}
+          onShowCorridor={!historical && gis.records.some(r => r.feature.properties.referenceKind === 'road-corridor') ? () => {
+            const corridor = gis.records.find(r => r.feature.properties.referenceKind === 'road-corridor');
+            if (corridor) {setMapMode('2d'); showGisOnResponse(corridor.id);}
+          } : undefined}
           onShowSurvey={() => {
             resetTools(); navigation.dispatch({type:'reset'}); setGisCardId(null); setGisGroupIds([]);
             setMobileView('map');
@@ -983,6 +995,7 @@ export function ResponseWorkspace({
               values: { selectedRouteType }
             });
             setFocusDistance(null);
+            setCameraIntent(previous=>({kind:'route',version:previous.version+1}));
           }}
           onSelectCommunity={selectCommunity}
           onInspectObject={inspectObject}
@@ -1286,11 +1299,12 @@ export function ResponseWorkspace({
                 setLayers((previous) => ({ ...previous, [layer]: true }));
                 if (kind === 'community') selectCommunity(id);
                 else inspectObject(result.key);
-                viewControlRef.current?.focusProjected(result.projected);
+                if (kind !== 'community') viewControlRef.current?.focusProjected(result.projected);
               }}
             />
           </MapControls>
           <MapAttribution
+            osmReference={layers.gis && displayedGis.some(r => r.visible && r.feature.properties.referenceKind === 'road-corridor')}
             fieldSource={runtime.fieldDataset?.records[0]?.source.name}
             terrainDisplay={mapMode === '3d' && models[0]?.metadata ? {exaggeration:models[0].metadata.elevation.exaggeration * (geographicPlacements?.[0]?.scaleY ?? 1)} : undefined}
             locale={locale}

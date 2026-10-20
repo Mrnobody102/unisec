@@ -61,5 +61,10 @@
         "sha256": "cc4240cd29ab4f86eddd22911ac54931b1fd6fdf70cad89f14181a2860daf7e7"
       }
     }
-  ]
+  ],
+  "referenceData": {
+    "url": "/scenarios/che-tao/reference/mcc-chetao.geojson",
+    "byteLength": 140663,
+    "sha256": "11a6eca8238b6413caa2031a446afb787c5a24407bf7e43f7af2dd8cc3c19662"
+  }
 }

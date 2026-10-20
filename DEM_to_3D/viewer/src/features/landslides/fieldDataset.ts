@@ -5,7 +5,7 @@ import { parseKml } from '../geodata/parseKml';
 import { restoreGeometryRecords } from '../geodata/geometrySession';
 import { landslideAreaKey, newLandslideArea } from './landslideAreas';
 
-export type FieldDataset = { id: string; records: GeometryRecord[] };
+export type FieldDataset = import('../geodata/publishedGis').PreparedGeometrySource;
 
 /** Preserve survey geometry/Z and source names. Import time never becomes observation time. */
 export function fieldRecords(features: VectorFeature[], id: string, sourceName: string, networkVersion: string, importedAt: string): GeometryRecord[] {

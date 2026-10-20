@@ -25,8 +25,9 @@ describe('GIS import budgets and persistence', () => {
   });
   it('checks total vertices before topology and retains a per-feature bound', () => {
     const line: VectorGeometry = { type: 'LineString', coordinates: Array.from({ length: limits.verticesPerFeature }, (_, i) => [104 + i / 100_000, 21]) };
-    expect(() => validateGeometryBudget(Array(33).fill(line))).not.toThrow();
-    expect(() => validateGeometryBudget(Array(34).fill(line))).toThrow('vertex-limit');
+    const count=Math.floor(limits.verticesPerWorkspace/limits.verticesPerFeature);
+    expect(() => validateGeometryBudget(Array(count).fill(line))).not.toThrow();
+    expect(() => validateGeometryBudget(Array(count+1).fill(line))).toThrow('vertex-limit');
     expect(() => validateGeometryBudget([{ ...line, coordinates: [...line.coordinates, [105, 21]] }])).toThrow('vertex-limit');
   });
   it('measures UTF-8 bytes and rejects oversized saved attributes without changing previous records', () => {

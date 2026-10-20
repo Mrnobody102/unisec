@@ -20,6 +20,7 @@ def package_workspace(dist, destination):
     manifest_path, _ = workspace_manifest_path(dist)
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     assets = [manifest['workspace'], *manifest['terrain'].values(), *([manifest['fieldData']] if manifest.get('fieldData') else [])]
+    if manifest.get('referenceData'): assets.append(manifest['referenceData'])
     assets += [asset for group in manifest.get('terrainContext', []) for asset in group.values()]
     for asset in assets:
         if not isinstance(asset, dict) or 'url' not in asset:

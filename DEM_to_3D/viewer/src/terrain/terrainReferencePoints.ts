@@ -18,6 +18,7 @@ export function terrainReferencePoints(
   selectedId: string | null,
   surfaces: Surface[],
   onSelect: (id: string) => void,
+  contextPoint?: (x:number,y:number)=>THREE.Vector3|undefined,
 ) {
   const layer = document.createElement('div');
   layer.className = 'terrain-reference-layer';
@@ -36,6 +37,10 @@ export function terrainReferencePoints(
       const point = projectedToScene(metadata, {x, y}, elevation + 6);
       anchor = new THREE.Vector3(point.x, point.y, point.z).applyMatrix4(surface.group.matrixWorld);
       break;
+    }
+    if (!anchor && contextPoint) {
+      const metadata=surfaces.find(surface=>surface.model.metadata)?.model.metadata;
+      if(metadata){const [x,y]=proj4('EPSG:4326',metadata.crs.proj4||`${metadata.crs.authority}:${metadata.crs.code}`,record.feature.geometry.coordinates.slice(0,2));anchor=contextPoint(x,y)??null;}
     }
     if (!anchor) return [];
 

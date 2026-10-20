@@ -5,6 +5,7 @@ import { planBasemapTiles } from '../terrain/regionalBasemap';
 import { terrainAreaLabel } from '../features/landslides/terrainAreaLabel';
 import { renderOnDemand } from '../terrain/renderOnDemand';
 import { cameraPoseBesideDock, frameCameraPoints } from '../terrain/cameraFraming';
+import { terrainReferenceRoads } from '../terrain/terrainReferenceRoads';
 import { terrainLandslideAreas, disposeTerrainAreas } from '../features/landslides/terrainAreas';
 import type { GeometryRecord } from '../geo/vector/types';
 import { useEffect, useLayoutEffect, useRef } from 'react';
@@ -199,8 +200,10 @@ export function TerrainViewer({
     const frame = primary?.model.metadata ? basemapFrame(geographicPlacements ? located.map(entry => entry.model.metadata!) : [primary.model.metadata]) : null;
     const planned = frame ? planBasemapTiles(frame, imagerySource.maxNativeZoom) : undefined;
     const terrainImageries = located.map(entry => createTerrainImagery(entry.model.metadata!, entry.group, entry.meshes, imagerySource.maxNativeZoom, Math.min(16, renderer.capabilities.getMaxAnisotropy()), planned));
+    let refreshReferenceRelief = () => {};
+    let lastReferenceRelief: string|undefined;
     const basemap = frame && primary
-      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); if(state.status!=='loading')scheduleViewImagery(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
+      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { if(state.relief!==lastReferenceRelief){lastReferenceRelief=state.relief;if(state.relief==='ready'||state.relief==='partial')refreshReferenceRelief();} onBasemapStateRef.current?.(state); invalidate(); if(state.status!=='loading')scheduleViewImagery(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
       : null;
     if (basemap) scene.add(basemap.group);
     const viewImagery = frame && primary ? createViewImagery(() => {
@@ -298,13 +301,14 @@ export function TerrainViewer({
       if (mappedAreasRef.current.records) {
         mappedAreaGroup = new THREE.Group();
         const chosen = mappedAreasRef.current.records.find(record => record.id === mappedAreasRef.current.selectedId);
-        referencePoints = terrainReferencePoints(host,mappedAreasRef.current.records,mappedAreasRef.current.selectedId??null,entries,id=>mappedAreasRef.current.onSelect?.(id));
+        referencePoints = terrainReferencePoints(host,mappedAreasRef.current.records,mappedAreasRef.current.selectedId??null,entries,id=>mappedAreasRef.current.onSelect?.(id),(x,y)=>basemap?.surfacePoint(x,y));
         for (const entry of entries) {
           if (!entry.model.metadata || !entry.model.grid) continue;
           const group = terrainLandslideAreas(mappedAreasRef.current.records, entry.model.metadata, entry.model.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion);
           group.matrix.copy(entry.group.matrixWorld); group.matrixAutoUpdate = false; mappedAreaGroup.add(group);
           if (chosen && !mappedLabel) mappedLabel = terrainAreaLabel(host,chosen,entry.model.metadata,entry.model.grid,entry.group.matrixWorld,localeRef.current);
         }
+        mappedAreaGroup.add(terrainReferenceRoads(mappedAreasRef.current.records,entries,mappedAreasRef.current.selectedId??null,{width:host.clientWidth,height:host.clientHeight},(x,y)=>basemap?.surfacePoint(x,y)));
         scene.add(mappedAreaGroup);
       }
       if (sp && primaryModel?.metadata && primaryModel?.grid) {
@@ -432,6 +436,7 @@ export function TerrainViewer({
       controls.update();
       markerLayoutDirty = true;
     };
+    refreshReferenceRelief = () => {rebuildScenarioOverlays();invalidate();onViewReady?.();};
     runtimeRef.current = { updateScenario: rebuildScenarioOverlays, setMode: mode => setInitialCamera(mode, true), updateSurface, invalidate: () => invalidate() };
 
     const moveCamera = (position: THREE.Vector3, target: THREE.Vector3, duration = 480) => {
@@ -452,7 +457,7 @@ export function TerrainViewer({
         const p = projectedToScene(entry.model.metadata, point, elevation);
         return entry.group.localToWorld(new THREE.Vector3(p.x,p.y,p.z));
       }
-      return null;
+      return basemap?.surfacePoint(point.x,point.y) ?? null;
     };
     if (viewControlRef) {
       viewControlRef.current = {

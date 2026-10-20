@@ -13,6 +13,8 @@ export function gisValueKey(value: unknown): string {
       : item,
   );
 }
+export type PreparedGeometrySource = {id:string; records:GeometryRecord[]; additionalSources?:Array<{id:string;records:GeometryRecord[]}>};
+export const preparedSources = (source: PreparedGeometrySource) => [source, ...(source.additionalSources ?? [])];
 export type PublishedGis = {
   schema: "dear-gis/v2";
   records: GeometryRecord[];
@@ -75,12 +77,17 @@ export function writePublishedGis(
   }
 }
 /** One atomic installation per source revision. Later edits/deletions are retained on reload. */
-export function installPreparedRecords(source: {id: string; records: GeometryRecord[]}, storage: Storage = localStorage): PublishedGis {
+export function installPreparedRecords(source: PreparedGeometrySource, storage: Storage = localStorage): PublishedGis {
   const current = readPublishedGis(storage);
-  if (current.installedSources?.includes(source.id)) return current;
+  const pending = preparedSources(source).filter(item => !current.installedSources?.includes(item.id));
+  if (!pending.length) return current;
   const ids = new Set(current.records.map(record => record.id));
-  const next = {...current, records: [...current.records, ...source.records.filter(record => !ids.has(record.id))],
-    installedSources: [...(current.installedSources ?? []), source.id]};
+  const additions = pending.flatMap(item => item.records).filter(record => {
+    if (ids.has(record.id)) return false;
+    ids.add(record.id); return true;
+  });
+  const next = {...current, records:[...current.records,...additions],
+    installedSources:[...(current.installedSources ?? []),...pending.map(item => item.id)]};
   writePublishedGis(next, storage);
   return next;
 }

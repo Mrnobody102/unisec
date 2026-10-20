@@ -14,7 +14,7 @@ export function MapAttribution({
   onRetry,
   localSource,
   terrainDisplay,
-  fieldSource
+  fieldSource, osmReference
 }: {
   locale: Locale;
   state: BasemapState;
@@ -22,6 +22,7 @@ export function MapAttribution({
   localSource?: [string, string];
   terrainDisplay?: {exaggeration: number};
   fieldSource?: string;
+  osmReference?: boolean;
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const imagery =
@@ -86,6 +87,8 @@ export function MapAttribution({
                 </div>
               )}
               {fieldSource && <div><dt>{t('Khảo sát thực địa', 'Field survey')}</dt><dd>{fieldSource}<br/>{t('Lớp ảnh Google Earth không kèm dữ liệu ảnh.', 'Google Earth image layers contain no raster data.')}</dd></div>}
+              {osmReference && <div><dt>{t('Đường tham chiếu', 'Reference road')}</dt><dd><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors · ODbL</a></dd></div>}
+              {osmReference && <div><dt>{t('Mốc địa danh', 'Place reference')}</dt><dd><a href="https://www.geonames.org/8526472/ban-che-tao.html" target="_blank" rel="noreferrer">GeoNames · CC BY 4.0</a></dd></div>}
               {state.relief && <div><dt>{t('Địa hình nền', 'Context terrain')}</dt><dd>
                 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer">Mapzen Terrain Tiles</a>
                 <br/>{state.relief === 'loading' ? t('Đang tải…', 'Loading…') : state.relief === 'error' ? t('Chưa tải được', 'Unavailable') : t('Chỉ hiển thị, không dùng đo đạc', 'Display only, excluded from measurements')}
@@ -176,6 +179,7 @@ export function MapAttribution({
             )}
           </div>
         )}
+      {osmReference && !open && <a className="map-reference-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>}
       </div>
     </>
   );
