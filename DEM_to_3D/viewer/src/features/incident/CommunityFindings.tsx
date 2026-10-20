@@ -1,13 +1,14 @@
 import type { CommunityFact, CommunityFinding, IncidentEvidence, Locale } from '../../types/dear';
+import { contactAlreadySummarized } from './findingPresentation';
 import { communityNeedTopic, isCommunityNeed } from './communityNeeds';
 import { observationTime } from './sourceTime';
 import { resolveCommunityFindings } from './resolveCommunityFindings';
 import { EvidenceMetadata } from './EvidenceMetadata';
 import { evidencePresentation } from './evidencePresentation';
 
-type Props = { facts: CommunityFact[]; communityName?: string; evidence: IncidentEvidence[]; locale: Locale; onOpenEvidence: (hazardId: string) => void };
+type Props = { facts: CommunityFact[]; communityName?: string; evidence: IncidentEvidence[]; locale: Locale; communication?: 'lost' | 'available' | 'unknown'; onOpenEvidence: (hazardId: string) => void };
 
-export function CommunityFindings({ facts, communityName, evidence, locale, onOpenEvidence }: Props): JSX.Element {
+export function CommunityFindings({ facts, communityName, evidence, locale, communication, onOpenEvidence }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const findings = resolveCommunityFindings(facts, evidence);
   const groups: { id: string; title: string; items: CommunityFinding[] }[] = [
@@ -17,14 +18,15 @@ export function CommunityFindings({ facts, communityName, evidence, locale, onOp
     { id: 'context', title: t('Thông tin địa bàn', 'Community information'), items: findings.filter(f => f.kind === 'context' && !isCommunityNeed(f)) }
   ];
   return <>{groups.map(({id, title, items}) => {
-    if (!items.length) return id === 'needs' ? <section className="workflow-section community-needs" key={id}><h3>{title}</h3><p>{t('Chưa có báo cáo nhu cầu hỗ trợ.', 'No assistance needs have been reported.')}</p></section> : null;
+    if (!items.length) return null;
     return <section className={'workflow-section community-findings' + (id === 'needs' ? ' community-needs' : '')} key={id}>
       <h3>{title}</h3>
       {items.map((finding, index) => {
         const record = evidence.find(item => item.hazardId === finding.hazardId);
-        return <article className="community-finding" key={index}>
-          {!(id === 'needs' && communityNeedTopic(finding) === 'assistance' && items.length === 1) && <h4>{finding.kind === 'gap' && finding.label[0] === `Đường vào ${communityName}` ? t('Đường tiếp cận', 'Access roads') : t(...finding.label)}</h4>}<p>{t(...finding.value)}</p>
-          {(record || finding.source) && <details className="finding-provenance"><summary>{t('Nguồn và thời gian', 'Source and times')}</summary>
+        const summarizedContact = contactAlreadySummarized(finding, communication);
+        return <article className={'community-finding' + (summarizedContact ? ' is-summarized' : '')} key={index}>
+          {!summarizedContact && <>{!(id === 'needs' && communityNeedTopic(finding) === 'assistance' && items.length === 1) && <h4>{finding.kind === 'gap' && finding.label[0] === `Đường vào ${communityName}` ? t('Đường tiếp cận', 'Access roads') : t(...finding.label)}</h4>}<p>{t(...finding.value)}</p></>}
+          {(record || finding.source) && <details className="finding-provenance"><summary>{summarizedContact ? t('Liên lạc: nguồn và thời gian', 'Contact: source and times') : record || finding.observedAt || finding.receivedAt ? t('Nguồn và thời gian', 'Source and times') : t('Nguồn', 'Source')}</summary>
           {record ? <EvidenceMetadata evidence={record} locale={locale} className="finding-source"/> : finding.source && <dl className="finding-source">
             <div><dt>{t('Nguồn', 'Source')}</dt><dd>{t(...finding.source)}</dd></div>
             {finding.observedAt && <div><dt>{t('Ghi nhận', 'Observed')}</dt><dd><time dateTime={finding.observedAt}>{observationTime(finding.observedAt, locale)}</time></dd></div>}

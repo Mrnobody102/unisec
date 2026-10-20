@@ -81,7 +81,7 @@ export function IncidentView({
           <strong>{t('Khảo sát Chế Tạo – Lao Chải', 'Che Tao – Lao Chai survey')}</strong>
           <span>{survey.areas} {t('vùng khoanh', 'mapped areas')} · {survey.points} {t('điểm khảo sát', 'survey points')}</span><UiIcon name="next" size={16}/>
         </button>}
-        <details className="incident-observations"><summary>{t('Ghi nhận trên bản đồ', 'Mapped observations')}<span>{hazards.filter(hazard => hazard.kind === 'landslide').length}</span></summary>
+        <details className="incident-observations"><summary>{t('Ghi nhận sạt lở', 'Landslide observations')}<span>{hazards.filter(hazard => hazard.kind === 'landslide').length}</span></summary>
           {hazards.filter(hazard => hazard.kind === 'landslide').map(hazard => <button className="incident-overview-item incident-overview-hazard" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>
             <strong>{t(...hazard.name)}</strong><UiIcon name="next" size={16}/>
           </button>)}

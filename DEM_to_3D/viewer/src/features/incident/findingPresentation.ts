@@ -1,3 +1,5 @@
+import type { CommunityFinding } from '../../types/dear';
+
 /** Keep extra detail, but do not repeat a finding that only restates the title
  * (same words, at most two added, e.g. "gần Khau Mang" vs "gần đường vào Khau Mang"). */
 export function findingAddsDetail(title: string, finding: string): boolean {
@@ -5,4 +7,15 @@ export function findingAddsDetail(title: string, finding: string): boolean {
   const titleWords = words(title), findingWords = words(finding);
   const covered = titleWords.every(word => findingWords.includes(word));
   return !(covered && findingWords.length - titleWords.length <= 2);
+}
+
+/** Collapse only the known, identical contact statement. Additional findings or
+ * conflicting/unknown header status remain fully visible; provenance stays available.
+ */
+export function contactAlreadySummarized(finding: CommunityFinding, communication?: 'lost' | 'available' | 'unknown'): boolean {
+  return communication === 'lost'
+    && finding.kind === 'report' && Boolean(finding.source)
+    && finding.label[0] === 'Liên lạc' && finding.label[1] === 'Communications'
+    && finding.value[0] === 'Mất liên lạc với bản.'
+    && finding.value[1] === 'Contact with the village lost.';
 }
