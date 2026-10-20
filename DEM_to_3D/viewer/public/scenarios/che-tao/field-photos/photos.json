@@ -1,0 +1,508 @@
+{
+ "points": [
+  {
+   "id": "scar-1",
+   "hazardId": "LS-01",
+   "surveyName": "Scar 1 [0830]",
+   "photos": [
+    {
+     "name": "IMG_0827",
+     "capturedAt": "2026-10-08T10:48:01+07:00",
+     "latitude": 21.757417,
+     "longitude": 104.046853,
+     "accuracyM": 7.1,
+     "headingDeg": 258,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0827.image.webp",
+      "byteLength": 253174,
+      "sha256": "47a4ab176c585a114394c547a3cdc3b4964bbeda8c48e5e9d4c545a1c20f71a5",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0827.thumb.webp",
+      "byteLength": 12262,
+      "sha256": "215798139ccdcb92a2a5c7e55f39703917b0319a1b4c8148f7c91b9f20111770",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0828",
+     "capturedAt": "2026-10-08T10:48:04+07:00",
+     "latitude": 21.757419,
+     "longitude": 104.046822,
+     "accuracyM": 5.2,
+     "headingDeg": 259,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0828.image.webp",
+      "byteLength": 338662,
+      "sha256": "587b35001b0f709225f8c6affb73e4a64cb48aaaf9aba4ed300309eadacfcd05",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0828.thumb.webp",
+      "byteLength": 17794,
+      "sha256": "dc774ad0c337f5923da792561c6684e98004f529bf9ec92e85fef20396ffcef9",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0829",
+     "capturedAt": "2026-10-08T10:48:09+07:00",
+     "latitude": 21.757439,
+     "longitude": 104.046814,
+     "accuracyM": 3.5,
+     "headingDeg": 328,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0829.image.webp",
+      "byteLength": 261378,
+      "sha256": "9b6480a73383c2661dea97ef62e9ed9e94221b11801823b11a190a7047baa356",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0829.thumb.webp",
+      "byteLength": 13602,
+      "sha256": "cde27df7d13aaa7d24872a2a8812d4eba50d04caddd44b0a2d53d24c6d69a413",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0830",
+     "capturedAt": "2026-10-08T10:48:23+07:00",
+     "latitude": 21.757458,
+     "longitude": 104.046753,
+     "accuracyM": 3.9,
+     "headingDeg": 202,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0830.image.webp",
+      "byteLength": 306410,
+      "sha256": "aa4f39fee88f0351a4685439ef41a9d3fdd80ec20bb791b432bb4c5e033caf5b",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0830.thumb.webp",
+      "byteLength": 15678,
+      "sha256": "926f2556bfb81f0983be4a25724db04bf6e67b2f1bdce0d683afd5f422fe751a",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0831",
+     "capturedAt": "2026-10-08T10:48:51+07:00",
+     "latitude": 21.757469,
+     "longitude": 104.046219,
+     "accuracyM": 4.7,
+     "headingDeg": 161,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0831.image.webp",
+      "byteLength": 294356,
+      "sha256": "fbacc774bbe236e630edb337cc5f35106ca31c7e796b3198a667d7417395eb50",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0831.thumb.webp",
+      "byteLength": 16196,
+      "sha256": "cf108ac76e239010c04f08368a5cb00f2eaa1d9788e7c2c8aa22d16001017d87",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0832",
+     "capturedAt": "2026-10-08T10:48:53+07:00",
+     "latitude": 21.757447,
+     "longitude": 104.046242,
+     "accuracyM": 4.7,
+     "headingDeg": 205,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0832.image.webp",
+      "byteLength": 264440,
+      "sha256": "4932ef8f30dcec9cbf9b00cda2f49e69f188d353ecc2fc60988a4085b4b4a599",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0832.thumb.webp",
+      "byteLength": 13426,
+      "sha256": "b7b95e1f10e50caad2b6011fcfc0d0837e0e327389b14d2a4d1fb3b08c780156",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0833",
+     "capturedAt": "2026-10-08T10:48:56+07:00",
+     "latitude": 21.757469,
+     "longitude": 104.046233,
+     "accuracyM": 4.7,
+     "headingDeg": 334,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0833.image.webp",
+      "byteLength": 305892,
+      "sha256": "1a919f3d9f0e0031018a5fffa9db807c2124f06be886836ce288235ad417d0aa",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0833.thumb.webp",
+      "byteLength": 15562,
+      "sha256": "fcb5135e9bf0d3d4e8de3e22c71fbc90e9fa4cba1819558dde1a5fcf9c87c672",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0834",
+     "capturedAt": "2026-10-08T10:50:18+07:00",
+     "latitude": 21.757483,
+     "longitude": 104.04625,
+     "accuracyM": 4.7,
+     "headingDeg": 76,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-1-img_0834.image.webp",
+      "byteLength": 443492,
+      "sha256": "35efb4f7d289f9ed93e10388d49b180c0c0da5009aee25cb949639bb47811c18",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-1-img_0834.thumb.webp",
+      "byteLength": 29864,
+      "sha256": "148ab35d2abd319de1918d0f26a86c61bc58e37be0bd2ebb3c67704f75f2ec5c",
+      "width": 240,
+      "height": 320
+     }
+    }
+   ]
+  },
+  {
+   "id": "scar-2",
+   "hazardId": "LS-02",
+   "surveyName": "Scar 2 [0850]",
+   "photos": [
+    {
+     "name": "IMG_0846",
+     "capturedAt": "2026-10-08T11:05:25+07:00",
+     "latitude": 21.763392,
+     "longitude": 104.045325,
+     "accuracyM": 4.8,
+     "headingDeg": 43,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0846.image.webp",
+      "byteLength": 346526,
+      "sha256": "faffaa5d8f9b5da8175bc6f0d6291710087980785134635c9f2b8ce0d4fbed99",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-2-img_0846.thumb.webp",
+      "byteLength": 18102,
+      "sha256": "5e62465909e64c8d5e11710b1b710fd4d11e88c0a1be379b3562f1eeb59f6c5a",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0847",
+     "capturedAt": "2026-10-08T11:05:36+07:00",
+     "latitude": 21.763397,
+     "longitude": 104.045417,
+     "accuracyM": 4.7,
+     "headingDeg": 33,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0847.image.webp",
+      "byteLength": 317054,
+      "sha256": "d9efe8caac920282e2e8aec78e0abd350c77576d3f80a4d4ebab4676e3c5455a",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-2-img_0847.thumb.webp",
+      "byteLength": 16692,
+      "sha256": "c52aea233e88f70f7abe73e3ee36c4a065aa76d8a2fccf411935e7852a7811b2",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0848",
+     "capturedAt": "2026-10-08T11:05:55+07:00",
+     "latitude": 21.763339,
+     "longitude": 104.045564,
+     "accuracyM": 4.7,
+     "headingDeg": 266,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0848.image.webp",
+      "byteLength": 382000,
+      "sha256": "0e82218ec67748d518eb3e9b327267e2e6872598b8a5e16f9bbaff8458c952b7",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-2-img_0848.thumb.webp",
+      "byteLength": 20428,
+      "sha256": "3733a89f6fd9db8e3184088a65281b4068d648d0221b3727103ba6a8cf32a72d",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0849",
+     "capturedAt": "2026-10-08T11:05:57+07:00",
+     "latitude": 21.763333,
+     "longitude": 104.045539,
+     "accuracyM": 4.7,
+     "headingDeg": 191,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0849.image.webp",
+      "byteLength": 397830,
+      "sha256": "81c370aa2b13aee0886b1afcf782e4d1ec1dfdbdb8b84c4417ca4a3f030919ca",
+      "width": 1280,
+      "height": 960
+     },
+     "thumb": {
+      "url": "scar-2-img_0849.thumb.webp",
+      "byteLength": 21234,
+      "sha256": "c97cccef450f965249e8d7fea73b1c771400847c0e45232d783a776184315d9f",
+      "width": 320,
+      "height": 240
+     }
+    },
+    {
+     "name": "IMG_0850",
+     "capturedAt": "2026-10-08T11:06:00+07:00",
+     "latitude": 21.763339,
+     "longitude": 104.045556,
+     "accuracyM": 4.7,
+     "headingDeg": 182,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0850.image.webp",
+      "byteLength": 369468,
+      "sha256": "5e6bf1bffb7880656a154af815aa6c018bbb1efba56cef526b9adb2d7367fe28",
+      "width": 1280,
+      "height": 960
+     },
+     "thumb": {
+      "url": "scar-2-img_0850.thumb.webp",
+      "byteLength": 19560,
+      "sha256": "b6d0d6e30e06b59209295a2b36766d722dc82494a7065ae6e5863a07a686803c",
+      "width": 320,
+      "height": 240
+     }
+    },
+    {
+     "name": "IMG_0851",
+     "capturedAt": "2026-10-08T11:06:27+07:00",
+     "latitude": 21.763333,
+     "longitude": 104.045831,
+     "accuracyM": 4.7,
+     "headingDeg": 176,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0851.image.webp",
+      "byteLength": 486040,
+      "sha256": "2aeccf42b1a1f6b6d4097de05ebfcaee5ef2bf66a664a77e27d56737da52b88f",
+      "width": 1280,
+      "height": 960
+     },
+     "thumb": {
+      "url": "scar-2-img_0851.thumb.webp",
+      "byteLength": 28662,
+      "sha256": "c713f25821d7b93e560482e3de84d0445e77ab4f96623edb058b4fbb0bc11873",
+      "width": 320,
+      "height": 240
+     }
+    },
+    {
+     "name": "IMG_0852",
+     "capturedAt": "2026-10-08T11:06:30+07:00",
+     "latitude": 21.763333,
+     "longitude": 104.045822,
+     "accuracyM": 4.7,
+     "headingDeg": 141,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0852.image.webp",
+      "byteLength": 406544,
+      "sha256": "71b57a0867691a8071d0d76076586c56c67be6566ee250cf7fef32e29d25b71d",
+      "width": 1280,
+      "height": 960
+     },
+     "thumb": {
+      "url": "scar-2-img_0852.thumb.webp",
+      "byteLength": 25772,
+      "sha256": "53d3da77c361dd5c2e2751524400ca20736123ff0ba0cf72dea3b606e7695621",
+      "width": 320,
+      "height": 240
+     }
+    },
+    {
+     "name": "IMG_0853",
+     "capturedAt": "2026-10-08T11:06:35+07:00",
+     "latitude": 21.763322,
+     "longitude": 104.045831,
+     "accuracyM": 4.7,
+     "headingDeg": 197,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-2-img_0853.image.webp",
+      "byteLength": 481408,
+      "sha256": "3c9af91df52ba5c07ad8eb63bc28761686b0d31603a1c88adea6c0caa764ac14",
+      "width": 1280,
+      "height": 960
+     },
+     "thumb": {
+      "url": "scar-2-img_0853.thumb.webp",
+      "byteLength": 27788,
+      "sha256": "3c0480d260eeb5ec3e59899cfaad5693b04c58ae7b0d409f04ef184bc300688e",
+      "width": 320,
+      "height": 240
+     }
+    }
+   ]
+  },
+  {
+   "id": "scar-3",
+   "hazardId": "LS-03",
+   "surveyName": "Scar 3 [0926]",
+   "photos": [
+    {
+     "name": "IMG_0925",
+     "capturedAt": "2026-10-08T11:45:24+07:00",
+     "latitude": 21.783828,
+     "longitude": 104.04435,
+     "accuracyM": 7.7,
+     "headingDeg": 257,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-3-img_0925.image.webp",
+      "byteLength": 343784,
+      "sha256": "0d024957e22db9dbab39d2f1d1005ef4ecdc4561b0070996a794a4aa0aae0f87",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-3-img_0925.thumb.webp",
+      "byteLength": 19554,
+      "sha256": "a844566263e0d69eef9c152637395efb39a3cae09df52120be8c44c7698c2c71",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0926",
+     "capturedAt": "2026-10-08T11:45:26+07:00",
+     "latitude": 21.783811,
+     "longitude": 104.044358,
+     "accuracyM": 4.4,
+     "headingDeg": 56,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-3-img_0926.image.webp",
+      "byteLength": 191086,
+      "sha256": "9faa05d8317b40e4118676a625589374ba3a9013dd9c8fe19ea9bcbc11960fdf",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-3-img_0926.thumb.webp",
+      "byteLength": 11312,
+      "sha256": "d4d9855e87f41f0ba31ecfa9556f3d3633f58d04e06812a21647d778eab132ef",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0927",
+     "capturedAt": "2026-10-08T11:45:47+07:00",
+     "latitude": 21.78375,
+     "longitude": 104.044603,
+     "accuracyM": 4.7,
+     "headingDeg": 143,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-3-img_0927.image.webp",
+      "byteLength": 251882,
+      "sha256": "04cec4356cce20fd75e63a6f9ef1aacada3984d149fbdb731f8dffa17e496cf0",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-3-img_0927.thumb.webp",
+      "byteLength": 14820,
+      "sha256": "2a4828daabca2c8817fe6005dd846131699625a907aac4a588b7980a6b6d65c2",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0928",
+     "capturedAt": "2026-10-08T11:45:50+07:00",
+     "latitude": 21.783747,
+     "longitude": 104.044608,
+     "accuracyM": 4.7,
+     "headingDeg": 114,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-3-img_0928.image.webp",
+      "byteLength": 230812,
+      "sha256": "66b7740b5a80af01ee4e7c3920b605968b53a770030a634f8601c8e346edf885",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-3-img_0928.thumb.webp",
+      "byteLength": 12702,
+      "sha256": "69e9ae51ff418083a44353ad53980e7547b2e37c25e7317d7849b5efa592dceb",
+      "width": 240,
+      "height": 320
+     }
+    },
+    {
+     "name": "IMG_0929",
+     "capturedAt": "2026-10-08T11:45:58+07:00",
+     "latitude": 21.783753,
+     "longitude": 104.044717,
+     "accuracyM": 4.7,
+     "headingDeg": 40,
+     "camera": "Apple iPhone 13",
+     "image": {
+      "url": "scar-3-img_0929.image.webp",
+      "byteLength": 265948,
+      "sha256": "7798a12ebb1485498ef333f3eda1d691e4b1a4a2a877de98888b20f2f8ad48fb",
+      "width": 960,
+      "height": 1280
+     },
+     "thumb": {
+      "url": "scar-3-img_0929.thumb.webp",
+      "byteLength": 14818,
+      "sha256": "af1407b14cc3d9c335a884ee4a71f4c93965a2adf1944c49c27abfffbab87f85",
+      "width": 240,
+      "height": 320
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,4 +1,5 @@
 """Exercise operator measurement tools, persistence, editing and map space."""
+from gis_browser_actions import map_tool
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -18,7 +19,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='English', exact=True).click()
         page.keyboard.press('Escape')
         panel = page.locator('.map-measure-panel')
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(page.locator('.map-bottom-bar')).to_be_hidden()
         initial_box = panel.bounding_box()
         panel.get_by_role('button', name='Measurement settings', exact=True).click()
@@ -78,7 +79,7 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Layers', exact=True).click()
         expect(panel).to_have_count(0)
         page.keyboard.press('Escape')
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(panel.locator('.map-measure-result')).to_have_text(committed)
         expect(panel).to_have_attribute('data-stage', 'finished')
         panel.get_by_role('button', name='Copy results', exact=True).click()
@@ -87,7 +88,7 @@ def run(url, chrome, captures):
         result = panel.locator('.map-measure-result').text_content()
         panel.get_by_role('button', name='Close measurement', exact=True).click()
         expect(page.locator('.map-measure-label')).to_have_count(1)
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(panel.locator('.map-measure-result')).to_have_text(result)
         normal = panel.bounding_box()['height']
         panel.get_by_role('button', name='Collapse measurement', exact=True).click()
@@ -146,18 +147,18 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Show information panel', exact=True).click()
         assert abs(page.locator('.sidebar').bounding_box()['width'] - sidebar_width) < 1
         # Completed measurements survive a 3D round trip. New sessions explicitly reset them.
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(panel).to_be_visible()
         page.get_by_role('button', name='Switch to 3D', exact=True).click()
         expect(page.locator('.map-2d')).to_have_count(0)
         expect(panel).to_have_count(0)
         expect(page.get_by_role('button', name='Measure on 2D map', exact=True)).to_have_attribute('aria-pressed', 'false')
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(panel.locator('.map-measure-result')).to_contain_text('Latitude')
         expect(page.locator('.map-measure-label')).to_have_count(5)
         for _ in range(12):
             panel.get_by_role('button', name='Close measurement', exact=True).click()
-            page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+            map_tool(page, 'Measure on 2D map').click()
             expect(page.locator('.map-measure-label')).to_have_count(5)
             expect(page.locator('.map-measure-vertex')).to_have_count(1)
         # Mobile tool becomes a short bottom sheet, leaving the upper map usable.
@@ -192,14 +193,14 @@ def run(url, chrome, captures):
         pick(.55, .3); pick(.75, .4)
         # Closing pauses an unfinished drawing rather than silently losing it.
         panel.get_by_role('button', name='Close measurement', exact=True).click()
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(page.locator('.map-measure-vertex.is-editable')).to_have_count(2)
         pick(.8, .4, False)
         page.keyboard.press('Enter')
         expect(panel.get_by_role('button', name='New', exact=True)).to_be_visible()
         panel.get_by_role('button', name='Close measurement', exact=True).click()
         page.locator('.incident-priority-row').first.click()
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         panel.get_by_role('button', name='Measure selected route', exact=True).click()
         expect(panel.locator('.map-measure-source')).to_be_visible()
         expect(panel.get_by_role('button', name='Copy results', exact=True)).to_be_visible()
@@ -207,7 +208,7 @@ def run(url, chrome, captures):
         panel.get_by_role('button', name='Close measurement', exact=True).click()
         page.locator('.workspace-nav button').first.click()
         page.locator('.incident-area-link').click()
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         panel.get_by_role('button', name='Measure assessment area', exact=True).click()
         expect(panel.locator('.map-measure-result')).to_contain_text('Perimeter')
         expect(panel.locator('.map-measure-source')).to_be_visible()

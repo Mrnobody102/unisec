@@ -8,10 +8,14 @@ import type { MapTile } from './regionalBasemap';
 const faces = [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]];
 
 /** Conservative visible surface bounds, including tilted views and terrain at different heights. */
-export function visibleImageryPoints(metadata: TerrainMetadata, reference: THREE.Matrix4, camera: THREE.Camera, meshes: THREE.Mesh[]): Array<{x:number;y:number}> {
+export function visibleImageryPoints(metadata: TerrainMetadata, reference: THREE.Matrix4, camera: THREE.Camera, meshes: THREE.Mesh[], detailDistance?: number): Array<{x:number;y:number}> {
   camera.updateMatrixWorld();
   const toReference = reference.clone().invert();
-  const view = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  let projection=camera.projectionMatrix;
+  if(detailDistance && camera instanceof THREE.PerspectiveCamera) {
+    const local=camera.clone();local.far=Math.min(camera.far,Math.max(camera.near+1,detailDistance));local.updateProjectionMatrix();projection=local.projectionMatrix;
+  }
+  const view = new THREE.Matrix4().multiplyMatrices(projection, camera.matrixWorldInverse);
   const visible = new THREE.Box3();
   for (const mesh of meshes) {
     mesh.updateWorldMatrix(true, false);
@@ -74,7 +78,7 @@ export function viewImageryTiles(metadata: TerrainMetadata, points: Array<{x:num
 
 
 /** One request/atlas shared by native DEMs and context; only completed windows are published. */
-export function createViewImagery(plan: () => MapTile[], anisotropy: number, publish: (atlas: ImageryDetailAtlas | null) => void, invalidate: () => void) {
+export function createViewImagery(plan: () => MapTile[], anisotropy: number, publish: (atlas: ImageryDetailAtlas | null) => void, invalidate: () => void, publishBase: (atlas:ImageryDetailAtlas|null)=>void = ()=>{}) {
   const status = document.createElement('span'); status.className='terrain-detail-status';
   status.setAttribute('role','status'); status.hidden=true;
   let enabled=false, disposed=false, timer:ReturnType<typeof setTimeout>|undefined;
@@ -83,15 +87,19 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
   const keyOf=(tiles:MapTile[])=>tiles.map(t=>`${t.z}/${t.x}/${t.y}`).join(',');
   let scheduledAt:number|null=null;
   const cancel = () => {clearTimeout(timer);scheduledAt=null;controller?.abort();controller=null;loadingKey='';status.hidden=true;};
-  const request = async () => {
+  let held=false;
+  let filmController:AbortController|null=null, filmKey='';
+  let pages:Array<{tiles:MapTile[];atlas:ImageryDetailAtlas}>=[];
+  const clearFilm=()=>{filmController?.abort();filmController=null;publishBase(null);pages.forEach(page=>page.atlas.dispose());pages=[];filmKey='';};
+  const request = async (preparedTiles?:MapTile[]) => {
     if (!enabled || disposed) return;
-    const tiles=plan();
+    const tiles=preparedTiles ?? plan();
     if (!tiles.length) return;
     const key=keyOf(tiles);
     if (key===loadedKey || key===loadingKey) return;
     controller?.abort(); const run=new AbortController();controller=run;loadingKey=key;
     const timeout=setTimeout(()=>run.abort(),45000);
-    status.textContent=document.documentElement.lang==='en'?'Loading imagery…':'Đang tải ảnh…';status.hidden=false;
+    status.textContent=document.documentElement.lang==='en'?'Loading imagery':'Đang tải ảnh';status.hidden=false;
     const apply=(next:ImageryDetailAtlas|null,nextKey:string)=>{
       if(!next)return;
       if(disposed || run.signal.aborted || controller!==run){next.dispose();return;}
@@ -112,12 +120,49 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
     finally {clearTimeout(timeout);if(controller===run){controller=null;loadingKey='';status.hidden=true;}}
   };
   const schedule=()=>{
-    if(!enabled||disposed)return;
+    if(!enabled||disposed||held)return;
     const now=performance.now();scheduledAt??=now;clearTimeout(timer);
     // Debounce short gestures, but keep refining during a continuous orbit/drag.
     const delay=Math.min(250,Math.max(0,1000-(now-scheduledAt)));
     timer=setTimeout(()=>{scheduledAt=null;void request();},delay);
   };
-  return {status,schedule,setEnabled(value:boolean){if(enabled===value)return;enabled=value;if(!enabled)cancel();else schedule();},
-    retry:schedule,dispose(){disposed=true;cancel();publish(null);atlas?.dispose();cache.clear();status.remove();}};
+  return {status,schedule,
+    /** Hold a completed image of the entire film corridor, not the launch view.
+     * Releasing it resumes normal camera-based refinement. Failure keeps the last
+     * complete image; no partially loaded atlas is ever published. */
+    async prepare(tiles:MapTile[], detailWindows:MapTile[][]=[]) {
+      clearFilm();held=true;clearTimeout(timer);scheduledAt=null;
+      await request(tiles);
+      if(!enabled||disposed||!held)return;
+      publishBase(atlas);
+      const run=new AbortController();filmController=run;
+      const timeout=setTimeout(()=>run.abort(),25000);
+      try {
+        // A small native-detail page per stop, plus the two endpoints. The complete
+        // corridor remains underneath; switching pages never exposes a blank patch.
+        for(const window of detailWindows) {
+          run.signal.throwIfAborted();
+          const next=await loadImageryAtlas(window,run.signal,anisotropy,cache);
+          if(next) {
+            if(disposed||run.signal.aborted){next.dispose();break;}
+            pages.push({tiles:window,atlas:next});
+          }
+        }
+      } catch { /* The complete corridor image remains usable. */ }
+      finally {clearTimeout(timeout);}
+    },
+    filmAt(point:{x:number;y:number}, metadata:TerrainMetadata) {
+      if(!held||!pages.length)return;
+      const [lon,lat]=proj4(metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`,'EPSG:4326',[point.x,point.y]);
+      const selected=pages.find(page=>{
+        const a=page.atlas,n=2**a.zoom,x=(lon+180)/360*n,y=(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*n;
+        return x>a.minX+.8&&x<a.maxX-.8&&y>a.minY+.8&&y<a.maxY-.8;
+      });
+      const key=selected?keyOf(selected.tiles):loadedKey;
+      if(filmKey===key)return;
+      filmKey=key;publish(selected?.atlas??atlas);invalidate();
+    },
+    release(){publish(atlas);clearFilm();held=false;schedule();},
+    setEnabled(value:boolean){if(enabled===value)return;enabled=value;if(!enabled){cancel();publish(atlas);clearFilm();held=false;}else schedule();},
+    retry:schedule,dispose(){disposed=true;cancel();publish(null);clearFilm();atlas?.dispose();cache.clear();status.remove();}};
 }

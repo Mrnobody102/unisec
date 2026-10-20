@@ -32,7 +32,7 @@ export function CitizenRouteCard({
   const eta = route.eta;
   const time = eta && (eta.minMinutes === eta.maxMinutes
     ? duration(eta.minMinutes)
-    : `${duration(eta.minMinutes)} – ${duration(eta.maxMinutes)}`);
+    : locale === 'en' ? `${duration(eta.minMinutes)} to ${duration(eta.maxMinutes)}` : `${duration(eta.minMinutes)} đến ${duration(eta.maxMinutes)}`);
   const verdict = { open: m.routeOpen, uncertain: m.routeUncertain, blocked: m.routeBlocked }[route.status];
   const advice = { open: m.adviceOpen, uncertain: m.adviceUncertain, blocked: m.adviceBlocked }[route.status];
   const icon = route.status === 'open' ? 'check' : route.status;
@@ -45,7 +45,7 @@ export function CitizenRouteCard({
       <h2>{name(route.name)}</h2>
       <p className="citizen-route-facts">
         {route.lengthKm.toLocaleString(locale === 'en' ? 'en-GB' : 'vi-VN')} km
-        {time && ` · ${fill(eta.mode === 'foot' ? m.onFoot : m.byCar, { time })}`}
+        {time && `, ${fill(eta.mode === 'foot' ? m.onFoot : m.byCar, { time })}`}
       </p>
       {problems.length > 0 && (
         <div className="citizen-route-problems">
@@ -66,6 +66,7 @@ export function CitizenRouteCard({
         </p>
       )}
       <button className="button citizen-route-map" onClick={onShowMap}>
+        <UiIcon name="map" size={16} />
         {m.showRouteOnMap}
       </button>
     </article>

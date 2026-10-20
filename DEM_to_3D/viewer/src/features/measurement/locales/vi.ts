@@ -90,7 +90,7 @@ export const vi = {
   longitude: 'Kinh độ',
   incomplete: 'Chưa đủ điểm',
   invalidArea: 'Vùng không hợp lệ',
-  segmentAndTotal: 'Đoạn {segment} · Tổng {total}',
+  segmentAndTotal: 'Đoạn {segment}, tổng {total}',
   modes: {
     distance: 'Khoảng cách',
     area: 'Diện tích',

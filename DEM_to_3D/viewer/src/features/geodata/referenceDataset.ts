@@ -13,7 +13,9 @@ export function referenceRecords(features: VectorFeature[], id: string, imported
     id:`reference:${id.slice(0,16)}:${feature.id ?? index+1}`,
     name:String(feature.properties.name ?? feature.id ?? index+1),
     role:feature.properties.referenceKind === 'imagery-aoi' ? 'footprint' : 'reference',
-    visible:feature.properties.referenceKind !== 'imagery-aoi',
+    // Off by default: the corridor is the scenario road geometry, places duplicate communities,
+    // and the imagery request is answered by the prepared scenes. All stay listed in GIS.
+    visible:false,
     source:{name:String(feature.properties.sourceName ?? 'Reference data'),format:'GeoJSON',importedAt},
     feature:{...feature,properties:{...feature.properties,sourceDatasetId:id}}
   })));

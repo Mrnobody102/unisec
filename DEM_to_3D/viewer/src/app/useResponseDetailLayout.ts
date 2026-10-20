@@ -4,7 +4,8 @@ type DetailLayout = { mode: 'dock' | 'pane'; fitsProfile: boolean };
 
 /** Keep a usable map beside the detail dock, including when the list is resized. */
 export function useResponseDetailLayout(
-  root: RefObject<HTMLDivElement>
+  root: RefObject<HTMLDivElement>,
+  profileOpen = false
 ): DetailLayout {
   const [layout, setLayout] = useState<DetailLayout>({
     mode: 'pane',
@@ -19,11 +20,11 @@ export function useResponseDetailLayout(
         parseFloat(styles.getPropertyValue('--response-detail-reserve')) || 408;
       const toolbar =
         parseFloat(styles.getPropertyValue('--size-workspace-toolbar')) || 48;
+      const fitsProfile = map.clientHeight - toolbar - 16 - 336 >= 300;
       const mode =
-        window.innerWidth > 900 && map.clientWidth >= reserve + 360
+        window.innerWidth > 900 && map.clientWidth >= reserve + 360 && (!profileOpen || fitsProfile)
           ? 'dock'
           : 'pane';
-      const fitsProfile = map.clientHeight - toolbar - 16 - 336 >= 300;
       setLayout((previous) =>
         previous.mode === mode && previous.fitsProfile === fitsProfile
           ? previous
@@ -34,6 +35,6 @@ export function useResponseDetailLayout(
     observer.observe(map);
     update();
     return () => observer.disconnect();
-  }, [root]);
+  }, [root, profileOpen]);
   return layout;
 }

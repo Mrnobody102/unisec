@@ -74,6 +74,8 @@ export function journeyMarkers(journey: ReturnType<typeof useRoadJourney>) {
           {
             ...roadGeographic(endpoint.origin),
             label: index === 0 ? "A" : "B",
+            // A named place already has its own symbol: the pin stands on top of it.
+            place: /^(community|site):/.test(endpoint.source),
             road:
               endpoint.anchor && endpoint.anchor.distance > 1
                 ? roadGeographic(endpoint.anchor.point)

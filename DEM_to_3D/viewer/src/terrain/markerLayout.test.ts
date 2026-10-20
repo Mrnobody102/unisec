@@ -1,7 +1,16 @@
+import {placeMapLabel} from './markerLayout';
 import { describe, expect, it } from 'vitest';
 import { layoutMarkerGroups, markerPriority, overlaps } from './markerLayout';
 
 describe('map symbol layout', () => {
+  it('keeps named featured hazards separate unless their symbols actually cover each other', () => {
+    const points = [
+      {id:'scar-1',x:100,y:100,priority:40,category:'landslide',featured:true},
+      {id:'scar-2',x:102,y:136,priority:40,category:'landslide',featured:true}
+    ];
+    expect(layoutMarkerGroups(points,400,300,[])).toHaveLength(2);
+    expect(layoutMarkerGroups([points[0],{...points[1],y:112}],400,300,[])).toHaveLength(1);
+  });
   it('keeps touching symbols of different categories separate and clickable', () => {
     const groups = layoutMarkerGroups([
       { id: 'community:priority', x: 100, y: 100, priority: 50, category: 'community' },
@@ -77,5 +86,19 @@ describe('map symbol layout', () => {
     expect(far).toHaveLength(20);
     expect(layoutMarkerGroups([...points].reverse(), 400, 300, [])).toEqual(near);
     expect(layoutMarkerGroups([{ id: 'bad', x: NaN, y: 30, priority: 100 }], 400, 300, [])).toEqual([]);
+  });
+});
+
+describe('contextual extent label placement',()=>{
+  it('moves a label around the station symbol and its text, never covering either',()=>{
+    const obstacles=[{x:180,y:155,width:40,height:50},{x:170,y:205,width:120,height:24}];
+    const position=placeMapLabel({x:200,y:200},{width:160,height:48},{width:700,height:500},obstacles);
+    expect(position).toBeDefined();
+    expect(obstacles.some(rect=>overlaps(position!,rect,6))).toBe(false);
+  });
+  it('suppresses a label when the viewport is occupied and respects the panel edge',()=>{
+    expect(placeMapLabel({x:100,y:100},{width:120,height:40},{width:200,height:200},[{x:0,y:0,width:200,height:200}])).toBeUndefined();
+    const position=placeMapLabel({x:480,y:200},{width:140,height:40},{width:700,height:400},[{x:500,y:0,width:200,height:400}]);
+    expect(position).toBeDefined();expect(position!.x+position!.width).toBeLessThan(500);
   });
 });

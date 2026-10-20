@@ -19,7 +19,7 @@
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--ws-line);
-  border-radius: var(--radius-float);
+  border-radius: 3px;
   background: var(--ws-surface);
   box-shadow: var(--shadow-overlay);
   color: var(--ws-text);
@@ -27,32 +27,9 @@
 .response-detail-dock[hidden] {
   display: none;
 }
-.response-detail-dock .sidebar-top {
-  flex: none;
-  padding: 16px var(--detail-inset);
-  background: var(--ws-raised);
-  border-bottom: 1px solid var(--ws-line);
-}
-.response-detail-dock .sidebar-scroll {
-  flex: 1;
-  min-height: 0;
-  padding: 16px var(--detail-inset);
-}
-.response-detail-dock h3 {
-  margin: 0 0 12px;
-  color: var(--ws-text);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-.response-detail-dock .section-line h3 {
-  margin: 0;
-}
 .workspace[data-response-profile='true'] .response-detail-dock {
   bottom: 336px;
 }
-.response-detail-edit { flex:none; padding:12px var(--detail-inset); border-top:1px solid var(--ws-line); background:var(--ws-raised); }
-.response-detail-edit .button { display:inline-flex; align-items:center; gap:6px; min-height:34px; font-size:12px; }
 /* The dock floats over a full-width map (as in Google Earth); only right-edge map
    controls step aside so the card never covers them. */
 .map-area :is(.map-north, .map-overview, .map-attribution) {
@@ -106,6 +83,8 @@
   .workspace[data-mobile='map'] .response-detail-dock {
     display: none;
   }
+  .workspace .response-detail-dock { position:relative; grid-column:1; grid-row:2; inset:auto; width:auto; min-width:0; border-radius:0; box-shadow:none; }
+  .workspace[data-response-detail="true"] .work-area > .sidebar { visibility:hidden; }
 }
 
 #response-panel .impact-row[aria-pressed='true'] {
@@ -116,53 +95,39 @@
   color: var(--select-ink);
 }
 
-@media(max-width:900px) {
- .workspace .response-detail-dock { position:relative; grid-column:1; grid-row:2; inset:auto; width:auto; min-width:0; border-radius:0; box-shadow:none; }
- .workspace[data-response-detail="true"] .work-area > .sidebar { visibility:hidden; }
-}
-
-/* One reading order: identity/status, operational content, then tools. */
-.response-detail-dock .detail-title h1 { font-size:20px; line-height:1.35; font-weight:600; }
-.response-detail-dock .detail-priority { margin:10px 0 0; }
-.response-detail-dock .key-facts { margin:16px 0 0; gap:12px 16px; }
-.response-detail-dock .community-detail-heading .key-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 16px; }
-.community-status-summary { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px; }
-.response-detail-dock .key-facts dt { font-size:12px; }
-.response-detail-dock .key-facts dd { font-size:14px; line-height:1.45; }
-.response-detail-dock .decision-tabs { margin-top:12px; }
-/* A rule belongs between populated groups, never above the first group. */
-.response-detail-dock :is(.sidebar-scroll,.hazard-detail,.site-detail) > .workflow-section { margin:0; padding:0; border:0; }
-.response-detail-dock :is(.sidebar-scroll,.hazard-detail,.site-detail) > * + .workflow-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--ws-line); }
-/* A section label is a quiet band; rows stay open, with one rule at the group boundary. */
-.response-detail-dock .workflow-section > h3 { margin:0 -12px 8px; padding:7px 12px; background:var(--ws-raised); color:var(--ws-text); font-size:13px; line-height:1.5; }
-.response-detail-dock .object-row strong { font-size:14px; font-weight:500; }
-.response-detail-dock .object-observation { gap:12px; padding:0; }
-.response-detail-dock .object-observation > h3 { margin:0; color:var(--ws-text); font-size:13px; font-weight:600; }
-.response-detail-dock .object-observation > p { font-size:14px; line-height:1.6; }
-.object-evidence-details { color:var(--ws-muted); font-size:12px; }
-.object-evidence-details > summary { cursor:pointer; padding:4px 0; }
-.object-evidence-details .observation-times { margin:12px 0 0; }
-.evidence-open { display:inline-flex; align-items:center; justify-self:start; gap:8px; font-size:13px; }
-.response-detail-dock .verification-row { width:100%; box-sizing:border-box; margin:0 0 16px; padding:12px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); }
+/* Dock geometry only; the panel's visual language lives in styles/sheet.css. */
+.response-detail-dock { --sheet-inset: var(--detail-inset); }
+.response-detail-dock .sidebar-top { flex:none; }
+.response-detail-dock .sidebar-scroll { flex:1; min-height:0; }
 .road-status-edit-trigger { display:inline-flex; align-items:center; gap:8px; min-height:36px; font-size:13px; }
-.response-detail-dock .object-profile-tools { margin:0; padding:0; border:0; }
-.response-detail-dock .sidebar-scroll > * + .object-profile-tools { margin-top:16px; padding-top:16px; border-top:1px solid var(--ws-line); }
 .object-profile-tools .button { display:inline-flex; align-items:center; gap:8px; margin:0; }
-.map-area .field-map-card { display:flex; flex-direction:column; padding:0; overflow:hidden; }
-.map-area .field-map-card > header { flex:none; margin:0; padding:20px; border-bottom:1px solid var(--ws-line); background:var(--ws-raised); }
-.map-area .field-map-card > header h2 { margin:0; font-size:18px; line-height:1.4; }
-.field-map-card-body { flex:1; min-height:0; overflow:auto; padding:20px; }
-.field-map-card-body .landslide-area-summary > p { margin:0 0 16px; font-size:14px; line-height:1.6; }
-.field-map-card-body .field-metadata { gap:12px; margin:16px 0; font-size:13px; }
-.field-map-card-body .field-metadata > div { grid-template-columns:96px minmax(0,1fr); gap:12px; }
-.map-area .field-map-card > footer { flex:none; padding:12px 20px; border-top:1px solid var(--ws-line); background:var(--ws-raised); }
-.field-map-card > footer .button { font-size:12px; min-height:34px; }
-@media (max-width:380px) { .response-detail-dock { --detail-inset:16px; } }
 
-.response-detail-dock .verification-row::after { content:none; }
-.response-detail-dock .verification-row > span:first-child { display:grid; grid-column:1; grid-row:1; gap:4px; min-width:0; }
-.response-detail-dock .verification-row > .status-text { grid-column:2; grid-row:1; align-self:start; font-size:12px; }
+.response-detail-edit { flex:none; padding:10px var(--detail-inset); border-top:1px solid var(--ws-line); background:var(--ws-surface); }
+.response-detail-edit .button { display:inline-flex; align-items:center; gap:6px; min-height:34px; border-radius:3px; background:none; font-size:13px; }
+.response-detail-edit .button:hover { background:var(--hover); }
+
+:is(.map-area, .response-detail-dock) .field-map-card { display:flex; flex-direction:column; padding:0; overflow:hidden; }
+:is(.map-area, .response-detail-dock) .field-map-card > header { flex:none; margin:0; padding:18px 20px 8px; background:var(--ws-surface); }
+:is(.map-area, .response-detail-dock) .field-map-card > header h2 { margin:0; font-size:20px; line-height:1.3; }
+.field-map-card-body { flex:1; min-height:0; overflow:auto; padding:8px 20px 20px; }
+.field-map-card-body .field-metadata { gap:10px; margin:16px 0; font-size:13px; }
+.field-map-card-body .field-metadata > div { grid-template-columns:104px minmax(0,1fr); gap:12px; }
+.field-map-card-body .field-metadata a { color:var(--ws-text); text-decoration-color:var(--ws-muted); text-underline-offset:3px; overflow-wrap:anywhere; }
+:is(.map-area, .response-detail-dock) .field-map-card > footer { flex:none; padding:10px 20px; border-top:1px solid var(--ws-line); background:var(--ws-surface); }
+.field-map-card > footer .button { font-size:13px; min-height:34px; }
 
 .map-reference-credit { position:absolute; right:44px; bottom:3px; width:max-content; max-width:calc(100vw - 88px); padding:2px 5px; background:var(--ws-surface); color:var(--ws-muted); font-size:10px; }
 
-.field-map-card-body .field-metadata a { color:var(--ws-text); text-decoration-color:var(--ws-muted); text-underline-offset:3px; overflow-wrap:anywhere; }
+@media (max-width:380px) { .response-detail-dock { --detail-inset:16px; } }
+@media (max-width:900px) { .workspace .response-detail-dock { border-radius:0; } }
+
+/* Imported areas and field observations share the same detail dock as incident objects. */
+.workspace-shell .response-detail-dock > .field-map-card.is-docked {
+  position:static; display:flex; flex-direction:column; flex:1; min-height:0;
+  inset:auto; width:100%; max-height:none; overflow:hidden; padding:0;
+  border:0; border-radius:0; box-shadow:none; background:transparent;
+}
+.response-detail-dock .field-map-card-body { padding:8px var(--detail-inset) 20px; }
+.response-detail-dock .field-map-card-head .key-facts { margin-top:14px; }
+
+.response-detail-dock :is(h1,h2)[tabindex="-1"]:focus { outline:none; }

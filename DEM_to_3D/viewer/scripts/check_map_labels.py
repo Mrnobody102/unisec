@@ -50,7 +50,7 @@ def run(url, chrome, captures=None):
                         }"""), mode
                         page.evaluate("document.getElementById('label-test-obstacle').remove()")
                 if step in [4,8]:
-                    group=page.locator('.map-pin[aria-haspopup="true"]:visible').first
+                    group=page.locator('.map-pin[aria-haspopup="dialog"]:visible').first
                     if group.count():
                         group.click(); expect(page.locator('.map-object-chooser')).to_be_visible()
                         page.wait_for_timeout(350); expect(page.locator('.map-object-chooser')).to_be_visible()

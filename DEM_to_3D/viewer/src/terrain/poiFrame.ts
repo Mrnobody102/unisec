@@ -5,11 +5,11 @@ export const POI_FRAME_PATH = 'M14 2.8a9.2 9.2 0 0 1 9.2 9.2c0 5.8-5.8 10.2-9.2 
 export const SELECTED_PIN_PATH =
   "M480.21-480Q510-480 531-501.21t21-51Q552-582 530.79-603t-51-21Q450-624 429-602.79t-21 51Q408-522 429.21-501t51 21ZM480-96Q323.02-227.11 245.51-339.55 168-452 168-549q0-134 89-224.5T479.5-864q133.5 0 223 90.5T792-549q0 97-77 209T480-96Z";
 export function selectedPinSvg(): string {
-  return `<svg width="28" height="32" viewBox="0 -960 960 960" aria-hidden="true"><path d="${SELECTED_PIN_PATH}" fill-rule="evenodd"/></svg>`;
+  return `<svg width="28" height="32" viewBox="0 0 28 32" aria-hidden="true"><path d="${POI_FRAME_PATH}" transform="translate(0 3.6)"/></svg>`;
 }
 /** Survey station, using the same white POI frame as incident map symbols. */
-export function surveyPointSvg(): string {
-  return `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="${POI_FRAME_PATH}" fill="#fbfcfa" stroke="#7b6953" stroke-width=".9"/><path d="M14 6.5v11M8.5 12h11" fill="none" stroke="#7b6953" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+export function surveyPointSvg(selected = false): string {
+  return `<svg width="28" height="${selected ? 32 : 28}" viewBox="0 0 28 ${selected ? 32 : 28}" aria-hidden="true"><g transform="translate(0 ${selected ? 3.6 : 0})"><path d="${POI_FRAME_PATH}" fill="#fcfcf9" stroke="#746650" stroke-width="${selected ? 1.8 : 1.1}"/><path d="M14 6.5v11M8.5 12h11" fill="none" stroke="#746650" stroke-width="1.2" stroke-linecap="round"/></g></svg>`;
 }
 export function poiFrameSvg(selected = false): string {
   if (selected) return selectedPinSvg();
@@ -29,7 +29,7 @@ export function drawPoiMarker(
   ctx.translate(x - half, y - tip);
   ctx.scale(size / 28, size / 28);
   const frame = new Path2D(POI_FRAME_PATH);
-  ctx.fillStyle = '#fbfcfa'; ctx.strokeStyle = color; ctx.lineWidth = .9; ctx.lineJoin = 'round';
+  ctx.fillStyle = '#fcfcf9'; ctx.strokeStyle = color; ctx.lineWidth = 1.1; ctx.lineJoin = 'round';
   ctx.fill(frame); ctx.stroke(frame);
   ctx.globalAlpha = unconfirmed ? .8 : 1;
   drawMapSymbol(ctx, symbol, 6, 4, 16, color);

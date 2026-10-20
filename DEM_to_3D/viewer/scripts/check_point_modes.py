@@ -1,4 +1,5 @@
 """Check grouped/original-point display, direct photo montage and cross-map preference."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task
 import argparse
 import base64
@@ -39,10 +40,10 @@ def run(url, chrome, captures):
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))', records)
         page.reload()
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         mode = page.get_by_role('combobox', name='Hiển thị điểm', exact=True)
         expect(mode).to_have_value('group')
@@ -74,7 +75,7 @@ def run(url, chrome, captures):
         main_mode.select_option('group')
         expect(page.locator('.map-2d .map-point-cluster')).to_have_count(1)
         page.get_by_role('button', name='Đóng lớp bản đồ', exact=True).click()
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         expect(mode).to_have_value('group')
         symbol.focus()
@@ -85,7 +86,7 @@ def run(url, chrome, captures):
             page.screenshot(path=str(captures / 'grouped-points.png'))
         mode.select_option('individual')
         page.reload()
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         expect(mode).to_have_value('individual')
         expect(page.locator('.geodata-map .map-point-cluster')).to_have_count(0)

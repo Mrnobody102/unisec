@@ -4,6 +4,7 @@ import proj4 from 'proj4';
 import type { TerrainMetadata } from '../types/terrain';
 import { sceneToProjected } from './coordinate';
 import { planBasemapTiles, planRegionalTiles, type MapTile } from './regionalBasemap';
+import { mapLayerOrder } from '../features/map/mapLayerOrder';
 
 export type ImageryAtlas = {
   zoom: number; minX: number; minY: number; maxX: number; maxY: number;
@@ -71,7 +72,7 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     }
     geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.matrix.copy(relative); mesh.matrixAutoUpdate = false; mesh.renderOrder = 3; group.add(mesh);
+    mesh.matrix.copy(relative); mesh.matrixAutoUpdate = false; mesh.renderOrder = mapLayerOrder.imagery * 2; group.add(mesh);
   }
   terrain.add(group); group.visible = false;
   const focusGroup = new THREE.Group();
@@ -86,20 +87,24 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>',
       'if(any(lessThan(vMapUv,vec2(0.0))) || any(greaterThan(vMapUv,vec2(1.0)))) discard;\n#include <map_fragment>\nvec2 edge=min(vMapUv,1.0-vMapUv); diffuseColor.a*=smoothstep(0.0,0.015,min(edge.x,edge.y));');
   };
+  const baseGroup=new THREE.Group();baseGroup.name='terrain-corridor-imagery';baseGroup.visible=false;terrain.add(baseGroup);
+  const baseMaterial=focusMaterial.clone();baseMaterial.onBeforeCompile=focusMaterial.onBeforeCompile;
+  baseMaterial.polygonOffsetFactor=baseMaterial.polygonOffsetUnits=-3;
+  let baseTexture:THREE.Texture|null=null;
   let focusTexture: THREE.Texture | null = null;
   let disposed = false, enabled = false, activeZoom = -1;
   const loaded = new Set<string>();
 
-  const clearFocusMeshes = () => {
-    for (const child of [...focusGroup.children]) {
+  const clearPatch = (target:THREE.Group) => {
+    for (const child of [...target.children]) {
       const mesh = child as THREE.Mesh;
       // Attributes belong to the complete terrain mesh; dispose only the patch index.
       for (const key of Object.keys(mesh.geometry.attributes)) mesh.geometry.deleteAttribute(key);
       mesh.geometry.dispose();
-      focusGroup.remove(child);
+      target.remove(child);
     }
   };
-  const buildFocusMeshes = (texture: THREE.Texture) => {
+  const buildPatch = (texture: THREE.Texture, target:THREE.Group, patchMaterial:THREE.Material, order:number) => {
     const {x: sx, y: sy} = texture.repeat, {x: ox, y: oy} = texture.offset;
     for (const object of group.children) {
       const source = object as THREE.Mesh;
@@ -115,16 +120,16 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
       const geometry = new THREE.BufferGeometry();
       for (const name of Object.keys(source.geometry.attributes)) geometry.setAttribute(name, source.geometry.getAttribute(name));
       geometry.setIndex(chosen);
-      const mesh = new THREE.Mesh(geometry, focusMaterial);
+      const mesh = new THREE.Mesh(geometry, patchMaterial);
       mesh.matrix.copy(source.matrix);
       mesh.matrixAutoUpdate = false;
-      mesh.renderOrder = 4;
-      focusGroup.add(mesh);
+      mesh.renderOrder = order;
+      target.add(mesh);
     }
   };
   const setDetail = (atlas: ImageryDetailAtlas | null) => {
     if (disposed) return;
-    clearFocusMeshes();
+    clearPatch(focusGroup);
     focusTexture?.dispose(); focusTexture = null; focusMaterial.map = null; focusGroup.visible = false;
     if (!atlas) return;
     const width = atlas.maxX - atlas.minX, height = atlas.maxY - atlas.minY;
@@ -133,14 +138,26 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     focusTexture.repeat.set(columns * ratio / width, rows * ratio / height);
     focusTexture.offset.set((reference.minX * ratio - atlas.minX) / width, (atlas.maxY - reference.maxY * ratio) / height);
     focusMaterial.map = focusTexture; focusMaterial.needsUpdate = true;
-    buildFocusMeshes(focusTexture);
+    buildPatch(focusTexture,focusGroup,focusMaterial,mapLayerOrder.imagery*2+.5);
     focusGroup.visible = enabled;
   };
   return {
     group, setDetail,
+    setBase(atlas:ImageryDetailAtlas|null) {
+      clearPatch(baseGroup);baseTexture?.dispose();baseTexture=null;baseGroup.visible=false;
+      if(atlas) {
+        const width=atlas.maxX-atlas.minX,height=atlas.maxY-atlas.minY,ratio=2**(atlas.zoom-reference.zoom);
+        baseTexture=atlas.texture.clone();
+        baseTexture.repeat.set(columns*ratio/width,rows*ratio/height);
+        baseTexture.offset.set((reference.minX*ratio-atlas.minX)/width,(atlas.maxY-reference.maxY*ratio)/height);
+        baseMaterial.map=baseTexture;baseMaterial.needsUpdate=true;
+        buildPatch(baseTexture,baseGroup,baseMaterial,mapLayerOrder.imagery*2+.25);baseGroup.visible=enabled;
+      } else {baseMaterial.map=null;baseMaterial.needsUpdate=true;}
+    },
     setVisible: (visible: boolean) => {
       enabled = visible;
       group.visible = enabled && activeZoom >= 0;
+      baseGroup.visible=enabled&&!!baseTexture;
       focusGroup.visible = enabled && !!focusTexture;
     },
     tile: (tile: MapTile, bitmap: ImageBitmap) => {
@@ -160,8 +177,8 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     },
     dispose: () => {
       disposed = true;
-      clearFocusMeshes();
-      focusTexture?.dispose();
+      clearPatch(focusGroup);
+      focusTexture?.dispose();baseTexture?.dispose();clearPatch(baseGroup);baseMaterial.dispose();baseGroup.removeFromParent();
       focusMaterial.dispose();
       focusGroup.removeFromParent();
       group.removeFromParent();

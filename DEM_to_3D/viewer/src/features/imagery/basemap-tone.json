@@ -1,0 +1,133 @@
+{
+  "schema": "dear-basemap-tone/v1",
+  "purpose": "Display-only basemap RGB to Planet canopy; Planet source pixels unchanged",
+  "planetSha256": "de1ad143cd54954d089afd9e603b7b0fae1c4b789f6bfe088eafcdfb27b36857",
+  "bounds": [
+    [
+      21.7250732,
+      104.0206057
+    ],
+    [
+      21.8195834,
+      104.0676166
+    ]
+  ],
+  "reference": {
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "retrievedAt": "2026-10-20T17:26:09.035450+00:00",
+    "tiles": [
+      {
+        "z": 14,
+        "x": 12926,
+        "y": 7174,
+        "sha256": "96cf0b751a58d5bdca4ce31cbc125f283d8fbdaf28ce9c5513a15efd2a0198d9"
+      },
+      {
+        "z": 14,
+        "x": 12927,
+        "y": 7174,
+        "sha256": "a387529047f0ab4c433b254d651e01fbde486e6a60dca127ed86a7e1c295d9c5"
+      },
+      {
+        "z": 14,
+        "x": 12928,
+        "y": 7174,
+        "sha256": "1265f3c3fa45f4e4102349ab15dec587d9e9623f883bf6409257b450c7f6aeac"
+      },
+      {
+        "z": 14,
+        "x": 12926,
+        "y": 7175,
+        "sha256": "d95f1a8c8eb4d319b611e5c90c1d88eb46a47dbbd822ff141e5a74a0ae46d128"
+      },
+      {
+        "z": 14,
+        "x": 12927,
+        "y": 7175,
+        "sha256": "de59004df6748b7c0b567b36a0f62b8be70d9e785de9a74a8def7d533a7d0484"
+      },
+      {
+        "z": 14,
+        "x": 12928,
+        "y": 7175,
+        "sha256": "f6c34ea82d17c715c94bb84732a898bff0f09472854124eb1e542e0bcc00ec74"
+      },
+      {
+        "z": 14,
+        "x": 12926,
+        "y": 7176,
+        "sha256": "cf46a4bed338dec137580267cc5e01f066050c6b649531424150878fd282c092"
+      },
+      {
+        "z": 14,
+        "x": 12927,
+        "y": 7176,
+        "sha256": "0657fe80510fba78180a9ec25b9c11e2e4844fd7588827071d4fcb5790a5091d"
+      },
+      {
+        "z": 14,
+        "x": 12928,
+        "y": 7176,
+        "sha256": "f8475d8e4ed716744ec317119a97e7202d00c7fae240e41684204ab563148eb6"
+      },
+      {
+        "z": 14,
+        "x": 12926,
+        "y": 7177,
+        "sha256": "84c864438011c1b4c06f9f10ed45fc27c464f540b518500e8f41a79f0ea6648f"
+      },
+      {
+        "z": 14,
+        "x": 12927,
+        "y": 7177,
+        "sha256": "970da2b879fc8780d83628d81e8dd3ab12c8d311bf8f35b8a149c198fb36daec"
+      },
+      {
+        "z": 14,
+        "x": 12928,
+        "y": 7177,
+        "sha256": "933ffeaf1559de9436b6e1d0c887d2c40aa39afec19c17db4b29705208eda979"
+      },
+      {
+        "z": 14,
+        "x": 12926,
+        "y": 7178,
+        "sha256": "e6af8c4950c9a0feb858196752c8e79280f1231ec0669a078c33de181d2a51d0"
+      },
+      {
+        "z": 14,
+        "x": 12927,
+        "y": 7178,
+        "sha256": "4bc1fa3a0d25b0dcb8522bec18416fece645df9e988ad7611e9a3dc61367ceaf"
+      },
+      {
+        "z": 14,
+        "x": 12928,
+        "y": 7178,
+        "sha256": "51bd51e15f1a7953ba395cb4ef350bd987911c1f2519b6793f2f82e5a6ae4fb1"
+      }
+    ]
+  },
+  "exclusions": "Both images: dark, bright, non-green pixels; original KML extents buffered by ~60 m. RGB heuristics, not a certified cloud mask.",
+  "esri": {
+    "gamma": [
+      1.4122,
+      1.344195,
+      1.100042
+    ],
+    "samples": 53912,
+    "medianCanopyDifferenceBefore": 18.666666666666668,
+    "medianCanopyDifferenceAfter": 1.1842378929335002e-15
+  },
+  "prepared": {
+    "gamma": [
+      1.8,
+      1.8,
+      1.748442
+    ],
+    "samples": 39555,
+    "medianCanopyDifferenceBefore": 47.333333333333336,
+    "medianCanopyDifferenceAfter": 1.2639218327602701
+  },
+  "preparedAssetId": "che_tao_v2_tex"
+}

@@ -1,3 +1,4 @@
+import { validateGeometry } from '../../geo/vector/validateGeometry';
 import { describe, expect, it, vi } from 'vitest';
 import { GEOMETRY_LIMITS as limits, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
@@ -100,4 +101,10 @@ describe('Pasted survey coordinates', () => {
       expect(() => parseSpatialInput(input)).toThrow();
     }
   });
+});
+
+
+it('retains fine survey vertices without mistaking small turns for self intersections', () => {
+  const geometry = {type:'Polygon',coordinates:[[[104,21],[104.0000001,21.0000001],[104.0000002,21],[104.0001,21],[104.0001,21.0001],[104,21.0001],[104,21]]]} as const;
+  expect(validateGeometry(geometry)).toEqual(geometry);
 });

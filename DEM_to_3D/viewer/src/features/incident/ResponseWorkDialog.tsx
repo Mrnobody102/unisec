@@ -42,7 +42,12 @@ export function ResponseWorkDialog({
   onClose: () => void;
 }): JSX.Element {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
-  const [selected, setSelected] = useState(initialTaskId),
+  // Side-by-side layout opens on the first open task instead of an empty pane;
+  // the stacked mobile layout keeps the list first.
+  const [selected, setSelected] = useState<string | null | undefined>(() => initialTaskId
+      ?? (typeof window !== 'undefined' && window.matchMedia?.('(min-width: 681px)').matches
+        ? tasks.find(task => workState(task, entries).status !== 'done')?.id
+        : undefined)),
     [filter, setFilter] = useState('open');
   const [error, setError] = useState(false);
   const active = tasks.find((task) => task.id === selected);
@@ -126,11 +131,9 @@ export function ResponseWorkDialog({
                     <strong>{t(...task.action)}</strong>
                     <small>{t(...task.subject)}</small>
                   </span>
-                  {workState(task, entries).status !== 'pending' && (
-                    <span className={`work-status work-${workState(task, entries).status}`}>
-                      {t(...workStatusText[workState(task, entries).status])}
-                    </span>
-                  )}
+                  <span className={`work-status work-${workState(task, entries).status}`}>
+                    {t(...workStatusText[workState(task, entries).status])}
+                  </span>
                 </button>
               </li>
             ))}

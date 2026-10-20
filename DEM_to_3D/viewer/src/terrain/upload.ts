@@ -1,3 +1,4 @@
+import { collectTileFiles, isTileFile, isTileMetadata, loadTilePackage } from './tileUpload';
 import { LoadingManager } from 'three';
 import type { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedModel, TerrainMetadata } from '../types/terrain';
@@ -15,6 +16,7 @@ export type UploadedFilePair = {
   grid?: File;
   texture?: File;
   resources: File[];
+  tiles?: { metadata: File; files: Map<string, File> };
 };
 
 export function selectUploadedFiles(files: readonly File[], mode: 'single' | 'merge'): File[] {
@@ -25,6 +27,8 @@ export function selectUploadedFiles(files: readonly File[], mode: 'single' | 'me
   return files.filter((file) => {
     if (file === model) return true;
     if (isSidecar(file)) return basename(file) === key;
+    if (isTileMetadata(file)) return file.name.toLowerCase() === `${key}.tiles.json`;
+    if (isTileFile(file)) return collectTileFiles([file], model.name).size > 0;
     if (isTextureFile(file)) return textureMatchesModel(file, key);
     return !isModel(file);
   });
@@ -83,17 +87,22 @@ export function pairUploadedFiles(files: readonly File[]): UploadedFilePair[] {
 
   const metadataFiles = files.filter((file) => extension(file.name) === '.terrain.json');
   const gridFiles = files.filter((file) => extension(file.name) === '.grid.bin');
-  const textureFiles = files.filter(isTextureFile);
+  const textureFiles = files.filter(file => isTextureFile(file) && !isTileFile(file));
+  const tileMetadataFiles = files.filter(isTileMetadata);
   const pairs = models.map((model) => {
     const key = basename(model);
     const metadata = findUniqueByName(metadataFiles, `${key}.terrain.json`);
     const grid = findUniqueByName(gridFiles, `${key}.grid.bin`);
     const texture = findUniqueTexture(textureFiles, key);
-    return { model, metadata, grid, texture, resources: files.filter((file) => !isModel(file) && !isSidecar(file) && !isTextureFile(file)) };
+    const tileMetadata = findUniqueByName(tileMetadataFiles, `${key}.tiles.json`);
+    const owned = collectTileFiles(files, model.name);
+    if (owned.size && !tileMetadata) throw new TerrainAssetError(`Missing ${key}.tiles.json`);
+    return { model, metadata, grid, texture, tiles: tileMetadata ? { metadata: tileMetadata, files: owned } : undefined,
+      resources: files.filter(file => !isModel(file) && !isSidecar(file) && !isTextureFile(file) && !isTileMetadata(file) && !isTileFile(file)) };
   });
 
-  const pairedNames = new Set(pairs.flatMap((pair) => [pair.metadata?.name.toLowerCase(), pair.grid?.name.toLowerCase()].filter((name): name is string => Boolean(name))));
-  const orphanSidecar = [...metadataFiles, ...gridFiles].find((file) => !pairedNames.has(lowerName(file)));
+  const pairedNames = new Set(pairs.flatMap((pair) => [pair.metadata?.name.toLowerCase(), pair.grid?.name.toLowerCase(), pair.tiles?.metadata.name.toLowerCase()].filter((name): name is string => Boolean(name))));
+  const orphanSidecar = [...metadataFiles, ...gridFiles, ...tileMetadataFiles].find((file) => !pairedNames.has(lowerName(file)));
   if (orphanSidecar) {
     throw new TerrainAssetError(`Sidecar ${orphanSidecar.name} does not match uploaded model(s): ${models.map((model) => model.name).join(', ')}`);
   }
@@ -169,6 +178,7 @@ export async function loadUploadedModels(files: readonly File[]): Promise<Loaded
             throw new TerrainAssetError(`Model file ${pair.model.name} does not match metadata mesh.file (${metadata.mesh.file})`);
           }
         }
+        const tilePyramid = pair.tiles ? await loadTilePackage(pair.tiles.metadata, pair.tiles.files, pair.model.name, metadata) : undefined;
         const manager = new LoadingManager();
         manager.setURLModifier((url) => resolveResourceUrl(url, resources));
         const gltf = await parseGltf(new GLTFLoader(manager), await pair.model.arrayBuffer());
@@ -178,11 +188,14 @@ export async function loadUploadedModels(files: readonly File[]): Promise<Loaded
           disposeObjectResources(gltf.scene);
           throw error;
         }
-        if (pair.texture) {
-          const decoded = await decodeTextureFile(pair.texture);
-          applyTextureToModel(gltf.scene, pair.model.name, decoded);
-        }
-        loaded.push({ id: `${pair.model.name}-${loaded.length}`, name: pair.model.name, metadata, grid, gridBuffer, gltf, objectUrls });
+        try {
+          if (pair.texture) {
+            const decoded = await decodeTextureFile(pair.texture);
+            try { applyTextureToModel(gltf.scene, pair.model.name, decoded); }
+            catch (reason) { decoded.texture.dispose(); throw reason; }
+          }
+          loaded.push({ id: `${pair.model.name}-${loaded.length}`, name: pair.model.name, metadata, grid, gridBuffer, gltf, objectUrls, tilePyramid, tileFiles: pair.tiles?.files });
+        } catch (reason) { disposeObjectResources(gltf.scene); throw reason; }
       } catch (error) {
         objectUrls.forEach((url) => URL.revokeObjectURL(url));
         throw error;

@@ -1,3 +1,5 @@
+import { useAnalysisImagery } from '../imagery/useAnalysisImagery';
+import { analysisSourceInfo } from '../imagery/analysisImagery';
 import { CitizenAreaCard } from "./CitizenAreaCard";
 import { visibleMapRecords } from "../map/visibleMapRecords";
 import { landslideAreaOf } from "../landslides/landslideAreas";
@@ -82,7 +84,10 @@ export function CitizenWorkspace({
     );
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [layerOptions, setLayerOptions] = useState({landslide:true,status:true,communities:true,imagery:true});
-  const [catalogOpen, setCatalogOpen] = useState(false);
+  const analysisImagery=useAnalysisImagery(manifest?.analysisImagery);
+  const analysisDisplay=useMemo(()=>({rasters:layerOptions.imagery?analysisImagery.rasters:[],opacity:1}),[analysisImagery.rasters,layerOptions.imagery]);
+  // The village access route is the default answer; a free A to B search is the other mode.
+  const [roadMode, setRoadMode] = useState<"village" | "journey">("village");
   const [mapOnMobile, setMapOnMobile] = useState(false),
     [picking, setPicking] = useState(false),
     [help, setHelp] = useState(false),
@@ -162,6 +167,21 @@ export function CitizenWorkspace({
   ), [gis.records, own, citizenLayers, packet.datasetVersion]);
   const selectedArea = mapRecords.find(record => record.id === selectedAreaId && landslideAreaOf(record));
   const roadView = tab === "roads";
+  const showRoadMode = (mode: "village" | "journey") => {
+    gps.cancel();
+    journey.setPicking(null);
+    journey.setOpen(mode === "journey");
+    setRoadMode(mode);
+  };
+  const gpsError = gps.error ? (
+    <p className="field-error" role="alert">
+      {gps.error === "denied"
+        ? t("Chưa được phép lấy vị trí. Bật quyền vị trí trong trình duyệt hoặc chọn trên bản đồ.", "Location permission is denied. Enable browser permission or choose on the map.")
+        : gps.error === "insecure"
+          ? t("Định vị cần mở ứng dụng qua HTTPS. Bạn vẫn có thể chọn trên bản đồ.", "Location requires HTTPS. You can still choose on the map.")
+          : t("Chưa lấy được vị trí. Thử lại hoặc chọn trên bản đồ.", "Location unavailable. Retry or choose on the map.")}
+    </p>
+  ) : null;
   const position = (
     latitude: number,
     longitude: number,
@@ -233,9 +253,7 @@ export function CitizenWorkspace({
       journey.close();
       setCommunity(hit.id);
       setTab("roads");
-      setCatalogOpen(true);
-      const catalog = root.current?.querySelector<HTMLDetailsElement>(".citizen-road-catalog");
-      if (catalog) catalog.open = true;
+      setRoadMode("village");
       setMapOnMobile(false);
     }
   };
@@ -264,6 +282,7 @@ export function CitizenWorkspace({
               aria-pressed={tab === "roads"}
               onClick={() => switchTab("roads")}
             >
+              <UiIcon name="route" size={18} />
               {m.roadInformation}
             </button>
             <button
@@ -273,12 +292,14 @@ export function CitizenWorkspace({
                 setMessage("");
               }}
             >
+              <UiIcon name="camera" size={18} />
               {m.reportAnObservation}
             </button>
             <button
               aria-pressed={tab === "mine"}
               onClick={() => switchTab("mine")}
             >
+              <UiIcon name="history" size={18} />
               {m.myReports}
             </button>
           </nav>
@@ -288,73 +309,64 @@ export function CitizenWorkspace({
                 {message}
               </p>
             )}
-            {gps.error && (
-              <p className="field-error" role="alert">
-                {gps.error === "denied"
-                  ? t(
-                      "Chưa được phép lấy vị trí. Bật quyền vị trí trong trình duyệt hoặc chọn trên bản đồ.",
-                      "Location permission is denied. Enable browser permission or choose on the map.",
-                    )
-                  : gps.error === "insecure"
-                    ? t(
-                        "Định vị cần mở ứng dụng qua HTTPS. Bạn vẫn có thể chọn trên bản đồ.",
-                        "Location requires HTTPS. You can still choose on the map.",
-                      )
-                    : t(
-                        "Chưa lấy được vị trí. Thử lại hoặc chọn trên bản đồ.",
-                        "Location unavailable. Retry or choose on the map.",
-                      )}
-              </p>
-            )}
             {tab === "roads" && (
-              <section>
-                <h1>{m.accessToAnArea}</h1>
-                <CitizenDirections
-                  journey={journey}
-                  communities={snapshot.communities}
-                  locale={locale}
-                  gps={gps}
-                  onPick={(side) => {
-                    gps.cancel();
-                    setPicking(false);
-                    journey.setPicking(side);
-                    setMapOnMobile(true);
-                  }}
-                  onMap={() => setMapOnMobile(true)}
-                />
-                <details className="citizen-road-catalog" open={catalogOpen} onToggle={event => setCatalogOpen(event.currentTarget.open)}>
-                  <summary>
-                    {t("Xem đường vào thôn/bản", "View village access roads")}
-                  </summary>
-                  <label className="geodata-field">
-                    {m.areaToView}
-                    <select
-                      value={community}
-                      onChange={(e) => setCommunity(e.target.value)}
-                    >
-                      {snapshot.communities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {route ? (
-                    <CitizenRouteCard
-                      route={route}
-                      avoided={advice.avoided}
-                      problems={routeProblems(route)}
-                      locale={locale}
-                      onShowMap={() => setMapOnMobile(true)}
-                    />
-                  ) : (
-                    <p>{m.noMappedRouteInTheCurrentDataset}</p>
-                  )}
-                </details>
+              <section className="citizen-roads">
+                <h1 className="visually-hidden">{m.accessToAnArea}</h1>
+                <div className="citizen-segments" role="group" aria-label={t("Cách xem đường", "Road view")}>
+                  <button type="button" aria-pressed={roadMode === "village"} onClick={() => showRoadMode("village")}>
+                    <UiIcon name="home" size={16} />
+                    {t("Đường về thôn, bản", "Village access")}
+                  </button>
+                  <button type="button" aria-pressed={roadMode === "journey"} onClick={() => showRoadMode("journey")}>
+                    <UiIcon name="route" size={16} />
+                    {t("Tìm đường", "Find a route")}
+                  </button>
+                </div>
+                {roadMode === "village" ? (
+                  <section className="citizen-card citizen-village" aria-label={t("Đường về thôn, bản", "Village access")}>
+                    {snapshot.communities.length > 1 && (
+                      <label className="geodata-field">
+                        {m.areaToView}
+                        <select value={community} onChange={(e) => setCommunity(e.target.value)}>
+                          {snapshot.communities.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {route ? (
+                      <CitizenRouteCard
+                        route={route}
+                        avoided={advice.avoided}
+                        problems={routeProblems(route)}
+                        locale={locale}
+                        onShowMap={() => setMapOnMobile(true)}
+                      />
+                    ) : (
+                      <p className="citizen-direction-note">{m.noMappedRouteInTheCurrentDataset}</p>
+                    )}
+                  </section>
+                ) : (
+                  <CitizenDirections
+                    journey={journey}
+                    communities={snapshot.communities}
+                    sites={snapshot.responseSites.filter((site) => site.kind === "staging")}
+                    locale={locale}
+                    gps={gps}
+                    gpsError={gpsError}
+                    onPick={(side) => {
+                      gps.cancel();
+                      setPicking(false);
+                      journey.setPicking(side);
+                      setMapOnMobile(true);
+                    }}
+                    onMap={() => setMapOnMobile(true)}
+                  />
+                )}
               </section>
             )}
             <section hidden={tab !== "report"}>
-              <h1>{m.fieldObservation}</h1>
+              <h1 className="visually-hidden">{m.fieldObservation}</h1>
               <CitizenReportForm
                 key={draftId}
                 locale={locale}
@@ -378,9 +390,9 @@ export function CitizenWorkspace({
                     );
                 }}
                 locationControl={
-                  <fieldset className="citizen-position">
+                  <fieldset className="citizen-card citizen-position">
                     <legend>{m.observationLocation}</legend>
-                    <div className="geodata-actions">
+                    <div className="citizen-capture-actions">
                       <button
                         type="button"
                         className="button"
@@ -393,6 +405,7 @@ export function CitizenWorkspace({
                           }
                         }}
                       >
+                        <UiIcon name="myLocation" size={20} />
                         {gps.busy ? m.locating : m.myLocation}
                       </button>
                       <button
@@ -405,12 +418,16 @@ export function CitizenWorkspace({
                           setMapOnMobile(true);
                         }}
                       >
+                        <UiIcon name="map" size={20} />
                         {m.chooseOnMap}
                       </button>
                     </div>
+                    {gpsError}
                     {lat && lon && (
                       <p className="citizen-position-value">
-                        {source === "community"
+                        <UiIcon name="check" size={16} />
+                        <span>
+                        <strong>{source === "community"
                           ? t(
                               "Vị trí gần đúng theo thôn/bản",
                               "Approximate village location",
@@ -424,13 +441,15 @@ export function CitizenWorkspace({
                                 )
                               : t("Vị trí đã chọn", "Selected location")}
                         {accuracy !== null
-                          ? " · ±" + Math.round(accuracy) + " m"
-                          : ""}
+                          ? t(", sai số ±", ", accuracy ±") + Math.round(accuracy) + " m"
+                          : ""}</strong>
+                        <small>{Number(lat).toFixed(5)}, {Number(lon).toFixed(5)}</small>
+                        </span>
                       </p>
                     )}
                     <label className="geodata-field">
                       {t(
-                        "Hoặc chọn thôn/bản xảy ra sự việc",
+                        "Hoặc chọn thôn, bản nơi xảy ra",
                         "Or choose the village where it happened",
                       )}
                       <select
@@ -630,6 +649,7 @@ export function CitizenWorkspace({
         <section className="map-area citizen-map" aria-label={m.communityMap}>
           <div className="map-canvas">
             <Map2D
+              analysisImagery={analysisDisplay}
               userLocation={gps.location}
               userLocationRequest={locationRequest}
               onBasemapState={setBasemap}
@@ -671,12 +691,9 @@ export function CitizenWorkspace({
                 responseSites: snapshot.responseSites,
                 hazards: snapshot.hazards,
                 roads: snapshot.roads,
-                selectedRoute: roadView ? journey.open ? journey.route : catalogOpen ? route : null : null,
-                selectedCommunityId: !roadView ? null : journey.open
-                  ? journey.end?.source.startsWith("community:")
-                    ? journey.end.source.slice(10)
-                    : null
-                  : catalogOpen ? community : null,
+                selectedRoute: !roadView ? null : roadMode === "journey" ? journey.route : route,
+                // In a search the A and B pins mark the places; a second selected pin would cover them.
+                selectedCommunityId: roadView && roadMode === "village" ? community : null,
                 selectedObjectId: null,
                 layers: citizenLayers,
                 appearance: defaultLayerAppearance,
@@ -758,6 +775,7 @@ export function CitizenWorkspace({
           </details>
           {selectedArea && !picking && !journey.picking && <CitizenAreaCard record={selectedArea} locale={locale} onClose={() => setSelectedAreaId(null)}/>}
           <MapAttribution
+            analysisSource={layerOptions.imagery?analysisSourceInfo(analysisImagery.layers,analysisImagery.selection,locale):undefined}
             locale={locale}
             state={basemap}
             onRetry={() => controls.current?.retryBasemap()}

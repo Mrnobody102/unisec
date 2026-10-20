@@ -21,8 +21,11 @@ export function GeometryExport({ locale, exportRecords, exportScope, onScope, di
   const [prepared, setPrepared] = useState<PreparedExport | null>(null);
   const [failed, setFailed] = useState(false);
   return <footer className="geodata-export">
+    <details>
+    <summary><UiIcon name="download" size={16}/>{t('Xuất dữ liệu', 'Export data')}</summary>
+    <div className="geodata-export-options">
     <label className="geodata-field">
-      {t('Xuất dữ liệu', 'Export data')}
+      {t('Phạm vi xuất', 'Export scope')}
       <select aria-label={t('Phạm vi xuất GIS', 'GIS export scope')} value={exportScope} onChange={event => onScope(event.target.value)}>
         <option value="all">{t('Tất cả đối tượng', 'All features')}</option>
         <option value="aoi">{t('Vùng quan tâm', 'AOI')}</option>
@@ -41,6 +44,8 @@ export function GeometryExport({ locale, exportRecords, exportScope, onScope, di
         <UiIcon name="download" />{format === 'geojson' ? 'GeoJSON' : 'KML'}
       </button>)}
     </div>
+    </div>
+    </details>
     {prepared && <ConfirmDialog title={t('Xuất dữ liệu GIS', 'Export GIS data')} locale={locale}
       confirmLabel={t('Tải tệp', 'Download file')} onCancel={() => setPrepared(null)}
       error={failed ? t('Không tạo được lượt tải. Thử lại.', 'Could not start the download. Retry.') : undefined}

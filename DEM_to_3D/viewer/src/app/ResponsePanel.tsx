@@ -4,6 +4,7 @@ import { ImpactView } from '../components/dear/ImpactView';
 import { CommunityListView } from '../components/dear/CommunityListView';
 import { usePanelScroll } from '../shared/hooks/usePanelScroll';
 import type { ResponsePanelProps } from './responsePanelTypes';
+import type { PreparedPhotoPoint } from '../features/fieldPhotos/preparedPhotos';
 
 type Props = Pick<
   ResponsePanelProps,
@@ -28,7 +29,12 @@ type Props = Pick<
   | 'onInspectObject'
   | 'onRevealPanel'
   | 'onOpenDialog'
-> & {survey?: {areas:number;points:number};onShowSurvey?:()=>void; onShowCorridor?:()=>void};
+> & {
+  /** Prepared survey photos by hazard ID. */
+  fieldPhotos?: Map<string, PreparedPhotoPoint>;
+  /** @deprecated The overview no longer lists reference datasets; GIS owns them. */
+  survey?: {areas:number;points:number}; onShowSurvey?:()=>void; onShowCorridor?:()=>void;
+};
 
 /** Lists retain their context and scroll while a selected item opens in the detail surface. */
 export function ResponsePanel({
@@ -37,12 +43,10 @@ export function ResponsePanel({
   onNavigate,
   snapshot,
   aoi,
-  updated,
   workTasks,
   workEntries,
   reportPending,
   pendingReport,
-  onApplyReport,
   historical,
   onOpenWork,
   onOpenReport,
@@ -52,7 +56,7 @@ export function ResponsePanel({
   onSelectCommunity,
   onInspectObject,
   onRevealPanel,
-  onOpenDialog, survey, onShowSurvey, onShowCorridor
+  onOpenDialog, fieldPhotos
 }: Props): JSX.Element {
   const {
     view,
@@ -106,11 +110,10 @@ export function ResponsePanel({
   } else if (view === 'incident') {
     content = (
       <IncidentView
-        survey={survey}
-        onShowSurvey={onShowSurvey}
-        onShowCorridor={onShowCorridor}
         incident={incident}
         hazards={hazards}
+        roads={roads}
+        fieldPhotos={fieldPhotos}
         onInspectObject={onInspectObject}
         areaName={aoi.name}
         onOpenArea={() => onInspectObject(`aoi:${aoi.id}`)}
@@ -119,22 +122,13 @@ export function ResponsePanel({
         entries={workEntries}
         reportPending={reportPending}
         pendingReport={pendingReport}
-        onApplyReport={onApplyReport}
         historical={historical}
         onOpenWork={onOpenWork}
         onOpenReport={onOpenReport}
         communities={communities}
         routes={routes}
         assessments={assessments}
-        blockedRoadCount={
-          roads.filter((road) => road.status === 'blocked').length
-        }
-        uncertainRoadCount={
-          roads.filter((road) => road.status === 'uncertain').length
-        }
         onSelectCommunity={onSelectCommunity}
-        onOpenTimeline={() => onOpenDialog('timeline')}
-        onOpenData={() => onOpenDialog('data')}
         onOpenCommunities={openCommunities}
         onOpenRoads={(filter) => {
           onNavigate({ type: 'road-list', filter });
@@ -158,7 +152,7 @@ export function ResponsePanel({
           onNavigate({ type: 'filters', values: { impactTab } })
         }
         onChangeRoadFilter={(roadFilter) =>
-          onNavigate({ type: 'road-list', filter: roadFilter })
+          onNavigate({ type: 'filters', values: { roadFilter } })
         }
         onSelectObject={onInspectObject}
         selectedId={navigation.objectIds.impact}

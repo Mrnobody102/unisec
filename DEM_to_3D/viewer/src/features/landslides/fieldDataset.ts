@@ -19,10 +19,18 @@ export function fieldRecords(features: VectorFeature[], id: string, sourceName: 
       if (!originalName || /^(Đa giác không có tiêu đề|Untitled polygon)$/i.test(originalName)) name = `Vết sạt ${String(polygon).padStart(2, '0')}`;
       const area = newLandslideArea('occurred', networkVersion);
       area.mappedAt = area.updatedAt = importedAt;
-      area.sources = ['field'];
+      area.sources = ['historical'];
       area.basis = `Khoanh vẽ trong ${sourceName}. Ngày khảo sát và sai số ranh giới chưa được khai báo.`;
       // Talus is mapped accumulation; named scars identify a source/scar. Other parts remain unspecified.
       area.part = /^talus\b/i.test(originalName) ? 'deposit' : /^scar\b|^scar\d/i.test(originalName) ? 'source' : 'undifferentiated';
+      // Image-interpreted outlines carry their provenance and road section as KML ExtendedData.
+      const data = feature.properties, number = (key: string) => Number.isFinite(Number(data[key])) && Number(data[key]) > 0 ? Number(data[key]) : null;
+      if (typeof data.imageReference === 'string' && data.imageReference) {
+        Object.assign(area, {sources: ['imagery'], basis: String(data.basis ?? ''), observedAt: String(data.observedAt ?? ''), imageReference: data.imageReference,
+          imageResolutionM: number('imageResolutionM'), boundaryAccuracyM: number('boundaryAccuracyM')});
+        if (typeof data.roadId === 'string' && data.roadId) area.roadLinks = [{roadId: data.roadId, relation: 'affected',
+          ...(number('toM') ? {fromM: Number(data.fromM), toM: Number(data.toM)} : {})}];
+      }
       Object.assign(properties, {[landslideAreaKey]: area});
     }
     return {id: `field:${id.slice(0, 16)}:${index + 1}`, name, role: 'reference', visible: true,

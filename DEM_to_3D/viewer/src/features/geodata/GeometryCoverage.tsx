@@ -36,14 +36,14 @@ export function GeometryCoverage({
       {!coverage ? (
         <p className="geodata-empty">
           {t(
-            'Chọn một polygon làm vùng quan tâm (AOI).',
+            'Chọn một vùng làm vùng quan tâm.',
             'Assign a polygon as the area of interest (AOI).'
           )}
         </p>
       ) : !coverage.rows.length ? (
         <p className="geodata-empty">
           {t(
-            'Nhập hoặc chọn polygon làm phạm vi ảnh để đối chiếu với ',
+            'Chọn phạm vi ảnh để so với ',
             'Import or assign image footprints to compare with '
           )}
           <strong>{coverage.aoiName}</strong>.
@@ -56,7 +56,7 @@ export function GeometryCoverage({
               {percent(coverage.fraction ?? 0)}
             </strong>
             <small>
-              ≈ {formatArea(coverage.coveredArea ?? 0, locale)} /{' '}
+              {t('khoảng ', 'about ')}{formatArea(coverage.coveredArea ?? 0, locale)} /{' '}
               {formatArea(coverage.aoiArea, locale)}
             </small>
           </div>

@@ -1,0 +1,50 @@
+/* Route flyover: while it plays the map is a film frame; everything else steps aside. */
+.flyover-overlay { position:absolute; inset:0; z-index:4; width:100%; height:100%; pointer-events:none; }
+.terrain-viewer.flyover-active > :not(.terrain-canvas):not(.flyover-overlay) { display:none !important; }
+.map-area.flyover-active > :not(.map-canvas):not(.flyover-bar) { visibility:hidden; }
+.map-area.flyover-active > .map-canvas { top:0; bottom:0; }
+.workspace:has(.map-area.flyover-active) .response-detail-dock { visibility:hidden; }
+.map-area:fullscreen { background:#0e1210; }
+
+.flyover-bar { position:absolute; left:50%; bottom:24px; z-index:30; display:flex; align-items:center; gap:8px; transform:translateX(-50%); font-variant-numeric:tabular-nums; }
+.flyover-bar .flyover-icon { width:40px; height:40px; border-radius:20px; background:#1d2420; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,.28); }
+.flyover-bar .flyover-icon:hover:not(:disabled) { background:#2a332e; color:#fff; }
+
+/* Playback controls stay in one corner and yield to the terrain. */
+.flyover-player { left:auto; right:24px; transform:none; padding:6px; border-radius:26px; background:rgba(16,20,18,.82); box-shadow:0 10px 30px rgba(0,0,0,.35); backdrop-filter:blur(6px); transition:opacity .4s ease; }
+.flyover-player .flyover-icon { box-shadow:none; background:transparent; }
+.flyover-player.is-resting { opacity:0; }
+.flyover-player.is-resting:focus-within { opacity:1; }
+.flyover-seek { width:min(360px, 36vw); accent-color:#fc5200; cursor:pointer; }
+.flyover-clock { min-width:84px; color:rgba(255,255,255,.85); font-size:13px; text-align:center; }
+
+.flyover-export { flex-direction:column; align-items:stretch; gap:10px; bottom:50%; width:min(360px, calc(100% - 32px)); padding:20px; border-radius:14px; background:rgba(16,20,18,.9); color:#fff; transform:translate(-50%, 50%); box-shadow:0 16px 40px rgba(0,0,0,.4); }
+.flyover-export strong { font-size:16px; }
+.flyover-export-percent { position:absolute; top:20px; right:20px; color:rgba(255,255,255,.8); }
+.flyover-export progress { width:100%; height:6px; accent-color:#fc5200; }
+.flyover-export .button { align-self:flex-end; }
+
+.flyover-message { position:absolute; bottom:calc(100% + 8px); left:50%; margin:0; padding:6px 12px; border-radius:6px; background:rgba(16,20,18,.88); color:#fff; font-size:13px; white-space:nowrap; transform:translateX(-50%); }
+@media (prefers-reduced-motion: reduce) { .flyover-player { transition:none; } }
+
+@media (max-width:600px) {
+  .flyover-player { right:12px; bottom:12px; width:calc(100% - 24px); max-width:420px; box-sizing:border-box; flex-wrap:wrap; }
+  .flyover-player .flyover-seek { order:-1; flex-basis:100%; width:100%; }
+  .flyover-player .flyover-clock { margin-right:auto; }
+}
+
+/* The film is an explicit tool action, never a launch pill over the map/profile. */
+.flyover-launch { position:relative; flex:none; }
+.flyover-menu { position:absolute; top:calc(100% + 8px); left:0; z-index:35; width:260px; max-width:calc(100vw - 24px); padding:8px;
+  border:1px solid var(--ws-line); border-radius:var(--radius-popover); background:var(--ws-surface); color:var(--ws-text); box-shadow:var(--shadow-overlay); }
+.flyover-menu > p { margin:4px 8px 8px; color:var(--ws-muted); font-size:12px; line-height:1.5; }
+.flyover-menu-action { display:flex; align-items:center; gap:10px; width:100%; min-height:38px; padding:8px; border:0; border-radius:var(--radius-control); background:transparent; color:var(--ws-text); text-align:left; font-size:13px; }
+.flyover-menu-action:hover { background:var(--hover); }
+.flyover-menu-action svg { flex:none; }
+.flyover-preparing { padding:10px 16px; border:1px solid var(--ws-line); border-radius:var(--radius-control); background:var(--ws-surface); color:var(--ws-text); box-shadow:var(--shadow-overlay); font-size:13px; }
+@container (max-width:600px) {
+  .map-area .map-advanced-tools:has(.flyover-launch):has(.map-journey-trigger) { grid-template-columns:repeat(6,minmax(0,1fr)); }
+  .map-advanced-tools .flyover-launch { min-width:0; }
+  .map-advanced-tools .flyover-launch > .icon-button { width:100%; }
+  .flyover-menu { position:fixed; top:auto; left:12px; right:12px; width:auto; max-width:calc(100vw - 24px); }
+}

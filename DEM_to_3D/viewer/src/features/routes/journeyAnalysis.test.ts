@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RoadSegment } from "../../types/dear";
-import { initialRoadSegments } from "../../data/cheTaoScenario";
+import { initialRoadSegments } from "../../data/fixtures/networkScenario";
 import { analyseRoadJourney, type JourneySelection } from "./journeyAnalysis";
 import {
   roadProjected,
@@ -24,8 +24,8 @@ const road = (
   len: 1,
   name: [id, id],
 });
-const a = { origin: roadProjected(21.74276, 104.05581), source: "map" },
-  b = { origin: roadProjected(21.72291, 104.08018), source: "map" };
+const a = { origin: roadProjected(21.77797, 104.03868), source: "map" },
+  b = { origin: roadProjected(21.75074, 104.05062), source: "map" };
 describe("journey matching and business rules", () => {
   it("routes the screenshot A/B via eligible roads instead of snapping B onto blocked E8", () => {
     const result = analyseRoadJourney(initialRoadSegments, a, b, true);

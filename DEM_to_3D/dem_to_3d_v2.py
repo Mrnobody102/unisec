@@ -433,10 +433,11 @@ def main():
         analysis_supported = False
 
     # 3. Cắt theo ranh giới xã
+    administrative_units = []
     if args.commune_shp:
-        outside_mask = load_commune_mask(
+        outside_mask, administrative_units = load_commune_mask(
             args.commune_shp, args.commune, transform, crs, array.shape,
-            args.commune_buffer, verbose,
+            args.commune_buffer, verbose, return_metadata=True,
         )
         nodata_mask = nodata_mask | outside_mask
         original_shape = array.shape
@@ -556,6 +557,11 @@ def main():
             "note": "Ảnh gốc đã cắt về bbox lưới DEM (pixel-center + nửa pixel đệm) trước khi resample.",
         }
 
+    if administrative_units:
+        metadata["administrative"] = {
+            "source": os.path.basename(args.commune_shp),
+            **(administrative_units[0] if len(administrative_units) == 1 else {"units": administrative_units}),
+        }
     validate_metadata(metadata)
     dump_metadata(metadata, json_path)
     validate_metadata(metadata, grid_path=grid_path, require_mesh=True)

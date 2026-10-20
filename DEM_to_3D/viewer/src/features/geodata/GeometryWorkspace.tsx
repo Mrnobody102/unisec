@@ -1,8 +1,10 @@
+import type { AnalysisImageryState } from '../imagery/useAnalysisImagery';
+import { distinctSourceRecords } from '../map/sourceRepresentation';
 import { useMapPreview } from '../map/useMapPreview';
 import { LandslideAreaList } from '../landslides/LandslideAreaList';
 import type { PickedRoadInterval } from '../landslides/LandslideAreaEditor';
 import { nearestRoadAnchor, roadGeographic } from '../routes/selectedRoadJourney';
-import { createLandslideArea, landslideAreaKey, landslideAreaOf, type LandslideArea } from '../landslides/landslideAreas';
+import { createLandslideArea, landslideAreaKey, landslideAreaOf, landslideBoundaryColor, type LandslideArea } from '../landslides/landslideAreas';
 import { GisEditSession } from './GisEditSession';
 import type { ReactNode } from 'react';
 import type { RenameScenario } from '../access/ScenarioLabels';
@@ -56,6 +58,7 @@ import './geodata.css';
 import './geometry-inspector.css';
 
 type Props = {
+  analysisImagery?: AnalysisImageryState;
   publication?: ReactNode;
   annotationProperties?: (id: string, records: GeometryRecord[]) => Record<string, unknown>;
   locale: Locale;
@@ -100,6 +103,7 @@ function LocalGeometryWorkspace(props: Props): JSX.Element {
   return <GeometryWorkspace {...props} session={session} />;
 }
 function GeometryWorkspaceView({
+  analysisImagery,
   publication,
   scenario,
   scenarioEdits,
@@ -137,9 +141,12 @@ function GeometryWorkspaceView({
   const [tab, setTab] = useState<Tab>(() => {
     if (scenarioRequest?.type === 'road') return 'roads';
     const areaSelected = session.records.some(record => record.id === session.selectedId && landslideAreaOf(record));
-    return areaSelected || scenario && !session.selectedId ? 'areas' : 'layers';
+    return areaSelected || scenarioRequest?.type === 'hazard' ? 'areas' : 'layers';
   });
   const [mobileTab, setMobileTab] = useState<'data' | 'map'>('data');
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [sitesOpen, setSitesOpen] = useState(false);
+  useEffect(() => { if (tab === 'aoi' || tab === 'scenes') setToolsOpen(true); }, [tab]);
   const [snapping, setSnapping] = useState(false),
     [exportScope, setExportScope] = useState('all');
   const [selectedScenes, setSelectedScenes] = useState(readSelection),
@@ -153,6 +160,9 @@ function GeometryWorkspaceView({
   const [detail, setDetail] = useState<GeometryDetail>(
     session.selectedId ? { kind: 'feature' } : null
   );
+  useEffect(() => {
+    if (detail?.kind === 'scenario' && ['site', 'community'].includes(detail.target.type)) setSitesOpen(true);
+  }, [detail]);
   const selectScenario = (target: ScenarioTarget) => {
     if (editor.active || pickTask) return;
     setTab(target.type === 'road' ? 'roads' : target.type === 'hazard' ? 'areas' : 'layers'); setDetail({kind:'scenario',target,moving:false,pending:null}); setScenarioFocus({...target}); setMobileTab('map');
@@ -319,7 +329,7 @@ function GeometryWorkspaceView({
           createGeometryRecords(
             {
               features: [
-                { type: 'Feature', properties: { name: 'AOI' }, geometry }
+                { type: 'Feature', properties: { name: t('Vùng quan tâm', 'Area of interest') }, geometry }
               ],
               format: 'drawing'
             },
@@ -510,13 +520,15 @@ function GeometryWorkspaceView({
           aria-label={t('Quản lý dữ liệu GIS', 'GIS data controls')}
         >
           <nav className="geodata-task-nav" aria-label={t('Nghiệp vụ GIS', 'GIS workflow')}>
-            {(['areas', ...(scenario ? ['roads' as const] : []), 'layers'] as const).map(id => <button key={id} type="button"
+            {(['layers', 'areas', ...(scenario ? ['roads' as const] : [])] as const).map(id => <button key={id} type="button"
               aria-pressed={id === 'layers' ? !['areas', 'roads'].includes(tab) : tab === id}
               disabled={editor.active || !!pickTask}
               onClick={() => { setDetail(null); setTab(id); }}>
               {id === 'areas' ? t('Vùng sạt lở', 'Landslide areas') : id === 'roads' ? t('Đường', 'Roads') : t('Dữ liệu', 'Data')}
             </button>)}
           </nav>
+          <details className="geodata-data-tools" hidden={tab === 'areas' || tab === 'roads'} open={toolsOpen} onToggle={event => setToolsOpen(event.currentTarget.open)}>
+          <summary>{t('Công cụ dữ liệu', 'Data tools')}</summary>
           <nav
             hidden={tab === 'areas' || tab === 'roads'}
             className="geodata-tabs"
@@ -535,6 +547,7 @@ function GeometryWorkspaceView({
                 onClick={() => {
                   setDetail(null);
                   setTab(id);
+                  if (id === 'aoi' && aoi) session.fit(aoi.id);
                 }}
                 onKeyDown={(event) => {
                   if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
@@ -556,6 +569,7 @@ function GeometryWorkspaceView({
               </button>
             ))}
           </nav>
+          </details>
           <div className="geodata-sidebar-scroll">
             <div hidden={tab !== 'areas'} className="geodata-task-panel" aria-label={t('Vùng sạt lở', 'Landslide areas')}>
               <LandslideAreaList records={session.records} selectedId={session.selectedId} locale={locale} disabled={working}
@@ -573,9 +587,6 @@ function GeometryWorkspaceView({
               aria-labelledby="geo-tab-layers"
               hidden={tab !== 'layers'}
             >
-              {scenario && <ScenarioFeatureList scenario={scenario} types={['site', 'community']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale}
-                onSelect={selectScenario} onCreate={scenarioEdits?.canEdit ? type => {setNewDraft(newPointDraft(type));setInputTask('scenario');setDetail(null);} : undefined} />}
-              {scenario && <h2 className="geodata-source-heading">{t('Dữ liệu nhập', 'Imported data')}</h2>}
               <div className="geodata-add-actions">
                 <PointEntry
                   open={inputTask === 'point'}
@@ -614,7 +625,7 @@ function GeometryWorkspaceView({
                 />
               </div>
               {session.records.some(record => !landslideAreaOf(record)) && <GeometryLayers
-                records={session.records.filter(record => !landslideAreaOf(record))}
+                records={distinctSourceRecords(session.records, session.selectedId).filter(record => !landslideAreaOf(record))}
                 selectedId={session.selectedId}
                 locale={locale}
                 disabled={working}
@@ -622,6 +633,12 @@ function GeometryWorkspaceView({
                 onUpdate={reviewUpdate}
                 onBatch={batch}
               />}
+
+              {scenario && <details className="geodata-scenario-data" open={sitesOpen} onToggle={event => setSitesOpen(event.currentTarget.open)}>
+                <summary>{t('Điểm tập kết và thôn bản', 'Sites and communities')}<span>{scenario.responseSites.length + scenario.communities.length}</span></summary>
+                <ScenarioFeatureList scenario={scenario} types={['site', 'community']} disabled={working} selected={detail?.kind === 'scenario' ? detail.target : null} locale={locale}
+                  onSelect={selectScenario} onCreate={scenarioEdits?.canEdit ? type => {setNewDraft(newPointDraft(type));setInputTask('scenario');setDetail(null);} : undefined} />
+              </details>}
 
               {results.length > 0 && (
                 <label className="geodata-section geodata-scene-visibility">
@@ -673,12 +690,17 @@ function GeometryWorkspaceView({
                     </div>
                   </>
                 ) : (
-                  <p className="geodata-empty">
-                    {t(
-                      'Vẽ vùng mới hoặc chọn một vùng có sẵn trong tab Lớp.',
-                      'Draw a new area or choose an existing area in Layers.'
-                    )}
-                  </p>
+                  <>
+                    <p className="geodata-empty">{t('Chưa có vùng quan tâm. Vùng này giới hạn phạm vi tìm ảnh.', 'No area of interest yet. It bounds the imagery search.')}</p>
+                    <div className="geodata-actions geodata-aoi-start">
+                      <button className="button primary" disabled={working} onClick={() => start('polygon')}>
+                        <UiIcon name="edit" />{t('Vẽ vùng', 'Draw area')}
+                      </button>
+                      <button className="button" disabled={working} onClick={() => start('rectangle')}>
+                        {t('Vẽ khung chữ nhật', 'Draw rectangle')}
+                      </button>
+                    </div>
+                  </>
                 )}
               </section>
               {editor.mode === 'edit' && editor.draft.geometry && (
@@ -688,11 +710,11 @@ function GeometryWorkspaceView({
                   onMove={editor.move}
                 />
               )}
-              <GeometryCoverage
+              {aoi && <GeometryCoverage
                 locale={locale}
                 coverage={analysis.result}
                 onSelect={select}
-              />
+              />}
             </div>
             <div
               id="geo-panel-scenes"
@@ -790,6 +812,7 @@ function GeometryWorkspaceView({
           scenario={scenario}
           scenarioEdits={scenarioEdits}
           onRenameScenario={onRenameScenario}
+          analysisImagery={analysisImagery}
           records={mapRecords}
           selectedId={scene ? `scene:${scene.id}` : session.selectedId}
           locale={locale}
@@ -804,7 +827,7 @@ function GeometryWorkspaceView({
           onDetail={setDetail}
           editor={editor}
           snapping={snapping}
-          drawingColor={drawingLandslide === 'occurred' ? '#b45147' : drawingLandslide || areaPointId ? '#b77b28' : undefined}
+          drawingColor={drawingLandslide || areaPointId || (editor.mode === 'edit' && selected && landslideAreaOf(selected)) ? landslideBoundaryColor : undefined}
           onFinish={finish}
           onCancel={cancelGeometry}
           intersection={analysis.result?.intersection ?? null}

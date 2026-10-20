@@ -89,7 +89,7 @@ export function SceneCatalog({
   if (!catalog)
     return (
       <section className="geodata-section" role="status">
-        {t('Đang tải danh mục ảnh…', 'Loading catalog…')}
+        {t('Đang tải danh mục ảnh', 'Loading catalog')}
       </section>
     );
   return (
@@ -232,7 +232,7 @@ export function SceneCatalog({
                       <span>
                         {scene.sensor === 'sar'
                           ? scene.polarizations.join('/') || 'SAR'
-                          : `${t('Mây', 'Cloud')} ${scene.cloudCover === null ? '—' : Math.round(scene.cloudCover) + '%'}`}
+                          : (scene.cloudCover === null ? t('Chưa rõ mây', 'Cloud unknown') : `${t('Mây', 'Cloud')} ${Math.round(scene.cloudCover)}%`)}
                       </span>
                     </span>
                   </span>
@@ -337,30 +337,29 @@ export function SceneDetails({
       hour: '2-digit',
       minute: '2-digit'
     }) + ' UTC';
-  const values: [[string, string], ...[string, string][]] = [
-    [t('Thu nhận', 'Acquired'), acquired],
+  const unknown = t('Chưa rõ', 'Unknown');
+  // The figures an analyst compares first; the rest is reference.
+  const figures: [string, string][] = scene.sensor === 'sar'
+    ? [[t('Phân cực', 'Polarization'), scene.polarizations.join('/') || unknown],
+       [t('Pixel', 'Pixel'), scene.pixelSpacing === null ? unknown : scene.pixelSpacing + ' m']]
+    : [[t('Mây toàn cảnh', 'Scene cloud'), scene.cloudCover === null ? unknown : scene.cloudCover + '%'],
+       [t('GSD sản phẩm', 'Product GSD'), scene.gsd === null ? unknown : scene.gsd + ' m']];
+  const reference: [string, string][] = [
     [t('Bộ sản phẩm', 'Collection'), scene.collection],
-    [t('Mức xử lý', 'Processing level'), scene.level]
+    [t('Mức xử lý', 'Processing level'), scene.level],
+    ...(scene.sensor === 'sar' ? [
+      [t('Hướng bay', 'Pass'), scene.pass ? (scene.pass === 'ascending' ? t('Hướng bắc', 'Ascending') : t('Hướng nam', 'Descending')) : unknown] as [string, string],
+      [t('Quỹ đạo tương đối', 'Relative orbit'), String(scene.orbit ?? unknown)] as [string, string]] : []),
+    [t('Mã ảnh', 'Image identifier'), scene.id]
   ];
-  if (scene.sensor === 'sar')
-    values.push(
-      [t('Hướng bay', 'Pass'), scene.pass ? (locale === 'vi' ? (scene.pass === 'ascending' ? 'Hướng bắc' : 'Hướng nam') : scene.pass) : t('Không có','Not available')],
-      [t('Quỹ đạo tương đối', 'Relative orbit'), String(scene.orbit ?? '—')],
-      [t('Phân cực', 'Polarization'), scene.polarizations.join('/') || '—'],
-      [t('Kích thước pixel', 'Pixel spacing'), scene.pixelSpacing === null ? '—' : scene.pixelSpacing + ' m']
-    );
-  else
-    values.push(
-      [t('GSD sản phẩm', 'Product GSD'), scene.gsd === null ? '—' : scene.gsd + ' m'],
-      [
-        t('Mây toàn cảnh', 'Scene cloud cover'),
-        scene.cloudCover === null ? '—' : scene.cloudCover + '%'
-      ]
-    );
   return (
-    <aside className="geodata-scene-detail">
+    <aside className="geodata-scene-detail" aria-label={t('Thông tin ảnh', 'Scene metadata')}>
       <header>
-        <h2>{t('Thông tin ảnh', 'Scene metadata')}</h2>
+        <div className="detail-name">
+          <p className="sheet-kind">{scene.sensor === 'sar' ? t('Ảnh radar', 'Radar scene') : t('Ảnh quang học', 'Optical scene')}</p>
+          <h2>{sceneTitle(scene)}</h2>
+          <p className="catalog-detail-time"><time dateTime={scene.acquiredAt}>{acquired}</time></p>
+        </div>
         <button
           className="icon-button"
           aria-label={t('Đóng thông tin ảnh', 'Close scene metadata')}
@@ -369,25 +368,28 @@ export function SceneDetails({
           <UiIcon name="close" />
         </button>
       </header>
-      <SceneThumb scene={scene} large />
-      <div className="geodata-section">
-        <h3 className="catalog-detail-title">{sceneTitle(scene)}</h3>
-        <details className="catalog-image-code"><summary>{t('Mã ảnh','Image identifier')}</summary><p className="catalog-scene-id">{scene.id}</p></details>
-        <dl className="geodata-properties">
-          {values.map(([label, value]) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
+      <div className="catalog-detail-body">
+        <SceneThumb scene={scene} large />
+        <dl className="key-facts">
+          {figures.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
         </dl>
+        <section className="workflow-section">
+          <dl className="fact-rows">
+            {reference.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd className={label === t('Mã ảnh', 'Image identifier') ? 'catalog-scene-id' : undefined}>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
         <div className="geodata-actions">
           <button className="button" onClick={onFit}>
             <UiIcon name="fit" />
             {t('Xem phạm vi', 'Fit footprint')}
           </button>
-          <a href={scene.metadataUrl} target="_blank" rel="noreferrer">
-            STAC metadata
+          <a className="button" href={scene.metadataUrl} target="_blank" rel="noreferrer">
+            {t('Metadata STAC', 'STAC metadata')}
           </a>
         </div>
       </div>

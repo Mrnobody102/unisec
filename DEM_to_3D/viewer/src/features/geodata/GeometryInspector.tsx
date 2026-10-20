@@ -140,12 +140,12 @@ export function GeometryInspector({
       <dl className="geodata-properties">
         <div>
           <dt>{t('Hình học', 'Geometry')}</dt>
-          <dd>{selected.feature.geometry.type}</dd>
+          <dd>{({ Point: t('Điểm', 'Point'), LineString: t('Đường', 'Line'), MultiLineString: t('Nhiều đường', 'Multiline'), Polygon: t('Vùng', 'Polygon'), MultiPolygon: t('Nhiều vùng', 'Multipolygon') })[selected.feature.geometry.type]}</dd>
         </div>
         {isPolygon(selected.feature.geometry) && (
           <div>
             <dt>{t('Diện tích', 'Area')}</dt>
-            <dd>≈ {formatArea(area(selected.feature), locale)}</dd>
+            <dd>{t('khoảng ', 'about ')}{formatArea(area(selected.feature), locale)}</dd>
           </div>
         )}
         {selected.feature.geometry.type === 'Point' && (
@@ -173,6 +173,7 @@ export function GeometryInspector({
         <button className="button" disabled={disabled} onClick={() => onSaveLandslideArea(newLandslideArea('occurred',networkVersion))}>{t('Vết đã sạt lở', 'Observed landslide')}</button>
       </div></details>}
       {landslideAreaOf(selected) && onResponse && <button className="button" onClick={() => onResponse(selected.id)}>{t('Xem trên bản đồ ứng phó', 'Show on response map')}</button>}
+      <div className="geodata-feature-actions">
       {selected.feature.geometry.type === 'Point' && onCoordinates && (
         <>
           <button
@@ -205,9 +206,10 @@ export function GeometryInspector({
             onClick={() => onResponse(selected.id)}
           >
             <UiIcon name="location" size={16} />
-            {t('Xem trên bản đồ ứng phó', 'Show on response map')}
+            {t('Về bản đồ ứng phó', 'Show on response map')}
           </button>
         )}
+      </div>
       {selected.feature.geometry.type === 'Point' && onAnnotate && (
         <ObservationEditor
           key={selected.id + (observationOf(selected)?.updatedAt ?? '')}
@@ -302,7 +304,10 @@ export function GeometryInspector({
               </dd>
             </div>
           </dl>
-          <pre tabIndex={0}>{exportGeometryWkt(selected.feature.geometry)}</pre>
+          <details className="geodata-coordinate-details">
+            <summary>{t('Tọa độ WKT', 'WKT coordinates')}</summary>
+            <pre tabIndex={0}>{exportGeometryWkt(selected.feature.geometry)}</pre>
+          </details>
           {Object.entries(selected.feature.properties)
             .filter(
               ([key, value]) =>
@@ -312,8 +317,13 @@ export function GeometryInspector({
                   'dearObservation',
                   'dearFieldArea',
                   'dearRecordId',
-                  'dearSubmission'
+                  'dearSubmission',
+                  'dearLandslideArea',
+                  'sourceName',
+                  'sourceDatasetId',
+                  'sourceFeatureIndex'
                 ].includes(key) &&
+                !key.startsWith('dear') &&
                 value != null &&
                 value !== ''
             )

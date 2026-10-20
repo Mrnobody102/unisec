@@ -1,4 +1,5 @@
 """GIS edits stay local until one publication, and map names focus their actual point."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task
 import argparse
 import json
@@ -15,9 +16,10 @@ def run(url: str, chrome: str | None, captures: Path | None = None):
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(url + "/?offline=1&map=2d&demoRole=manager")
         expect(page.locator(".map-pin:visible").first).to_be_visible(timeout=30000)
-        page.get_by_role("button", name="Dữ liệu GIS", exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         workspace = page.locator(".geodata-workspace")
         expect(workspace.locator(".gis-draft-bar")).to_have_count(0)
+        gis_task(page, 'areas')
         row = workspace.locator(".scenario-feature-row").first
         group = row.locator("xpath=..")
         if group.evaluate("node => node.tagName === 'DETAILS'") and group.get_attribute("open") is None:
@@ -39,8 +41,8 @@ def run(url: str, chrome: str | None, captures: Path | None = None):
         assert page.evaluate("localStorage.getItem('dear.gis.v2')") == before
         workspace.get_by_role("button", name="Áp dụng thay đổi", exact=True).click()
         dialog = page.get_by_role("dialog", name="Áp dụng thay đổi GIS?")
-        expect(dialog).to_contain_text("sạt lở")
-        expect(dialog).to_contain_text("→ Sạt lở thử bản nháp")
+        expect(dialog).to_contain_text(original)
+        expect(dialog).to_contain_text("đổi thành Sạt lở thử bản nháp")
         if captures:
             page.screenshot(path=str(captures / "gis-review.png"))
         assert page.evaluate("localStorage.getItem('dear.gis.v2')") == before
@@ -79,7 +81,7 @@ def run(url: str, chrome: str | None, captures: Path | None = None):
         workspace.get_by_role('button', name='Làm lại GIS', exact=True).click()
         expect(workspace.locator('.gis-draft-bar')).to_have_count(0)
         assert not errors, errors
-        print(f"GIS draft, publish, discard, point import and map hover passed; original: {original}")
+        print("GIS draft, publish, discard, point import and map hover passed.")
         browser.close()
 
 

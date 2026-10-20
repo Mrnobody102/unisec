@@ -5,6 +5,8 @@ import { UiIcon } from '../../shared/ui/UiIcon';
 
 type Props = {
   locale: Locale;
+  expanded: boolean;
+  onCollapse: () => void;
   packet: IncidentPacket;
   applied: boolean;
   historical: boolean;
@@ -14,9 +16,10 @@ type Props = {
 };
 
 /** Only recorded assessments are selectable. Receiving a report does not publish it. */
-export function AssessmentTimeline({ locale, packet, applied, historical, onRevision, onReport, onJournal }: Props) {
+export function AssessmentTimeline({ expanded, onCollapse, locale, packet, applied, historical, onRevision, onReport, onJournal }: Props) {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
-  return <footer className="assessment-timeline" aria-label={t('Diễn biến sự kiện', 'Incident timeline')}>
+  return <footer id="assessment-timeline" hidden={!expanded} className="assessment-timeline" aria-label={t('Diễn biến sự kiện', 'Incident timeline')}>
+    <button className="icon-button assessment-collapse" onClick={onCollapse} aria-label={t('Thu gọn diễn biến', 'Collapse timeline')} title={t('Thu gọn diễn biến', 'Collapse timeline')}><UiIcon name="collapse" size={16}/></button>
     <span className="assessment-timeline-title">{t('Diễn biến', 'Timeline')}<small>UTC+7</small></span>
     <div className="assessment-timeline-track" role="group" aria-label={t('Các mốc sự kiện', 'Incident events')}>
       <button className="assessment-moment" aria-pressed={!applied || historical} onClick={() => onRevision(applied)}>

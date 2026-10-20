@@ -170,6 +170,27 @@ def validate_metadata(
     if "hole_mode" in data:
         _require(data["hole_mode"] in {"mask", "fill"}, "hole_mode must be mask or fill", errors)
 
+    if "administrative" in data:
+        text_keys = {"commune_code", "commune_name", "province_code", "province_name", "headquarters", "type"}
+        numeric_keys = {"area_km2", "population", "density_per_km2"}
+
+        def valid_unit(value, root=False):
+            if not isinstance(value, dict):
+                return False
+            allowed = text_keys | numeric_keys | ({"source", "units"} if root else set())
+            return (set(value).issubset(allowed)
+                    and all(isinstance(value[key], str) for key in text_keys & value.keys())
+                    and all(_finite_number(value[key]) and value[key] >= 0 for key in numeric_keys & value.keys()))
+
+        administrative = data["administrative"]
+        valid = valid_unit(administrative, root=True)
+        if valid and "source" in administrative:
+            valid = isinstance(administrative["source"], str)
+        if valid and "units" in administrative:
+            units = administrative["units"]
+            valid = isinstance(units, list) and len(units) > 0 and all(valid_unit(unit) for unit in units)
+        _require(valid, "administrative metadata is invalid", errors)
+
     mesh = data.get("mesh")
     if require_mesh:
         _require(isinstance(mesh, dict), "mesh metadata is required", errors)

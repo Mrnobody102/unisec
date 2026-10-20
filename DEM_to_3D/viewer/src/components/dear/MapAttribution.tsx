@@ -14,6 +14,7 @@ export function MapAttribution({
   onRetry,
   localSource,
   terrainDisplay,
+  analysisSource,
   fieldSource, osmReference
 }: {
   locale: Locale;
@@ -21,6 +22,7 @@ export function MapAttribution({
   onRetry: () => void;
   localSource?: [string, string];
   terrainDisplay?: {exaggeration: number};
+  analysisSource?: {name:string; acquired:string; credit:string};
   fieldSource?: string;
   osmReference?: boolean;
 }): JSX.Element | null {
@@ -80,6 +82,7 @@ export function MapAttribution({
               </button>
             </div>
             <dl>
+              {analysisSource && <div><dt>{t('Ảnh đang hiển thị','Displayed imagery')}</dt><dd>{analysisSource.name}<br/>{analysisSource.acquired}<br/>{analysisSource.credit}</dd></div>}
               {localSource && (
                 <div>
                   <dt>{t('Dữ liệu khu vực', 'Local data')}</dt>
@@ -87,11 +90,11 @@ export function MapAttribution({
                 </div>
               )}
               {fieldSource && <div><dt>{t('Khảo sát thực địa', 'Field survey')}</dt><dd>{fieldSource}<br/>{t('Lớp ảnh Google Earth không kèm dữ liệu ảnh.', 'Google Earth image layers contain no raster data.')}</dd></div>}
-              {osmReference && <div><dt>{t('Đường tham chiếu', 'Reference road')}</dt><dd><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors · ODbL</a></dd></div>}
-              {osmReference && <div><dt>{t('Mốc địa danh', 'Place reference')}</dt><dd><a href="https://www.geonames.org/8526472/ban-che-tao.html" target="_blank" rel="noreferrer">GeoNames · CC BY 4.0</a></dd></div>}
+              {osmReference && <div><dt>{t('Đường tham chiếu', 'Reference road')}</dt><dd><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors, ODbL</a></dd></div>}
+              {osmReference && <div><dt>{t('Mốc địa danh', 'Place reference')}</dt><dd><a href="https://www.geonames.org/8526472/ban-che-tao.html" target="_blank" rel="noreferrer">GeoNames, CC BY 4.0</a></dd></div>}
               {state.relief && <div><dt>{t('Địa hình nền', 'Context terrain')}</dt><dd>
                 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer">Mapzen Terrain Tiles</a>
-                <br/>{state.relief === 'loading' ? t('Đang tải…', 'Loading…') : state.relief === 'error' ? t('Chưa tải được', 'Unavailable') : t('Chỉ hiển thị, không dùng đo đạc', 'Display only, excluded from measurements')}
+                <br/>{state.relief === 'loading' ? t('Đang tải', 'Loading') : state.relief === 'error' ? t('Chưa tải được', 'Unavailable') : t('Chỉ hiển thị, không dùng đo đạc', 'Display only, excluded from measurements')}
               </dd></div>}
               {terrainDisplay && (
                 <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{Number(terrainDisplay.exaggeration.toFixed(2))}</dd></div>
@@ -102,7 +105,7 @@ export function MapAttribution({
                   {state.status === 'off'
                     ? t('Đã tắt', 'Off')
                     : state.status === 'loading' && !state.loaded
-                      ? t('Đang tải…', 'Loading…')
+                      ? t('Đang tải', 'Loading')
                     : state.loaded > 0
                       ? state.style === 'satellite'
                         ? imagery.name
@@ -179,7 +182,6 @@ export function MapAttribution({
             )}
           </div>
         )}
-      {osmReference && !open && <a className="map-reference-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>}
       </div>
     </>
   );

@@ -2,12 +2,13 @@ import type { Hazard, IncidentEvidence, Locale, ScenarioRoute } from '../../type
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { RouteOption } from './RouteOption';
-import { roadStatusLabels, roadStatusTone } from './roadStatus';
+import { formatRoadLength, roadStatusLabels, roadStatusTone } from './roadStatus';
 import { RouteSections } from './RouteSections';
 import { routeNextAction, selectAccessRoute } from './routeReview';
 import './access-panel.css';
 
 type Props = {
+  originName?: string;
   locale: Locale; hazards: Hazard[]; evidence: IncidentEvidence[];
   candidate: ScenarioRoute | null; direct: ScenarioRoute | null;
   selected: 'candidate' | 'direct'; onSelectRoute: (type: 'candidate' | 'direct') => void;
@@ -17,7 +18,7 @@ type Props = {
 };
 
 /** Route choice and its ordered sections stay in one review. Details do not replace it. */
-export function AccessPanel({ locale, hazards, evidence, candidate, direct, selected, onSelectRoute,
+export function AccessPanel({ originName, locale, hazards, evidence, candidate, direct, selected, onSelectRoute,
   sectionId, onSelectSection, hasProfile, onProfile, onEvidence, onFindings, onExport }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const active = selectAccessRoute({ candidate, direct }, selected);
@@ -36,6 +37,7 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
   };
   return <>
     {active ? <section className="decision-route" aria-label={t('Tuyến đang xem', 'Selected route')}>
+    {originName && <p className="route-origin"><span>{t('Xuất phát', 'From')}</span><strong>{originName}</strong></p>}
     {candidate && direct && <div className="access-route-choice" aria-labelledby="access-choice-title">
       <h3 id="access-choice-title">{t('Phương án tiếp cận', 'Access options')}</h3>
       <div className="route-options" role="group" aria-label={t('Chọn tuyến tiếp cận', 'Select access route')}>
@@ -43,6 +45,7 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
         <RouteOption route={direct} selected={active === direct} locale={locale} onSelect={() => onSelectRoute('direct')}/>
       </div>
     </div>}
+      <div className="route-summary">
       {!(candidate && direct) && <div className="access-route-label">
         <span>{t('Tuyến đang chọn', 'Selected route')}</span>
         <StatusText tone={roadStatusTone(active.status)}>{t(...roadStatusLabels[active.status])}</StatusText>
@@ -55,10 +58,11 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
         </button>
       </div>
       {(!(candidate && direct) || active.eta) && <dl className="route-metrics">
-        {!(candidate && direct) && <div><dt>{t('Chiều dài tuyến', 'Route length')}</dt><dd>{active.lengthKm} <small>km</small></dd></div>}
+        {!(candidate && direct) && <div><dt>{t('Chiều dài tuyến', 'Route length')}</dt><dd>{formatRoadLength(active.lengthKm,locale)} <small>km</small></dd></div>}
         {active.eta && <div className="route-travel-estimate"><dt>{t('Di chuyển nếu thông tuyến', 'Travel if passable')}</dt><dd>{active.eta.minMinutes}–{active.eta.maxMinutes} <small>{t('phút', 'min')}</small></dd><span>{active.eta.mode === 'foot' ? t('Đi bộ', 'On foot') : t('Xe 4x4', '4WD')}</span></div>}
       </dl>}
-      <RouteSections key={active.id} route={active} evidence={evidence} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
+      </div>
+      <RouteSections key={active.id} route={active} evidence={evidence} hazards={hazards} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
         onEvidence={onEvidence} onProfile={onProfile} hasProfile={hasProfile}/>
     </section> : <div className="next-action"><p className="assessment-action route-action">{action}</p><button className="button" onClick={onFindings}>{t('Xem tình hình', 'View community situation')}</button></div>}
     <div className="route-tools access-tools access-secondary-tools">

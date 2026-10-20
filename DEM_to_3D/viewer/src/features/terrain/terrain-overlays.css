@@ -1,0 +1,15 @@
+
+.terrain-contour-label { position: absolute; width: 64px; height: 18px; pointer-events: none; font-size: 11px; line-height: 18px; text-align: center; color: #4f4028; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 1px 1px #fff; z-index: 2; }
+.terrain-contour-label[hidden] { display: none; }
+.terrain-overlay-controls label { display: flex; align-items: center; gap: 8px; }
+.layers-content .terrain-overlay-controls .terrain-overlay-field { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 6px; margin: 12px 0; cursor: default; }
+.terrain-overlay-field > span { min-width: 0; overflow-wrap: normal; }
+.layers-content .terrain-overlay-field input:is([type="file"], [type="range"]) { width: 100%; min-width: 0; height: auto; font: inherit; }
+.layers-content .terrain-overlay-controls .terrain-overlay-opacity { grid-template-columns: minmax(0, 1fr) auto; }
+.terrain-overlay-opacity > input { grid-column: 1 / -1; }
+.terrain-overlay-opacity output { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.terrain-sar-controls { margin-top: 10px; }
+.terrain-sar-controls > summary { padding-block: 8px; font-size: 12px; cursor: pointer; }
+.terrain-overlay-controls select { max-width: 100%; }
+.terrain-overlay-controls p, .terrain-overlay-controls small { font-size: 12px; color: var(--ws-muted); }
+.terrain-raster-upload input { max-width: 100%; }

@@ -2,6 +2,16 @@
 
 Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 
+## Góc nhìn và lớp mặc định
+
+Mở ở 2D để đọc ranh sạt lở, địa bàn và đường tiếp cận; nút 3D dùng khi cần xem sườn dốc. Khung nhìn đầu tiên bao gồm vùng đã khoanh và các điểm nghiệp vụ, không thu nhỏ toàn bộ chỉ vì một tuyến tham chiếu kéo dài ra ngoài khu vực. 3D lấy phạm vi vùng trên cả DEM chính và DEM ngữ cảnh.
+
+Mặc định bật ảnh nền, vùng/điểm sạt lở, tình trạng đường, mạng đường, thôn bản, cầu và điểm tập kết. Mạng đường nền ở 65% độ rõ, nhãn tự động tránh chồng. AOI và bãi đáp đề xuất tắt lúc mở, có thể bật khi cần. Bản đồ khu vực bật khi trực tuyến; nguồn ảnh phân tích và các tùy chọn chuyên môn mở theo nhu cầu.
+
+Bảng lớp đặt **Ưu tiên ứng phó** lên đầu, có số vùng và nút đưa bản đồ tới các vùng. Bản đồ nền chọn riêng; ảnh phân tích, điểm hỗ trợ/tham chiếu, tùy chỉnh và phân tích 3D nằm trong các nhóm thu gọn. Khôi phục hiển thị chỉ đặt lại lớp và độ rõ, không sửa dữ liệu GIS.
+
+Polygon đã lưu vẫn hiện khi cập nhật phiên bản mạng đường. Phiên bản mạng đường chỉ giới hạn các liên kết đánh giá đường; không dùng nó để ẩn hình học và bằng chứng vùng. Viền vàng sáng có viền tối mảnh để đọc được trên ảnh và nền sáng, tăng độ dày khi chọn và giữ phần tô trong suốt. Chú giải gọn trên desktop có mẫu vùng vàng; trên điện thoại thu gọn để dành chỗ cho bản đồ.
+
 ## Ký hiệu và tỷ lệ
 
 | Đối tượng | Thể hiện | Điều kiện |
@@ -9,20 +19,21 @@ Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 | Đường bị chặn | Đỏ, nét liền | Có báo cáo đoạn bị chặn |
 | Đường chưa rõ | Vàng, nét đứt | Cần kiểm tra khả năng đi qua |
 | Chưa ghi nhận tắc đường | Nét trung tính | Không suy ra là đường đi được |
-| Tuyến đang xem | Xanh lam xám | Đoạn bị chặn/chưa rõ vẫn giữ màu cảnh báo, viền trung tính |
+| Tuyến đang xem / hành trình | Đỏ tươi, viền đỏ sẫm | Chỉ phần tuyến đã chọn; đoạn bị chặn/chưa rõ vẫn giữ màu cảnh báo, viền trung tính |
 | Cộng đồng | POI đầu bo tròn, mũi neo ngắn, nền trắng và nét xanh xám | Có tọa độ địa bàn |
 | Cộng đồng ưu tiên | Ký hiệu nâu trầm có viền sáng mảnh | Mức ưu tiên, không phải kết luận cô lập |
 | Sạt lở được báo | Núi/đá màu đỏ | Báo cáo hiện trường có thời điểm |
 | Nghi sạt lở | Núi/đá đỏ nhạt hơn điểm đã xác minh | Nhận định chưa kiểm chứng |
 | Cầu, điểm vượt khe, điểm tập kết | Ký hiệu riêng | Không dùng cùng dấu chấm than cho mọi loại điểm |
 | Bãi đáp H | Chữ H trong cùng khung POI trung tính | Vị trí mô phỏng ở trạng thái đề xuất, chưa khảo sát |
-| Vùng nguy cơ sạt lở | Polygon hổ phách, nét đứt, tô nhẹ | Khoanh vùng có căn cứ, lưu nguồn và mức rà soát; chưa phải xác suất sạt lở |
-| Vết sạt lở đã xảy ra | Polygon đỏ đất, tô nhẹ; nét ngắt ngắn khi chưa rà soát, nét liền sau rà soát | Dấu vết được khoanh từ tư liệu hoặc thực địa; mức rà soát hiển thị riêng |
+| Vùng nguy cơ sạt lở | Viền vàng, nét đứt dài, tô trong suốt | Khoanh vùng có căn cứ, lưu nguồn và mức rà soát; chưa phải xác suất sạt lở |
+| Vết sạt lở đã xảy ra | Viền vàng liền, tô trong suốt | Ranh đã khoanh không đổi kiểu nét theo mức rà soát; nguồn và mức rà soát đọc trong hồ sơ vùng |
+| Đường tham chiếu OSM | Nét kem mảnh, viền tối trên cả GIS và 2D/3D | Tư liệu tham chiếu, chưa xác minh khả năng đi qua; không phải hành trình đã chọn |
 | AOI | Ranh giới nét đứt mảnh | Phạm vi đánh giá, không phải phạm vi ngập hoặc footprint DEM |
 
 - POI thường có vùng bấm 28 × 28 px, khung đầu tròn thuôn về mũi ngắn, nền trắng, viền màu trầm mảnh và glyph khoảng 16 px. Cả POI và pin đỏ khi chọn đều neo mũi vào tọa độ. Hover dùng chính ký hiệu và nhãn hiện có. Không thêm vòng hover, màu nền sặc sỡ hoặc hiệu ứng nảy. Glyph được lưu kèm nguồn tại `viewer/vendor/material/ROUNDED_SOURCE.json`; icon công cụ ngoài bản đồ giữ nguyên.
 - Nhãn ưu tiên đối tượng đang chọn, cộng đồng ưu tiên, điểm tập kết, rồi địa danh khác. Đo độ rộng theo font thực, thử nhiều vị trí, ẩn nhãn khi không còn chỗ. Tránh đè marker, nhãn và điều khiển.
-- Điểm chồng nhau dùng glyph của đối tượng đại diện và số nhỏ khi đủ điều kiện đếm; nhóm điểm GIS nhập dùng nét xếp lớp không nền tròn. Ký hiệu nhóm neo tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Bấm mở danh sách chọn hoặc chọn **Xem khu vực này** để tách điểm. Nhóm điểm gần nhau không có nghĩa là các điểm trùng tọa độ.
+- Điểm chồng nhau dùng glyph của đối tượng đại diện và số nhỏ khi đủ điều kiện đếm; nhóm điểm GIS nhập dùng nét xếp lớp không nền tròn. Ký hiệu nhóm neo tại tọa độ một thành viên. Không dời từng điểm sang vị trí giả. Với điểm tình huống, bấm phóng tới các thành viên để tách điểm; chỉ mở danh sách ngắn khi các tọa độ gần trùng nhau hoặc đã tới mức phóng lớn nhất. Danh sách dùng đúng glyph/màu của đối tượng, có số lượng và nút đóng. Tham chiếu hành vi [cụm điểm Google Maps](https://developers.google.com/maps/documentation/javascript/marker-clustering); không biến các điểm khác loại thành một loại sự cố mới.
 - Gom theo loại: điểm cùng loại gộp khi ký hiệu chạm nhau. Khác loại chỉ gộp khi một ký hiệu che tâm ký hiệu kia. Còn lại cả hai cùng hiện, có thể chồng một phần, điểm nguy hiểm vẽ trên và tâm từng ký hiệu vẫn bấm được.
 - Đại diện nhóm theo thứ tự: đang chọn, nguy hiểm đã báo cáo, cộng đồng ưu tiên, nguy hiểm nghi ngờ, điểm tập kết, rồi điểm khác. Sạt lở đã báo cáo không bị gộp dưới cộng đồng. Nhóm hỗn hợp còn chứa điểm nguy hiểm đã báo cáo dùng chấm nhóm màu đỏ, tên đọc cho trình đọc màn hình ghi rõ điều này.
 - Số đếm chỉ dùng trên 2D, khi zoom nhỏ hơn mức 14 và nhóm cùng loại. Nhóm khác loại hoặc trong 3D không hiện tổng số. Đối tượng đang chọn giữ ký hiệu và dấu nhóm. Nếu điểm chọn nằm sau điều khiển, không gắn tên của nó lên điểm khác. Nhóm này xử lý chồng hình trên màn hình, không tính số địa bàn trong vùng hành chính.
@@ -32,7 +43,8 @@ Quy tắc cho bản đồ ứng phó DEAR, đối chiếu proposal trang 2–3.
 - Rê hoặc focus tên đối tượng trong danh sách làm rõ đúng tọa độ trên bản đồ; khi điểm nằm ngoài màn hình, bản đồ đưa điểm vào vùng nhìn. Bấm tên chọn chính đối tượng đó và hiển thị pin đỏ. Nhãn trên bản đồ là vùng bấm của điểm tương ứng.
 - Nhãn có ba chế độ: tự động, chỉ đối tượng đang xem, tắt. Bật lại lớp giữ nguyên tọa độ. Đỉnh hình đo là dữ liệu người dùng vẽ, có thể chỉnh riêng.
 - 2D dùng Bắc địa lý và thước khoảng cách ngang tại tâm bản đồ theo zoom. 3D dùng Bắc lưới, xoay theo camera. Không dùng thước phẳng cho góc nhìn nghiêng.
-- Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Màu xanh đánh dấu phần tuyến đang xem, không che đoạn đỏ hoặc vàng.
+- Đường, vùng và neo điểm 3D lấy độ cao hiển thị trên đúng tam giác của DEM xuất, không dùng mặt nội suy song tuyến tính thay cho mesh. Đường được cắt ở cạnh ô và đường chéo tam giác, giữ nguyên XY và ngắt tại NoData. Các cách biểu diễn đường và tuyến chọn dùng cùng độ nâng hiển thị, không đẩy tuyến lên cao khi chọn. Phép đo độ cao vẫn giữ phương pháp nội suy phân tích đã công bố.
+- Đoạn được kiểm tra có viền sáng, vẫn giữ màu tình trạng. Đỏ tươi đánh dấu phần tuyến đang xem; cảnh báo đoạn bị chặn/chưa rõ vẫn có ưu tiên. Các đoạn nối điểm A/B vào mạng đường giữ nét chấm xanh để phân biệt với đường hành trình thực sự.
 - Nguồn đầy đủ mở từ nút thông tin dưới phải. Credit tối thiểu của nền ngoài vẫn hiện theo yêu cầu của nhà cung cấp.
 
 Phạm vi và cách kiểm tra nằm trong [kiểm tra workspace](../quality/workspace-review.md).
@@ -41,7 +53,7 @@ Chú giải dùng đúng khung POI trắng và nét của marker, không dùng h
 
 ## Ảnh nền và bản đồ tổng quan
 
-Thứ tự hiện hành từ dưới lên: nền khu vực → ảnh/DEM cục bộ → ranh AOI → mạng đường → tuyến chọn → tình trạng đường → điểm đọc/chọn → hình đo và ký hiệu → nhãn/điều khiển. Nét cảnh báo không bị tuyến xanh che. Bật/tắt lớp không thay thứ tự này. Hằng số dùng chung ở `features/map/mapLayerOrder.ts`, 2D dùng panes, 3D dùng render order.
+Thứ tự hiện hành từ dưới lên: nền khu vực → ảnh/DEM cục bộ → ranh AOI → mạng đường → tuyến chọn → tình trạng đường → điểm đọc/chọn → hình đo và ký hiệu → nhãn/điều khiển. Nét cảnh báo không bị tuyến đang xem che. Bật/tắt lớp không thay thứ tự này. Hằng số dùng chung ở `features/map/mapLayerOrder.ts`, 2D dùng panes, 3D dùng render order.
 
 Chọn đường tách khỏi độ dày nét vẽ: vùng bấm 2D rộng 16 px bằng chuột, 24 px khi cảm ứng. 3D có dung sai bắt nét theo pixel. Rê chuột làm rõ đoạn, bấm mở chi tiết và nút mặt cắt. Đây là lựa chọn UX của DEAR, không phải kích thước bắt buộc của một tiêu chuẩn.
 
@@ -151,8 +163,35 @@ Timeline phân biệt bản đánh giá đã công bố với thời điểm nh�
 
 ## Khảo sát Chế Tạo – Lao Chải
 
+Đồng mức 3D là đường cắt lưới DEM ở cao độ thực, giữ cùng cách chia tam giác của
+mesh và không nối qua NoData. Khoảng cao độ điều khiển mật độ nét, không nâng
+độ phân giải nguồn. Nhãn cao độ tránh che khuất địa hình và nhãn đã có. Bật/tắt
+lớp hoặc đổi khoảng cao độ giữ nguyên camera và cơ chế render khi có thay đổi.
+
+SAR GeoTIFF là lớp hiển thị riêng theo CRS/geotransform và kênh nguồn. Giãn
+tương phản không thay giá trị gốc, NoData trong suốt; đây không phải lớp hazard
+hay kết quả phân loại sạt lở. SAR có thể kết hợp với ảnh trực tuyến hoặc tile
+cục bộ mà không thay material hay dữ liệu gốc của mô hình sau mỗi lượt vẽ.
+
+Ảnh Planet chuẩn bị từ GeoTIFF giữ pixel/alpha hợp lệ ở EPSG:32648 bằng WebP không mất dữ liệu; bản EPSG:3857 tái chiếu một lần để đặt ảnh 2D theo cạnh pixel. Lưới 3 m không thay chi tiết gốc khoảng 3,8–3,9 m được ghi trong metadata. Không coi phóng vượt tỷ lệ ảnh là thêm chi tiết, và không dịch OSM hay polygon KML để ép khớp một cảnh ảnh khác ngày.
+
+Ba dải Planet được ghép trên cùng lưới thành một lớp hiển thị; vùng chồng nối chuyển tiếp trong 60 m, chỉ dùng pixel có dữ liệu. Giữ ngày chụp từng dải, không lấp mây hay mở rộng vùng phủ. Khung chữ nhật bao ngoài không đồng nghĩa có ảnh ở mọi pixel; phần ngoài vùng phủ dùng nền khu vực. Mỗi dải gốc và checksum được giữ để truy nguồn.
+
+Tên tuyến dùng địa danh hai đầu “Mù Cang Chải – Chế Tạo”, đoạn được đánh số trong tuyến. Các khoảng cách là ước tính dọc hình học đường từ điểm xuất phát, không phải lý trình cột mốc được xác nhận. Vết sạt 01–03 liên kết mã khảo sát Scar 1–3, không dùng khoảng cách làm danh tính đối tượng. Tên hành lang đánh giá không thể hiện ranh giới hành chính.
+
+Trong 3D, ảnh phân tích là lớp phủ riêng dùng chung hình học DEM, có NoData trong suốt, ở trên cả ảnh nền và ảnh nền chi tiết nhưng dưới vector. Lớp này dùng màu sản phẩm ảnh hiển thị, không trộn UV hoặc thay vật liệu DEM. Hệ tọa độ và nguồn được đối chiếu từ dữ liệu chuẩn bị; xác nhận sai số thực địa cần điểm kiểm chứng.
+
 `CheTao-Landslide-Scars.kml` cung cấp 47 vùng khoanh và 3 điểm khảo sát. Giữ nguyên tọa độ, Z và tên nguồn; tên polygon trống được đánh số để dễ tìm. Ngày khảo sát, sai số ranh giới và liên hệ với đường chưa được cung cấp, nên không suy diễn từ giờ trong tên điểm hoặc thời điểm nhập file. Các vùng ở trạng thái chưa rà soát và không tự đổi tình trạng đường.
 
-Hai DEM có sẵn của Chế Tạo và Lao Chải được ghép theo CRS và gốc tọa độ. Polygon Z=0 trong KML được phủ lên DEM khi hiển thị; dữ liệu gốc vẫn được giữ để xuất lại. Năm lớp ảnh trong KML chỉ chứa GIF trong suốt và liên kết tile riêng của Google Earth, không chứa raster để đưa lên bản đồ.
+Hai DEM có sẵn của Chế Tạo và Lao Chải được ghép theo CRS và gốc tọa độ. Polygon Z=0 trong KML được phủ lên DEM khi hiển thị; dữ liệu gốc vẫn được giữ để xuất lại. Các lớp ảnh trong KML chỉ chứa GIF trong suốt và liên kết tile riêng của Google Earth, không chứa raster để đưa lên bản đồ.
 
 Ảnh trực tuyến thay thế theo từng mức phủ đầy đủ; ảnh chi tiết phủ vùng camera đang nhìn, không phụ thuộc đối tượng được chọn. Cửa sổ ảnh có một hàng tile đệm ngoài vùng nhìn, tối đa 256 tile (64 trên thiết bị cảm ứng), 4 yêu cầu đồng thời; giới hạn kích thước texture theo GPU. Cùng một ảnh hoàn chỉnh được dùng cho các DEM và địa hình nền. Trong lúc tải hoặc khi lỗi mạng, ảnh mức trước vẫn được giữ. Mức zoom tile không phải độ phân giải hay độ chính xác đo đạc. Xoay địa hình do người xem chủ động bật, dừng khi kéo/cuộn/chọn vị trí và tôn trọng thiết lập giảm chuyển động.
+
+
+Khi mở hồ sơ sạt lở, tình trạng ở đầu, ảnh hiện trường ngay bên dưới, tiếp theo là việc cần làm và ảnh hưởng. Nguồn/phân tích mở khi cần; ngày chụp đi cùng ảnh, không dùng ngày nhận báo cáo làm ngày chụp. Điểm khảo sát không có diện tích; diện tích vùng được tính từ polygon nguồn, không gán một diện tích kịch bản cho điểm.
+
+Cân màu trình bày chỉ tác động **nền** theo màu Planet, dùng đường cong gamma RGB đơn điệu. Ảnh Planet, SAR, ảnh đối chiếu và raster nguồn giữ nguyên màu. Mẫu ghép cặp theo tọa độ chỉ lấy thảm xanh ở cả hai ảnh; loại pixel quá sáng/tối và vùng KML có đệm. Đây là lọc RGB thực dụng cho trình bày, không thay mặt nạ mây đa phổ hay chuẩn hóa phản xạ bề mặt. Tham số và checksum nguồn ở `basemap-tone.json`, công cụ chuẩn bị ở `prepare_basemap_tone.py`; nguồn nền tùy chỉnh không áp thông số Esri. Bật/tắt trong bảng lớp. Tham khảo [ArcGIS color balance](https://doc.esri.com/en/arcgis-pro/latest/tool-reference/data-management/color-balance-mosaic-dataset.html) và [Planet Visual/SR](https://docs.planet.com/data/imagery/planetscope/).
+
+Đối chiếu trước/sau dùng hai ảnh Planet gốc đồng tọa độ trên **một** bản đồ với thanh quét, ranh KML giữ nguyên hình học. NoData của mỗi phía để trống, không lấy ảnh bên kia lấp vào. Hiển thị ngày chụp của mỗi dải; ranh chưa có ngày tư liệu không được gắn ngầm vào ngày ảnh đang mở.
+
+`resources/kml/MuCangChai_CheTao_roadPath.kml` là đường tham chiếu 397 đỉnh, không chứa ngày ảnh. `activity_24686163702.kml` là track GPS ngày 09/10/2026, ở phía nam tuyến demo; không phải ranh sạt lở hay thời điểm chụp vệ tinh. Không dùng hai tệp này để xác nhận ngày khoanh ranh trong `CheTao-Landslide-Scars.kml`. Kịch bản ứng phó có vị trí từ nguồn thật nhưng trạng thái đường/báo cáo vẫn là mô phỏng; không coi đó là kiểm chứng hiện trạng.

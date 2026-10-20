@@ -15,10 +15,10 @@ class SnapshotApiTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        folder = self.root / 'scenarios/che-tao/v0.2'
+        folder = self.root / 'scenarios/che-tao/v0.3'
         folder.mkdir(parents=True)
         self.packet = b'{"incident":{"id":"event"}}'
-        self.asset = {'url': '/scenarios/che-tao/v0.2/incident.json', 'byteLength': len(self.packet),
+        self.asset = {'url': '/scenarios/che-tao/v0.3/incident.json', 'byteLength': len(self.packet),
                       'sha256': hashlib.sha256(self.packet).hexdigest()}
         (folder / 'incident.json').write_bytes(self.packet)
         (folder / 'manifest.json').write_text(json.dumps({'incidentId': 'event', 'datasetVersion': 'v1', 'workspace': self.asset}))
@@ -34,7 +34,7 @@ class SnapshotApiTests(unittest.TestCase):
                 self.assertEqual(response.read(), self.packet)
                 self.assertEqual(response.headers['ETag'], '"' + self.asset['sha256'] + '"')
             with urlopen(base + '/workspace-config.json') as response:
-                self.assertEqual(json.load(response), {'dataSource': 'api', 'offline': False, 'manifestUrl': '/scenarios/che-tao/v0.2/manifest.json'})
+                self.assertEqual(json.load(response), {'dataSource': 'api', 'offline': False, 'manifestUrl': '/scenarios/che-tao/v0.3/manifest.json'})
             with self.assertRaises(HTTPError) as error:
                 urlopen(base + '/api/v1/incidents/unknown/workspace')
             self.assertEqual(error.exception.code, 404)
@@ -42,7 +42,7 @@ class SnapshotApiTests(unittest.TestCase):
             server.shutdown(); server.server_close(); thread.join()
 
     def test_refuses_corrupt_snapshot_before_opening_server(self):
-        (self.root / 'scenarios/che-tao/v0.2/incident.json').write_bytes(b'changed data')
+        (self.root / 'scenarios/che-tao/v0.3/incident.json').write_bytes(b'changed data')
         with self.assertRaisesRegex(ValueError, 'checksum'):
             create_server(self.root, port=0)
 
@@ -52,7 +52,7 @@ class SnapshotApiTests(unittest.TestCase):
         thread.start()
         try:
             with urlopen(f'http://127.0.0.1:{server.server_port}/workspace-config.json') as response:
-                self.assertEqual(json.load(response), {'dataSource': 'prepared', 'offline': True, 'manifestUrl': '/scenarios/che-tao/v0.2/manifest.json'})
+                self.assertEqual(json.load(response), {'dataSource': 'prepared', 'offline': True, 'manifestUrl': '/scenarios/che-tao/v0.3/manifest.json'})
         finally:
             server.shutdown(); server.server_close(); thread.join()
 

@@ -19,6 +19,7 @@ export function LandslideAreaEditor({ record, records, roads, locale, disabled, 
   const [draft, setDraft] = useState(current ?? newLandslideArea('potential',networkVersion));
   const [observed, setObserved] = useState(current?.observedAt ? deviceLocal(current.observedAt) : '');
   const [error, setError] = useState(''), [saved, setSaved] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(!current?.sources.length);
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const update = (patch: Partial<LandslideArea>) => { setDraft(v => ({ ...v, ...patch })); setSaved(false); setError(''); };
   const observations = records.filter(r => observationOf(r));
@@ -39,14 +40,17 @@ export function LandslideAreaEditor({ record, records, roads, locale, disabled, 
     return false;
   };
   return <form className="landslide-area-editor" onSubmit={event => {event.preventDefault();save();}}>
-    <h3>{t('Khoanh vùng sạt lở', 'Landslide mapping')}</h3>
+    <h3>{t('Đánh giá vùng', 'Area assessment')}</h3>
     <label className="geodata-field">{t('Loại vùng', 'Area type')}<select disabled={disabled} value={draft.state} onChange={e => {
       const state = e.target.value as LandslideArea['state'];
       update({ state, part: state === 'potential' && draft.part === 'deposit' ? 'undifferentiated' : draft.part, roadLinks: draft.roadLinks.map(l => ({ ...l, relation: state === 'potential' ? 'threatens' : l.relation })) });
     }}>{(['potential', 'occurred'] as const).map(v => <option key={v} value={v}>{areaLabel(v, locale)}</option>)}</select></label>
     <button type="button" className="button" disabled={disabled} onClick={onEditGeometry}>{t('Sửa ranh giới trên bản đồ', 'Edit boundary on map')}</button>
-    <fieldset disabled={disabled}><legend>{t('Nguồn nhận định', 'Evidence sources')}</legend>{areaSources.map(source => <label className="landslide-check" key={source}><input type="checkbox" checked={draft.sources.includes(source)} onChange={e => update({ sources: e.target.checked ? [...draft.sources, source] : draft.sources.filter(s => s !== source) })}/>{areaLabel(source, locale)}</label>)}</fieldset>
-    <label className="geodata-field">{t('Căn cứ khoanh vùng', 'Mapping basis')}<textarea required disabled={disabled} rows={3} maxLength={2000} value={draft.basis} onChange={e => update({ basis: e.target.value })} placeholder={t('Mô tả dấu vết, vết nứt hoặc dấu hiệu được phản ánh.', 'Describe mapped scars, cracks or reported warning signs.')}/></label>
+    <details className="landslide-source-editor" open={sourcesOpen} onToggle={event => setSourcesOpen(event.currentTarget.open)}>
+      <summary>{t('Nguồn dữ liệu', 'Evidence source')}{draft.sources.length > 0 && <small>{draft.sources.map(source => areaLabel(source, locale)).join(', ')}</small>}</summary>
+      <fieldset disabled={disabled}><legend className="visually-hidden">{t('Nguồn nhận định', 'Evidence sources')}</legend>{areaSources.map(source => <label className="landslide-check" key={source}><input type="checkbox" checked={draft.sources.includes(source)} onChange={e => update({ sources: e.target.checked ? [...draft.sources, source] : draft.sources.filter(s => s !== source) })}/><span>{areaLabel(source, locale)}</span></label>)}</fieldset>
+    </details>
+    <label className="geodata-field">{t('Căn cứ khoanh vùng', 'Mapping basis')}<textarea required disabled={disabled} rows={3} maxLength={2000} value={draft.basis} onChange={e => update({ basis: e.target.value })} placeholder={t('Dấu vết hoặc tư liệu dùng để khoanh vùng', 'Evidence used to map this area')}/></label>
     <label className="geodata-field">{t('Thời điểm tư liệu (nếu biết)', 'Evidence time (if known)')}<input type="datetime-local" disabled={disabled} value={observed} onChange={e => { setObserved(e.target.value); setSaved(false); }}/></label>
     {draft.sources.includes('imagery') && <><label className="geodata-field">{t('Mã ảnh / tài liệu ảnh', 'Image ID / imagery reference')}<input required maxLength={500} disabled={disabled} value={draft.imageReference} onChange={e => update({ imageReference: e.target.value })}/></label><label className="geodata-field">{t('Độ phân giải ảnh (m, nếu biết)', 'Image resolution (m, if known)')}<input type="number" min="0.01" step="any" disabled={disabled} value={draft.imageResolutionM ?? ''} onChange={e => update({ imageResolutionM: e.target.value ? Number(e.target.value) : null })}/></label></>}
     <details><summary>{t('Ranh giới và rà soát', 'Extent and review')}</summary>
@@ -60,13 +64,13 @@ export function LandslideAreaEditor({ record, records, roads, locale, disabled, 
     </details>}
     <details open={draft.roadLinks.length > 0}><summary>{t('Đoạn đường liên quan', 'Linked road sections')} ({draft.roadLinks.length})</summary>
       {draft.roadLinks.length > 0 && draft.networkVersion !== networkVersion && <p className="field-error">{areaLabel('network',locale)} <button type="button" className="text-button" onClick={() => update({roadLinks:[],networkVersion})}>{t('Chọn lại liên kết', 'Reassess road links')}</button></p>}
-      <p className="geodata-hint">{t('Liên kết vùng sườn dốc với đoạn đường có thể bị ảnh hưởng. Trạng thái đi lại được cập nhật trong hồ sơ đoạn đường.', 'Link the slope area to exposed road sections. Update passability in the road record.')}</p>
+      <p className="geodata-hint">{t('Tình trạng đi lại được sửa trong hồ sơ đường.', 'Edit passability in the road record.')}</p>
       {roads.map(road => { const entry = draft.roadLinks.find(l => l.roadId === road.id), length = roadLengthM(road); return <div className="landslide-road-edit" key={road.id}>
         <label className="landslide-check"><input type="checkbox" disabled={disabled || (!!draft.roadLinks.length && draft.networkVersion !== networkVersion)} checked={!!entry} onChange={e => update({ networkVersion, roadLinks: e.target.checked ? [...draft.roadLinks, { roadId: road.id, relation: 'threatens' }] : draft.roadLinks.filter(l => l.roadId !== road.id) })}/>{road.name[locale === 'vi' ? 0 : 1]}</label>
         {entry && <><label className="geodata-field">{t('Quan hệ với vùng', 'Relation to area')}<select aria-label={t('Quan hệ với vùng', 'Relation to area')} disabled={disabled} value={entry.relation} onChange={e => link(road.id, { relation: e.target.value as 'threatens' | 'affected' })}><option value="threatens">{t('Có thể ảnh hưởng', 'Potentially exposed')}</option>{draft.state === 'occurred' && <option value="affected">{t('Đã có ảnh hưởng', 'Impact recorded')}</option>}</select></label>
           <label className="landslide-check"><input type="checkbox" disabled={disabled} checked={entry.fromM !== undefined} onChange={e => link(road.id, { fromM: e.target.checked ? 0 : undefined, toM: e.target.checked ? Math.floor(length) : undefined })}/>{t('Chỉ một phần đoạn đường', 'Only part of this section')}</label>
           {onPickRoadInterval && <button type="button" className="button" disabled={disabled} onClick={() => onPickRoadInterval(road.id)}>{t('Chọn đầu và cuối trên bản đồ', 'Pick section ends on map')}</button>}
-          {entry.fromM !== undefined && <><div className="landslide-chainage"><label>{t('Từ (m)', 'From (m)')}<input type="number" min={0} max={length} step="any" disabled={disabled} value={entry.fromM} onChange={e => link(road.id, { fromM: Number(e.target.value) })}/></label><label>{t('Đến (m)', 'To (m)')}<input type="number" min={0} max={length} step="any" disabled={disabled} value={entry.toM} onChange={e => link(road.id, { toM: Number(e.target.value) })}/></label></div><p className="geodata-hint">{t('Tính từ đầu đoạn đường', 'Measured from the start of this road section')} · 0–{Math.floor(length)} m</p></>}
+          {entry.fromM !== undefined && <><div className="landslide-chainage"><label>{t('Từ (m)', 'From (m)')}<input type="number" min={0} max={length} step="any" disabled={disabled} value={entry.fromM} onChange={e => link(road.id, { fromM: Number(e.target.value) })}/></label><label>{t('Đến (m)', 'To (m)')}<input type="number" min={0} max={length} step="any" disabled={disabled} value={entry.toM} onChange={e => link(road.id, { toM: Number(e.target.value) })}/></label></div><p className="geodata-hint">{t('Tính từ đầu đoạn đường, trong khoảng', 'Measured from the start of this road section, within')} 0–{Math.floor(length)} m</p></>}
           {onRoad && <button type="button" className="text-button" onClick={() => {if(save())onRoad(road.id);}}>{t('Lưu vùng và mở đoạn đường', 'Save area and open road section')}</button>}
         </>}
       </div>; })}

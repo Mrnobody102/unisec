@@ -24,10 +24,14 @@ type Props = {
   hasHLZData?: boolean; gisObservations?: ObservationKind[];
   affectedOnly?: boolean;
   mappedAreas?: GeometryRecord[];
+  timelineExpanded?: boolean; onToggleTimeline?: () => void;
+  headerCollapsed?: boolean; onShowHeader?: () => void;
+  journeyControl?: ReactNode; flyoverControl?: ReactNode;
   children?: ReactNode; onMeasure: () => void; measuring: boolean; onDraw: () => void; drawing: boolean;
 };
 
-export function MapControls({ orbiting = false, onToggleOrbit, mappedAreas = [], locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
+export function MapControls({ orbiting = false, onToggleOrbit, mappedAreas = [], locale, mapMode, onChangeMapMode, onZoomIn, onZoomOut, onResetView, gisObservations=[], onOpenGis, onOpenLayers, layersOpen, layers, hasSelectedRoute, hazards, hasHLZData, affectedOnly, timelineExpanded, onToggleTimeline, headerCollapsed, onShowHeader, journeyControl, flyoverControl, children, onMeasure, measuring, onDraw, drawing, panelCollapsed, onTogglePanel, locating, onLocation }: Props): JSX.Element {
+  const [toolsExpanded, setToolsExpanded] = useState(false);
   const [legendExpanded, setLegendExpanded] = useState(false);
   const [legendMinimized, setLegendMinimized] = useState(true);
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
@@ -37,7 +41,7 @@ export function MapControls({ orbiting = false, onToggleOrbit, mappedAreas = [],
   if (layers.aoi) legend.push({ kind: 'aoi', label: t('Vùng đánh giá', 'Assessment area') });
   if ((layers.roads || routeVisible) && layers.status) legend.push({ kind: 'blocked', label: t('Đường bị chặn', 'Blocked road') }, { kind: 'uncertain', label: t('Đường cần xác minh', 'Road to verify') });
   if (routeVisible) legend.push({ kind: 'selected', label: t('Tuyến đang xem', 'Selected route') });
-  if (layers.communities) legend.push({ kind: 'community', symbol: 'community', label: t('Thôn, bản', 'Community') }, { kind: 'priority', symbol: 'community', label: t('Ưu tiên cứu hộ', 'Rescue priority') });
+  if (layers.communities) legend.push({ kind: 'community', symbol: 'community', label: t('Địa bàn dân cư', 'Community') }, { kind: 'priority', symbol: 'community', label: t('Ưu tiên cứu hộ', 'Rescue priority') });
   if (layers.landslide && hazards.some(h => h.kind === 'landslide' && h.observation === 'reported')) legend.push({ kind: 'landslide', symbol: 'landslide', label: t('Điểm sạt lở', 'Reported landslide') });
   if (layers.landslide && hazards.some(h => h.kind === 'landslide' && h.observation === 'suspected')) legend.push({ kind: 'suspected', symbol: 'landslide', label: t('Nghi sạt lở', 'Suspected landslide') });
   if ((layers.crossings ?? layers.status) && hazards.some(h => h.kind === 'bridge')) legend.push({ kind: 'bridge', symbol: 'bridge', label: t('Cầu cần xác minh', 'Bridge to verify') });
@@ -57,15 +61,24 @@ export function MapControls({ orbiting = false, onToggleOrbit, mappedAreas = [],
     if (observed) legend.push({kind:'observed-area', label:t('Vết sạt lở đã rà soát','Reviewed landslide extent'), area:landslideAreaStyle(observed)});
     if (unreviewed) legend.push({kind:'unreviewed-area', label:t('Vết sạt lở chưa rà soát','Unreviewed landslide extent'), area:landslideAreaStyle(unreviewed)});
   }
-  const visibleLegend = legendExpanded ? legend : legend.filter(item => ['network', 'blocked', 'uncertain', 'selected', 'field-warning', 'field-survey'].includes(item.kind));
+  const visibleLegend = legendExpanded ? legend : legend.filter(item => ['network', 'blocked', 'uncertain', 'selected', 'potential-area', 'observed-area', 'unreviewed-area', 'field-warning', 'field-survey'].includes(item.kind));
 
   return <>
     <div className="map-toolbar" role="group" aria-label={t('Công cụ bản đồ', 'Map tools')}>
       <button className="icon-button map-panel-toggle" aria-controls="response-panel" aria-expanded={!panelCollapsed} onClick={onTogglePanel} aria-label={panelCollapsed ? t('Mở bảng thông tin', 'Show information panel') : t('Ẩn bảng thông tin', 'Hide information panel')} title={panelCollapsed ? t('Mở bảng thông tin', 'Show information panel') : t('Ẩn bảng thông tin', 'Hide information panel')}><UiIcon name={panelCollapsed ? 'panelOpen' : 'panelClose'}/></button>
+      {headerCollapsed && <button className="icon-button map-header-restore" onClick={onShowHeader} aria-label={t('Hiện tiêu đề', 'Show header')} title={t('Hiện tiêu đề', 'Show header')}><UiIcon name="expand"/></button>}
       {children}
+      <div className="map-tool-group map-primary-actions">
+        <button className="icon-button map-layer-trigger map-layer-launcher" data-map-layers-trigger aria-label={t('Lớp bản đồ', 'Layers')} title={t('Lớp bản đồ', 'Layers')} aria-expanded={layersOpen} aria-controls="map-layers-panel" onClick={onOpenLayers}><UiIcon name="layers"/><span>{t('Lớp', 'Layers')}</span></button>
+        <button className="icon-button map-tool-toggle" aria-label={t('Công cụ bổ sung', 'Additional map tools')} title={t('Công cụ bổ sung', 'Additional map tools')} aria-expanded={toolsExpanded} aria-controls="map-advanced-tools" onClick={() => setToolsExpanded(open => !open)}><UiIcon name="settings"/><span>{t('Công cụ', 'Tools')}</span></button>
+        {onToggleTimeline && <button className="icon-button map-timeline-toggle" aria-label={t('Diễn biến sự kiện', 'Incident timeline')} title={t('Diễn biến sự kiện', 'Incident timeline')} aria-expanded={timelineExpanded} aria-controls="assessment-timeline" onClick={onToggleTimeline}><UiIcon name="history"/><span>{t('Diễn biến', 'Timeline')}</span></button>}
+      </div>
+    </div>
+    <div className="map-advanced-tools" id="map-advanced-tools" role="group" aria-label={t('Công cụ bổ sung', 'Additional map tools')} hidden={!toolsExpanded}>
+      {journeyControl}
+      {flyoverControl}
       {/* Data opens layers and the GIS workspace; tools take map input until closed. */}
       <div className="map-tool-group" role="group" aria-label={t('Dữ liệu', 'Data')}>
-        <button className="icon-button map-layer-trigger map-layer-launcher" data-map-layers-trigger aria-label={t('Lớp bản đồ', 'Layers')} title={t('Lớp bản đồ', 'Layers')} aria-expanded={layersOpen} aria-controls="map-layers-panel" onClick={onOpenLayers}><UiIcon name="layers"/><span>{t('Lớp', 'Layers')}</span></button>
         <button className="icon-button map-gis-trigger" aria-label={t('Dữ liệu GIS','GIS data')} title={t('Dữ liệu GIS','GIS data')} onClick={onOpenGis}><UiIcon name="polygon"/><span>GIS</span></button>
       </div>
       <div className="map-tool-group" role="group" aria-label={t('Đo và vẽ', 'Measure and draw')}>

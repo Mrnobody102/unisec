@@ -1,0 +1,5 @@
+/* Hazard detail geometry. Its rows, impact chain and field-check card follow styles/sheet.css. */
+.hazard-detail { display: block; }
+
+.hazard-basis > summary { cursor:pointer; color:var(--ws-muted); font-size:13px; font-weight:600; }
+.hazard-basis[open] > summary { margin-bottom:10px; }

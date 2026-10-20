@@ -1,7 +1,9 @@
+from network_browser_fixture import install_network_fixture
 """Browser regression for the prepared incident workspace.
 
 Requires Playwright for Python and a Chromium browser. Run against a built app.
 """
+from gis_browser_actions import map_tool
 import argparse
 import json
 from pathlib import Path
@@ -43,6 +45,13 @@ def run(url, chrome, captures, prepared=False):
           HTMLCanvasElement.prototype.getContext = function(type, ...rest) {
             return type === 'webgl' || type === 'webgl2' ? null : original.call(this, type, ...rest);
           };""")
+        if prepared:
+            actual=context.new_page();actual.goto(url+'/?map=2d&demoRole=manager')
+            expect(actual.locator('[data-map-object="community:CT"]')).to_be_visible(timeout=30000)
+            expect(actual.locator('img[alt="Ảnh phân tích"]')).to_be_visible(timeout=30000)
+            expect(actual.locator('.landslide-area')).to_have_count(47)
+            actual.close()
+        install_network_fixture(context,url)
         page = context.new_page()
         errors, requests = [], []
         page.on('pageerror', lambda error: errors.append(str(error)))
@@ -75,9 +84,10 @@ def run(url, chrome, captures, prepared=False):
         page.wait_for_function("document.querySelector('.leaflet-image-layer')?.complete")
         page.get_by_role('separator').dblclick()
 
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
         expect(page.locator('.assessment-action')).to_contain_text('Kiểm tra')
-        expect(page.locator('.route-travel-estimate')).to_contain_text('40')
+        expect(page.locator('.route-travel-estimate')).to_contain_text('170–290')
         if captures:
             page.screenshot(path=str(captures / 'workspace-summary.png'))
         expect(page.locator('.route-card')).to_have_count(2)
@@ -112,6 +122,9 @@ def run(url, chrome, captures, prepared=False):
             page.screenshot(path=str(captures / 'workspace-routes.png'), animations='disabled')
         page.get_by_role('button', name='Mặt cắt địa hình', exact=True).click()
         expect(page.locator('.profile-svg')).to_contain_text('km')
+        # The rich fixture partly extends beyond the prepared DEM. Select a covered run.
+        covered = page.locator('.profile-svg .profile-line').first.evaluate("p => {const q=p.getPointAtLength(p.getTotalLength()/2);const s=new DOMPoint(q.x,q.y).matrixTransform(p.getScreenCTM());return {x:s.x,y:s.y};}")
+        page.mouse.move(covered['x'],covered['y'])
         slider = page.locator('#profile-dist-slider'); slider.focus(); page.keyboard.press('ArrowRight')
         expect(page.locator('.map-profile-point-2d')).to_have_count(1)
         cursor = page.locator('.map-profile-point-2d').get_attribute('d')
@@ -160,20 +173,24 @@ def run(url, chrome, captures, prepared=False):
             page.screenshot(path=str(captures / 'workspace-road-action.png'))
         page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
         page.get_by_role('button', name='Xem toàn khu vực', exact=True).click()
-        for _ in range(7):
+        for _ in range(16):
             page.get_by_role('button', name='Thu nhỏ', exact=True).click()
             page.wait_for_timeout(150)
         group = page.locator('.map-pin.is-cluster:visible,.map-pin.has-overlap:visible').first
         expect(group).to_be_visible()
         check_symbols(page)
         assert page.locator('.map-pin.has-overlap:visible .map-pin-count:visible').count() == 0
+        action = group.get_attribute('data-group-action')
         group.click()
-        expect(page.locator('.map-object-chooser')).to_be_visible()
-        page.keyboard.press('Escape'); expect(page.locator('.map-object-chooser')).to_have_count(0)
+        if action == 'zoom':
+            expect(page.locator('.map-object-chooser')).to_have_count(0)
+        else:
+            expect(page.locator('.map-object-chooser')).to_be_visible()
+            page.keyboard.press('Escape'); expect(page.locator('.map-object-chooser')).to_have_count(0)
 
         # Measurement must consume map clicks, never select response objects.
         page.get_by_role('button', name='Xem toàn khu vực', exact=True).click()
-        page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
+        map_tool(page, 'Đo trên bản đồ 2D').click()
         panel = page.locator('.map-measure-panel')
         expect(panel).to_be_visible()
         expect(page.get_by_role('button', name='Chuyển sang 3D')).to_be_enabled()
@@ -222,23 +239,27 @@ def run(url, chrome, captures, prepared=False):
         # Verify the complete report flow, AOI inspection and recalculated route.
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
+        install_network_fixture(context,url)
         page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.get_by_role('button', name='Xem phạm vi trên bản đồ', exact=True).click()
-        expect(page.locator('#response-details')).to_contain_text('201.3 km')
+        expect(page.locator('#response-details')).to_contain_text('86,2 km²')
         page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         expect(page.locator('.notification-popover')).to_be_visible()
         page.get_by_role('button', name='Mở sự kiện', exact=True).click()
-        expect(page.locator('.incident-priority-row').first).to_be_visible()
-        page.locator('.incident-priority-row').first.click()
+        expect(page.locator('.incident-overview-heading')).to_be_visible()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
+        page.get_by_role('button',name='Diễn biến sự kiện',exact=True).click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Xem chi tiết', exact=True).click()
-        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('14:02')
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Nậm Khắt')
-        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:45')
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('14:16')
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
         page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
@@ -246,7 +267,7 @@ def run(url, chrome, captures, prepared=False):
             page.locator('.export-formats summary').click()
             page.get_by_role('button', name='Tải dữ liệu JSON', exact=True).click()
         snapshot = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
-        assert '09:45' in snapshot['asOf'] and snapshot['route']['status'] == 'blocked'
+        assert snapshot['asOf'] == '2026-09-12T14:16:00+07:00' and snapshot['route']['status'] == 'blocked'
         assert 'eta' not in snapshot['route'] and snapshot['appliedReportIds']
         expect(page.locator('.decision-export-preview')).to_be_visible(timeout=25000)
         if captures:
@@ -255,14 +276,14 @@ def run(url, chrome, captures, prepared=False):
             download.value.save_as(str(captures / 'decision-map-updated.png'))
         page.keyboard.press('Escape')
         page.get_by_role('button', name='Sự kiện đang xem', exact=True).click(); page.locator('.header-context-popover').get_by_role('button', name='Nguồn dữ liệu', exact=True).click()
-        expect(page.locator('.data-source-row').filter(has_text='Phương án tiếp cận').locator('time')).to_have_text('09:45')
+        expect(page.locator('.data-source-row').filter(has_text='Phương án tiếp cận').locator('time')).to_have_text('14:16')
         page.keyboard.press('Escape')
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
         page.locator('.workspace-nav button').nth(1).click()
         page.locator('#response-panel .decision-tabs button').nth(1).click()
         page.get_by_role('searchbox', name='Tìm đường hoặc điểm ảnh hưởng').fill('U-1')
         page.locator('.impact-row').click()
-        expect(page.locator('#response-details')).to_contain_text('Có đoạn đường bị chặn')
+        expect(page.locator('#response-details')).to_contain_text('Bị chặn')
         expect(page.locator('#response-details')).not_to_contain_text('Mã tham chiếu')
         page.get_by_role('button', name='Đường vòng qua sườn núi, đoạn vượt khe').click()
         expect(page.locator('#response-details h1')).to_have_text('Đường vòng qua sườn núi, đoạn vượt khe')
@@ -273,6 +294,7 @@ def run(url, chrome, captures, prepared=False):
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/workspace-config.json', lambda route: route.fulfill(content_type='application/json', body='{"dataSource":"api"}'))
         context.route('**/api/v1/incidents/*/workspace', lambda route: route.fulfill(status=503, body='unavailable'))
+        install_network_fixture(context,url)
         page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.get_by_role('alert').get_by_role('heading', level=1)).to_have_text('Chưa tải được dữ liệu', timeout=25000)
         expect(page.locator('.sidebar')).not_to_contain_text('Nậm Khắt')
@@ -282,9 +304,11 @@ def run(url, chrome, captures, prepared=False):
         # A damaged/missing GLB must not remove the independent 2D workspace.
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) and not '.glb' in route.request.url else route.abort())
+        install_network_fixture(context,url)
         page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
         page.get_by_role('button', name='Chuyển sang 3D', exact=True).click()
         expect(page.locator('.notice-toast')).to_contain_text('2D', timeout=25000)
         expect(page.locator('.map-2d-surface')).to_be_visible()
@@ -298,9 +322,11 @@ def run(url, chrome, captures, prepared=False):
         # Losing an active GPU context also falls back without losing selection.
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
+        install_network_fixture(context,url)
         page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
         page.get_by_role('button', name='Chuyển sang 3D', exact=True).click()
         expect(page.locator('canvas.terrain-canvas')).to_be_visible(timeout=25000)
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)

@@ -17,6 +17,7 @@ export type ScreenMarkerOptions = {
   appearance?: import('../features/map/layerAppearance').LayerAppearance;
   onPreviewFocus?: (point:{x:number;y:number})=>void;
   onExpandGroup?: (points: Array<{ x: number; y: number }>) => void;
+  canExpandGroup?: () => boolean;
 };
 type Marker = {
   id: string; hit: OverlayHit; name: string; symbol: MapSymbolName;
@@ -46,6 +47,8 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   let chooserTrigger: HTMLButtonElement | null = null;
   let chooserKey = '';
   let chooserAnchor = { x: 0, y: 0 };
+  const groupCanExpand = (members: Marker[]) => Boolean(options.onExpandGroup && options.canExpandGroup?.() !== false &&
+    members.some(member => Math.hypot(member.point.x - members[0].point.x, member.point.y - members[0].point.y) > 1));
   const closeChooser = (restoreFocus = false): void => {
     chooser?.remove(); chooser = null; chooserKey = '';
     chooserTrigger?.setAttribute('aria-expanded', 'false');
@@ -58,21 +61,23 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     chooserTrigger = marker.button; chooserKey = members.map(m => m.id).sort().join(',');
     marker.button.setAttribute('aria-expanded', 'true');
     chooser = document.createElement('div');
-    chooser.className = 'map-object-chooser'; chooser.setAttribute('role', 'group');
+    chooser.className = 'map-object-chooser'; chooser.setAttribute('role', 'dialog');
+    chooser.setAttribute('aria-modal', 'false');
     chooser.setAttribute('aria-label', locale === 'vi' ? 'Chọn đối tượng' : 'Choose an object');
     const heading = document.createElement('div'); heading.className = 'map-object-chooser-heading';
-    heading.textContent = locale === 'vi' ? 'Các điểm trong nhóm' : 'Points in this group';
+    const title = document.createElement('span');
+    title.textContent = locale === 'vi' ? `${members.length} đối tượng tại đây` : `${members.length} features here`;
+    const close = document.createElement('button'); close.type = 'button'; close.className = 'map-chooser-close';
+    close.setAttribute('aria-label', locale === 'vi' ? 'Đóng danh sách điểm' : 'Close point list');
+    close.textContent = '×'; close.onclick = event => { event.stopPropagation(); closeChooser(true); };
+    heading.append(title, close);
     chooser.appendChild(heading);
-    if (options.onExpandGroup && members.some(member => Math.hypot(member.point.x - members[0].point.x, member.point.y - members[0].point.y) > 1)) {
-      const expand = document.createElement('button'); expand.type = 'button';
-      expand.className = 'map-chooser-expand';
-      expand.textContent = locale === 'vi' ? 'Xem khu vực này' : 'View this area';
-      expand.onclick = () => { closeChooser(); options.onExpandGroup?.(members.map(member => member.point)); };
-      chooser.appendChild(expand);
-    }
     members.forEach(member => {
       const choice = document.createElement('button'); choice.type = 'button';
+      choice.className = 'map-object-choice';
       const icon = document.createElement('span'); icon.innerHTML = mapSymbolSvg(member.symbol);
+      icon.style.color = getComputedStyle(member.button).getPropertyValue('--pin');
+      icon.setAttribute('aria-hidden', 'true');
       const name = document.createElement('span'); name.textContent = member.name;
       choice.append(icon, name); choice.setAttribute('aria-pressed', String(member.selected));
       choice.addEventListener('click', event => { event.stopPropagation(); closeChooser(); options.onSelect(member.hit); });
@@ -80,10 +85,11 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     });
     for (const type of ['pointerdown', 'mousedown', 'touchstart', 'mousemove', 'dblclick', 'wheel'])
       chooser.addEventListener(type, event => event.stopPropagation());
-    layer.appendChild(chooser);
     const width = Math.min(280, host.clientWidth - 16);
-    const height = Math.min(chooser.scrollHeight, host.clientHeight - 16);
-    chooser.style.width = `${width}px`; chooser.style.maxHeight = `${height}px`;
+    chooser.style.width = `${width}px`;
+    layer.appendChild(chooser);
+    const height = Math.min(chooser.scrollHeight, 300, host.clientHeight - 16);
+    chooser.style.maxHeight = `${height}px`;
     const r = marker.button.getBoundingClientRect(), area = host.getBoundingClientRect();
     const x = r.x - area.x, y = r.y - area.y;
     chooserAnchor = {x:x+r.width/2,y:y+poiMetrics(r.width,marker.selected).tip};
@@ -93,7 +99,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     const position = candidates.find(p => inside(p) && !protectedRects.some(rect => overlaps({ ...p, width, height }, rect))) ??
       { x: Math.max(8, Math.min(x, host.clientWidth - width - 8)), y: Math.max(8, Math.min(y + r.height + 8, host.clientHeight - height - 8)) };
     chooser.style.left = `${position.x}px`; chooser.style.top = `${position.y}px`;
-    chooser.querySelector('button')?.focus();
+    chooser.querySelector<HTMLButtonElement>('.map-object-choice')?.focus();
   };
   const dismiss = (event: PointerEvent): void => {
     if (chooser && !chooser.contains(event.target as Node) && !chooserTrigger?.contains(event.target as Node)) closeChooser();
@@ -125,7 +131,11 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       event.stopPropagation();
       const members = groups.get(button.dataset.mapObject!) ?? [];
       if(event.target instanceof Element && event.target.closest('.map-pin-label')) options.onSelect(hit);
-      else if (members.length > 1) openChooser(markers.find(m => m.button === button)!, members);
+      else if (members.length > 1) {
+        if (groupCanExpand(members)) {
+          closeChooser(); options.onExpandGroup?.(members.map(member => member.point));
+        } else openChooser(markers.find(m => m.button === button)!, members);
+      }
       else options.onSelect(hit);
     });
     for (const type of ['pointerdown', 'mousedown', 'touchstart', 'dblclick'])
@@ -177,8 +187,8 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
   const controlRects = (): { controls: ScreenRect[]; labels: ScreenRect[] } => {
     const hostRect = host.getBoundingClientRect();
     const workspace = host.closest('.geodata-workspace, .workspace') ?? host.closest('.map-area') ?? host.parentElement;
-    const entries = Array.from(workspace?.querySelectorAll<HTMLElement>('#response-details,.geodata-detail,.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-tool-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin,.map-selected-reference, .notice-toast,.citizen-map-tools,.citizen-map-layers,.citizen-area-info,.citizen-pick-hint,.terrain-area-label') ?? [])
-      .filter(el => el.getBoundingClientRect().height > 0).map(el => {
+    const entries = Array.from(workspace?.querySelectorAll<HTMLElement>('#response-details,.geodata-detail,.geodata-map-toolbar,.geodata-map-zoom,.geodata-basemap,.scenario-card,.map-tools,.map-toolbar,.map-advanced-tools,.map-search-results,.map-help [data-popover],.map-bottom-bar,.map-reference,.basemap-status,.layers-panel,.profile-panel,.map-attribution,.map-source-popover,.map-tool-panel,.road-journey-panel,.map-location-panel,.map-measure-label,.map-panel-toggle,.revision-notice,.map-overview,.leaflet-tooltip,.leaflet-popup,.field-map-card,.field-selected-pin,.map-selected-reference, .notice-toast,.citizen-map-tools,.citizen-map-layers,.citizen-area-info,.citizen-pick-hint,.terrain-area-label') ?? [])
+      .filter(el => !el.classList.contains('terrain-area-label') && !el.querySelector('.landslide-map-label') && el.getBoundingClientRect().height > 0).map(el => {
         const r = el.getBoundingClientRect();
         return { tooltip: el.classList.contains('leaflet-tooltip'), rect: { x: r.x - hostRect.x, y: r.y - hostRect.y, width: r.width, height: r.height } };
       });
@@ -191,7 +201,8 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
     const { controls, labels: externalLabels } = controlRects();
     const positions = markers.flatMap(marker => {
       const position = project(marker.point);
-      return position ? [{ id: marker.id, ...position, priority: marker.priority, selected: marker.selected, category: marker.symbol }] : [];
+      return position ? [{ id: marker.id, ...position, priority: marker.priority, selected: marker.selected, category: marker.symbol,
+        featured: marker.hit.type === 'hazard' && marker.labelEligible }] : [];
     });
     const layout = layoutMarkerGroups(positions, width, height, controls);
     const pp=previewPoint?project(previewPoint):null;
@@ -243,13 +254,14 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       marker.button.classList.toggle('has-hazard', hiddenHazard);
       const accessibleName = clustered ? (presentation === 'cluster'
         ? `${group.members.length} ${categoryNames[marker.symbol][locale === 'vi' ? 0 : 1]}`
-        : `${display.name}. ${hiddenHazard ? (locale === 'vi' ? 'Có điểm nguy hiểm đã báo cáo trong nhóm. ' : 'Includes a reported hazard. ') : ''}${locale === 'vi' ? 'Mở danh sách điểm trong nhóm' : 'Browse points in this group'}`) : marker.name;
+        : `${display.name}. ${hiddenHazard ? (locale === 'vi' ? 'Có điểm nguy hiểm đã báo cáo trong nhóm. ' : 'Includes a reported hazard. ') : ''}${groupCanExpand(members) ? (locale === 'vi' ? 'Phóng để tách điểm' : 'Zoom to separate points') : (locale === 'vi' ? 'Chọn đối tượng tại đây' : 'Choose a feature here')}`) : marker.name;
       if (marker.button.getAttribute('aria-label') !== accessibleName) marker.button.setAttribute('aria-label', accessibleName);
       const description = clustered ? group.members.map(p => markerById.get(p.id)!.name).join(', ') : marker.name;
       if (marker.button.getAttribute('aria-description') !== description) marker.button.setAttribute('aria-description', description);
       marker.button.classList.toggle('is-preview', previewGroup?.anchor.id === marker.id);
-      if (clustered) {
-        if (!marker.button.hasAttribute('aria-haspopup')) marker.button.setAttribute('aria-haspopup', 'true');
+      marker.button.dataset.groupAction = clustered ? (groupCanExpand(members) ? 'zoom' : 'choose') : 'select';
+      if (clustered && !groupCanExpand(members)) {
+        if (marker.button.getAttribute('aria-haspopup') !== 'dialog') marker.button.setAttribute('aria-haspopup', 'dialog');
         const expanded = String(chooserTrigger === marker.button);
         if (marker.button.getAttribute('aria-expanded') !== expanded) marker.button.setAttribute('aria-expanded', expanded);
       }

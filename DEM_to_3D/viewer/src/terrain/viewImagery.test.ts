@@ -85,3 +85,49 @@ it('does not starve image requests during continuous camera motion',async()=>{
   expect(load).toHaveBeenCalled();
  }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
 });
+
+it('prepares the entire film corridor, holds it through camera motion and resumes after exit',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('document',{documentElement:{lang:'en'},createElement:()=>({setAttribute:vi.fn(),remove:vi.fn()})});
+ const make=()=>({zoom:16,minX:0,minY:0,maxX:2,maxY:2,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()});
+ const viewImage=make(),filmImage=make(),nextImage=make(),publish=vi.fn();
+ const load=vi.spyOn(loader,'loadImageryAtlas').mockResolvedValueOnce(viewImage).mockResolvedValueOnce(filmImage).mockResolvedValueOnce(nextImage);
+ const view=createViewImagery(()=>[{x:1,y:1,z:18}],4,publish,vi.fn());
+ try {
+  view.setEnabled(true);await vi.advanceTimersByTimeAsync(250);
+  const corridor=[{x:10,y:12,z:16},{x:11,y:12,z:16}];await view.prepare(corridor);
+  expect(load.mock.calls[1][0]).toEqual(corridor);expect(publish).toHaveBeenLastCalledWith(filmImage);
+  for(let i=0;i<5;i++){view.schedule();await vi.advanceTimersByTimeAsync(500);}
+  expect(load).toHaveBeenCalledTimes(2);expect(filmImage.dispose).not.toHaveBeenCalled();
+  view.release();await vi.advanceTimersByTimeAsync(250);
+  expect(publish).toHaveBeenLastCalledWith(nextImage);expect(filmImage.dispose).toHaveBeenCalledOnce();
+ }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
+});
+
+it('keeps distant mountains from forcing a coarse texture on the whole foreground',()=>{
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000));mesh.rotation.x=-Math.PI/2;
+ const camera=new THREE.PerspectiveCamera(45,1.6,1,100000);camera.position.set(0,500,1000);camera.lookAt(0,400,-1000);
+ const all=visibleImageryPoints(metadata,new THREE.Matrix4(),camera,[mesh]);
+ const near=visibleImageryPoints(metadata,new THREE.Matrix4(),camera,[mesh],5000);
+ expect(near.length).toBeGreaterThan(0);
+ expect(Math.abs(near[1].y-near[0].y)).toBeLessThan(Math.abs(all[1].y-all[0].y));
+ expect(camera.far).toBe(100000);
+ mesh.geometry.dispose();(mesh.material as THREE.Material).dispose();
+});
+
+it('uses native detail pages over the retained corridor and releases them when the film ends',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('document',{documentElement:{lang:'en'},createElement:()=>({setAttribute:vi.fn(),remove:vi.fn()})});
+ const base={zoom:12,minX:3200,minY:1700,maxX:3300,maxY:1900,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+ const fine={zoom:16,minX:51701,minY:28698,maxX:51705,maxY:28702,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+ const load=vi.spyOn(loader,'loadImageryAtlas').mockResolvedValueOnce(base).mockResolvedValueOnce(fine),publish=vi.fn(),publishBase=vi.fn();
+ const view=createViewImagery(()=>[],4,publish,vi.fn(),publishBase);
+ try {
+  view.setEnabled(true);
+  await view.prepare([{x:3200,y:1700,z:12}],[[{x:51702,y:28700,z:16}]]);
+  expect(publishBase).toHaveBeenLastCalledWith(base);
+  const [lon,lat]=tileLonLat(51703,28700,16),[x,y]=proj4('EPSG:4326',metadata.crs.proj4!,[lon,lat]);
+  view.filmAt({x,y},metadata);expect(publish).toHaveBeenLastCalledWith(fine);
+  view.filmAt({x:x+100000,y},metadata);expect(publish).toHaveBeenLastCalledWith(base);
+  expect(base.dispose).not.toHaveBeenCalled();expect(fine.dispose).not.toHaveBeenCalled();
+  view.release();expect(publishBase).toHaveBeenLastCalledWith(null);expect(fine.dispose).toHaveBeenCalledOnce();
+ }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
+});

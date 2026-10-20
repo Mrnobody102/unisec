@@ -1,3 +1,5 @@
+import { placeMapLabel } from '../../terrain/markerLayout';
+import { areaLabelObstacles } from './areaLabelLayout';
 import * as THREE from 'three';
 import pointOnFeature from '@turf/point-on-feature';
 import proj4 from 'proj4';
@@ -6,13 +8,13 @@ import type { Locale } from '../../types/dear';
 import type { TerrainMetadata } from '../../types/terrain';
 import { areaMapLabel } from './areaMapLabel';
 import { landslideAreaOf } from './landslideAreas';
-import { bilinearElevation } from '../../terrain/elevationGrid';
+import { terrainSurfaceElevation } from '../../terrain/terrainSurface';
 import { projectedToScene } from '../../terrain/coordinate';
 
 export function terrainAreaLabel(host: HTMLElement, record: GeometryRecord, metadata: TerrainMetadata, grid: Float32Array, transform: THREE.Matrix4, locale: Locale) {
   if (!landslideAreaOf(record)) return null;
   const [x,y] = proj4('EPSG:4326',metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`,pointOnFeature(record.feature).geometry.coordinates);
-  const elevation = bilinearElevation(grid,metadata,x,y).elevation;
+  const elevation = terrainSurfaceElevation(grid,metadata,x,y);
   if (elevation === undefined) return null;
   const p = projectedToScene(metadata,{x,y},elevation + 5);
   const anchor = new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(transform), projected = new THREE.Vector3();
@@ -27,14 +29,9 @@ export function terrainAreaLabel(host: HTMLElement, record: GeometryRecord, meta
       // A hidden element has zero dimensions. Measure the actual label before placement.
       label.hidden = false;
       const width = label.offsetWidth, height = label.offsetHeight;
-      const bounds = host.getBoundingClientRect();
-      const controls = [...(host.closest('.map-area')?.querySelectorAll<HTMLElement>('#response-details,.field-map-card,.map-toolbar,.layers-panel,.map-tools,.profile-panel,.map-attribution') ?? [])]
-        .map(control => control.getBoundingClientRect()).filter(rect => rect.width && rect.height);
-      const left = Math.max(12, Math.min(host.clientWidth - width - 12, x - width/2));
-      const top = [y - height - 14, y + 14].find(candidate => candidate >= 12 && candidate + height <= host.clientHeight - 12 &&
-        !controls.some(rect => left+bounds.x < rect.right && left+bounds.x+width > rect.left && candidate+bounds.y < rect.bottom && candidate+bounds.y+height > rect.top));
-      label.hidden = top === undefined;
-      if (top !== undefined) label.style.transform = `translate(${left}px,${top}px)`;
+      const position=placeMapLabel({x,y},{width,height},{width:host.clientWidth,height:host.clientHeight},areaLabelObstacles(host));
+      label.hidden = !position;
+      if (position) label.style.transform = `translate(${position.x}px,${position.y}px)`;
     },
     dispose: () => label.remove()
   };

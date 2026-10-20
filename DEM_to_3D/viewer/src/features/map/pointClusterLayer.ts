@@ -70,7 +70,14 @@ export function attachPointClusters(
     badge.style.setProperty('--cluster-core', color);
     badge.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 3; i++) badge.append(document.createElement('i'));
-    if (selected) badge.innerHTML = selectedPinSvg();
+    if (selected) {
+      badge.innerHTML = selectedPinSvg();
+      const count = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      count.setAttribute('x','14'); count.setAttribute('y','19.5'); count.setAttribute('text-anchor','middle');
+      count.setAttribute('fill','currentColor'); count.setAttribute('stroke','none'); count.setAttribute('font-size','10');
+      count.textContent = String(members.length); badge.querySelector('svg')!.append(count);
+      badge.style.color = color;
+    }
     const label = selected
       ? t(
           `${selected.name} (+${members.length - 1} điểm)`,
@@ -112,8 +119,8 @@ export function attachPointClusters(
     if (members.length > 4) {
       const more = document.createElement('span');
       more.textContent = t(
-        `… và ${members.length - 4} điểm khác`,
-        `… and ${members.length - 4} more`
+        `Và ${members.length - 4} điểm khác`,
+        `And ${members.length - 4} more`
       );
       tip.append(more);
     }

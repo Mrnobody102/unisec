@@ -1,4 +1,5 @@
 """Exercise the selected-point inspector and linked manual extents in the real Demo UI."""
+from gis_browser_actions import map_tool, open_header_help
 from gis_browser_actions import gis_task, apply_boundary, download_geometry
 import argparse, json, tempfile, uuid
 from pathlib import Path
@@ -18,9 +19,9 @@ def run(url, chrome, captures):
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
         page = context.new_page(); errors=[]; page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.evaluate('(records)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(records))',[point,aoi]);page.reload()
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         page.locator(f'[data-geodata-id="{pid}"] .geodata-feature').click()
         expect(page.locator('.geodata-inspector')).to_be_visible()
@@ -113,12 +114,12 @@ def run(url, chrome, captures):
             publication.get_by_role('button',name='Áp dụng',exact=True).click()
         expect(page.locator('.field-map-card')).to_contain_text('Vết trượt')
         assert page.locator('.map-road-target').count()>0
-        page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True).click()
+        open_header_help(page)
         guide=page.get_by_role('dialog',name='Hướng dẫn sử dụng',exact=True)
         expect(guide).to_be_visible();guide.get_by_role('button',name='Dữ liệu GIS và ảnh',exact=False).click()
         expect(guide).to_contain_text('vẽ vùng nghi ảnh hưởng')
         page.keyboard.press('Escape');expect(guide).to_have_count(0)
-        expect(page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True)).to_be_focused()
+        expect(page.get_by_role('button',name='Cài đặt hiển thị',exact=True)).to_be_focused()
         assert not errors,errors
         browser.close()
     print('Field areas: selected-record layout, file time, draw/edit/cancel/undo, AOI isolation, KML associations, responsive themes and guide passed.')

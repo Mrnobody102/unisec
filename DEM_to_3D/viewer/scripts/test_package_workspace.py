@@ -13,10 +13,10 @@ class PackageTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.dist = self.root / 'dist'
-        folder = self.dist / 'scenarios/che-tao/v0.2'
+        folder = self.dist / 'scenarios/che-tao/v0.3'
         folder.mkdir(parents=True)
         payload = b'{"incident":{"id":"event"}}'
-        asset = {'url': '/scenarios/che-tao/v0.2/incident.json', 'byteLength': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
+        asset = {'url': '/scenarios/che-tao/v0.3/incident.json', 'byteLength': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
         (folder / 'incident.json').write_bytes(payload)
         (folder / 'manifest.json').write_text(json.dumps({'incidentId': 'event', 'datasetVersion': 'v1', 'dataKind': 'synthetic', 'reviewStatus': 'draft', 'workspace': asset, 'terrain': {}}))
         (self.dist / 'index.html').write_text('<html></html>')
@@ -35,6 +35,6 @@ class PackageTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(package.read(name)).hexdigest(), digest)
 
     def test_corrupt_dataset_prevents_packaging(self):
-        (self.dist / 'scenarios/che-tao/v0.2/incident.json').write_text('corrupt')
+        (self.dist / 'scenarios/che-tao/v0.3/incident.json').write_text('corrupt')
         with self.assertRaisesRegex(ValueError, 'checksum'):
             package_workspace(self.dist, self.root / 'release.zip')

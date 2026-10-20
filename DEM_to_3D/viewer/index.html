@@ -8,7 +8,7 @@
       try {
         if (localStorage.getItem('dear.theme') === 'dark') {
           document.documentElement.dataset.theme = 'dark';
-          document.querySelector('meta[name="theme-color"]').content = '#191f1b';
+          document.querySelector('meta[name="theme-color"]').content = '#20232c';
         }
         const font = localStorage.getItem('dear.font-choice');
         if (['classic', 'plex', 'modern', 'source'].includes(font)) document.documentElement.dataset.font = font;

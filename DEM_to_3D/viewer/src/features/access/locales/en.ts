@@ -44,7 +44,7 @@ export const en = {
   locationIsNotAvailable: 'Location is not available.',
   couldNotObtainLocationChooseOnMap:
     'Could not obtain location. Choose on map or enter coordinates.',
-  locating: 'Locating…',
+  locating: 'Locating',
   myLocation: 'My location',
   latitude: 'Latitude',
   reportLatitude: 'Report latitude',

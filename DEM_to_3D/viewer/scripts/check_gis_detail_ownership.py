@@ -1,4 +1,5 @@
 """Verify one GIS detail surface, replacement/close transitions and stable map points."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse
 import json
@@ -18,9 +19,9 @@ def run(url, chrome, captures=None):
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         baseline=clear_prepared_survey(page)
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         workspace = page.locator('.geodata-workspace')
         details = workspace.locator(DETAILS)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { communityAccessText } from './accessAssessment';
-import { buildScenarioRoutes, initialRoadSegments, scenarioHazards } from '../../data/cheTaoScenario';
+import { buildScenarioRoutes, initialRoadSegments, scenarioHazards } from '../../data/fixtures/networkScenario';
 
 describe('community access assessment', () => {
   it('keeps a blocked main road distinct from an unverified bypass', () => {

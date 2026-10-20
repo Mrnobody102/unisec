@@ -1,7 +1,7 @@
 import { hazardLayerVisible } from '../features/map/visibleMapRecords';
 import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import {surfaceLineGeometry,stabiliseSurfaceLine} from './surfaceLine';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type {
   Community,
@@ -11,9 +11,9 @@ import type {
   ScenarioRoute
 } from '../types/dear';
 import type { TerrainMetadata } from '../types/terrain';
-import { bilinearElevation } from './elevationGrid';
 import { projectedToScene } from './coordinate';
-import { roadColors, roadStroke } from './roadStyle';
+import { roadColors, roadStroke, roadSurfaceOffsetM } from './roadStyle';
+import { terrainDrapePoints, terrainSurfaceElevation } from './terrainSurface';
 import { routeRoadDisplay } from './routeRoadDisplay';
 import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../features/map/layerAppearance';
@@ -21,8 +21,11 @@ import { defaultLayerAppearance, showRoad, type LayerAppearance } from '../featu
 import type { OverlayHit } from '../features/map/mapContracts';
 
 type ScenarioOverlayOptions = {
+  surfaceFrames?: TerrainMetadata[];
   metadata: TerrainMetadata;
   grid: Float32Array;
+  /** Absolute elevation from every loaded DEM; the primary grid alone misses context terrain. */
+  elevationAt?: (x: number, y: number) => number | undefined;
   communities: Community[];
   hazards: Hazard[];
   roads: RoadSegment[];
@@ -36,8 +39,8 @@ type ScenarioOverlayOptions = {
   resolution?: { width: number; height: number };
 };
 
-function getSurfaceElevation(grid: Float32Array, metadata: TerrainMetadata, x: number, y: number): number | undefined {
-  return bilinearElevation(grid, metadata, x, y).elevation;
+function surfaceElevation(grid: Float32Array, metadata: TerrainMetadata, x: number, y: number): number | undefined {
+  return terrainSurfaceElevation(grid, metadata, x, y);
 }
 
 function interpolateSegmentPoints(
@@ -69,6 +72,8 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     selectedObjectId,
     layers
   } = options;
+  const getSurfaceElevation = (_grid: Float32Array, _metadata: TerrainMetadata, x: number, y: number) =>
+    options.elevationAt ? options.elevationAt(x, y) : surfaceElevation(grid, metadata, x, y);
 
   const rootGroup = new THREE.Group();
   rootGroup.name = 'dear-scenario-overlays';
@@ -94,9 +99,9 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     const runs = drapedRuns(points, 5);
     const selected = selectedObjectId === `aoi:${options.aoi.id}`;
     for (const positions of runs) {
-      const geometry = new LineGeometry(); geometry.setPositions(positions);
-      const material = new LineMaterial({ color: selected ? 0x167b66 : 0x85aa9d, linewidth: selected ? 2 : 1.5,
-        dashed: true, dashSize: 120, gapSize: 100, depthTest: true, transparent: true, opacity: selected ? 0.9 : 0.6 });
+      const geometry = surfaceLineGeometry(positions);
+      const material = stabiliseSurfaceLine(new LineMaterial({ color: selected ? 0x167b66 : 0x85aa9d, linewidth: selected ? 2 : 1.5,
+        dashed: true, dashSize: 120, gapSize: 100, depthTest: true, transparent: true, opacity: selected ? 0.9 : 0.6 }));
       material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
       const outline = new Line2(geometry, material); outline.computeLineDistances();
       outline.renderOrder = mapLayerOrder.boundary * 2; outline.userData = { type: 'aoi', id: options.aoi.id }; rootGroup.add(outline);
@@ -111,12 +116,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
     routeRoadDisplay(roads, selectedRoute, Boolean(layers.route)).forEach(({road, sourceId, routeSelected}) => {
       if (road.points.length < 2) return;
 
-      const densePoints: Array<{ x: number; y: number }> = [];
-      for (let i = 0; i < road.points.length - 1; i += 1) {
-        const segPoints = interpolateSegmentPoints(road.points[i], road.points[i + 1], interval);
-        if (i > 0) segPoints.shift();
-        densePoints.push(...segPoints);
-      }
+      const densePoints = terrainDrapePoints(road.points, options.surfaceFrames ?? [metadata]);
 
       const isRoadSelected = selectedObjectId === `road:${sourceId}`;
       const isPartOfSelectedRoute = routeSelected;
@@ -125,7 +125,7 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       const appearance = options.appearance ?? defaultLayerAppearance;
       if (!showRoad(road.status, Boolean(routeVisible || isRoadSelected), appearance.roads)) return;
 
-      const runs = drapedRuns(densePoints, isPartOfSelectedRoute ? 7 : 4);
+      const runs = drapedRuns(densePoints, roadSurfaceOffsetM);
 
       let lineColor: THREE.ColorRepresentation = routeVisible ? roadColors.selected : (layers.imagery ? roadColors.networkImagery : roadColors.networkTerrain);
       // Route selection must preserve the warning on blocked or uncertain segments.
@@ -134,11 +134,10 @@ export function buildScenarioOverlays(options: ScenarioOverlayOptions): THREE.Gr
       const lineWidth = routeVisible || isRoadSelected ? roadStroke.emphasis : roadStroke.normal;
       const addLine = (color: THREE.ColorRepresentation, width: number, casing: boolean): void => {
         for (const positions of runs) {
-          const geometry = new LineGeometry();
-          geometry.setPositions(positions);
+          const geometry = surfaceLineGeometry(positions);
           const opacity = routeVisible || isRoadSelected || (layers.status && road.status !== 'open') ? 1 : appearance.networkOpacity;
-          const material = new LineMaterial({ color, linewidth: width, depthTest: true, depthWrite: false, transparent: true, opacity,
-            dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 });
+          const material = stabiliseSurfaceLine(new LineMaterial({ color, linewidth: width, depthTest: true, depthWrite: false, transparent: true, opacity,
+            dashed: !casing && layers.status && road.status === 'uncertain', dashSize: 100, gapSize: 70 }));
           material.resolution.set(options.resolution?.width ?? 1440, options.resolution?.height ?? 900);
           const line = new Line2(geometry, material);
           line.computeLineDistances();

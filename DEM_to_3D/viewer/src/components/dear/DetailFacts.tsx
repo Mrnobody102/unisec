@@ -16,14 +16,14 @@ export function KeyFacts({ items }: { items: KeyFact[] }): JSX.Element | null {
 }
 
 export const peopleText = (community: Community, locale: Locale) =>
-  locale === 'vi' ? `${community.hh} hộ · ${community.pop} người` : `${community.hh} households · ${community.pop} people`;
+  locale === 'vi' ? `${community.hh} hộ, ${community.pop} người` : `${community.hh} households, ${community.pop} people`;
 
 /** A community affected by the object in view: who lives there and how urgent it is. */
 export function CommunityImpactRow({ community, locale, note, onSelect }: {
   community: Community; locale: Locale; note?: string; onSelect: () => void;
 }): JSX.Element {
   return <button className="object-row impact-row community-impact-row" onClick={onSelect}>
-    <span><strong>{community.name}</strong><small>{peopleText(community, locale)}{note && ` · ${note}`}</small></span>
+    <span><strong>{community.name}</strong><small>{peopleText(community, locale)}</small>{note && <small>{note}</small>}</span>
     {community.prio === 1
       ? <StatusText tone="priority" icon="priority">{locale === 'vi' ? 'Ưu tiên cao' : 'High priority'}</StatusText>
       : <UiIcon name="next" size={16}/>}

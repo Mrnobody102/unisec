@@ -52,7 +52,15 @@
     "uncertain": "warning--alt",
     "priority": "flag",
     "account": "user--avatar",
-    "history": "time"
+    "history": "time",
+    "camera": "camera",
+    "microphone": "microphone",
+    "send": "send",
+    "upload": "upload",
+    "map": "map",
+    "myLocation": "location--current",
+    "swap": "arrows--vertical",
+    "home": "home"
   },
   "processing": "SVG descriptors copied without path or viewBox changes; no lifecycle scripts executed."
 }

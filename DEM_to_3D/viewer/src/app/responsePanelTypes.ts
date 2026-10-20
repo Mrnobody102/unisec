@@ -1,6 +1,5 @@
 import type { Dispatch } from 'react';
 import type { ScenarioEdit } from '../features/access/scenarioEdits';
-import type { RenameScenario } from '../features/access/ScenarioLabels';
 import type { IncidentPacket } from '../data/incidentPacket';
 import type { IncidentWorkspaceSnapshot } from '../features/incident/deriveIncidentWorkspace';
 import type { Community, Locale, ScenarioRoutePair } from '../types/dear';
@@ -51,7 +50,5 @@ export type ResponsePanelProps = {
   onOpenDialog: (dialog: 'data' | 'timeline') => void;
   onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
-  /** Managers rename scenario features where they read them. */
-  onRename?: RenameScenario;
   scenarioEdits?: ScenarioEdit[];
 };

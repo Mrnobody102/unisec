@@ -79,3 +79,17 @@ it('publishes a second edit after restoration reorders feature JSON fields', () 
   publishGisDraft('demo', [renamed], [], [moved], [], s);
   expect(() => publishGisDraft('demo', [renamed], [], [record], [], s)).toThrow('GIS_CONFLICT');
 });
+
+it.each(['survey:point-42', 42])('preserves imported GeoJSON feature ID %s between consecutive edits', id => {
+  const s = store();
+  const record = {
+    id: 'workspace-point', name: 'Survey point', role: 'reference' as const, visible: true,
+    source: {name:'survey.geojson',format:'GeoJSON' as const,importedAt:'2026-10-20T00:00:00Z'},
+    feature: {type:'Feature' as const,id,properties:{source:'survey'},geometry:{type:'Point' as const,coordinates:[104,21]}},
+  };
+  publishGisDraft('demo', [], [], [record], [], s);
+  expect(readPublishedGis(s).records[0].feature.id).toBe(id);
+  const renamed = {...record,name:'Reviewed survey point'};
+  expect(() => publishGisDraft('demo', [record], [], [renamed], [], s)).not.toThrow();
+  expect(readPublishedGis(s).records[0]).toEqual(renamed);
+});

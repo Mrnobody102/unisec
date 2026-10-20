@@ -384,6 +384,7 @@
         "hz": {
           "$ref": "#/definitions/identifier"
         },
+        "hazardIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/definitions/identifier"}},
         "note": {
           "$ref": "#/definitions/localizedText"
         },

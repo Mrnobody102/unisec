@@ -1,4 +1,5 @@
 """Check readable workspace text and tool surfaces in both display themes."""
+from gis_browser_actions import map_tool
 from playwright.sync_api import expect
 
 
@@ -10,7 +11,7 @@ def check_themes(browser, url, captures=None):
         page = context.new_page()
         try:
             page.goto(url+'/?map=2d&demoRole=manager')
-            expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+            expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
             metrics_reader = """() => {
               const rgba = color => color.match(/[\\d.]+/g).map(Number);
@@ -48,7 +49,7 @@ def check_themes(browser, url, captures=None):
                     page.get_by_role('button', name='Nguồn bản đồ', exact=True).click()
                     expect(page.locator('.map-source-popover')).to_be_visible()
                 else:
-                    page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
+                    map_tool(page, 'Đo trên bản đồ 2D').click()
                     expect(page.locator('.map-measure-panel')).to_have_css('opacity', '1')
                 metrics = page.evaluate(metrics_reader)
                 failures = [item for item in metrics['text'] if item['ratio'] < 4.5]
@@ -66,9 +67,7 @@ def check_themes(browser, url, captures=None):
             page.locator('.incident-priority-row').first.click()
             page.locator('.decision-tabs button').nth(1).click()
             report = page.locator('.community-finding').filter(has_text='Đường chính vào Nậm Khắt')
-            report.locator('.finding-provenance summary').click()
-            expect(report.locator('.finding-source dt')).to_have_text(['Báo cáo', 'Ghi nhận', 'Tiếp nhận'])
-            expect(report.locator('.finding-source time')).to_have_count(2)
+            expect(report.locator('.finding-provenance time')).to_have_count(2)
             report.get_by_role('button', name='Xem báo cáo', exact=True).click()
             expect(page.locator('.modal-dialog')).to_have_css('opacity', '1')
             expect(page.locator('.evidence-metadata dt')).to_have_text(['Báo cáo', 'Ghi nhận', 'Tiếp nhận'])

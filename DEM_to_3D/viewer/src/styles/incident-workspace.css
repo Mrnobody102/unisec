@@ -38,19 +38,20 @@
   white-space: nowrap;
 }
 
-.workspace-nav button:hover {
-  color: var(--ws-text);
+/* Tabs: the current one is marked by ink and an underline only; no tinted block. */
+@media (hover: hover) {
+  .workspace-nav button:hover { color:var(--ws-text); background:var(--hover); }
+  .workspace-nav button[aria-current="page"]:hover { background:var(--hover); }
 }
 
 .workspace-nav button[aria-current="page"] {
-  color: var(--select-ink);
-  background: transparent;
-  border-color: transparent;
-  font-weight: 600;
+  color: var(--ws-text);
+  background:transparent;
+  border-color:transparent;
+  font-weight:600;
 }
-.workspace-nav button[aria-current="page"]::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--select); }
+.workspace-nav button[aria-current="page"]::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: var(--select); }
 .workspace-nav button > svg { flex: none; }
-.workspace-nav button:not([aria-current="page"]):hover { color: var(--ws-text); }
 .object-observation { display: grid; gap: 12px; padding-bottom: 20px; }
 .object-length { margin-top: 10px; }
 .object-observation time { flex: none; color: var(--ws-muted); font-size: 12px; }
@@ -73,8 +74,6 @@
 /* Report rows inherit the list inset, including inside a dialog. */
 .evidence-road.object-row { display: grid; gap: 5px; font-size: 13px; }
 .evidence-road span { color: var(--ws-muted); }
-.route-travel-estimate { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 14px; font-weight: 600; }
-.route-travel-estimate small { font-weight: 400; color: var(--ws-muted); font-size: 12px; }
 .route-estimate-basis { margin: 12px 0 16px; color: var(--ws-muted); font-size: 12px; line-height: 1.6; }
 .notification-incident { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--ws-line); }
 .notification-finding { margin: 20px 0 0; font-size: 14px; line-height: 1.65; }
@@ -97,13 +96,16 @@
   border: 1px solid var(--ws-surface);
 }
 
+/* Groups are separated by space and a muted heading, never by a rule. */
 .workflow-section {
-  padding: 16px 0;
-  border-top: 1px solid var(--ws-line);
+  padding: 0;
+  margin-top: 28px;
 }
+.workflow-section:first-child { margin-top: 0; }
 
 .workflow-section h3 {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
+  color: var(--ws-muted);
   font-size: 13px;
 }
 
@@ -167,7 +169,6 @@
 .incident-facts dt { min-height: 36px; font-size: 12px; line-height: 1.5; }
 .incident-facts dd { font-size: 20px; font-variant-numeric: tabular-nums; }
 .incident-facts small { display: block; font-size: 12px; }
-.sidebar-scroll > .workflow-section:first-child { border-top: 0; padding-top: 0; }
 .assessment-action { padding-top: 18px; border-top: 1px solid var(--ws-line); font-size: 14px; }
 .assessment-action span { color: var(--ws-text); }
 
@@ -203,7 +204,7 @@
   font-size: 12px;
   color: var(--ws-muted);
   padding-top: 2px;
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .event-timeline li > span {
@@ -245,8 +246,8 @@
 .freshness-row > span:last-child {
   white-space: nowrap;
   color: var(--ws-muted);
-  font-family: var(--font-mono);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .object-row {
@@ -262,15 +263,14 @@
   border-radius: var(--radius-control);
   text-align: left;
   font-size: 12px;
-  transition: background 0.15s ease;
+  transition: background 0.12s ease;
 }
-.object-row::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; border-bottom: 1px solid var(--ws-line); }
+.object-row::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; border-bottom: 1px solid var(--row-line); }
 .object-row:last-child::after { display: none; }
 
 .object-row:hover {
-  background: transparent;
+  background: var(--hover);
 }
-.object-row:hover strong { color: var(--select-ink); }
 
 .object-row > span:first-child, .object-row > strong {
   margin-right: auto;
@@ -355,17 +355,15 @@
 
 .priority-reason { margin-top: 8px; color: var(--ws-muted); font-size: 12px; line-height: 1.55; }
 
-.community-finding { padding: 16px 0; border-bottom: 1px solid var(--ws-line); }
+.community-finding { padding: 12px 0; border-bottom: 1px solid var(--row-line); }
 .community-finding:first-of-type { padding-top: 4px; }
 .community-finding:last-child { padding-bottom: 0; border-bottom: 0; }
 .community-finding h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
 .community-finding p { font-size: 13px; line-height: 1.6; }
-.community-finding > .text-button { margin-top:12px; }
-.finding-provenance { margin-top:8px; color:var(--ws-muted); font-size:12px; }
-.finding-provenance > summary { width:fit-content; cursor:pointer; padding:4px 0; }
+.community-finding > .text-button { margin-top:4px; font-size:13px; }
+.finding-provenance { margin-top:4px; color:var(--ws-muted); font-size:13px; line-height:1.5; }
 .community-finding.is-summarized { padding-block:8px; }
 .community-finding.is-summarized .finding-provenance { margin-top:0; }
-.finding-provenance .finding-source { margin-top:8px; }
 .finding-source { display: grid; gap: 4px; margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--ws-muted); }
 .finding-source > div { display: grid; grid-template-columns: var(--meta-label) minmax(0, 1fr); gap: 12px; }
 .finding-source dd { color: var(--ws-text); opacity: 0.86; }
@@ -461,16 +459,13 @@
   width: 100%;
   padding: 12px 6px;
   border: 0;
-  border-bottom: 1px solid var(--ws-line);
+  border-bottom: 1px solid var(--row-line);
   background: transparent;
   text-align: left;
   border-radius: var(--radius-control);
 }
 
-.notification-item:hover {
-  background: transparent;
-}
-.notification-item:is(button,a):hover strong { color: var(--select-ink); }
+.notification-item:is(button,a):hover { background: var(--hover); }
 
 .notification-item strong {
   display: block;
@@ -510,6 +505,7 @@
 .filter[aria-pressed="true"] .filter-count { color: inherit; opacity: 0.8; }
 .filter[data-road-filter="blocked"] .filter-count { color: var(--critical-ink); }
 .filter[data-road-filter="uncertain"] .filter-count { color: var(--warning-ink); }
+.filter[data-empty] .filter-count { color: var(--ws-muted); }
 
 /* Detail template shared by road, impact site, response site and area:
    title, one status line, an action row, the observation, then attribute rows. */
@@ -549,19 +545,16 @@
 .assessment-basis .fact-rows { margin-top: 0; }
 .community-evidence .fact-rows { border-bottom: 0; }
 .community-evidence .assessment-facts > div:first-child { border-top: 0; padding-top: 0; }
-.community-reference-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--ws-line); }
-.community-reference-section .fact-rows { margin-top:12px; }
-.community-reference-section .fact-rows > div:first-child { border-top: 0; padding-top: 0; }
-.community-evidence .workflow-section { padding:16px 0 0; margin-top:16px; }
-.community-evidence .community-needs { margin-top:16px; padding:14px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); }
-.response-detail-dock .community-needs > h3 { margin:0 0 8px; padding:0; background:none; }
+.community-evidence .workflow-section { padding:0; margin-top:28px; }
+/* Assistance needs are the one group that earns a filled block. */
+.community-evidence .community-needs { margin-top:20px; padding:12px 14px; border:0; border-radius:3px; background:var(--fill); }
+.response-detail-dock .community-needs > h3 { margin:0 0 4px; }
 .community-needs .community-finding:first-of-type { padding-top:0; }
 .community-needs .community-finding p { font-size:14px; }
-.community-reference-section > summary { padding:4px 0; color:var(--ws-muted); font-size:13px; cursor:pointer; }
-.community-evidence-actions { padding-top: 16px; }
-.community-evidence-actions .text-button { font-size: 12px; }
+.community-evidence-actions { margin-top:24px; }
+.community-evidence-actions .text-button { font-size: 13px; }
 .detail-actions .road-profile-action { margin-top: 0; }
-.detail-actions .button { max-width:100%; white-space:normal; overflow-wrap:anywhere; text-align:left; }
+.detail-actions .button { flex:0 1 auto; max-width:100%; white-space:normal; overflow-wrap:normal; word-break:normal; text-align:left; }
 .fact-rows.object-facts { display: block; gap: 0; margin: 16px 0 0; }
 .manual-edit-note { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 10px; padding: 8px 10px; border-left: 3px solid var(--select); background: var(--ws-tint); font-size: 12px; }
 .manual-edit-note svg { flex: none; margin-top: 2px; color: var(--select-ink); }

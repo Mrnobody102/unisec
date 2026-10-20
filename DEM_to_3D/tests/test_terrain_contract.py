@@ -33,6 +33,15 @@ def metadata(shape=(2, 3)):
 
 
 class TerrainContractTests(unittest.TestCase):
+    def test_optional_administrative_source_metadata(self):
+        value = metadata()
+        value['administrative'] = {'source':'communes.shp', 'units':[{'commune_code':'001','population':0}]}
+        self.assertEqual(validate_metadata(value)['administrative'], value['administrative'])
+        for invalid in [None, [], {'units':[]}, {'units':'invalid'}, {'units':[None]}, {'population':True}, {'area_km2':-1}, {'population':float('nan')}]:
+            value['administrative'] = invalid
+            with self.subTest(invalid=invalid), self.assertRaises(AssetContractError):
+                validate_metadata(value)
+
     def test_affine_round_trip_with_rotation_and_pixel_centres(self):
         transform = metadata()["grid_transform"]
         for point in [(0, 0), (2.5, 1.25), (-.2, 3.4)]:

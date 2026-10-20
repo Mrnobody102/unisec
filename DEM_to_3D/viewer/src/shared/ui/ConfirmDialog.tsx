@@ -19,7 +19,9 @@ export function ConfirmDialog({ title, children, confirmLabel, locale, onConfirm
   useNativeDialog(ref);
   return <dialog ref={ref} className="confirm-dialog" aria-labelledby={id} aria-describedby={id + '-body'}
     onCancel={event => { event.preventDefault(); event.stopPropagation(); onCancel(); }}>
-    <h2 id={id}>{title}</h2>
+    <header className="confirm-dialog-heading">
+      <h2 id={id}>{title}</h2>
+    </header>
     <div id={id + '-body'} className="confirm-dialog-body">{children}</div>
     {error && <p className="field-error" role="alert">{error}</p>}
     <footer>

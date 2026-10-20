@@ -1,4 +1,5 @@
 """Simulated resident/coordinator workflow; no external delivery or real authentication."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import publish_draft, reviewed_records_json
 import argparse,json,re,tempfile
 from pathlib import Path
@@ -8,6 +9,9 @@ from field_photo_fixture import create_field_photo
 def switch_role(page):
  account=page.get_by_role('button',name='Tài khoản',exact=True)
  if account.count(): account.click()
+ elif page.locator('.settings-anchor').count():
+  page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+  page.locator('.settings-workspace summary').click()
  page.get_by_role('button',name='Đổi vai trò',exact=True).click()
 
 def run(url,chrome,captures):
@@ -46,7 +50,7 @@ def run(url,chrome,captures):
   switch_role(page)
   expect(page.locator('.demo-signin')).to_be_visible()
   page.get_by_role('radio',name='Điều phối viên',exact=False).check();page.get_by_role('button',name='Vào ứng dụng',exact=True).click()
-  expect(page.locator('.incident-priority-row').first).to_be_visible()
+  expect(page.locator('.incident-overview-heading')).to_be_visible()
   page.get_by_role('button',name='Ghi nhận gửi đến',exact=True).click()
   inbox=page.get_by_role('dialog',name='Ghi nhận gửi đến',exact=False)
   inbox.get_by_role('button',name='Người dân A',exact=False).click()
@@ -56,7 +60,7 @@ def run(url,chrome,captures):
   expect(photo_details).to_contain_text('Test Camera');expect(photo_details).to_contain_text('SHA-256')
   photo_details.locator('summary').click()
   inbox.get_by_label('Nhận xét kiểm tra',exact=True).fill('Đã đối chiếu ảnh và vị trí, cần khảo sát khả năng đi qua.')
-  inbox.get_by_role('button',name='Lưu kết quả kiểm tra',exact=True).click();expect(inbox).to_contain_text('Đã lưu kết quả kiểm tra')
+  inbox.get_by_role('button',name='Lưu kết quả',exact=True).click();expect(inbox).to_contain_text('Đã lưu kết quả kiểm tra')
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'manager-inbox.png'))
   page.get_by_role('button',name='Đóng tiếp nhận',exact=True).click()
   # Names are edited directly at the selected community; source IDs and states stay unchanged.
@@ -70,7 +74,7 @@ def run(url,chrome,captures):
   card.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
   expect(page.locator('#response-details h1')).to_have_text('Địa bàn thử nghiệm')
   # Arbitrary start/end includes a complete staging-to-community route and DEM profile.
-  page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
+  map_tool(page, 'Hành trình giữa hai điểm').click()
   journey=page.get_by_role('region',name='Hành trình giữa hai điểm',exact=True)
   start=journey.get_by_label('Điểm đầu',exact=True)
   start.select_option(start.locator('option[value^="site:"]').first.get_attribute('value'))

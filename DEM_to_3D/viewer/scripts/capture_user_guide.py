@@ -1,4 +1,5 @@
 """Capture current DEAR guide screens. The report image is a labelled test fixture."""
+from gis_browser_actions import map_tool
 import argparse, tempfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -32,7 +33,7 @@ def run(url,chrome,out):
         page.get_by_role('radio',name='Điều phối ứng phó',exact=False).check()
         page.get_by_label('Tên hiển thị',exact=True).fill('Điều phối viên')
         page.get_by_role('button',name='Vào ứng dụng',exact=True).click()
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         wait_map()
         page.locator('.incident-priority-row').first.click();shot('response.jpg')
         page.get_by_role('button',name='Lưu đánh giá',exact=True).click()
@@ -46,7 +47,7 @@ def run(url,chrome,out):
         inbox.get_by_role('button',name='Người dùng minh họa',exact=False).click()
         expect(inbox.locator('.field-photo-gallery img')).to_be_visible();shot('reports.jpg')
         page.keyboard.press('Escape')
-        page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
+        map_tool(page, 'Hành trình giữa hai điểm').click()
         journey=page.get_by_role('region',name='Hành trình giữa hai điểm',exact=True)
         start=journey.get_by_label('Điểm đầu',exact=True)
         start.select_option(start.locator('option[value^="site:"]').first.get_attribute('value'))
@@ -54,7 +55,7 @@ def run(url,chrome,out):
         end.select_option(end.locator('option[value^="community:"]').first.get_attribute('value'))
         expect(journey.locator('.journey-result')).to_be_visible();shot('map.jpg')
         journey.get_by_role('button',name='Đóng hành trình',exact=True).click()
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         expect(page.locator('.geodata-workspace')).to_be_visible()
         page.get_by_role('button',name='Nhập dữ liệu',exact=True).click()
         expect(page.get_by_role('dialog',name='Nhập dữ liệu',exact=True)).to_be_visible()

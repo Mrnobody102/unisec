@@ -114,7 +114,7 @@ export function GeometryToolbar({
       </div>
       <div className="geodata-drawing-bar" hidden={!editor.active}>
         <strong>
-          {drawingLabel ? `${drawingLabel} · ${editor.draft.vertices.length} ${t('đỉnh', 'vertices')}` : fieldAreaName
+          {drawingLabel ? `${drawingLabel}, ${editor.draft.vertices.length} ${t('đỉnh', 'vertices')}` : fieldAreaName
             ? t('Vùng nghi ảnh hưởng: ', 'Suspected affected area: ') +
               fieldAreaName
             : editor.mode === 'edit'
@@ -141,7 +141,7 @@ export function GeometryToolbar({
       </div>
       {!editor.active && showAoiTools && (
         <span className="geodata-tool-status" data-empty={!aoiName || undefined} title={aoiName}>
-          {aoiName ? `${t('Vùng quan tâm', 'AOI')}: ${aoiName}` : t('Chưa có vùng quan tâm', 'No AOI')}
+          {aoiName ? (aoiName === t('Vùng quan tâm', 'Area of interest') ? aoiName : `${t('Vùng quan tâm', 'AOI')}: ${aoiName}`) : t('Chưa có vùng quan tâm', 'No AOI')}
         </span>
       )}
     </div>

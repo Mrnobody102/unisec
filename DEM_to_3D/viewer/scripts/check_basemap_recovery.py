@@ -30,10 +30,10 @@ def run(url, chrome):
         page.route('**/*', request)
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         expect(page.locator('.map-2d img[data-retry="2"].leaflet-tile-loaded')).to_be_visible(timeout=15000)
         # The local image remains underneath ready opaque tiles to fill future pan gaps.
-        expect(page.locator('.map-2d img.leaflet-image-layer')).to_have_css('opacity', '1')
+        expect(page.locator('.map-2d img.leaflet-image-layer[alt="Ảnh nền khu vực Chế Tạo"]')).to_have_css('opacity', '1')
         assert page.locator('.leaflet-dear-imagery-pane').evaluate("p => +getComputedStyle(p).zIndex < +getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex")
         expect(page.locator('.map-source-warning')).to_have_count(0)
         expect(page.locator('.map-credit')).to_have_count(0)

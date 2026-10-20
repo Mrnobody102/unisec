@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import proj4 from 'proj4';
 import type { GeometryRecord } from '../geo/vector/types';
 import type { TerrainMetadata } from '../types/terrain';
-import { bilinearElevation } from './elevationGrid';
+import { terrainSurfaceElevation } from './terrainSurface';
 import { projectedToScene } from './coordinate';
-import { selectedPinSvg, surveyPointSvg } from './poiFrame';
+import { surveyPointSvg } from './poiFrame';
 
 type Surface = {
   model: {metadata?: TerrainMetadata | null; grid?: Float32Array | null};
@@ -32,9 +32,9 @@ export function terrainReferencePoints(
       if (!metadata || !grid) continue;
       const crs = metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`;
       const [x, y] = proj4('EPSG:4326', crs, record.feature.geometry.coordinates.slice(0, 2));
-      const elevation = bilinearElevation(grid, metadata, x, y).elevation;
+      const elevation = terrainSurfaceElevation(grid, metadata, x, y);
       if (elevation === undefined) continue;
-      const point = projectedToScene(metadata, {x, y}, elevation + 6);
+      const point = projectedToScene(metadata, {x, y}, elevation + 3);
       anchor = new THREE.Vector3(point.x, point.y, point.z).applyMatrix4(surface.group.matrixWorld);
       break;
     }
@@ -50,7 +50,7 @@ export function terrainReferencePoints(
     button.setAttribute('aria-label', record.name);
     button.setAttribute('aria-pressed', String(selected));
     button.dataset.mapReference = record.id;
-    button.innerHTML = selected ? selectedPinSvg() : surveyPointSvg();
+    button.innerHTML = surveyPointSvg(selected);
     const label = document.createElement('span');
     label.className = 'terrain-reference-label';
     label.textContent = record.name;
@@ -70,8 +70,8 @@ export function terrainReferencePoints(
   return {
     update: (camera: THREE.Camera) => {
       const bounds = host.getBoundingClientRect();
-      const controls = [...(host.closest('.map-area')?.querySelectorAll<HTMLElement>(
-        '#response-details,.field-map-card,.map-toolbar,.layers-panel,.map-tools',
+      const controls = [...(host.closest('.workspace')?.querySelectorAll<HTMLElement>(
+        '#response-details,.field-map-card,.map-toolbar,.map-advanced-tools,.layers-panel,.map-tools',
       ) ?? [])].map(element => element.getBoundingClientRect());
       for (const marker of markers) {
         projected.copy(marker.anchor).project(camera);

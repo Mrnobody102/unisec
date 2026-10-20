@@ -88,13 +88,15 @@ export function remapLandslideEvidence(records: GeometryRecord[]): GeometryRecor
     return {...record, feature:{...record.feature,properties:{...record.feature.properties,[landslideAreaKey]:{...value,observationIds:value.observationIds.map(id => ids.get(id) ?? (id.startsWith('external:') ? id : 'external:'+id))}}}};
   });
 }
+/** The boundary is geographic geometry; evidence and review state are read in its record. */
+export const landslideBoundaryColor = '#e6cb7a';
+export const landslideBoundaryCasing = '#39412c';
 export function landslideAreaStyle(a: Pick<LandslideArea, 'state' | 'review'>, selected = false) {
   return {
-    color: a.state === 'potential' ? '#bd914f' : '#b85b4b',
-    weight: selected ? 2.2 : 1.4,
-    // Long dashes: potential extent; short dashes: observed extent awaiting review.
-    dashArray: a.state === 'potential' ? '6 4' : a.review === 'unreviewed' ? '2 3' : undefined,
-    fillOpacity: selected ? .16 : .09,
+    color: landslideBoundaryColor,
+    weight: selected ? 2.5 : 1.7,
+    dashArray: a.state === 'potential' ? '8 4' : undefined,
+    fillOpacity: selected ? .10 : .045,
     lineCap: 'round' as const,
     lineJoin: 'round' as const
   };

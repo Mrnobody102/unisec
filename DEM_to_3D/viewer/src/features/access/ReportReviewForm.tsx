@@ -16,6 +16,7 @@ export function ReportReviewForm({
   onSave: (review: Submission['review']) => boolean;
 }): JSX.Element {
   const m = accessMessages[locale];
+  const t=(vi:string,en:string)=>locale==='vi'?vi:en;
   const [status, setStatus] = useState<Submission['review']['status']>(
     submission.review.status === 'pending'
       ? 'checked'
@@ -23,12 +24,15 @@ export function ReportReviewForm({
   );
   const [note, setNote] = useState(submission.review.note);
   const [message, setMessage] = useState('');
+  const needsNote = status === 'needs-info' || status === 'rejected';
+  const noteLabel=status==='needs-info' ? t('Thông tin cần bổ sung','Information needed')
+    : status==='rejected' ? t('Lý do không sử dụng','Reason for not using') : m.reviewFindings;
   return (
     <form
       className="inbox-review"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!note.trim()) {
+        if (needsNote && !note.trim()) {
           setMessage(m.recordYourFindingsOrTheInformationNeeded);
           return;
         }
@@ -61,9 +65,10 @@ export function ReportReviewForm({
         </select>
       </label>
       <label className="geodata-field">
-        {m.reviewFindings}
+        {noteLabel}{!needsNote && ` (${t('không bắt buộc','optional')})`}
         <textarea
-          required
+          aria-label={noteLabel}
+          required={needsNote}
           maxLength={2000}
           rows={3}
           value={note}
@@ -74,7 +79,7 @@ export function ReportReviewForm({
         />
       </label>
       <button className="button primary" type="submit">
-        {m.saveReview}
+        {locale === 'vi' ? 'Lưu kết quả' : 'Save review'}
       </button>
       {message && <p role="status">{message}</p>}
     </form>

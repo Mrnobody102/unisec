@@ -1,0 +1,8 @@
+.prepared-comparison { width:min(1100px,calc(100vw - 32px)); height:min(850px,calc(100dvh - 32px)); display:flex; flex-direction:column; }
+.prepared-comparison-map { position:relative; min-height:200px; flex:1; isolation:isolate; background:var(--ws-line); }
+.prepared-comparison-map .leaflet-comparison-before-pane,.prepared-comparison-map .leaflet-comparison-after-pane { position:absolute; inset:0; width:100%; height:100%; }
+.prepared-comparison-dates { display:flex; justify-content:space-between; padding:10px 20px 0; font-size:13px; font-variant-numeric:tabular-nums; }
+.prepared-comparison-slider { display:flex; align-items:center; gap:12px; padding:10px 20px; font-size:13px; }
+.prepared-comparison-slider input { flex:1; min-width:0; accent-color:var(--select); }
+.prepared-comparison footer { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 16px; padding:10px 20px 14px; border-top:1px solid var(--ws-line); color:var(--ws-muted); font-size:13px; }
+.prepared-comparison footer p { margin:0; flex:1; min-width:200px; }

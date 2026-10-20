@@ -28,3 +28,13 @@ python terrain_contract.py terrain.terrain.json --grid terrain.grid.bin
 
 Asset có `analysis_supported: true` phải dùng projected CRS với đơn vị mét.
 `--keep-geographic` tạo asset visual-only (`analysis_supported: false`).
+
+`administrative` là metadata nguồn tùy chọn, không đổi tọa độ hoặc phạm vi DEM.
+Một xã dùng `commune_code`, `commune_name`, `province_code`, `province_name`,
+`headquarters`, `type`, `area_km2`, `population`, `density_per_km2`; nhiều xã nằm
+trong `units`. `source` giữ tên tệp địa giới. Mã/tên là chuỗi; số liệu phải hữu
+hạn và không âm. Validator Python và TypeScript kiểm tra cùng cấu trúc.
+
+Pyramid ảnh cục bộ có sidecar riêng `model.tiles.json` và thư mục
+`model_tiles/zN/cột_hàng.webp`; không sửa metadata, grid hoặc checksum của bộ
+địa hình đã xuất. Xem [công cụ và cách nhập](../README.md#ảnh-địa-hình-dạng-tile-cục-bộ).

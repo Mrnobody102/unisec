@@ -583,3 +583,159 @@
 .citizen-area-info p { margin:12px 0 0; }
 .citizen-area-info details { margin-top:16px; }
 .citizen-area-info summary { min-height:44px; font-size:14px; }
+
+/* Resident panel: the same recessed sheet and lifted cards as the coordinator panels,
+   with larger touch targets and type. One card per question: photos, what you saw,
+   where, when. Icons name the action; colour is kept for state. */
+.citizen-workspace .citizen-panel { background: var(--sheet-bg); border-right-color: var(--card-line); }
+.citizen-workspace .citizen-panel > nav { gap: 4px; padding: 6px 8px 0; border-bottom: 1px solid var(--card-line); background: var(--sheet-bg); }
+.citizen-workspace .citizen-panel > nav button {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px 9px;
+  border-radius: 8px 8px 0 0; color: var(--ws-muted); font-size: 13px; font-weight: 500; line-height: 1.25;
+}
+.citizen-workspace .citizen-panel > nav button:hover { color: var(--ws-text); background: var(--hover); }
+.citizen-workspace .citizen-panel > nav button[aria-pressed="true"] { color: var(--ws-text); font-weight: 600; border-bottom-color: var(--select); }
+.citizen-workspace .citizen-panel-scroll { padding: 16px; background: var(--sheet-bg); }
+
+.citizen-workspace .citizen-card {
+  display: grid; gap: 12px; min-width: 0; margin: 0; padding: 14px 16px 16px;
+  border: 1px solid var(--card-line); border-radius: 10px; background: var(--card);
+}
+.citizen-workspace .citizen-card > * { margin: 0; }
+.citizen-workspace .citizen-card > h2,
+.citizen-workspace .citizen-card > legend {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin: 0; padding: 0; color: var(--ws-text); font-size: 15px; font-weight: 600; line-height: 1.35;
+}
+.citizen-workspace .citizen-card > h2 small,
+.citizen-workspace .citizen-card > legend small { color: var(--ws-muted); font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.citizen-workspace fieldset.citizen-card > legend { float: left; width: 100%; }
+.citizen-workspace .citizen-report-form { gap: 12px; }
+.citizen-workspace .citizen-hint { color: var(--ws-muted); font-size: 13px; line-height: 1.5; }
+.citizen-workspace .citizen-panel .field-error { margin: 0; color: var(--critical-ink); font-size: 13px; line-height: 1.5; }
+
+/* Inputs read as fields on the card: their own surface and a visible edge. */
+.citizen-workspace .citizen-panel :is(input:not([type="file"]):not([type="checkbox"]), textarea, select:not([multiple])) {
+  border: 1px solid var(--control-border); border-radius: 8px; background: var(--sheet-bg); color: var(--ws-text);
+}
+.citizen-workspace .citizen-panel textarea { min-height: 84px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
+.citizen-workspace .citizen-panel textarea::placeholder { color: var(--ws-muted); opacity: 0.85; }
+.citizen-workspace .citizen-panel .geodata-field { gap: 6px; margin: 0; color: var(--ws-muted); font-size: 13px; }
+
+/* Big, equal action buttons with the icon beside the label. */
+.citizen-workspace .citizen-capture-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; }
+.citizen-workspace .citizen-capture-actions .button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 12px;
+  border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 14px; font-weight: 600;
+}
+.citizen-workspace .citizen-capture-actions .button:not(:disabled):hover { border-color: var(--ws-text); background: var(--hover); }
+.citizen-workspace .citizen-capture-actions .button svg { color: var(--ws-brand); }
+
+/* Added photos: thumbnails with a small remove button on the corner. */
+.citizen-workspace .citizen-photo-strip { gap: 8px; margin: 0; }
+.citizen-workspace .citizen-photo-strip li { position: relative; width: 88px; }
+.citizen-workspace .citizen-photo-open { overflow: hidden; border-color: var(--card-line); border-radius: 8px; }
+.citizen-workspace .citizen-photo-open img { width: 86px; height: 72px; }
+.citizen-workspace .citizen-photo-remove {
+  position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 28px; height: 28px; min-height: 28px; padding: 0;
+  border: 0; border-radius: 50%; background: rgba(20, 22, 26, 0.72); color: #fff;
+}
+.citizen-workspace .citizen-photo-remove:hover { background: rgba(20, 22, 26, 0.9); }
+
+/* Voice: record is a real button; a file is the quieter alternative. */
+.citizen-workspace .citizen-voice { gap: 8px; }
+.citizen-workspace .citizen-voice .geodata-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0; }
+.citizen-workspace .citizen-voice .geodata-actions .button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px;
+  border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); font-size: 14px; font-weight: 600;
+}
+.citizen-workspace .citizen-voice .geodata-actions .button svg { color: var(--ws-brand); }
+.citizen-workspace .citizen-voice .geodata-actions .text-button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--ws-muted); font-size: 13px; }
+.citizen-workspace .citizen-voice .geodata-actions .text-button:hover { color: var(--ws-text); }
+.citizen-workspace .voice-live { width: 10px; height: 10px; border-radius: 50%; background: var(--critical); }
+@media (prefers-reduced-motion: no-preference) {
+  .citizen-workspace .voice-live { animation: voice-live 1.2s ease-in-out infinite; }
+  @keyframes voice-live { 50% { opacity: 0.35; } }
+}
+
+/* Position: two ways to set it, then a confirmation line with the coordinates. */
+.citizen-workspace .citizen-position { gap: 12px; }
+.citizen-workspace .citizen-position .citizen-capture-actions { margin: 0; }
+.citizen-workspace .citizen-position-value {
+  display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--fill); color: var(--ws-text); font-size: 13px;
+}
+.citizen-workspace .citizen-position-value > svg { flex: none; margin-top: 2px; color: var(--ws-brand); }
+.citizen-workspace .citizen-position-value > span { display: grid; gap: 1px; min-width: 0; }
+.citizen-workspace .citizen-position-value strong { font-weight: 600; }
+.citizen-workspace .citizen-position-value small { color: var(--ws-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-position .field-extra { margin: 0; border: 0; }
+.citizen-workspace .citizen-position .field-extra > summary { min-height: 36px; padding: 0; color: var(--ws-muted); font-size: 13px; font-weight: 500; }
+.citizen-workspace .citizen-position .field-extra[open] > summary { margin-bottom: 8px; }
+
+/* Send: always reachable at the bottom of the panel. */
+.citizen-workspace .citizen-panel .citizen-report-form .field-form-actions {
+  position: sticky; bottom: -16px; margin: 0 -16px -16px; padding: 12px 16px 16px; border-top: 1px solid var(--card-line); background: var(--sheet-bg);
+}
+.citizen-workspace .citizen-report-form .field-form-actions .button.primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 8px; font-size: 15px; font-weight: 600;
+}
+
+/* Road tab: a segmented choice between the village route and a free search. */
+.citizen-workspace .citizen-roads { display: grid; gap: 12px; }
+.citizen-workspace .citizen-segments { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border-radius: 8px; background: var(--fill); }
+.citizen-workspace .citizen-segments button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 6px 8px;
+  border: 0; border-radius: 6px; background: none; color: var(--ws-muted); font-size: 14px; font-weight: 500;
+}
+.citizen-workspace .citizen-segments button:hover { color: var(--ws-text); }
+.citizen-workspace .citizen-segments button[aria-pressed="true"] { background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: 0 0 0 1px var(--card-line), 0 1px 2px rgba(0, 0, 0, 0.06); }
+
+/* The village route sits directly in its card. */
+.citizen-workspace .citizen-village .citizen-route { margin: 0; padding: 0; border: 0; gap: 10px; }
+.citizen-workspace .citizen-route-verdict { font-size: 17px; }
+.citizen-workspace .citizen-route h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.citizen-workspace .citizen-route-facts { color: var(--ws-muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-route-problems { padding: 10px 12px; border-radius: 8px; background: var(--fill); font-size: 14px; }
+.citizen-workspace .citizen-route-problems ul { margin: 4px 0 0; padding-left: 18px; }
+.citizen-workspace .citizen-route-advice { font-size: 14px; line-height: 1.55; }
+.citizen-workspace .citizen-route-why { font-size: 13px; }
+.citizen-workspace :is(.citizen-route-map, .citizen-direction-result .button) {
+  display: inline-flex; align-items: center; gap: 8px; justify-self: start; min-height: 40px; padding: 6px 14px;
+  border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); font-size: 14px; font-weight: 600;
+}
+.citizen-workspace :is(.citizen-route-map, .citizen-direction-result .button) svg { color: var(--ws-brand); }
+
+/* Search: two stops, each a list with its quieter alternatives under it. */
+.citizen-workspace .citizen-directions { gap: 16px; }
+.citizen-workspace .citizen-stop { display: grid; gap: 8px; }
+.citizen-workspace .citizen-stop + .citizen-stop { padding-top: 16px; border-top: 1px solid var(--card-line); }
+.citizen-workspace .citizen-stop-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.citizen-workspace .citizen-stop-actions .button {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px;
+  border: 1px solid var(--card-line); border-radius: 8px; background: transparent; color: var(--ws-text); font-size: 13px; font-weight: 500;
+}
+.citizen-workspace .citizen-stop-actions .button:not(:disabled):hover { border-color: var(--control-border); background: var(--hover); }
+.citizen-workspace .citizen-stop-actions .button svg { color: var(--ws-brand); }
+.citizen-workspace .citizen-direction-result { display: grid; gap: 8px; margin: 0; padding: 16px 0 0; border-top: 1px solid var(--card-line); }
+.citizen-workspace .citizen-direction-result > * { margin: 0; }
+.citizen-workspace .citizen-direction-verdict { display: flex; align-items: center; gap: 8px; color: var(--ws-text); font-size: 14px; font-weight: 600; }
+.citizen-workspace .citizen-direction-verdict::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--open); }
+.citizen-workspace .citizen-direction-result[data-status="uncertain"] .citizen-direction-verdict { color: var(--warning-ink); }
+.citizen-workspace .citizen-direction-result[data-status="uncertain"] .citizen-direction-verdict::before { background: var(--warning); }
+.citizen-workspace .citizen-direction-length { color: var(--ws-muted); font-size: 14px; }
+.citizen-workspace .citizen-direction-length strong { color: var(--ws-text); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-direction-note { color: var(--ws-muted); font-size: 13px; line-height: 1.5; }
+
+/* Feedback after sending, and the sent list, share the card surface. */
+.citizen-workspace .citizen-feedback { margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+.citizen-workspace .citizen-submissions { gap: 8px; }
+.citizen-workspace .citizen-submission { border-color: var(--card-line); border-radius: 10px; background: var(--card); }
+.citizen-workspace .citizen-submission[data-open] { background: var(--card); }
+.citizen-workspace .citizen-submission-head > img,
+.citizen-workspace .citizen-submission-thumb { border-radius: 6px; }
+
+@media (max-width: 760px) {
+  .citizen-workspace .citizen-panel-scroll { padding: 12px; }
+  .citizen-workspace .citizen-panel .citizen-report-form .field-form-actions { bottom: -12px; margin: 0 -12px -12px; padding: 12px; }
+  .citizen-workspace .citizen-card { padding: 14px; }
+}

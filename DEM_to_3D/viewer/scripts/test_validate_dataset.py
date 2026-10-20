@@ -131,6 +131,24 @@ class PreparedDatasetTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, 'invalid GLB'):
             validator.embedded_image(glb)
 
+    def add_imagery(self, tamper=False):
+        folder = self.public / 'scenarios' / 'imagery'
+        folder.mkdir(parents=True, exist_ok=True)
+        image = b'webp fixture'
+        (folder / 'scene.utm.webp').write_bytes(image + (b'!' if tamper else b''))
+        (folder / 'scene.web.webp').write_bytes(image)
+        entry = {'url': 'scene.utm.webp', 'byteLength': len(image), 'sha256': hashlib.sha256(image).hexdigest()}
+        catalog = json.dumps({'layers': [{'id': 'optical', 'parts': [{'terrain': entry, 'web': {**entry, 'url': 'scene.web.webp'}}]}]}).encode()
+        (folder / 'imagery.json').write_bytes(catalog)
+        self.manifest['analysisImagery'] = {'url': '/scenarios/imagery/imagery.json', 'byteLength': len(catalog), 'sha256': hashlib.sha256(catalog).hexdigest()}
+
+    def test_analysis_imagery_files_are_checksummed(self):
+        self.add_imagery()
+        self.run_validator(prepare=True)
+        self.add_imagery(tamper=True)
+        with self.assertRaisesRegex(SystemExit, 'size mismatch'):
+            self.run_validator()
+
 
 if __name__ == '__main__':
     unittest.main()

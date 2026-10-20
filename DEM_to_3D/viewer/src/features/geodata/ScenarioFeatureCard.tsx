@@ -114,13 +114,13 @@ export function ScenarioFeatureCard({
         `Moved ${Math.round(Math.hypot(c.to.x - c.from.x, c.to.y - c.from.y))} m`
       );
     if (c.kind === 'status')
-      return `${pick(statusLabel[c.from])} → ${pick(statusLabel[c.to])}`;
-    if (c.kind === 'links') return t('Cập nhật liên kết đường–sự cố','Updated road–hazard links');
+      return t(`Từ ${pick(statusLabel[c.from])} sang ${pick(statusLabel[c.to]).toLocaleLowerCase('vi-VN')}`, `${pick(statusLabel[c.from])} to ${pick(statusLabel[c.to]).toLocaleLowerCase('en-GB')}`);
+    if (c.kind === 'links') return t('Cập nhật liên kết đường và sự cố','Updated road and hazard links');
     if (c.kind === 'create') return target.type === 'site' ? t('Thêm bãi đáp đề xuất', 'Added candidate landing site') : t('Thêm sự cố', 'Added hazard');
     if (c.kind === 'properties') return c.from.names[0] !== c.to.names[0] ? t('Đổi tên: ', 'Renamed: ') + c.to.names[0]
       : c.from.siteAssessment !== c.to.siteAssessment ? t('Cập nhật khảo sát', 'Assessment updated')
       : c.from.hazardKind !== c.to.hazardKind ? t('Cập nhật loại sự cố', 'Hazard type updated') : t('Cập nhật nhãn bản đồ', 'Map label updated');
-    return t(`Đổi tên: ${c.from} → ${c.to}`, `Renamed: ${c.from} → ${c.to}`);
+    return t(`Đổi tên ${c.from} thành ${c.to}`, `Renamed ${c.from} to ${c.to}`);
   };
   const save = (change: ScenarioChange) => {
     if (!note.trim()) {

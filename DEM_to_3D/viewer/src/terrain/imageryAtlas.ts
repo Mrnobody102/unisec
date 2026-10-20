@@ -39,7 +39,7 @@ export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, an
       }
     }
   };
-  await Promise.all(Array.from({length: 4}, worker));
+  await Promise.all(Array.from({length: 6}, worker));
   signal.throwIfAborted();
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;

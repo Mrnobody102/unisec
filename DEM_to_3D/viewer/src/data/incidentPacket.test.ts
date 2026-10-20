@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import packetJson from '../../public/scenarios/che-tao/v0.2/incident.json';
+import imageryJson from '../../public/scenarios/che-tao/imagery/imagery.json';
+import packetJson from '../../public/scenarios/che-tao/v0.3/incident.json';
 import { validateIncidentPacket } from './incidentPacket';
 import { apiRepository, preparedRepository } from './ScenarioRepository';
 
@@ -9,8 +10,29 @@ afterEach(() => { vi.unstubAllGlobals(); });
 describe('incident data boundary', () => {
   it('accepts the prepared snapshot and links every observation', () => {
     const data = validateIncidentPacket(packet());
-    expect(data.datasetVersion).toBe('che-tao-2026-09-29-v0.2');
+    expect(data.datasetVersion).toBe('che-tao-2026-09-12-v0.3');
     expect(data.evidence.every(item => data.hazards.some(hazard => hazard.id === item.hazardId))).toBe(true);
+  });
+  it('does not turn survey stations into dated Planet detections or invent a point footprint',()=>{
+    const data=validateIncidentPacket(packet());
+    expect(data.dataKind).toBe('synthetic');
+    for(const hazard of data.hazards){
+      expect(hazard.area).toBeUndefined();
+      expect(hazard.src[0]).toContain('KML');
+      const evidence=data.evidence.find(item=>item.hazardId===hazard.id)!;
+      expect(evidence.source[0]).toContain('demo');
+      expect(evidence.finding[0]).not.toMatch(/Thấy lần đầu|ha/);
+    }
+  });
+  it('keeps the simulated image-review timestamp separate from its receipt', () => {
+    const data = validateIncidentPacket(packet());
+    const scene = imageryJson.layers.find(layer => layer.id === 'planet-post')!.parts!.find(part => part.id === 'planet-post-roadpart2')!;
+    for (const hazard of data.hazards) {
+      const record = data.evidence.find(item => item.hazardId === hazard.id)!;
+      expect(record.type).toBe('image-analysis');
+      expect(Date.parse(record.observedAt)).toBe(Date.parse(scene.acquired));
+      expect(Date.parse(record.receivedAt)).toBeGreaterThan(Date.parse(record.observedAt));
+    }
   });
   it('rejects unsupported CRS, malformed dates and duplicate object IDs', () => {
     const data = packet(); data.crs = 'EPSG:4326';
@@ -25,9 +47,9 @@ describe('incident data boundary', () => {
     expect(() => validateIncidentPacket(duplicate)).toThrow('duplicate community');
   });
   it('rejects dangling evidence, missing contact signals and stale lengths', () => {
-    const data = packet(); data.roads[0].hz = 'unknown';
+    const data = packet(); data.roads[0].hazardIds = ['unknown'];
     expect(() => validateIncidentPacket(data)).toThrow('unknown road hazard');
-    const signal = packet(); delete (signal.signals as Record<string, unknown>).NK;
+    const signal = packet(); delete (signal.signals as Record<string, unknown>).CT;
     expect(() => validateIncidentPacket(signal)).toThrow('community signals');
     const length = packet(); length.roads[0].len += 1;
     expect(() => validateIncidentPacket(length)).toThrow('road length');
@@ -50,10 +72,10 @@ describe('incident data boundary', () => {
     expect(() => validateIncidentPacket(data)).toThrow('unknown hazard in community finding');
     finding.hazardId = 'LS-02';
     finding.source = ['Nguồn', 'Source'];
-    finding.observedAt = '2026-09-29T10:00:00+07:00';
+    finding.observedAt = '2026-09-12T15:00:00+07:00';
     expect(() => validateIncidentPacket(data)).toThrow('community finding timestamp');
-    finding.observedAt = '2026-09-29T07:40:00+07:00';
-    finding.receivedAt = '2026-09-29T07:00:00+07:00';
+    finding.observedAt = '2026-09-12T12:11:00+07:00';
+    finding.receivedAt = '2026-09-12T11:30:00+07:00';
     expect(() => validateIncidentPacket(data)).toThrow('community finding receipt');
   });
   it('accepts previous tuple snapshots while refusing untraceable field reports', () => {
@@ -74,7 +96,7 @@ describe('incident data boundary', () => {
   it('uses the same schema for API responses and propagates errors instead of substituting mock data', async () => {
     const fetch = vi.fn(async (_url: string, _options?: RequestInit) => Response.json(packet())); vi.stubGlobal('fetch', fetch);
     const repository = apiRepository('http://localhost:8000/', packetJson.incident.id);
-    expect((await repository.load()).communities).toHaveLength(7);
+    expect((await repository.load()).communities).toHaveLength(1);
     expect(fetch.mock.calls[0][0]).toBe('http://localhost:8000/api/v1/incidents/INC-2026-0412/workspace');
     fetch.mockImplementation(async () => new Response('', { status: 503 }));
     await expect(repository.load()).rejects.toThrow('503');

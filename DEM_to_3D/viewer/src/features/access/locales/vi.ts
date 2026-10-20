@@ -44,7 +44,7 @@ export const vi = {
   locationIsNotAvailable: 'Thiết bị không hỗ trợ định vị.',
   couldNotObtainLocationChooseOnMap:
     'Không lấy được vị trí. Chọn trên bản đồ hoặc nhập tọa độ.',
-  locating: 'Đang định vị…',
+  locating: 'Đang định vị',
   myLocation: 'Vị trí của tôi',
   latitude: 'Vĩ độ',
   reportLatitude: 'Vĩ độ ghi nhận',

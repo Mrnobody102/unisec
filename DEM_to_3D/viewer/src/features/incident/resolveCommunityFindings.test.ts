@@ -1,7 +1,7 @@
 import { communityNeedTopic } from './communityNeeds';
 import { describe, expect, it } from 'vitest';
 import { resolveCommunityFindings } from './resolveCommunityFindings';
-import { initialEvidence, scenarioEvidence } from '../../data/cheTaoEvidence';
+import { initialEvidence, scenarioEvidence } from '../../data/fixtures/networkScenario';
 import type { CommunityFinding } from '../../types/dear';
 
 describe('community observations', () => {
@@ -9,10 +9,10 @@ describe('community observations', () => {
     const fact: CommunityFinding = { kind: 'report', label: ['Vượt khe', 'Crossing'], value: ['Nội dung cũ', 'Old finding'], hazardId: 'U-1' };
     const initial = resolveCommunityFindings([fact], initialEvidence)[0];
     const updated = resolveCommunityFindings([fact], scenarioEvidence(true))[0];
-    expect(initial.observedAt).toBe('2026-09-29T08:58:00+07:00');
-    expect(updated.observedAt).toBe('2026-09-29T09:40:00+07:00');
-    expect(updated.receivedAt).toBe('2026-09-29T09:45:00+07:00');
-    expect(updated.value[0]).toContain('không thể qua');
+    expect(initial.observedAt).toBe('2026-09-12T13:29:00+07:00');
+    expect(updated.observedAt).toBe('2026-09-12T14:11:00+07:00');
+    expect(updated.receivedAt).toBe('2026-09-12T14:16:00+07:00');
+    expect(updated.value[0]).toContain('Không thể đi qua');
     expect(fact.value[0]).toBe('Nội dung cũ');
   });
   it('keeps an information gap separate from observations and their sources', () => {

@@ -1,4 +1,5 @@
 """A/B route acceptance: screenshot coordinates, eligible matching, clipping and failure state."""
+from gis_browser_actions import map_tool
 import argparse,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -13,8 +14,8 @@ def run(url,chrome,captures=None):
         context.add_init_script("if(!localStorage.getItem('dear.geodata.v1'))localStorage.setItem('dear.geodata.v1',"+json.dumps(json.dumps(records,ensure_ascii=False))+');')
         page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
-        page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        map_tool(page, 'Hành trình giữa hai điểm').click()
         panel=page.get_by_role('region',name='Hành trình giữa hai điểm',exact=True)
         start=panel.get_by_label('Điểm đầu',exact=True);end=panel.get_by_label('Điểm cuối',exact=True)
         start.select_option('gis:route-a');end.select_option('gis:route-b')
@@ -38,9 +39,9 @@ def run(url,chrome,captures=None):
         expect(panel.locator('.journey-pick').first).to_have_attribute('aria-pressed','false')
         page.locator('.overview-toggle').click()
         panel.locator('.journey-pick').first.click()
-        page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
+        map_tool(page, 'Hành trình giữa hai điểm').click()
         expect(panel).to_have_count(0)
-        page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
+        map_tool(page, 'Hành trình giữa hai điểm').click()
         expect(panel.locator('.journey-pick').first).to_have_attribute('aria-pressed','false')
         expect(start).to_have_value('gis:route-a')
         expect(panel.locator('.journey-result')).to_be_visible()

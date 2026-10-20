@@ -4,6 +4,18 @@ Phạm vi: công cụ thử nghiệm trong demo, lưu dữ liệu cục bộ t�
 
 Mở **GIS** trên thanh công cụ bản đồ, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
 
+Mặc định mở **Dữ liệu**: nhập/thêm điểm ở đầu, tìm theo tên và lọc tệp nguồn,
+sau đó chọn đối tượng để xem hoặc sửa trong một hồ sơ. **Vùng sạt lở** và
+**Đường** là hai nhóm nghiệp vụ riêng. Điểm tập kết/thôn bản nằm trong nhóm
+thu gọn; chọn từ bản đồ tự mở đúng nhóm. **Công cụ dữ liệu** chứa AOI/catalog,
+**Xuất dữ liệu** chỉ mở tùy chọn khi cần. Mốc diễn biến ứng phó ẩn trong lúc
+sửa GIS để danh sách, bản đồ và hồ sơ dùng trọn chiều cao.
+
+Nhãn/ô nhập xếp thành hàng rõ ràng, nút dài xuống hàng theo cụm từ; không ép
+chữ thành cột. Bảng lớp chỉ áp kích thước 15 px cho checkbox/radio, không cho
+thanh trượt hay ô chọn tệp. Nguồn tư liệu và thuộc tính kỹ thuật có thể mở khi
+cần; căn cứ, trạng thái rà soát và bước áp dụng bản nháp vẫn được giữ.
+
 ```mermaid
 flowchart LR
   A[Nhập KML / GeoJSON / WKT / tọa độ] --> B[Kiểm hình học WGS84]
@@ -161,3 +173,5 @@ Catalog này có phạm vi/ngày hữu hạn; không có kết quả không có 
 Proposal vẫn là đích nghiệp vụ: SAR ưu tiên sau sự kiện, phân tích tác động đường/cộng đồng rồi tạo sản phẩm cứu hộ. Catalog là đầu vào hỗ trợ luồng đó, không thay pipeline hoặc biến demo thành sản phẩm xử lý tự động.
 
 Hoàn tác sau khi áp dụng tạo một bản nháp mới, không thay ngược dữ liệu đang dùng. Dữ liệu nhận từ tab khác làm mới lịch sử Hoàn tác để không xóa nhầm ghi nhận vừa nhận. So sánh xung đột dựa trên nội dung JSON, không phụ thuộc thứ tự trường. Khi sửa ranh giới vùng sạt lở, mức rà soát trở về chưa rà soát; căn cứ và liên kết đường vẫn được giữ.
+
+Khi đổi bộ nguồn prepared, hồ sơ của nguồn không còn được dùng chỉ bị ẩn khỏi bản đồ. Các sửa đổi và lịch sử xóa được giữ lại; chọn lại nguồn khôi phục trạng thái hiển thị trước đó.

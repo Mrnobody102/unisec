@@ -13,22 +13,24 @@ def run(url: str, captures: Path | None, chrome: str | None):
         page.on("pageerror", lambda error: errors.append(str(error)))
         for mode in ("2d", "3d"):
             page.goto(f"{url}/?offline=1&map={mode}&demoRole=manager")
+            page.get_by_role('button', name='Lớp bản đồ', exact=True).click()
+            page.locator('.layer-context > summary').click()
+            landing_layer=page.get_by_label('Bãi đáp đề xuất', exact=True)
+            if landing_layer.count(): landing_layer.check()
+            page.get_by_role('button', name='Đóng lớp bản đồ', exact=True).click()
             candidates = page.locator(".map-pin:not(.is-selected):not([aria-haspopup]):visible")
             expect(candidates.first).to_be_visible(timeout=30000)
             for pin in page.locator(".map-pin:not(.is-selected):visible").all():
                 assert pin.locator(".map-pin-shape svg").count() == 1
                 assert pin.locator(".map-pin-shape svg path").count() == 1
                 assert pin.get_attribute("title") is None
-            landing = page.locator(".map-pin.hlz:visible").first
-            expect(landing).to_be_visible()
-            landing.hover()
-            expect(landing.locator(".map-pin-label:visible")).to_have_count(1)
-            expect(page.locator(".map-hover-target:visible")).to_have_count(0)
-            bridge = page.locator(".map-pin.bridge:visible").first
-            expect(bridge).to_be_visible()
-            bridge.hover()
-            expect(bridge.locator(".map-pin-label:visible")).to_have_count(1)
-            expect(page.locator(".map-hover-target:visible")).to_have_count(0)
+            # Exercise each symbol type present in the selected dataset.
+            kinds=page.locator('.map-pin:visible').evaluate_all("nodes=>[...new Set(nodes.map(node=>node.dataset.mapObject?.split(':')[0]).filter(Boolean))]")
+            for kind in kinds:
+                pin=page.locator(f'.map-pin[data-map-object^="{kind}:"]:visible').first
+                pin.hover()
+                expect(pin.locator('.map-pin-label:visible')).to_have_count(1)
+                expect(page.locator('.map-hover-target:visible')).to_have_count(0)
             marker = candidates.first
             name = marker.get_attribute("aria-label")
             assert name and marker.get_attribute("title") is None
@@ -46,7 +48,7 @@ def run(url: str, captures: Path | None, chrome: str | None):
             selected = page.locator(".map-pin.is-selected:visible")
             expect(selected).to_have_count(1)
             assert selected.first.locator(".map-pin-shape svg").count() == 1
-            expect(selected.first.locator(".map-pin-icon")).to_be_hidden()
+            expect(selected.first.locator(".map-pin-icon")).to_be_visible()
             if captures:
                 page.screenshot(path=str(captures / f"symbols-selected-{mode}.png"))
             if mode == '2d':

@@ -18,7 +18,7 @@ describe('prepared field evidence',()=>{
   expect(records[0].feature.properties.altitudeMode).toBe('absolute');
   expect(records[0].id).toBe(fieldRecords(features,id,'survey.kml','network',time)[0].id);
   const area=landslideAreaOf(records[1])!;
-  expect(area).toMatchObject({state:'occurred',part:'deposit',review:'unreviewed',observedAt:'',boundaryAccuracyM:null,roadLinks:[],sources:['field']});
+  expect(area).toMatchObject({state:'occurred',part:'deposit',review:'unreviewed',observedAt:'',boundaryAccuracyM:null,roadLinks:[],sources:['historical']});
  });
  it('installs once and retains later renames and deletions across reload',()=>{
   const s=storage(),source={id,records:fieldRecords(features,id,'survey.kml','network',time)};
@@ -39,6 +39,27 @@ describe('prepared field evidence',()=>{
   expect(next.records[1].feature.geometry).toEqual({type:'Point',coordinates:[104.03,21.74146]});
   expect(landslideAreaOf(next.records[2])).toBeNull();
   expect(next.records[2]).toMatchObject({role:'footprint',visible:false});
+ });
+ it('hides an inactive prepared source while retaining edits and deletions when it returns',()=>{
+  const s=storage(),old={id,records:fieldRecords(features,id,'survey.kml','network',time)};
+  const first=installPreparedRecords(old,s);
+  publishGisDraft('network',first.records,[],[{...first.records[0],name:'Reviewed station'}],[],s);
+  const current={id:'c'.repeat(64),records:fieldRecords([features[1]],'c'.repeat(64),'scars.kml','network',time)};
+  const next=installPreparedRecords(current,s);
+  expect(next.records.map(r=>r.name)).toEqual(['Reviewed station','Talus']);
+  expect(next.records[0]).toMatchObject({visible:false,feature:{geometry:features[0].geometry}});
+  expect(readPublishedGis(s).installedSources).toEqual([id,current.id]);
+  const restored=installPreparedRecords(old,s);
+  expect(restored.records[0]).toMatchObject({name:'Reviewed station',visible:true});
+  expect(restored.records[0].feature.properties.dearInactiveSourceVisibility).toBeUndefined();
+  expect(restored.records.filter(r=>r.feature.properties.sourceDatasetId===id)).toHaveLength(1);
+  expect(restored.records[1].visible).toBe(false);
+ });
+ it('takes image provenance and the affected road section from KML extended data',()=>{
+  const outline:VectorFeature={...features[1],properties:{name:'Sạt lở Km 6,2',basis:'PlanetScope change',observedAt:'2026-09-12T10:43:27+07:00',
+    imageReference:'PlanetScope PSScene 12/9/2026',imageResolutionM:'3',boundaryAccuracyM:'6',roadId:'E8',fromM:'3912',toM:'4013'}};
+  expect(landslideAreaOf(fieldRecords([outline],id,'scars.kml','network',time)[0])).toMatchObject({sources:['imagery'],part:'undifferentiated',
+    observedAt:'2026-09-12T10:43:27+07:00',imageResolutionM:3,boundaryAccuracyM:6,roadLinks:[{roadId:'E8',relation:'affected',fromM:3912,toM:4013}]});
  });
  it('retains source feature identity before preparing a reference record',()=>{
   const parsed=parseSpatialInput(JSON.stringify({type:'Feature',id:'source-road-12',properties:{name:'Road'},geometry:{type:'LineString',coordinates:[[104,21],[104.01,21.01]]}}));

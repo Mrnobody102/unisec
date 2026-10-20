@@ -1,0 +1,20 @@
+.analysis-imagery > label > span { display: grid; min-width: 0; line-height: 1.25; }
+.analysis-imagery > label > span small { color: var(--ws-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.analysis-sar-modes { display: inline-flex; margin: 6px 0 4px 25px; border: 1px solid var(--ws-line); border-radius: var(--radius-control); overflow: hidden; }
+.analysis-sar-modes button { padding: 4px 10px; border: 0; background: transparent; color: var(--ws-text); font: inherit; font-size: 12px; cursor: pointer; }
+.analysis-sar-modes button + button { border-left: 1px solid var(--ws-line); }
+.analysis-sar-modes button[aria-checked="true"] { background: var(--ws-text); color: var(--ws-surface, #fff); }
+.analysis-legend { display: flex; align-items: center; gap: 6px; margin: 4px 0 0 25px; font-size: 11px; color: var(--ws-muted); font-variant-numeric: tabular-nums; }
+.analysis-legend i { flex: 0 1 96px; height: 8px; border: 1px solid var(--ws-line); background: linear-gradient(90deg, #000, #fff); }
+.analysis-note { margin: 4px 0 0 25px; font-size: 11px; line-height: 1.35; color: var(--ws-muted); }
+.layers-content .analysis-imagery .analysis-opacity { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; margin-top: 8px; cursor: default; }
+.analysis-opacity input { grid-column: 1 / -1; width: 100%; }
+.analysis-opacity output { font-variant-numeric: tabular-nums; }
+
+.analysis-load-status { position:absolute; z-index:850; top:64px; left:50%; transform:translateX(-50%); display:flex; align-items:center; flex-wrap:wrap; justify-content:center; gap:6px 12px; max-width:calc(100% - 32px); padding:8px 12px; border:1px solid var(--ws-line); border-radius:4px; background:var(--ws-surface); color:var(--ws-text); font:13px/1.4 var(--font-sans); box-shadow:0 1px 4px #0002; }
+.analysis-load-status button { border:0; padding:4px 6px; color:var(--select-ink); background:var(--hover); font:inherit; cursor:pointer; }
+
+.has-balanced-basemap .leaflet-tile-pane { filter:var(--basemap-tone-online); }
+.has-balanced-basemap img.leaflet-image-layer[alt="Ảnh nền khu vực Chế Tạo"],
+.has-balanced-basemap img.leaflet-image-layer[alt="Chế Tạo area imagery"] { filter:var(--basemap-tone-prepared); }
+.analysis-tone-choice { display:flex; align-items:center; gap:8px; margin:12px 0 8px; font-size:13px; }

@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "datasetVersion": "che-tao-2026-09-29-v0.2",
+  "datasetVersion": "che-tao-2026-09-12-v0.3",
   "dataKind": "synthetic",
   "reviewStatus": "draft",
   "incidentId": "INC-2026-0412",
-  "snapshotAt": "2026-09-29T09:31:00+07:00",
+  "snapshotAt": "2026-09-12T14:02:00+07:00",
   "crs": "EPSG:32648",
   "counts": {
-    "communities": 7,
-    "roads": 8,
-    "hazards": 5
+    "communities": 1,
+    "roads": 4,
+    "hazards": 3
   },
   "terrain": {
     "glb": {
@@ -34,9 +34,9 @@
     }
   },
   "workspace": {
-    "url": "/scenarios/che-tao/v0.2/incident.json",
-    "byteLength": 25069,
-    "sha256": "8c5f59f894d99ea46d65040ad1cdf4abebf3d75716192d33ffed8066a691f8c1"
+    "url": "/scenarios/che-tao/v0.3/incident.json",
+    "byteLength": 89265,
+    "sha256": "182df3ee65045ac9843bb3166de72c634349aee1cb4331056595ee6011db022c"
   },
   "fieldData": {
     "url": "/scenarios/che-tao/field/CheTao-Landslide-Scars.kml",
@@ -62,9 +62,14 @@
       }
     }
   ],
-  "referenceData": {
-    "url": "/scenarios/che-tao/reference/mcc-chetao.geojson",
-    "byteLength": 140663,
-    "sha256": "11a6eca8238b6413caa2031a446afb787c5a24407bf7e43f7af2dd8cc3c19662"
+  "analysisImagery": {
+    "url": "/scenarios/che-tao/imagery/imagery.json",
+    "byteLength": 10544,
+    "sha256": "9ad9dc448a80c8869bd407bf25ed42b6b8671d4eb88876f6ba7cfa0a5321e08e"
+  },
+  "fieldPhotos": {
+    "url": "/scenarios/che-tao/field-photos/photos.json",
+    "byteLength": 14228,
+    "sha256": "a4605f02899a59c1c2149a0a48047ac081f8484c616c32ad2eb697df3575ccd8"
   }
 }

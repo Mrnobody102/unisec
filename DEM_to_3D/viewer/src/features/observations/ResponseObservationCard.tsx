@@ -1,6 +1,10 @@
+import { areaDisplayName, areaPhotoEvidence } from '../landslides/areaEvidence';
+import { FieldPhotoStrip } from '../fieldPhotos/FieldPhotoStrip';
+import type { PreparedPhotoPoint } from '../fieldPhotos/preparedPhotos';
 import { reportReviewLabel } from '../access/reportReviewLabel';
 import { landslideAreaOf } from '../landslides/landslideAreas';
-import { LandslideAreaSummary } from '../landslides/LandslideAreaSummary';
+import { LandslideAreaSummary, landslideAreaHead } from '../landslides/LandslideAreaSummary';
+import { StatusText } from '../../shared/ui/StatusText';
 import type { RoadSegment } from '../../types/dear';
 import { observationTimeLabel } from './captureMetadata';
 import type { GeometryRecord } from '../../geo/vector/types';
@@ -13,16 +17,20 @@ import { submissionLocationLabel } from '../access/submissions';
 import { PhotoGallery } from './PhotoGallery';
 export function ResponseObservationCard({
   record,
+  docked = false,
+  records = [], fieldPhotos,
   locale,
   onClose,
-  onEdit,
+  onEdit, onCompare,
   onBack,
   roads = [], onRoad
 }: {
   record: GeometryRecord;
+  docked?: boolean;
+  records?: GeometryRecord[]; fieldPhotos?: Map<string,PreparedPhotoPoint>;
   locale: Locale;
   onClose: () => void;
-  onEdit: () => void;
+  onEdit: () => void; onCompare?:()=>void;
   /** Returns to the point group this record was opened from. */
   onBack?: () => void;
   roads?: RoadSegment[];
@@ -36,9 +44,12 @@ export function ResponseObservationCard({
       record.feature.geometry.type === 'Point'
         ? record.feature.geometry.coordinates
         : null;
+  const areaPhotos=areaPhotoEvidence(record,records,fieldPhotos);
+  const stationPhotos=record.feature.geometry.type==='Point'?[...(fieldPhotos?.values()??[])].find(point=>point.surveyName.trim()===String(record.feature.properties.sourceName??record.name).trim()):undefined;
+  const areaHead = landslideAreaHead(record, locale);
   return (
     <section
-      className="field-map-card"
+      className={"field-map-card" + (docked ? " is-docked" : "")}
       aria-label={reference === 'road-corridor' ? t('Tuyến đường tham chiếu', 'Reference road corridor') : landslideAreaOf(record) ? t('Vùng sạt lở', 'Landslide area') : t('Điểm dữ liệu GIS', 'GIS data point')}
     >
       <header>
@@ -52,7 +63,10 @@ export function ResponseObservationCard({
             <UiIcon name="back" />
           </button>
         )}
-        <h2>{record.name}</h2>
+        <div className="detail-name">
+          {areaHead && <p className="sheet-kind">{areaHead.kind}</p>}
+          <h2>{areaHead ? areaDisplayName(record,locale) : record.name}</h2>
+        </div>
         <button
           className="icon-button"
           aria-label={t('Đóng điểm GIS', 'Close GIS point')}
@@ -60,12 +74,20 @@ export function ResponseObservationCard({
         >
           <UiIcon name="close" />
         </button>
+        {areaHead && <div className="field-map-card-head">
+          <div className="detail-priority"><StatusText tone={areaHead.unreviewed ? 'warning' : 'neutral'} icon={areaHead.unreviewed ? 'uncertain' : undefined}>{areaHead.review}</StatusText></div>
+
+        </div>}
       </header>
       <div className="field-map-card-body">
+      {areaPhotos && <FieldPhotoStrip point={areaPhotos.point} locale={locale} context={t(`Điểm khảo sát liên quan: ${areaPhotos.point.surveyName}.`,`Related survey station: ${areaPhotos.point.surveyName}.`)}/>}
+      {areaHead && <div className="area-measure"><span>{t('Diện tích ước tính','Estimated area')}</span><strong>{areaHead.facts[0].value}</strong></div>}
       {landslideAreaOf(record) && <LandslideAreaSummary record={record} roads={roads} locale={locale} onRoad={onRoad}/>}
+
+      {stationPhotos && <FieldPhotoStrip point={stationPhotos} locale={locale}/>}
       {reference === 'road-corridor' && <p className="field-note">{t('Đường tham chiếu OSM đến bản Chế Tạo. Chưa xác minh khả năng đi qua và vị trí trụ sở xã.', 'OSM reference road to Chế Tạo settlement. Passage and commune office location remain unverified.')}</p>}
       {reference === 'destination-place' && <p className="field-note">{t('Mốc bản Chế Tạo từ GeoNames. Vị trí trụ sở xã chưa được xác minh.', 'Chế Tạo settlement reference from GeoNames. The commune office location has not been verified.')}</p>}
-      {reference === 'required-imagery-point' && <p className="field-note">{t('Ảnh tải về phải có pixel dữ liệu hợp lệ tại điểm này. Chưa xác nhận ảnh đáp ứng yêu cầu.', 'Downloaded imagery must contain valid pixels here. Coverage has not yet been confirmed.')}</p>}
+      {reference === 'required-imagery-point' && <p className="field-note">{typeof record.feature.properties.coverageCheck === 'string' ? record.feature.properties.coverageCheck : t('Ảnh tải về phải có pixel dữ liệu hợp lệ tại điểm này. Chưa xác nhận ảnh đáp ứng yêu cầu.', 'Downloaded imagery must contain valid pixels here. Coverage has not yet been confirmed.')}</p>}
       {observation && (
         <>
           <div className="field-record-heading">
@@ -109,7 +131,7 @@ export function ResponseObservationCard({
         <PhotoGallery photos={observation.photos} locale={locale} />
       )}
       </div>
-      <footer><button className="button" onClick={onEdit}>
+      <footer>{areaHead&&onCompare&&<button className="button" onClick={onCompare}>{t('Đối chiếu ảnh','Compare imagery')}</button>}<button className="button" onClick={onEdit}>
         {t('Mở hồ sơ trong GIS', 'Open GIS record')}
       </button></footer>
     </section>

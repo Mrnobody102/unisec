@@ -16,10 +16,15 @@ def run(url, chrome, captures=None):
         page.route('**/*', lambda route: route.continue_()
                    if route.request.url.startswith(url + '/') else route.abort())
         page.goto(url + '/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         # An overview selection must keep its marker clear of the floating dock.
         # A pending hover preview used to interrupt the camera framing on click.
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+        community_rows=page.locator('#response-panel .community')
+        row=community_rows.first
+        community_count=community_rows.count()
+        community_name=row.locator('strong').inner_text()
+        row.click()
         page.wait_for_function("""() => {
             const pin = document.querySelector('.map-pin.is-selected[data-map-object^="community:"]');
             const dock = document.querySelector('#response-details');
@@ -33,8 +38,7 @@ def run(url, chrome, captures=None):
         assert page.locator('.map-pin.is-selected').evaluate('node => !node.hidden')
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
         page.locator('.workspace-nav button').last.click()
-        row = page.locator('#response-panel .community').filter(
-            has=page.locator('strong', has_text='Nậm Khắt'))
+        row = page.locator('#response-panel .community').first
         row.click()
         details = page.locator('#response-details')
         def detail_bounds():
@@ -42,8 +46,8 @@ def run(url, chrome, captures=None):
             expect(details).to_have_css('transform', 'none')
             return details.bounding_box()
         expect(details).to_be_visible()
-        expect(details.locator('h1')).to_have_text('Nậm Khắt')
-        expect(page.locator('#response-panel .community')).to_have_count(7)
+        expect(details.locator('h1')).to_have_text(community_name)
+        expect(page.locator('#response-panel .community')).to_have_count(community_count)
         expect(row).to_be_visible()
         expect(details.locator('h1')).to_be_focused()
         bounds = detail_bounds()
@@ -68,6 +72,8 @@ def run(url, chrome, captures=None):
         assert detail_box['y'] + detail_box['height'] <= profile_box['y'] - 10
         if captures:
             page.screenshot(path=str(captures / 'profile-1440.png'))
+        tools=page.get_by_role('button',name='Công cụ bổ sung',exact=True)
+        if tools.get_attribute('aria-expanded')!='true':tools.click()
         page.locator('.map-measure-trigger').click()
         expect(details).not_to_be_visible()
         expect(page.locator('.map-measure-panel')).to_be_visible()
@@ -82,7 +88,7 @@ def run(url, chrome, captures=None):
                 page.get_by_role('button', name='Thông tin', exact=True).click()
             row.click()
             expect(details).to_be_visible()
-            expect(details.locator('h1')).to_have_text('Nậm Khắt')
+            expect(details.locator('h1')).to_have_text(community_name)
             expect(page.locator('#response-panel')).not_to_be_visible()
             box = detail_bounds()
             assert box['x'] < 2 and box['width'] <= width, box
@@ -106,7 +112,7 @@ def run(url, chrome, captures=None):
         assert page.locator('.map-canvas').bounding_box()['width'] >= 1000
         page.get_by_role('button', name='Mở bảng thông tin', exact=True).click()
         expect(details).to_be_visible()
-        expect(details.locator('h1')).to_have_text('Nậm Khắt')
+        expect(details.locator('h1')).to_have_text(community_name)
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
 
         # Resizing the list must not squeeze the usable map behind a fixed dock.
@@ -122,17 +128,37 @@ def run(url, chrome, captures=None):
         separator.press('Home')
         page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
 
-        # On a short screen the profile owns the map; details return when it closes.
+        # On short screens the details use the information pane beside the profile.
         page.set_viewport_size({'width': 1440, 'height': 600})
         row.click()
         profile = details.get_by_role('button', name='Mặt cắt địa hình', exact=True)
         profile.click()
         expect(page.locator('.profile-panel')).to_be_visible()
-        expect(details).not_to_be_visible()
+        expect(details).to_be_visible()
+        expect(page.locator('.workspace')).to_have_attribute('data-response-layout', 'pane')
         page.get_by_role('button', name='Đóng mặt cắt', exact=True).click()
         expect(details).to_be_visible()
         expect(profile).to_be_focused()
         assert details.locator('.sidebar-scroll').bounding_box()['height'] >= 128
+
+        # Source areas use the same dock, including mobile entry and switching renderers.
+        area_id=page.evaluate("JSON.parse(localStorage.getItem('dear.gis.v2')).records.find(r=>r.feature.properties.dearLandslideArea)?.id")
+        if area_id:
+            page.goto(url+'/?offline=1&map=2d&demoRole=manager&gisPoint='+area_id)
+            area_card=details.locator('.field-map-card')
+            expect(area_card).to_be_visible(timeout=30000)
+            expect(area_card).not_to_contain_text('dearLandslideArea')
+            page.get_by_role('button',name='Chuyển sang 3D',exact=True).click()
+            expect(page.locator('canvas.terrain-canvas')).to_be_visible(timeout=30000)
+            expect(area_card).to_be_visible()
+            page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
+            expect(area_card).to_have_count(0)
+            page.locator('#response-panel .community').first.click()
+            expect(details.locator('h1')).to_have_text(community_name)
+            page.set_viewport_size({'width':390,'height':844})
+            page.goto(url+'/?offline=1&map=2d&demoRole=manager&gisPoint='+area_id)
+            expect(area_card).to_be_visible(timeout=30000)
+            assert details.evaluate('e=>e.scrollWidth<=e.clientWidth+1')
 
         assert not errors, errors
         browser.close()

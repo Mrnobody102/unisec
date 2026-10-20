@@ -1,4 +1,3 @@
-import { EditableTitle } from '../../shared/ui/EditableTitle';
 import React from 'react';
 import type {
   Community,
@@ -12,11 +11,11 @@ import { UiIcon } from './UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
 import { AccessPanel } from '../../features/routes/AccessPanel';
 import type { CommunitySignal, ResponseAssessment } from '../../features/incident/responseAssessment';
-import { KeyFacts, peopleText } from './DetailFacts';
 import { CommunityEvidence } from '../../features/incident/CommunityEvidence';
 
 type Props = {
   community: Community;
+  originName?: string;
   assessment: ResponseAssessment;
   terrainCovered: boolean | null;
   hazards: Hazard[];
@@ -36,12 +35,11 @@ type Props = {
   onOpenSources: () => void;
   onOpenEvidence: (hazardId: string) => void;
   onExport: () => void;
-  onRename?: (names: [string, string]) => boolean;
   signal?: CommunitySignal;
 };
 
 export const CommunityDetailView: React.FC<Props> = ({
-  onRename,
+  originName,
   signal,
   community,
   assessment,
@@ -70,21 +68,22 @@ export const CommunityDetailView: React.FC<Props> = ({
     <>
       <div className="sidebar-top community-detail-heading">
         <div className="detail-title">
-          <EditableTitle key={community.id} id="place-title" title={community.name} names={[community.name, community.name]} bilingual={false} locale={locale} onRename={onRename} />
+          <div className="detail-name">
+            <h1 id="place-title">{community.name}</h1>
+            {community.commune && community.commune !== community.name && <p className="community-parent">{t(`Xã ${community.commune}`, `${community.commune} commune`)}</p>}
+          </div>
           <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
         </div>
         <div className="detail-priority community-status-summary">
-          <StatusText tone={community.prio === 1 ? 'priority' : 'neutral'} icon={community.prio === 1 ? 'priority' : undefined}>
-            {community.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
-          </StatusText>
-          {signal?.urgentNeed && <StatusText tone="critical">{t('Cần hỗ trợ khẩn', 'Urgent support')}</StatusText>}
+          {signal?.urgentNeed ? <StatusText tone="critical">{t('Cần hỗ trợ khẩn', 'Urgent support')}</StatusText> :
+            <StatusText tone={community.prio === 1 ? 'priority' : 'neutral'} icon={community.prio === 1 ? 'priority' : undefined}>
+              {community.prio === 1 ? t('Ưu tiên cao', 'High priority') : t('Theo dõi', 'Monitor')}
+            </StatusText>}
+          {signal?.communication === 'lost' && <StatusText tone="critical">{t('Mất liên lạc', 'Contact lost')}</StatusText>}
+          {signal?.communication === 'available' && <StatusText>{t('Có liên lạc', 'In contact')}</StatusText>}
         </div>
-        <KeyFacts items={[
-          { label: t('Dân cư', 'Residents'), value: peopleText(community, locale) },
-          { label: t('Liên lạc', 'Contact'), value: signal?.communication === 'lost' ? t('Mất liên lạc', 'Lost')
-            : signal?.communication === 'available' ? t('Có liên lạc', 'Available') : t('Chưa có thông tin', 'Not reported'),
-            tone: signal?.communication === 'lost' ? 'critical' : undefined }
-        ]}/>
+        <p className="detail-population">{t(`${community.pop} người, ${community.hh} hộ`, `${community.pop} people, ${community.hh} households`)}</p>
+
 
 
         <div className="decision-tabs" role="group">
@@ -105,7 +104,7 @@ export const CommunityDetailView: React.FC<Props> = ({
 
       <div className="sidebar-scroll">
         {detailTab === 'decision' && <AccessPanel key={community.id}
-          locale={locale} candidate={candidateRoute} direct={directRoute} hazards={hazards} evidence={evidence}
+          originName={originName} locale={locale} candidate={candidateRoute} direct={directRoute} hazards={hazards} evidence={evidence}
           selected={selectedRouteType} onSelectRoute={onChangeRouteType}
           sectionId={sectionId} onSelectSection={onSelectSection} onEvidence={onOpenEvidence}
           hasProfile={hasTerrainProfile} onProfile={onToggleProfile}

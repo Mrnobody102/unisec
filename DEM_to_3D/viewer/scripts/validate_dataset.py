@@ -119,6 +119,36 @@ def main(prepare: bool = False, manifest_path: Path | None = None) -> None:
     if manifest.get('referenceData') is not None:
         additional_asset(manifest['referenceData'], 'referenceData', r'/scenarios/[A-Za-z0-9._/-]+\.geojson')
 
+    if manifest.get('fieldPhotos') is not None:
+        catalog_path = additional_asset(manifest['fieldPhotos'], 'fieldPhotos', r'/scenarios/[A-Za-z0-9._/-]+/photos\.json')
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+        folder = manifest['fieldPhotos']['url'].rsplit('/', 1)[0]
+        photos = [photo for point in catalog.get('points', []) for photo in point.get('photos', [])]
+        if not photos:
+            fail('empty field photo catalog')
+        for photo in photos:
+            for view in ('image', 'thumb'):
+                item = photo.get(view)
+                if not isinstance(item, dict) or not re.fullmatch(r'[a-z0-9._-]+\.webp', str(item.get('url', ''))):
+                    fail('invalid field photo file')
+                additional_asset({**item, 'url': f"{folder}/{item['url']}"}, f"fieldPhotos.{item['url']}", r'/scenarios/[A-Za-z0-9._/-]+\.webp')
+
+    if manifest.get('analysisImagery') is not None:
+        catalog_path = additional_asset(manifest['analysisImagery'], 'analysisImagery', r'/scenarios/[A-Za-z0-9._/-]+/imagery\.json')
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+        folder = manifest['analysisImagery']['url'].rsplit('/', 1)[0]
+        rasters = [part for layer in catalog.get('layers', []) for part in layer.get('parts', [])]
+        rasters += [layer['mosaic'] for layer in catalog.get('layers', []) if layer.get('mosaic')]
+        rasters += [mode for layer in catalog.get('layers', []) for mode in layer.get('modes', {}).values()]
+        if not rasters:
+            fail('empty analysis imagery catalog')
+        for raster in rasters:
+            for view in ('terrain', 'web'):
+                item = raster.get(view)
+                if not isinstance(item, dict) or not re.fullmatch(r'[a-z0-9.-]+\.webp', str(item.get('url', ''))):
+                    fail('invalid analysis imagery file')
+                additional_asset({**item, 'url': f"{folder}/{item['url']}"}, f"analysisImagery.{item['url']}", r'/scenarios/[A-Za-z0-9._/-]+\.webp')
+
     contexts = manifest.get('terrainContext', [])
     if not isinstance(contexts, list) or len(contexts) > 3:
         fail('invalid terrainContext')

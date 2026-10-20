@@ -375,7 +375,7 @@ def rasterize_commune_geometries(
     return inside
 
 
-def load_commune_mask(shp_path, commune_query, transform, crs, grid_shape, buffer_m, verbose):
+def load_commune_mask(shp_path, commune_query, transform, crs, grid_shape, buffer_m, verbose, return_metadata=False):
     """
     Trả về mask (True = pixel NGOÀI ranh giới xã, sẽ bị coi là nodata).
 
@@ -392,77 +392,97 @@ def load_commune_mask(shp_path, commune_query, transform, crs, grid_shape, buffe
         sys.exit(1)
 
     log(f"Đọc shapefile ranh giới: {shp_path}", verbose)
-    r = shapefile.Reader(shp_path)
+    with shapefile.Reader(shp_path) as r:
 
-    # Use only the grid bounds for query/list filtering; rasterization below
-    # avoids allocating coordinate arrays for every source pixel.
-    from rasterio.transform import array_bounds
-    from rasterio.warp import transform_bounds
-    left, bottom, right, top = array_bounds(rows, cols, transform)
-    if crs.is_geographic:
-        dem_bounds_wgs84 = (left, bottom, right, top)
-    else:
-        dem_bounds_wgs84 = transform_bounds(crs, "EPSG:4326", left, bottom, right, top)
+        # Use only the grid bounds for query/list filtering; rasterization below
+        # avoids allocating coordinate arrays for every source pixel.
+        from rasterio.transform import array_bounds
+        from rasterio.warp import transform_bounds
+        left, bottom, right, top = array_bounds(rows, cols, transform)
+        if crs.is_geographic:
+            dem_bounds_wgs84 = (left, bottom, right, top)
+        else:
+            dem_bounds_wgs84 = transform_bounds(crs, "EPSG:4326", left, bottom, right, top)
 
-    # ----- Chế độ liệt kê -----
-    queries = [q.strip().lower() for q in (commune_query or "list").split(",") if q.strip()]
-    wants_list = any(q in ("list", "?") for q in queries)
-    queries = [q for q in queries if q not in ("list", "?")]
+        # ----- Chế độ liệt kê -----
+        queries = [q.strip().lower() for q in (commune_query or "list").split(",") if q.strip()]
+        wants_list = any(q in ("list", "?") for q in queries)
+        queries = [q for q in queries if q not in ("list", "?")]
 
-    if wants_list:
-        dem_lon_min, dem_lat_min, dem_lon_max, dem_lat_max = dem_bounds_wgs84
-        print(f"\nCác xã/phường có ranh giới giao với vùng DEM "
-              f"(lon {dem_lon_min:.4f}..{dem_lon_max:.4f}, lat {dem_lat_min:.4f}..{dem_lat_max:.4f}):")
-        n = 0
+        if wants_list:
+            dem_lon_min, dem_lat_min, dem_lon_max, dem_lat_max = dem_bounds_wgs84
+            print(f"\nCác xã/phường có ranh giới giao với vùng DEM "
+                  f"(lon {dem_lon_min:.4f}..{dem_lon_max:.4f}, lat {dem_lat_min:.4f}..{dem_lat_max:.4f}):")
+            n = 0
+            for i, shape in enumerate(r.iterShapes()):
+                sxmin, symin, sxmax, symax = shape.bbox
+                if sxmax < dem_lon_min or sxmin > dem_lon_max or symax < dem_lat_min or symin > dem_lat_max:
+                    continue
+                rec = r.record(i)
+                print(f"  {rec['ma_xa']}  {rec['ten_xa']:<30} tỉnh: {rec['ten_tinh']}")
+                n += 1
+            print(f"Tổng: {n} xã. Chạy lại với --commune '<tên hoặc mã>' để cắt.")
+            if not queries:
+                sys.exit(0)
+
+        # ----- Tìm xã khớp truy vấn (tên HOẶC mã, kèm tỉnh nếu trùng tên) -----
+        matches = []  # [(shape, ten_xa, ten_tinh, source_attributes)]
         for i, shape in enumerate(r.iterShapes()):
-            sxmin, symin, sxmax, symax = shape.bbox
-            if sxmax < dem_lon_min or sxmin > dem_lon_max or symax < dem_lat_min or symin > dem_lat_max:
-                continue
             rec = r.record(i)
-            print(f"  {rec['ma_xa']}  {rec['ten_xa']:<30} tỉnh: {rec['ten_tinh']}")
-            n += 1
-        print(f"Tổng: {n} xã. Chạy lại với --commune '<tên hoặc mã>' để cắt.")
-        if not queries:
-            sys.exit(0)
-
-    # ----- Tìm xã khớp truy vấn (tên HOẶC mã, kèm tỉnh nếu trùng tên) -----
-    matches = []  # [(shape, ten_xa, ten_tinh)]
-    for i, shape in enumerate(r.iterShapes()):
-        rec = r.record(i)
-        ten = str(rec["ten_xa"] or "").strip()
-        ma = str(rec["ma_xa"] or "").strip()
-        tinh = str(rec["ten_tinh"] or "").strip()
-        for q in queries:
-            if "|" in q:
-                q_xa, _, q_tinh = q.partition("|")
-                if q_xa.strip() == ten.lower() and q_tinh.strip() == tinh.lower():
-                    matches.append((shape, ten, tinh))
+            ten = str(rec["ten_xa"] or "").strip()
+            ma = str(rec["ma_xa"] or "").strip()
+            tinh = str(rec["ten_tinh"] or "").strip()
+            for q in queries:
+                if "|" in q:
+                    q_xa, _, q_tinh = q.partition("|")
+                    if q_xa.strip() == ten.lower() and q_tinh.strip() == tinh.lower():
+                        matches.append((shape, ten, tinh, rec.as_dict()))
+                        break
+                elif q == ten.lower() or q == ma:
+                    matches.append((shape, ten, tinh, rec.as_dict()))
                     break
-            elif q == ten.lower() or q == ma:
-                matches.append((shape, ten, tinh))
-                break
 
-    if not matches:
-        print(f"Lỗi: không tìm thấy xã nào khớp truy vấn: {', '.join(queries)}", file=sys.stderr)
-        sys.exit(1)
+        if not matches:
+            print(f"Lỗi: không tìm thấy xã nào khớp truy vấn: {', '.join(queries)}", file=sys.stderr)
+            sys.exit(1)
 
-    log(f"Khớp {len(matches)} xã: " + ", ".join(f"{t} ({p})" for _, t, p in matches), verbose)
+        log(f"Khớp {len(matches)} xã: " + ", ".join(f"{t} ({p})" for _, t, p, _ in matches), verbose)
 
-    geometries = [shape.__geo_interface__ for shape, _, _ in matches]
-    inside = rasterize_commune_geometries(
-        geometries,
-        transform,
-        crs,
-        grid_shape,
-        buffer_m,
-        boundary_pixels=1,
-    )
+        geometries = [shape.__geo_interface__ for shape, _, _, _ in matches]
+        inside = rasterize_commune_geometries(
+            geometries,
+            transform,
+            crs,
+            grid_shape,
+            buffer_m,
+            boundary_pixels=1,
+        )
 
-    outside = ~inside
-    log(f"Giữ lại {(~outside).sum():,}/{outside.size:,} pixel "
-        f"({(~outside).mean()*100:.1f}%) bên trong ranh giới xã.", verbose)
-    return outside
-
+        outside = ~inside
+        log(f"Giữ lại {(~outside).sum():,}/{outside.size:,} pixel "
+            f"({(~outside).mean()*100:.1f}%) bên trong ranh giới xã.", verbose)
+        if not return_metadata:
+            return outside
+        field_map = {
+            "commune_code": "ma_xa",
+            "commune_name": "ten_xa",
+            "province_code": "ma_tinh",
+            "province_name": "ten_tinh",
+            "headquarters": "tru_so",
+            "type": "loai",
+            "area_km2": "dtich_km2",
+            "population": "dan_so",
+            "density_per_km2": "matdo_km2",
+        }
+        administrative_units = []
+        for _, _, _, attributes in matches:
+            unit = {}
+            for output_key, input_key in field_map.items():
+                value = attributes.get(input_key)
+                if value is not None and value != "":
+                    unit[output_key] = value
+            administrative_units.append(unit)
+        return outside, administrative_units
 
 # --------------------------------------------------------------------------
 # 4. Xây dựng mesh: vertices + faces (vector hóa bằng numpy, không loop Python)
@@ -771,10 +791,11 @@ def main():
         analysis_supported = False
 
     # 3. Cắt theo ranh giới xã/phường (nếu có) — đánh dấu pixel ngoài xã thành nodata
+    administrative_units = []
     if args.commune_shp:
-        outside_mask = load_commune_mask(
+        outside_mask, administrative_units = load_commune_mask(
             args.commune_shp, args.commune, transform, crs, array.shape,
-            args.commune_buffer, verbose,
+            args.commune_buffer, verbose, return_metadata=True,
         )
         nodata_mask = nodata_mask | outside_mask
 
@@ -888,6 +909,11 @@ def main():
             "triangle_count": int(faces.shape[0]),
         },
     }
+    if administrative_units:
+        metadata["administrative"] = {
+            "source": os.path.basename(args.commune_shp),
+            **(administrative_units[0] if len(administrative_units) == 1 else {"units": administrative_units}),
+        }
     validate_metadata(metadata)
     dump_metadata(metadata, json_path)
     # Validate the just-written pair, including its byte length, before

@@ -252,7 +252,7 @@ h3 {
 }
 
 /* Section names and object names have separate scales. */
-.sidebar h3, .sidebar .workflow-section h3, .sidebar .section-line h3 { margin: 0 0 10px; color: var(--ws-text); font-size: 12px; font-weight: 600; letter-spacing: 0.01em; line-height: 1.5; }
+.sidebar h3, .sidebar .workflow-section h3, .sidebar .section-line h3 { margin: 0 0 6px; color: var(--ws-muted); font-size: 13px; font-weight: 600; letter-spacing: 0; line-height: 1.5; }
 .sidebar .section-line h3 { margin: 0; }
 
 .sidebar-intro {
@@ -334,15 +334,12 @@ h3 {
   padding: 16px 12px;
   transition: background 0.15s ease;
 }
-.sidebar .community::after { content: ''; position: absolute; bottom: 0; left: 12px; right: 12px; border-bottom: 1px solid var(--ws-line); }
+.sidebar .community::after { content: ''; position: absolute; bottom: 0; left: 12px; right: 12px; border-bottom: 1px solid var(--row-line); }
+.sidebar .community:last-child::after { display: none; }
 
-.sidebar .community:hover {
-  background: var(--hover);
-}
-.sidebar .community:hover .community-heading strong { color: var(--select-ink); }
-.sidebar .community.active:hover { background:var(--hover); }
-
-.sidebar .community.active {background:transparent;}
+/* Hover is feedback, selection is state: different fills, the title colour never jumps. */
+.sidebar .community:hover { background: var(--hover); }
+.sidebar .community.active { background: var(--ws-tint); }
 .sidebar .community.active .community-heading strong { color: var(--select-ink); }
 
 .community-heading {
@@ -427,7 +424,7 @@ h3 {
 .map-location-panel .text-button { font-size: 12px; }
 .map-2d .leaflet-container { background: var(--ws-map); }
 .map-attribution { position: absolute; z-index: 22; bottom: 8px; right: 8px; display: flex; align-items: center; gap: 4px; max-width: calc(100% - 16px); color: var(--ws-muted); font-size: 10px; line-height: 1.5; }
-.map-attribution a { color: inherit; text-decoration: underline; }
+.map-attribution a { color: inherit; text-decoration: none; }
 .map-source-button { position: relative; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--map-control-line); border-radius: 50%; background: var(--ws-raised); color: var(--ws-text); box-shadow: var(--shadow-float); }
 .map-source-button:hover { background: var(--ws-tint); color: var(--ws-brand); }
 .map-source-warning { position: absolute; top: 0; right: 0; width: 6px; height: 6px; border-radius: 50%; background: #a6630b; }
@@ -698,7 +695,10 @@ dialog.timeline-dialog::backdrop { background: var(--modal-backdrop); }
 .basemap-preview svg { fill: none; stroke: #93a48a; stroke-width: 0.7; }
 .basemap-preview.is-imagery { background: #375746; }
 .basemap-choice.is-active { border-color: var(--select); background: var(--select-soft); }
-.layers-content input { accent-color: var(--select); width: 15px; height: 15px; margin: 0; flex: none; }
+.layers-content input:is([type="checkbox"], [type="radio"]) { accent-color: var(--select); width: 15px; height: 15px; margin: 0; flex: none; }
+.layers-content label { min-width: 0; }
+.layers-content select { max-width: 100%; min-width: 0; }
+.layers-content .layer-source-row label > span:not(.layer-key-sample) { min-width: 0; overflow-wrap: break-word; }
 .map-layer-group label, .terrain-shading { display: flex; align-items: center; gap: 10px; min-height: 34px; font-size: 13px; cursor: pointer; }
 .layer-source-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; font-size: 13px; }
 .layer-source-row label { flex: 1; min-width: 0; }

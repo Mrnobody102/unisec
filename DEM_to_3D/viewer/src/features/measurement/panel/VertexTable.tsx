@@ -55,7 +55,7 @@ export function VertexTable({ mode, points, selected, units, locale, onSelect, o
               aria-label={`${name(m.editCoordinates, row.label)}: ${row.point.lat.toFixed(5)}, ${row.point.lng.toFixed(5)}`}
               onClick={() => setEditing({ index: row.index, text: `${row.point.lat.toFixed(6)}, ${row.point.lng.toFixed(6)}`, invalid: false })}>
               {row.point.lat.toFixed(5)}, {row.point.lng.toFixed(5)}</button>}</td>
-        {lengths && <td>{row.segment ?? '—'}</td>}{totals && <td>{row.total ?? '—'}</td>}
+        {lengths && <td>{row.segment ?? ''}</td>}{totals && <td>{row.total ?? ''}</td>}
         <td><button type="button" className="icon-button vertex-remove" aria-label={name(m.removeVertex, row.label)} title={name(m.removeVertex, row.label)}
           onClick={() => onRemove(row.index)}><UiIcon name="trash" size={16}/></button></td>
       </tr>)}</tbody>

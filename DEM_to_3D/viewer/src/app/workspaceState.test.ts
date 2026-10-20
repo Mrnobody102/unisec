@@ -25,6 +25,8 @@ describe('workspace navigation', () => {
     state = navigate(state, { type: 'inspect-object', id: 'road:E13' });
     state = navigate(state, { type: 'inspect-object', id: 'hazard:U-1' });
     state = navigate(state, { type: 'close-object' });
+    expect(selectedMapObject(state)).toBe('road:E13');
+    state = navigate(state, { type: 'close-object' });
     expect(state.view).toBe('priority');
     expect(state.selectedCommunityId).toBe('NK');
     expect(state.selectedRouteType).toBe('direct');
@@ -54,6 +56,29 @@ describe('workspace navigation', () => {
     const site = navigate(roads, { type: 'inspect-object', id: 'poi:staging' });
     expect(site.view).toBe('impact');
     expect(selectedMapObject(site)).toBe('poi:staging');
+  });
+
+  it('returns from a linked road to the landslide, then to the overview', () => {
+    let state = navigate(initial, { type: 'inspect-object', id: 'hazard:L1' });
+    state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
+    state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
+    expect(state.detailHistory).toHaveLength(1);
+    state = navigate(state, { type: 'close-object' });
+    expect(selectedMapObject(state)).toBe('hazard:L1');
+    state = navigate(state, { type: 'close-object' });
+    expect(state.view).toBe('incident');
+    expect(selectedMapObject(state)).toBeNull();
+  });
+
+  it('clears old detail history when opening an explicit road list', () => {
+    let state = navigate(initial, { type: 'inspect-object', id: 'hazard:L1' });
+    state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
+    state = navigate(state, { type: 'road-list', filter: 'blocked' });
+    expect(state.detailHistory).toEqual([]);
+    state = navigate(state, { type: 'inspect-object', id: 'road:E2' });
+    state = navigate(state, { type: 'close-object' });
+    expect(state.view).toBe('impact');
+    expect(selectedMapObject(state)).toBeNull();
   });
 
   it('opens a road count as the exact list, clearing stale detail and query', () => {

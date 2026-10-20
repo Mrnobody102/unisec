@@ -8,10 +8,10 @@ const polygon = { type: 'Polygon' as const, coordinates: [[[104,21],[104.01,21],
 const reference: GeometryRecord = { id:'point',name:'Survey',role:'reference',visible:true,source:{name:'Field',format:'coordinate',importedAt:'2026-09-29T03:00:00Z'},feature:{type:'Feature',properties:{},geometry:{type:'Point',coordinates:[104,21]}} };
 
 describe('Semantic response layers', () => {
-  it('keeps mapped landslides independent of imported GIS data and excludes another network', () => {
+  it('retains published boundaries after a road-network revision, independently of imported GIS visibility', () => {
     const area = createLandslideArea(polygon, 'potential', 'Slope', 'current');
     const other = createLandslideArea(polygon, 'occurred', 'Other dataset', 'other');
-    expect(visibleMapRecords([area, reference, other], {gis:false,landslide:true}, 'current')).toEqual([area]);
+    expect(visibleMapRecords([area, reference, other], {gis:false,landslide:true}, 'current')).toEqual([area, other]);
     expect(visibleMapRecords([area, reference], {gis:true,landslide:false}, 'current')).toEqual([reference]);
     expect(visibleMapRecords([{...area,visible:false}], {gis:true,landslide:true}, 'current')).toEqual([]);
   });

@@ -1,8 +1,12 @@
+import { supportsBasemapTone } from '../features/imagery/basemapTone';
+import { analysisSourceInfo } from '../features/imagery/analysisImagery';
 import proj4 from 'proj4';
+import { mapSelectionFrame } from './mapSelectionFrame';
 import { geometryPositions } from '../geo/vector/types';
 import { AssessmentTimeline } from '../features/incident/AssessmentTimeline';
 import './workspace-layout.css';
 import { visibleMapRecords } from '../features/map/visibleMapRecords';
+import { representedHazard } from '../features/map/sourceRepresentation';
 import { useMapPreview } from '../features/map/useMapPreview';
 import { landslideAreaOf } from '../features/landslides/landslideAreas';
 import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
@@ -31,13 +35,14 @@ import '../styles.css';
 import '../styles/tokens.css';
 import '../styles/workspace.css';
 import '../styles/incident-workspace.css';
+import '../styles/cartographic.css';
+import '../styles/sheet.css';
 import '../features/incident/incident-tools.css';
 import '../features/search/search.css';
 import '../features/briefing/briefing.css';
 
 import { observationOf } from '../features/observations/model';
 import { useGeometrySession } from '../features/geodata/useGeometrySession';
-import { ResponseObservationCard } from '../features/observations/ResponseObservationCard';
 import { PointGroupCard } from '../features/observations/PointGroupCard';
 import { ResponsePanel } from './ResponsePanel';
 import { ResponseDetails } from './ResponseDetails';
@@ -51,6 +56,12 @@ import { WorkspaceNav } from '../components/dear/WorkspaceNav';
 import { MapControls } from '../components/dear/MapControls';
 import { MapAttribution } from '../components/dear/MapAttribution';
 import { ProfileDrawer } from '../components/dear/ProfileDrawer';
+import { useTerrainOverlays } from '../features/terrain/useTerrainOverlays';
+import { useAnalysisImagery } from '../features/imagery/useAnalysisImagery';
+import { usePreparedPhotos } from '../features/fieldPhotos/preparedPhotos';
+import { FlyoverBar } from '../features/flyover/FlyoverBar';
+import { buildFlyoverInput } from '../features/flyover/flyoverInput';
+import type { FlyoverState } from '../terrain/flyover/flyoverController';
 import { LayersDialog } from '../components/dear/LayersDialog';
 
 import type {
@@ -111,7 +122,7 @@ const TerrainViewer = React.lazy(() =>
 );
 const defaultLayers = {
   gis: true,
-  aoi: true,
+  aoi: false,
   imagery: true,
   context: true,
   hillshade: true,
@@ -122,7 +133,7 @@ const defaultLayers = {
   crossings: true,
   communities: true,
   staging: true,
-  hlz: true,
+  hlz: false,
   route: true
 };
 
@@ -169,16 +180,25 @@ export function ResponseWorkspace({
   const gisGroup = gis.records.filter(
     (record) => record.visible && gisGroupIds.includes(record.id)
   );
+  const inspectGisRecord = (id: string, keepGroup = false) => {
+    gis.select(id);
+    setGisCardId(id);
+    if (!keepGroup) setGisGroupIds([]);
+    setPanelCollapsed(false);
+    setMobileView('info');
+    resetTools();
+  };
   const showGisOnResponse = (id: string) => {
     gis.select(id);
     setGisCardId(id);
     setGisResponseView((previous) => ({ version: previous.version + 1, id }));
     const area = gis.records.find(record => record.id === id);
-    setLayers((previous) => ({ ...previous, gis: true, ...(area && landslideAreaOf(area) ? {landslide: true} : {}) }));
+    setLayers((previous) => ({ ...previous, gis: true, ...(area && (landslideAreaOf(area) || area.feature.properties.sourceDatasetId && area.feature.geometry.type === 'Point') ? {landslide: true} : {}) }));
     setPanelCollapsed(false);
     setGisGroupIds([]);
     setMapMode('2d');
-    setMobileView('map');
+    setMobileView('info');
+    resetTools();
     setActiveDialog(null);
   };
   const { view, selectedCommunityId, selectedRouteType, selectedObjectId } =
@@ -190,7 +210,7 @@ export function ResponseWorkspace({
       gis.fit(id);
       setGisResponseView({ version: 1, id });
       setMapMode('2d');
-      setMobileView('map');
+      setMobileView('info');
     }
   }, []);
   const [mapQuery, setMapQuery] = useState('');
@@ -225,6 +245,8 @@ export function ResponseWorkspace({
     recover2D: handle3DUnavailable
   } = interaction;
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const { session: measureSession, dispatch: dispatchMeasureSession } =
     useMeasurementSession(mapMode, measurementOpen);
   const { session: drawSession, dispatch: dispatchDrawSession } = useDrawSession(mapMode, drawOpen);
@@ -236,18 +258,23 @@ export function ResponseWorkspace({
     total: 0
   });
   const [locationPoint, setLocationPoint] = useState<MapLocation | null>(null);
+  const focusMapTool = (selector: string) => {
+    const button = document.querySelector<HTMLButtonElement>(selector);
+    (button?.getClientRects().length ? button : document.querySelector<HTMLButtonElement>('.map-tool-toggle'))?.focus();
+  };
   const closeLocation = useCallback(() => {
     interaction.dispatch({ type: 'close-tool', tool: 'location' });
-    document.querySelector<HTMLButtonElement>('.map-location-trigger')?.focus();
+    focusMapTool('.map-location-trigger');
   }, [interaction.dispatch]);
   const [evidenceModalId, setEvidenceModalId] = useState<string | null>(null);
   const { notice, notify: showToast, dismiss: dismissToast } = useNotice();
+  const terrainOverlays = useTerrainOverlays();
   const [layers, setLayers] = useState<Record<string, boolean>>(() => ({
     ...defaultLayers,
     context: !runtime.offline
   }));
 
-  const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion), [gis.records, layers, historical, runtime.packet.datasetVersion]);
+  const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion, runtime.packet.hazards, gisCardId), [gis.records, layers, historical, runtime.packet, gisCardId]);
 
   useEffect(() => {
     if (gisCardId && !displayedGis.some(record => record.id === gisCardId)) setGisCardId(null);
@@ -260,17 +287,31 @@ export function ResponseWorkspace({
   } | null>(null);
   const [orbiting, setOrbiting] = useState(false);
   const viewControlRef = useRef<ViewControls | null>(null);
+  const showMappedAreas = () => {
+    const points = gis.records.filter(record => record.visible && landslideAreaOf(record))
+      .flatMap(record => geometryPositions(record.feature.geometry))
+      .map(([lon, lat]) => { const [x, y] = proj4('EPSG:4326', 'EPSG:32648', [lon, lat]); return { x, y }; });
+    if (!points.length) return;
+    resetTools(); navigation.dispatch({type:'reset'}); setGisCardId(null); setGisGroupIds([]);
+    setMobileView('map'); setMapMode('2d');
+    setLayers(previous => ({...previous, landslide:true}));
+    requestAnimationFrame(() => viewControlRef.current?.frameProjected?.(points));
+  };
   const [viewReadyVersion, setViewReadyVersion] = useState(0);
   const onViewReady = useCallback(() => setViewReadyVersion(version => version + 1), []);
   useEffect(() => {
-    if (mapMode !== '3d' || !gisCard || !models[0]?.metadata) return;
+    if (!gisCard || !models[0]?.metadata) return;
     const metadata = models[0].metadata;
     const points = geometryPositions(gisCard.feature.geometry).map(([lon,lat]) => {
       const [x,y] = proj4('EPSG:4326', metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`, [lon,lat]);return {x,y};
     });
+    const frame = points.length === 1 ? [
+      {x:points[0].x - 250, y:points[0].y - 250},
+      {x:points[0].x + 250, y:points[0].y + 250}
+    ] : points;
     const timer = requestAnimationFrame(() => {
       const reserve = parseFloat(getComputedStyle(document.querySelector('.workspace')!).getPropertyValue('--response-detail-reserve')) || 0;
-      viewControlRef.current?.frameProjected?.(points,{right:reserve});
+      viewControlRef.current?.frameProjected?.(frame,{right:reserve});
     });
     return () => cancelAnimationFrame(timer);
   }, [gisCardId, gisCard?.feature.geometry, mapMode, viewReadyVersion]);
@@ -278,7 +319,7 @@ export function ResponseWorkspace({
   const workspaceRef = useRef<HTMLDivElement>(null);
   const detailReturnTarget = useRef<HTMLElement | null>(null);
   const profileReturnTarget = useRef<HTMLElement | null>(null);
-  const detailLayout = useResponseDetailLayout(workspaceRef);
+  const detailLayout = useResponseDetailLayout(workspaceRef, showProfile);
   const modalKey = interaction.dialog === 'layers' ? null : interaction.dialog;
   useModalFocus(workspaceRef, modalKey, () => {
     setActiveDialog(null);
@@ -349,10 +390,20 @@ export function ResponseWorkspace({
     incident,
     responseSites
   } = incidentSnapshot;
+  const selectedSourceHazard = gisCard ? representedHazard(gisCard, hazards)?.id : undefined;
+  const mapHazards = useMemo(() => hazards.filter(hazard => hazard.id !== selectedSourceHazard)
+    .map(hazard => ({...hazard, labelMode: hazard.labelMode ?? 'show' as const})), [hazards, selectedSourceHazard]);
   useMapPreview(workspaceRef,key=>{const [kind,...rest]=key.split(':'),id=rest.join(':');const f=kind==='community'?communities.find(f=>f.id===id):kind==='hazard'?hazards.find(f=>f.id===id):kind==='poi'?responseSites.find(f=>f.id===id):roads.find(f=>f.id===id);if(f)return {point:'projected' in f?f.projected:f.points[Math.floor(f.points.length/2)],name:typeof f.name==='string'?f.name:f.name[locale==='vi'?0:1]};const r=gis.records.find(r=>r.id===id);if(r?.feature.geometry.type==='Point'){const [lon,lat]=r.feature.geometry.coordinates;return {point:roadProjected(lat,lon),name:r.name};}return null;});
   useEffect(() => {
     if (offlineMode) setLayers((previous) => ({ ...previous, context: false }));
   }, [offlineMode]);
+  const analysisImagery = useAnalysisImagery(scenarioManifest?.analysisImagery);
+  const fieldPhotos = usePreparedPhotos(scenarioManifest?.fieldPhotos);
+  const analysisDisplay = useMemo(() => ({ rasters: analysisImagery.rasters, opacity: analysisImagery.selection.opacity, balanceBasemap:analysisImagery.balanceBasemap && supportsBasemapTone(analysisImagery.layers) && analysisImagery.layers.some(layer=>layer.id===analysisImagery.selection.layer && layer.kind==='optical') }),
+    [analysisImagery.rasters, analysisImagery.selection.opacity,analysisImagery.balanceBasemap,analysisImagery.layers,analysisImagery.selection.layer]);
+  const [flyoverState, setFlyoverState] = useState<FlyoverState>({ status: 'idle', time: 0, duration: 0 });
+  const flyoverInput = useMemo(() => buildFlyoverInput({ communities, routes, hazards, responseSites, fieldPhotos, mappedAreas:displayedGis, imageryLayers: analysisImagery.layers, imagerySelection: analysisImagery.selection }),
+    [communities, routes, hazards, responseSites, fieldPhotos, displayedGis, analysisImagery.layers, analysisImagery.selection]);
 
   const resetTerrainTools = useCallback(() => {
     resetTools();
@@ -419,6 +470,13 @@ export function ResponseWorkspace({
     [models, defaultTerrainData]
   );
   const journey = useRoadJourney(roads);
+  // One map tool at a time: opening the journey already resets the others, so the
+  // others close the journey too. Its chosen points are kept for when it reopens.
+  const otherMapTool = measurementOpen || drawOpen || locationOpen;
+  useEffect(() => {
+    if (otherMapTool && journey.open) journey.setOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otherMapTool]);
   const profileTarget = useMemo(
     () =>
       journey.open && journey.route
@@ -426,8 +484,8 @@ export function ResponseWorkspace({
         : selectedObjectId?.startsWith('road:')
           ? (roads.find((road) => `road:${road.id}` === selectedObjectId) ??
             null)
-          : activeRoute,
-    [selectedObjectId, roads, activeRoute, journey.open, journey.route]
+          : activeRoute?.segs.find(road => road.id === navigation.routeSectionId) ?? activeRoute,
+    [selectedObjectId, roads, activeRoute, navigation.routeSectionId, journey.open, journey.route]
   );
   const { analysisTerrain, routeProfile, focusPoint } = useRouteTerrainAnalysis(
     analysisModels,
@@ -521,6 +579,7 @@ export function ResponseWorkspace({
     revealPanel();
   };
   const selectRouteSection = (id: string | null) => {
+    rememberDetailTrigger();
     navigation.dispatch({ type: 'route-section', id });
     setFocusDistance(null);
     setPanelCollapsed(false);
@@ -697,10 +756,12 @@ export function ResponseWorkspace({
   }, [showToast, reportApplied, historical, resetTools, setReportApplied, setActiveDialog]);
 
   const changeView = (view: WorkspaceView) => {
+    rememberDetailTrigger();
     navigation.dispatch({ type: 'view', view, list: true });
     revealPanel();
   };
   const openList = (view: WorkspaceView) => {
+    rememberDetailTrigger();
     navigation.dispatch({ type: 'view', view, list: true });
     revealPanel();
   };
@@ -765,42 +826,31 @@ export function ResponseWorkspace({
   const responseDetailSelected =
     snapshotReady &&
     Boolean(
-      view === 'priority'
+      gisCard || (view === 'priority'
         ? selectedCommunity && selectedRoutePair
-        : selectedObjectId
+        : selectedObjectId)
     );
   const responseDetailVisible =
     responseDetailSelected &&
     !panelCollapsed &&
-    !(showProfile && detailLayout.mode === 'dock' && !detailLayout.fitsProfile) &&
     !measurementOpen &&
     !drawOpen &&
     !locationOpen &&
     !journey.open &&
-    !gisCard &&
-    gisGroup.length < 2 &&
+    (Boolean(gisCard) || gisGroup.length < 2) &&
     activeDialog !== 'layers';
   useEffect(() => {
-    if (!responseDetailVisible) return;
+    const selection = view === 'priority' ? selectedCommunityId && `community:${selectedCommunityId}` : selectedObjectId;
+    if (!selection || gisCard || gisGroup.length > 1) return;
     if (window.matchMedia('(max-width:900px)').matches && mobileView !== 'map') return;
     let firstFrame = 0,
       secondFrame = 0;
     const focusSelection = () => {
-      const [kind, id] = (
-        selectedObjectId ?? `community:${selectedCommunityId}`
-      ).split(':');
-      const road = roads.find((item) => item.id === id);
-      const point =
-        kind === 'community'
-          ? communities.find((item) => item.id === id)?.projected
-          : kind === 'hazard'
-            ? hazards.find((item) => item.id === id)?.projected
-            : kind === 'poi'
-              ? responseSites.find((item) => item.id === id)?.projected
-              : road?.points[Math.floor(road.points.length / 2)];
-      if (!point) return;
+      const frame = mapSelectionFrame({ roads, hazards, communities, responseSites, aoi: packet.aoi }, selection,
+        selection.startsWith('community:') && cameraIntent.kind === 'route' ? activeRoute?.points : undefined);
+      if (!frame.length) return;
       // The dock floats over the map: centre the selection in the uncovered part.
-      const reserve = detailLayout.mode === 'dock' ?
+      const reserve = responseDetailVisible && detailLayout.mode === 'dock' ?
         parseFloat(
           getComputedStyle(workspaceRef.current ?? document.documentElement).getPropertyValue(
             '--response-detail-reserve'
@@ -810,12 +860,8 @@ export function ResponseWorkspace({
       cancelAnimationFrame(secondFrame);
       firstFrame = requestAnimationFrame(() => {
         secondFrame = requestAnimationFrame(() => {
-          const frame = kind === 'road' ? road?.points : kind === 'community' && cameraIntent.kind === 'route' && activeRoute ? activeRoute.points : kind === 'community' ? [
-            {x:point.x-450,y:point.y-450}, {x:point.x+450,y:point.y-450},
-            point, {x:point.x+450,y:point.y+450}, {x:point.x-450,y:point.y+450}
-          ] : undefined;
-          if (frame?.length && viewControlRef.current?.frameProjected) viewControlRef.current.frameProjected(frame,{right:reserve});
-          else viewControlRef.current?.focusProjected(point, { right: reserve });
+          if (viewControlRef.current?.frameProjected) viewControlRef.current.frameProjected(frame,{right:reserve});
+          else viewControlRef.current?.focusProjected(frame[Math.floor(frame.length / 2)], { right: reserve });
         });
       });
     };
@@ -826,6 +872,7 @@ export function ResponseWorkspace({
     };
   }, [
     responseDetailVisible,
+    view,
     detailLayout.mode,
     selectedCommunityId,
     selectedObjectId,
@@ -837,7 +884,10 @@ export function ResponseWorkspace({
     roads,
     communities,
     hazards,
-    responseSites
+    responseSites,
+    packet.aoi,
+    gisCard,
+    gisGroup.length
   ]);
 
   return (
@@ -847,6 +897,8 @@ export function ResponseWorkspace({
       data-response-gis-detail={!journey.open && !locationOpen && !measurementOpen && !drawOpen && (mapMode === '2d' || !!gisCard && (!!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId)) && (Boolean(gisCard) || gisGroup.length > 1)}
       data-gis-open={activeDialog === 'geodata'}
       data-mobile={mobileView}
+      data-timeline-expanded={timelineExpanded}
+      data-header-collapsed={headerCollapsed}
       data-panel-collapsed={panelCollapsed}
       data-response-detail={responseDetailVisible}
       data-response-layout={detailLayout.mode}
@@ -854,6 +906,8 @@ export function ResponseWorkspace({
     >
       <AppHeader
         locked={activeDialog === 'geodata'}
+        collapsed={headerCollapsed}
+        onCollapse={() => {setHeaderCollapsed(true);requestAnimationFrame(() => workspaceRef.current?.querySelector<HTMLButtonElement>('.map-header-restore')?.focus());}}
         locale={locale}
         incident={incident}
         areaName={packet.aoi.name}
@@ -895,6 +949,8 @@ export function ResponseWorkspace({
           dispatchMeasureSession({ type: 'reset' });
           dispatchDrawSession({ type: 'discard' });
           setPanelCollapsed(false);
+          setTimelineExpanded(false);
+          setHeaderCollapsed(false);
           setLocationPoint(null);
           setReportApplied(false);
           setHistorical(false);
@@ -907,6 +963,7 @@ export function ResponseWorkspace({
           viewControlRef.current?.resetView();
           setLayerAppearance(defaultLayerAppearance);
           setLayers({ ...defaultLayers, context: !offlineMode });
+          analysisImagery.resetSelection();
           setComparisonPair(null);
           map2DViewport.current = null;
           if (!defaultTerrainData) reloadTerrain();
@@ -918,18 +975,13 @@ export function ResponseWorkspace({
       <main className="work-area">
         <WorkspaceNav view={view} locale={locale} onChangeView={changeView} />
         <ResponsePanel
+          fieldPhotos={fieldPhotos}
           survey={!historical && runtime.fieldDataset ? {areas:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type !== 'Point').length,points:gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset!.id && r.feature.geometry.type === 'Point').length} : undefined}
           onShowCorridor={!historical && gis.records.some(r => r.feature.properties.referenceKind === 'road-corridor') ? () => {
             const corridor = gis.records.find(r => r.feature.properties.referenceKind === 'road-corridor');
             if (corridor) {setMapMode('2d'); showGisOnResponse(corridor.id);}
           } : undefined}
-          onShowSurvey={() => {
-            resetTools(); navigation.dispatch({type:'reset'}); setGisCardId(null); setGisGroupIds([]);
-            setMobileView('map');
-            setLayers(previous => ({...previous,landslide:true,gis:true}));
-            const points = gis.records.filter(r => r.feature.properties.sourceDatasetId === runtime.fieldDataset?.id).flatMap(r => geometryPositions(r.feature.geometry)).map(([lon,lat]) => {const [x,y]=proj4('EPSG:4326','EPSG:32648',[lon,lat]);return {x,y};});
-            requestAnimationFrame(() => viewControlRef.current?.frameProjected?.(points));
-          }}
+          onShowSurvey={showMappedAreas}
           locale={locale}
           navigation={navigation}
           onNavigate={navigation.dispatch}
@@ -957,12 +1009,19 @@ export function ResponseWorkspace({
         />
 
         <ResponseDetails
+          onCompareImagery={()=>setActiveDialog('comparison')}
+          gisRecord={gisCard}
+          gisRecords={gis.records}
+          gisRoads={gisCard && landslideAreaOf(gisCard)?.networkVersion === packet.datasetVersion ? roads : []}
+          onCloseGis={() => {setGisCardId(null);setGisGroupIds([]);}}
+          onEditGis={() => {if(gisCard){gis.select(gisCard.id);setActiveDialog('geodata');}}}
+          onBackToGisGroup={gisCard && gisGroup.length > 1 && gisGroupIds.includes(gisCard.id) ? () => {setGisCardId(null);setMobileView('map');} : undefined}
+          fieldPhotos={fieldPhotos}
           locale={locale}
-          mappedAreas={historical ? [] : gis.records.filter(record => landslideAreaOf(record)?.networkVersion === packet.datasetVersion)}
+          mappedAreas={historical ? [] : gis.records.filter(record => landslideAreaOf(record))}
           onOpenMappedArea={showGisOnResponse}
           onEditScenario={!historical ? target => {setGisScenarioRequest(target);setActiveDialog('geodata');} : undefined}
           scenarioEdits={historical ? undefined : scenarioEdits?.edits}
-          onRename={!historical ? onRename : undefined}
           signals={packet.signals}
           workTasks={workTasks}
           workEntries={work.entries}
@@ -1030,16 +1089,12 @@ export function ResponseWorkspace({
           <div className="map-canvas">
             {mapMode === '2d' ? (
               <Map2D
+                analysisImagery={analysisDisplay}
                 gisEnabled={true}
                 gisRecords={displayedGis}
                 gisSelectedId={gisCardId}
                 gisRequest={gisResponseView}
-                onGisSelect={(id) => {
-                  setPanelCollapsed(false);
-                  gis.select(id);
-                  setGisCardId(id);
-                  setGisGroupIds([]);
-                }}
+                onGisSelect={inspectGisRecord}
                 gisGroupIds={gisGroupIds}
                 onGisGroup={(ids) => {
                   setPanelCollapsed(false);
@@ -1062,16 +1117,14 @@ export function ResponseWorkspace({
                 dispatchMeasureSession={dispatchMeasureSession}
                 onCloseMeasurement={() => {
                   interaction.dispatch({ type: 'close-tool', tool: 'measure' });
-                  document
-                    .querySelector<HTMLButtonElement>('.map-measure-trigger')
-                    ?.focus();
+                  focusMapTool('.map-measure-trigger');
                 }}
                 drawOpen={drawOpen}
                 drawSession={drawSession}
                 dispatchDrawSession={dispatchDrawSession}
                 onCloseDraw={() => {
                   interaction.dispatch({ type: 'close-tool', tool: 'draw' });
-                  document.querySelector<HTMLButtonElement>('.map-draw-trigger')?.focus();
+                  focusMapTool('.map-draw-trigger');
                 }}
                 onSaveDrawing={(record) => {
                   // A drawing is GIS reference data: it is listed and exported with imported layers.
@@ -1099,7 +1152,7 @@ export function ResponseWorkspace({
                         aoi: packet.aoi,
                         communities: communities,
                         responseSites: responseSites,
-                        hazards,
+                        hazards: mapHazards,
                         roads,
                         selectedRoute: journey.open
                           ? journey.route
@@ -1121,11 +1174,15 @@ export function ResponseWorkspace({
                   fallback={terrain3DBusy ? null : terrainLoading(null)}
                 >
                   <TerrainViewer
+                    analysisImagery={analysisDisplay}
+                    surfaceLayers={layers}
+                    terrainOverlays={terrainOverlays.options}
+                    onTerrainOverlayStatus={(kind, message) => kind === 'sar' ? terrainOverlays.setError(message) : terrainOverlays.setStatus(message)}
                     models={models}
                     onOrbitChange={setOrbiting}
                     gisRecords={displayedGis}
                     gisSelectedId={gisCardId}
-                    onGisSelect={id => {setPanelCollapsed(false);gis.select(id);setGisCardId(id);setGisGroupIds([]);}}
+                    onGisSelect={inspectGisRecord}
                     geographicPlacements={geographicPlacements}
                     measureMode={locationOpen}
                     onPick={handlePick}
@@ -1149,7 +1206,7 @@ export function ResponseWorkspace({
                             aoi: packet.aoi,
                             communities: communities,
                             responseSites: responseSites,
-                            hazards,
+                            hazards: mapHazards,
                             roads: roads,
                             selectedRoute: activeRoute,
                             selectedCommunityId: gisCard ? null : selectedCommunityId,
@@ -1163,6 +1220,8 @@ export function ResponseWorkspace({
                     viewControlRef={viewControlRef}
                     onViewReady={onViewReady}
                     onUnavailable={handle3DUnavailable}
+                    flyover={snapshotReady && scenarioTerrainCompatible ? flyoverInput : null}
+                    onFlyoverState={setFlyoverState}
                   />
                 </React.Suspense>
               </Map3DBoundary>
@@ -1200,6 +1259,35 @@ export function ResponseWorkspace({
           )}
 
           <MapControls
+            timelineExpanded={timelineExpanded}
+            onToggleTimeline={() => setTimelineExpanded(open => !open)}
+            headerCollapsed={headerCollapsed}
+            onShowHeader={() => {setHeaderCollapsed(false);requestAnimationFrame(() => workspaceRef.current?.querySelector<HTMLButtonElement>('.settings-anchor > button')?.focus());}}
+            journeyControl={<button
+              className="icon-button map-journey-trigger"
+              title={
+                locale === 'vi'
+                  ? 'Hành trình giữa hai điểm'
+                  : 'Journey between two points'
+              }
+              aria-label={
+                locale === 'vi'
+                  ? 'Hành trình giữa hai điểm'
+                  : 'Journey between two points'
+              }
+              aria-pressed={journey.open}
+              onClick={() => {
+                resetTools();
+                setMapMode('2d');
+                journey.setOpen(!journey.open);
+              }}
+            >
+              <UiIcon name="route" /><span>{locale === 'vi' ? 'Hành trình' : 'Journey'}</span>
+            </button>}
+            flyoverControl={snapshotReady && flyoverInput && !historical && <FlyoverBar locale={locale} state={flyoverState} mapMode={mapMode}
+            title={locale === 'vi' ? `Từ ${flyoverInput.start[0]} đến ${flyoverInput.end[0]}` : `${flyoverInput.start[1]} to ${flyoverInput.end[1]}`}
+            fileName={`hanh-trinh-${[flyoverInput.start[1], flyoverInput.end[1]].join('-').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.mp4`}
+            onRequest3D={() => setMapMode('3d')} controlRef={viewControlRef}/>}
             mappedAreas={displayedGis}
             panelCollapsed={panelCollapsed}
             onTogglePanel={() => setPanelCollapsed((value) => !value)}
@@ -1245,27 +1333,6 @@ export function ResponseWorkspace({
               interaction.dispatch({ type: 'toggle-tool', tool: 'measure' })
             }
           >
-            <button
-              className="icon-button map-journey-trigger"
-              title={
-                locale === 'vi'
-                  ? 'Hành trình giữa hai điểm'
-                  : 'Journey between two points'
-              }
-              aria-label={
-                locale === 'vi'
-                  ? 'Hành trình giữa hai điểm'
-                  : 'Journey between two points'
-              }
-              aria-pressed={journey.open}
-              onClick={() => {
-                resetTools();
-                setMapMode('2d');
-                journey.setOpen(!journey.open);
-              }}
-            >
-              <UiIcon name="route" />
-            </button>
             <MapSearch
               locale={locale}
               query={mapQuery}
@@ -1303,7 +1370,9 @@ export function ResponseWorkspace({
               }}
             />
           </MapControls>
+
           <MapAttribution
+            analysisSource={analysisSourceInfo(analysisImagery.layers,analysisImagery.selection,locale)}
             osmReference={layers.gis && displayedGis.some(r => r.visible && r.feature.properties.referenceKind === 'road-corridor')}
             fieldSource={runtime.fieldDataset?.records[0]?.source.name}
             terrainDisplay={mapMode === '3d' && models[0]?.metadata ? {exaggeration:models[0].metadata.elevation.exaggeration * (geographicPlacements?.[0]?.scaleY ?? 1)} : undefined}
@@ -1334,33 +1403,6 @@ export function ResponseWorkspace({
               }
             />
           )}
-          {(mapMode === '2d' || !!gisCard && (!!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId)) &&
-            !journey.open &&
-            gisCard &&
-            (layers.gis || !!landslideAreaOf(gisCard) || !!gisCard.feature.properties.sourceDatasetId) &&
-            !locationOpen &&
-            !measurementOpen &&
-            !drawOpen && (
-              <ResponseObservationCard
-                record={gisCard}
-                roads={landslideAreaOf(gisCard)?.networkVersion === packet.datasetVersion ? roads : []}
-                onRoad={id => inspectObject('road:'+id)}
-                locale={locale}
-                onClose={() => {
-                  setGisCardId(null);
-                  setGisGroupIds([]);
-                }}
-                onEdit={() => {
-                  gis.select(gisCard.id);
-                  setActiveDialog('geodata');
-                }}
-                onBack={
-                  gisGroup.length > 1 && gisGroupIds.includes(gisCard.id)
-                    ? () => setGisCardId(null)
-                    : undefined
-                }
-              />
-            )}
           {mapMode === '2d' &&
             !journey.open &&
             layers.gis &&
@@ -1374,11 +1416,7 @@ export function ResponseWorkspace({
                 locale={locale}
                 activeId={null}
                 openLabel={locale === 'vi' ? 'Xem chi tiết' : 'View details'}
-                onOpen={(id) => {
-                  setPanelCollapsed(false);
-                  gis.select(id);
-                  setGisCardId(id);
-                }}
+                onOpen={id => inspectGisRecord(id, true)}
                 onClose={() => setGisGroupIds([])}
               />
             )}
@@ -1392,6 +1430,9 @@ export function ResponseWorkspace({
 
           {activeDialog === 'layers' && (
             <LayersDialog
+              terrainOverlays={terrainOverlays}
+              analysisImagery={analysisImagery}
+              hasTerrainGrid={models.some(model => Boolean(model.grid && model.metadata?.analysis_supported))}
               locale={locale}
               imageryPreview={
                 defaultTerrainData
@@ -1407,6 +1448,13 @@ export function ResponseWorkspace({
               hasHLZData={responseSites.some((site) => site.kind === 'hlz')}
               hasSelectedRoute={Boolean(activeRoute)}
               hasIncidentLayers={scenarioTerrainCompatible}
+              areaCount={historical ? 0 : gis.records.filter(record => record.visible && landslideAreaOf(record)).length}
+              onShowAreas={showMappedAreas}
+              onReset={() => {
+                setLayers({...defaultLayers, context:!offlineMode});
+                analysisImagery.resetSelection();
+                setLayerAppearance(defaultLayerAppearance);
+              }}
               onToggleLayer={(layerId) =>
                 setLayers((prev) => ({ ...prev, [layerId]: !prev[layerId] }))
               }
@@ -1445,9 +1493,10 @@ export function ResponseWorkspace({
         </button>
       </nav>
 
-      <AssessmentTimeline locale={locale} packet={packet} applied={reportApplied} historical={historical} onRevision={setHistorical} onReport={() => setActiveDialog('alerts')} onJournal={() => setActiveDialog('timeline')}/>
+      <AssessmentTimeline expanded={timelineExpanded} onCollapse={() => {setTimelineExpanded(false);requestAnimationFrame(() => workspaceRef.current?.querySelector<HTMLButtonElement>('.map-timeline-toggle')?.focus());}} locale={locale} packet={packet} applied={reportApplied} historical={historical} onRevision={setHistorical} onReport={() => setActiveDialog('alerts')} onJournal={() => setActiveDialog('timeline')}/>
 
       <WorkspaceDialogs
+        comparisonRecord={gisCard}
         identity={identity}
         onRename={onRename}
         scenarioEdits={historical ? undefined : scenarioEdits}
@@ -1497,6 +1546,7 @@ export function ResponseWorkspace({
         terrain={defaultTerrainData}
         terrainMetadata={mapTerrain?.metadata}
         manifest={scenarioManifest}
+        analysisImagery={analysisImagery}
         upload={{
           mode: uploadMode,
           geographicMerge,

@@ -3,7 +3,7 @@ import { reportPhotoContext } from '../observations/photoSummary';
 import { reportReviewLabel } from './reportReviewLabel';
 import { ReportReviewForm } from './ReportReviewForm';
 import { accessMessages } from './locales';
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Locale } from '../../types/dear';
 import type { useGeometrySession } from '../geodata/useGeometrySession';
 import type { DemoIdentity } from './demoSession';
@@ -15,6 +15,12 @@ import { PhotoGallery } from '../observations/PhotoGallery';
 import { observationTimeLabel } from '../observations/captureMetadata';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import './inbox.css';
+
+function reportTitle(record: { id: string; name: string }): string {
+  const code = observationCode(record.id);
+  return record.name.endsWith(' ' + code) ? record.name.slice(0, -code.length).trimEnd() : record.name;
+}
+
 export function ReportInbox({
   locale,
   identity,
@@ -31,7 +37,10 @@ export function ReportInbox({
   onEdit: (id: string) => void;
 }): JSX.Element {
   const m = accessMessages[locale];
+  const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const [recordId, setRecordId] = useState<string | null>(null);
+  const listRef = useRef<HTMLElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
   const reports = session.records
     .filter((r) => submissionOf(r))
     .sort(
@@ -39,13 +48,26 @@ export function ReportInbox({
         Date.parse(submissionOf(b)!.submittedAt) -
         Date.parse(submissionOf(a)!.submittedAt)
     );
-  const record = reports.find((r) => r.id === recordId),
+  const record = reports.find((r) => r.id === recordId) ?? reports.find(r => submissionOf(r)?.review.status === 'pending') ?? reports[0],
     submission = record && submissionOf(record),
     observation = record && observationOf(record);
+  useEffect(() => {
+    if (record && recordId !== record.id) setRecordId(record.id);
+  }, [record?.id, recordId]);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const reveal = () => list.querySelector('[aria-pressed="true"]')?.scrollIntoView({block:'nearest', inline:'nearest'});
+    reveal();
+    if (articleRef.current) articleRef.current.scrollTop = 0;
+    const observer = new ResizeObserver(reveal);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [record?.id]);
   return (
     <div className="modal-overlay" onClick={onClose}>
       <section
-        className="modal-dialog report-inbox"
+        className={'modal-dialog report-inbox' + (reports.length ? '' : ' is-empty')}
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-inbox-title"
@@ -54,7 +76,7 @@ export function ReportInbox({
         <header className="user-guide-heading">
           <h2 id="report-inbox-title">
             {m.incomingReports}
-            {reports.length ? ` (${reports.length})` : ''}
+            {reports.length > 0 && <span className="inbox-count">({reports.length})</span>}
           </h2>
           <button
             className="icon-button"
@@ -68,18 +90,16 @@ export function ReportInbox({
           <p className="inbox-empty">{m.noReportsSubmittedInThisDemoSession}</p>
         ) : (
           <div className="inbox-body">
-            <nav aria-label={m.reportList}>
+            <nav ref={listRef} aria-label={m.reportList}>
               {reports.map((item) => {
                 const report = submissionOf(item)!;
                 const photo = observationOf(item)?.photos[0];
                 const code = observationCode(item.id);
-                const name = item.name.endsWith(' ' + code)
-                  ? item.name.slice(0, -code.length).trimEnd()
-                  : item.name;
+                const name = reportTitle(item);
                 return (
                   <button
                     key={item.id}
-                    aria-pressed={recordId === item.id}
+                    aria-pressed={record?.id === item.id}
                     onClick={() => setRecordId(item.id)}
                   >
                     {photo ? (
@@ -90,15 +110,12 @@ export function ReportInbox({
                       </span>
                     )}
                     <span className="inbox-item-text">
-                      <strong title={item.name}>{name}</strong>
-                      <small className="inbox-item-code">{code}</small>
+                      <strong title={`${name} (${code})`}>{name}</strong>
                       <small>{report.authorName}</small>
-                      <small>
-                        {new Date(report.submittedAt).toLocaleString(
-                          locale === 'vi' ? 'vi-VN' : 'en-GB',
-                          { dateStyle: 'short', timeStyle: 'short' }
-                        )}
-                      </small>
+                      <time dateTime={report.submittedAt}>{new Date(report.submittedAt).toLocaleString(
+                        locale === 'vi' ? 'vi-VN' : 'en-GB',
+                        { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }
+                      )}</time>
                     </span>
                     <span
                       className={'citizen-review is-' + report.review.status}
@@ -109,10 +126,13 @@ export function ReportInbox({
                 );
               })}
             </nav>
-            <article>
+            <article ref={articleRef} aria-label={t('Chi tiết ghi nhận', 'Report details')}>
               {record && submission ? (
                 <>
-                  <h3>{record.name}</h3>
+                  <div className="inbox-record-heading">
+                    <div><small className="inbox-record-code">{observationCode(record.id)}</small><h3>{reportTitle(record)}</h3></div>
+                    <span className={'citizen-review is-' + submission.review.status}>{reportReviewLabel(record, locale)}</span>
+                  </div>
                   <dl className="field-metadata">
                     <div>
                       <dt>{m.submittedBy}</dt>
@@ -150,13 +170,13 @@ export function ReportInbox({
                       className="button"
                       onClick={() => onShow(record.id)}
                     >
-                      {m.showOnMap}
+                      <UiIcon name="location" size={16}/>{m.showOnMap}
                     </button>
                     <button
                       className="button"
                       onClick={() => onEdit(record.id)}
                     >
-                      {m.openRecordAndDelineate}
+                      <UiIcon name="edit" size={16}/>{t('Mở hồ sơ', 'Open record')}
                     </button>
                   </div>
                   <ReportReviewForm

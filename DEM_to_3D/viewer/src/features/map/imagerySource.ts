@@ -3,7 +3,10 @@ export const defaultImagerySource = {
   name: 'Esri World Imagery',
   credit: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
   link: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
-  maxNativeZoom: 19,
+  // Esri answers past its coverage with a "Map data not yet available" image (HTTP 200,
+  // so no tile error fires). Around Mù Cang Chải real imagery stops at z18 (z19 is the
+  // placeholder), so deeper zooms upscale z18 instead.
+  maxNativeZoom: 18,
   custom: false
 };
 /** Load tiles while panning and keep a wider ring of loaded tiles, so a drag never

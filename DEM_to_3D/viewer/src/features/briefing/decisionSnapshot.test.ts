@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { preparedPacket, initialHazards, initialRoadSegments, buildScenarioRoutes } from '../../data/cheTaoScenario';
+import { preparedPacket, initialHazards, initialRoadSegments, buildScenarioRoutes } from '../../data/fixtures/networkScenario';
 import { assessCommunity } from '../incident/responseAssessment';
 import { createDecisionSnapshot, snapshotFilename } from './decisionSnapshot';
 

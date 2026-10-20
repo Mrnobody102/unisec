@@ -1,7 +1,7 @@
 import type { Locale } from '../../types/dear';
 import type { AreaSource, LandslideArea } from './landslideAreas';
 const names = {
-  potential: ['Vùng có nguy cơ sạt lở', 'Potential landslide area'], occurred: ['Vết sạt lở đã xảy ra', 'Mapped landslide occurrence'],
+  potential: ['Vùng nguy cơ', 'Potential landslide area'], occurred: ['Vết sạt lở', 'Mapped landslide occurrence'],
   source: ['Vùng phát sinh trên sườn dốc', 'Source area on slope'], runout: ['Vùng lan truyền xuống dốc', 'Runout area'], deposit: ['Vùng vật liệu bồi tích', 'Deposit area'], undifferentiated: ['Chưa tách các phần', 'Undifferentiated extent'],
   unreviewed: ['Chưa rà soát', 'Unreviewed'], reviewed: ['Đã rà soát tư liệu', 'Evidence reviewed'], 'field-checked': ['Đã kiểm tra thực địa', 'Field checked'],
   field: ['Khảo sát thực địa', 'Field survey'], imagery: ['Ảnh vệ tinh / ảnh bay', 'Satellite / aerial imagery'], resident: ['Phản ánh người dân', 'Resident report'], historical: ['Hồ sơ sạt lở cũ', 'Historical inventory'], terrain: ['Địa hình / địa chất', 'Terrain / geology'],

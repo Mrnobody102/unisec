@@ -191,3 +191,56 @@
 }
 
 .report-inbox .inbox-item-code { font-family: var(--font-mono); color: var(--ws-text); white-space: nowrap; }
+
+/* Incoming reports use a ruled index and a field-sheet reading pane. */
+.modal-dialog.report-inbox { width:min(1040px,calc(100vw - 32px)); height:min(760px,calc(100dvh - 48px)); border-radius:3px; }
+.report-inbox .user-guide-heading { padding:18px 24px; background:var(--ws-surface); }
+.report-inbox .user-guide-heading h2 { display:flex; align-items:baseline; gap:8px; font-family:var(--font-heading); font-size:17px; font-weight:600; letter-spacing:-.01em; }
+.inbox-count { color:var(--ws-muted); font-size:14px; font-weight:400; font-variant-numeric:tabular-nums; }
+.report-inbox .inbox-body { grid-template-columns:272px minmax(0,1fr); }
+.report-inbox .inbox-body > nav { gap:2px; padding:10px; background:var(--ws-surface); }
+.report-inbox .inbox-body nav button { grid-template-columns:40px minmax(0,1fr); align-items:start; gap:4px 12px; padding:10px; border:0; border-radius:3px; background:none; }
+.report-inbox .inbox-body nav button:hover { background:var(--hover); }
+.report-inbox .inbox-body nav button[aria-pressed='true'] { background:var(--ws-tint); box-shadow:none; }
+.report-inbox .inbox-body nav button[aria-pressed='true'] strong { color:var(--select-ink); font-weight:600; }
+.report-inbox .inbox-body nav button > img, .report-inbox .inbox-thumb { width:40px; height:40px; border-radius:3px; margin-top:1px; }
+.report-inbox .inbox-item-text { gap:2px; }
+.report-inbox .inbox-item-text strong { font-size:14px; font-weight:600; line-height:1.35; }
+.report-inbox .inbox-item-text time { color:var(--ws-muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.report-inbox .citizen-review { padding:0; border-radius:0; background:none; font-size:12px; font-weight:500; }
+.report-inbox .inbox-body nav .citizen-review { font-size:12px; }
+.report-inbox .inbox-body > article { gap:24px; padding:24px; }
+.inbox-record-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:0; border:0; }
+.inbox-record-heading > div { min-width:0; }
+.report-inbox .inbox-record-heading h3 { margin:2px 0 0; font-family:var(--font-heading); font-size:21px; font-weight:600; letter-spacing:-.01em; line-height:1.3; overflow-wrap:anywhere; }
+.inbox-record-code { color:var(--ws-muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.inbox-record-heading > .citizen-review { flex:none; margin-top:4px; }
+.report-inbox .field-metadata { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:0; border:0; }
+.report-inbox .field-metadata > div { display:block; padding:0; border:0; border-radius:0; background:none; }
+.report-inbox .field-metadata dt { margin-bottom:2px; font-size:12px; color:var(--ws-muted); }
+.report-inbox .field-metadata dd { margin:0; color:var(--ws-text); font-size:14px; line-height:1.5; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.report-inbox .geodata-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.report-inbox .geodata-actions .button { display:inline-flex; align-items:center; gap:6px; border-radius:3px; font-size:13px; background:none; }
+.report-inbox .geodata-actions .button:hover { background:var(--hover); }
+/* The review form is a different task from reading: a filled block, not another rule. */
+.report-inbox .inbox-review { margin:0; padding:16px; gap:12px; border:0; border-radius:3px; background:var(--fill); }
+.report-inbox .inbox-review h3 { margin-bottom:0; color:var(--ws-muted); font-size:13px; font-weight:600; letter-spacing:0; text-transform:none; }
+.report-inbox .inbox-review :is(input,select,textarea) { background:var(--ws-surface); border-radius:2px; }
+.report-inbox .inbox-review textarea { resize:vertical; }
+.report-inbox .inbox-review > [role='status'] { margin:0; font-size:12px; }
+.report-inbox .user-guide-heading .icon-button { flex:none; border:0; border-radius:2px; background:none; }
+.report-inbox .field-photo-gallery figure { border-radius:2px; }
+@media(max-width:760px) {
+  .modal-dialog.report-inbox { width:calc(100vw - 16px); height:calc(100dvh - 24px); }
+  .report-inbox .user-guide-heading { padding:14px 16px; }
+  .report-inbox .user-guide-heading h2 { font-size:19px; }
+  .report-inbox .inbox-body { grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); }
+  .report-inbox .inbox-body > nav { display:flex; padding:8px; gap:0; max-height:170px; border-right:0; }
+  .report-inbox .inbox-body nav button { width:220px; flex:none; padding:10px; border-bottom:0; border-right:1px solid var(--ws-line); }
+  .report-inbox .inbox-body > article { padding:16px; }
+  .report-inbox .field-metadata { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .report-inbox .field-metadata > div { display:grid; grid-template-columns:90px minmax(0,1fr); align-items:baseline; gap:10px; }
+  .report-inbox .field-metadata dt { margin:0; }
+  .inbox-record-heading { gap:8px; }
+  .report-inbox .inbox-record-heading h3 { font-size:19px; }
+}

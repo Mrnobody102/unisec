@@ -97,9 +97,13 @@ export function restoreGeometryRecords(raw: unknown): GeometryRecord[] {
     const properties = record.feature?.properties;
     if (!properties || typeof properties !== 'object' || Array.isArray(properties))
       throw new GeometryError('storage');
+    const featureId = record.feature?.id;
+    if (featureId !== undefined && typeof featureId !== 'string' && !(typeof featureId === 'number' && Number.isFinite(featureId))) {
+      throw new GeometryError('storage');
+    }
     return {
       ...record,
-      feature: { type: 'Feature' as const, geometry, properties }
+      feature: { type: 'Feature' as const, geometry, properties, ...(featureId === undefined ? {} : { id: featureId }) }
     };
   });
   return records;

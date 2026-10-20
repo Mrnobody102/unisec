@@ -48,6 +48,8 @@ export function GeometryLayers({
       r.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
   );
   const filteredKey=filtered.map(r=>r.id).join('|');
+  const groups = [...new Set(filtered.map(record => record.source.name))]
+    .map(name => ({name, records: filtered.filter(record => record.source.name === name)}));
   useEffect(()=>{
     const available=new Set(filtered.map(r=>r.id));
     setChecked(ids=>{const next=ids.filter(id=>available.has(id));return next.length===ids.length?ids:next;});
@@ -56,7 +58,7 @@ export function GeometryLayers({
   return (
     <section className="geodata-section geodata-layers">
       <h2>
-        {t('Đối tượng', 'Features')}
+        {t('Dữ liệu nhập', 'Imported data')}
         <span>{observationFilter === 'all' ? records.filter((r) => !fieldAreaOwner(r, records)).length : `${filtered.length} / ${records.filter((r) => !fieldAreaOwner(r, records)).length}`}</span>
       </h2>
       {!records.length && (
@@ -67,28 +69,16 @@ export function GeometryLayers({
           )}
         </p>
       )}
-      {records.length > 8 && (
+      {records.length > 0 && (
         <label className="geodata-field">
           <span>{t('Tìm đối tượng', 'Find a feature')}</span>
           <input
             type="search"
+            placeholder={t('Tên đối tượng', 'Feature name')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-      )}
-      {records.some(r => r.feature.geometry.type === 'Point' && !fieldAreaOwner(r, records)) && (
-        <details className="geodata-observation-filter">
-          <summary>{t('Lọc điểm theo ghi nhận', 'Filter points by field notes')}</summary>
-          <label className="geodata-field">
-            {t('Ghi nhận thực địa', 'Field observation')}
-            <select value={observationFilter} onChange={event => setObservationFilter(event.target.value as typeof observationFilter)}>
-              <option value="all">{t('Tất cả đối tượng', 'All features')}</option>
-              <option value="with">{t('Điểm đã có ghi nhận', 'Points with observations')}</option>
-              <option value="without">{t('Điểm chưa có ghi nhận', 'Points without observations')}</option>
-            </select>
-          </label>
-        </details>
       )}
       {records.length > 0 && (
         <div className="geodata-bulk">
@@ -108,6 +98,19 @@ export function GeometryLayers({
                 ))}
               </select>
             </label>
+          )}
+          {records.some(r => r.feature.geometry.type === 'Point' && !fieldAreaOwner(r, records)) && (
+            <details className="geodata-observation-filter">
+              <summary>{t('Lọc theo ghi nhận', 'Filter by observation')}</summary>
+              <label className="geodata-field">
+                {t('Ghi nhận thực địa', 'Field observation')}
+                <select value={observationFilter} onChange={event => setObservationFilter(event.target.value as typeof observationFilter)}>
+                  <option value="all">{t('Tất cả đối tượng', 'All features')}</option>
+                  <option value="with">{t('Điểm đã có ghi nhận', 'Points with observations')}</option>
+                  <option value="without">{t('Điểm chưa có ghi nhận', 'Points without observations')}</option>
+                </select>
+              </label>
+            </details>
           )}
           <div className="geodata-actions">
             <button
@@ -210,8 +213,11 @@ export function GeometryLayers({
           )}
         </div>
       )}
+      {groups.map(group => <details className="geodata-source-group" key={group.name}
+        open={group.records.length <= 6 || !!query || group.records.some(record => record.id === selectedId)}>
+        <summary><span>{group.name}</span><small>{group.records.length}</small></summary>
       <ul>
-        {filtered.map((record) => (
+        {group.records.map((record) => (
           <li
             key={record.id}
             className={record.id === selectedId ? 'is-selected' : ''}
@@ -261,16 +267,18 @@ export function GeometryLayers({
               </span>
               <span>
                 <strong>{record.name}</strong>
-                <small>
+                {(observationOf(record) || record.role !== 'reference') && <small>
                   {observationOf(record)
                     ? observationLabel(observationOf(record)!.kind, locale)
                     : roleLabel(record.role, locale)}
-                </small>
+                </small>}
               </span>
             </button>
           </li>
         ))}
       </ul>
+      </details>)}
+      {records.length > 0 && !filtered.length && <p className="geodata-empty">{t('Không tìm thấy đối tượng.', 'No matching features.')}</p>}
     </section>
   );
 }

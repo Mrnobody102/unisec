@@ -1,4 +1,5 @@
 """Check stable map hover, modal entry and GIS/response edit continuity."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse, json
 from pathlib import Path
@@ -13,7 +14,7 @@ def run(url, chrome, captures=None):
         page = context.new_page(); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         baseline=clear_prepared_survey(page)
         def fixed_hover(marker):
             before = marker.bounding_box()
@@ -32,7 +33,7 @@ def run(url, chrome, captures=None):
         expect(results.locator('[aria-selected="true"]')).to_have_count(1)
         expect(options.nth(1)).to_have_attribute('aria-selected','true')
         search.press('Escape')
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         for width in [1440,390,320]:
             page.set_viewport_size({'width':width,'height':960})

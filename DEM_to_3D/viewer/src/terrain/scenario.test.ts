@@ -9,7 +9,7 @@ import {
   scenarioHazards,
   initialRoadSegments,
   buildScenarioRoutes
-} from '../data/cheTaoScenario';
+} from '../data/fixtures/networkScenario';
 import { roadColors } from './roadStyle';
 import { buildScenarioOverlays } from './scenarioOverlays';
 import type { TerrainMetadata } from '../types/terrain';
@@ -20,7 +20,7 @@ describe('DEAR Scenario & Overlays', () => {
   it('validates Che Tao incident metadata and timeline', () => {
     expect(cheTaoIncident.id).toBe('INC-2026-0412');
     expect(cheTaoIncident.timeline.length).toBeGreaterThanOrEqual(6);
-    expect(cheTaoIncident.sources.length).toBe(4);
+    expect(cheTaoIncident.sources.length).toBe(5);
   });
 
   it('validates 7 communities and priority ranking', () => {
@@ -59,8 +59,8 @@ describe('DEAR Scenario & Overlays', () => {
     const routes = buildScenarioRoutes(updatedRoads);
     const nk = routes.get('NK');
     expect(nk?.candidate?.status).toBe('blocked');
-    expect(scenarioHazards(true).find(hazard => hazard.id === 'U-1')?.detected).toBe('09:40 29/09/2026');
-    expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('08:58 29/09/2026');
+    expect(scenarioHazards(true).find(hazard => hazard.id === 'U-1')?.detected).toBe('14:11 12/09/2026');
+    expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('13:29 12/09/2026');
   });
 
   it('does not invent road elevations where the DEM has no coverage', () => {
@@ -101,7 +101,9 @@ describe('DEAR Scenario & Overlays', () => {
         c: 390000,
         d: 0,
         e: -3000,
-        f: 2410000,
+        // Include every road inside the mesh's outer vertices, not only within
+        // the half-cell nearest-neighbour fringe outside the rendered mesh.
+        f: 2420000,
         convention: 'rasterio_affine',
         pixel_reference: 'center'
       },

@@ -1,10 +1,11 @@
 """Coordinator map -> GIS editing, new response features and operational state checks."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, publish_draft, published_edits, scenario_properties
 import argparse,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
 def run(url,chrome,captures=None):
- packet=json.loads((Path(__file__).parent.parent/'public/scenarios/che-tao/v0.2/incident.json').read_text(encoding='utf-8'))
+ packet=json.loads((Path(__file__).parent.parent/'public/scenarios/che-tao/v0.3/incident.json').read_text(encoding='utf-8'))
  hazard=packet['hazards'][0];site=next(s for s in packet['responseSites'] if s['kind']=='hlz')
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=chrome,headless=True)
@@ -12,8 +13,8 @@ def run(url,chrome,captures=None):
   context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
   page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url+'/?map=2d&offline=1&demoRole=manager')
-  expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
-  page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+  map_tool(page, 'Dữ liệu GIS').click()
   workspace=page.locator('.geodata-workspace');card=workspace.locator('.scenario-card')
   def choose(name):
    row=workspace.locator('.scenario-feature-row').filter(has_text=name).first
@@ -167,8 +168,8 @@ def run(url,chrome,captures=None):
   workspace.get_by_role('button',name='Bỏ bản nháp',exact=True).click()
   page.get_by_role('dialog',name='Bỏ bản nháp GIS?',exact=True).get_by_role('button',name='Bỏ bản nháp',exact=True).click()
   expect(card.get_by_role('heading',level=2)).to_have_text('Sạt lở mới từ kiểm tra')
-  page.reload();expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
-  page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  page.reload();expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+  map_tool(page, 'Dữ liệu GIS').click()
   choose('Sạt lở mới từ kiểm tra')
   choose('Sạt lở kiểm tra GIS')
   expect(scenario_properties(card).get_by_label('Nhãn trên bản đồ',exact=True)).to_have_value('hide')
@@ -190,12 +191,12 @@ def run(url,chrome,captures=None):
   publish_draft(page)
   page.get_by_role('button',name='Đóng dữ liệu GIS',exact=True).click()
   page.evaluate("(key)=>localStorage.setItem(key,JSON.stringify({applied:true,at:new Date().toISOString()}))",'dear.scenario-revision.v1:'+packet['datasetVersion'])
-  page.reload();expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+  page.reload();expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
   page.get_by_role('button',name='Nhật ký sự kiện',exact=True).click()
   page.get_by_role('radio',name='Đánh giá ban đầu',exact=False).evaluate('(input)=>input.click()')
   expect(page.locator('.revision-notice')).to_be_visible()
   page.keyboard.press('Escape')
-  page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  map_tool(page, 'Dữ liệu GIS').click()
   expect(workspace.get_by_role('button',name='Thêm điểm ghi nhận',exact=True)).to_have_count(0)
   expect(workspace.locator('.scenario-feature-list').get_by_role('button',name='Bãi đáp đề xuất mới',exact=True)).to_have_count(0)
   choose(hazard['name'][0])
@@ -206,7 +207,7 @@ def run(url,chrome,captures=None):
   page.get_by_role('radio',name='Sau báo cáo mới',exact=False).evaluate('(input)=>input.click()')
   expect(page.locator('.revision-notice')).to_have_count(0)
   page.keyboard.press('Escape')
-  page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+  map_tool(page, 'Dữ liệu GIS').click()
   # Compact layout: inspection, one detail panel and edit form stay within the viewport.
   choose('Sạt lở kiểm tra GIS')
   page.set_viewport_size({'width':390,'height':844})

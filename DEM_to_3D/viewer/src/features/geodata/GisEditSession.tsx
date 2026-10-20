@@ -111,7 +111,7 @@ export function GisEditSession({
           ? feature.name
           : feature?.name?.[locale === "vi" ? 0 : 1];
       return next && next !== target.name
-        ? `${target.name} → ${next}`
+        ? t(`${target.name} đổi thành ${next}`, `${target.name} renamed ${next}`)
         : (next ?? target.name);
     });
   }, [pending.edits, pending.packet, locale]);
@@ -188,8 +188,8 @@ export function GisEditSession({
         <strong>{t("Bản nháp GIS", "GIS draft")}</strong>
         <span>
           {t(
-            `${changes.length + targets.length} đối tượng chưa công bố`,
-            `${changes.length + targets.length} unpublished features`,
+            `${changes.length + targets.length} đối tượng đã sửa`,
+            `${changes.length + targets.length} edited features`,
           )}
         </span>
       </div>

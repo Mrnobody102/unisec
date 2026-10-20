@@ -10,6 +10,10 @@ import {
 import { VoiceRecorder } from "../observations/VoiceRecorder";
 import type { FieldVoice } from "../observations/voice";
 import { PhotoPreview } from "../observations/PhotoPreview";
+import { UiIcon } from "../../shared/ui/UiIcon";
+
+/** A camera button only where the browser can open a camera; elsewhere it would repeat the file picker. */
+const canCapture = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
 export function CitizenReportForm({
   locale,
   observer,
@@ -158,94 +162,98 @@ export function CitizenReportForm({
           );
       }}
     >
-      <div className="citizen-capture-actions">
-        <button
-          type="button"
-          className="button"
-          disabled={busy || photos.length >= photoLimits.count}
-          onClick={() => camera.current?.click()}
-        >
-          {t("Chụp ảnh", "Take photo")}
-        </button>
-        <button
-          type="button"
-          className="button"
-          disabled={busy || photos.length >= photoLimits.count}
-          onClick={() => library.current?.click()}
-        >
-          {t("Chọn ảnh", "Choose photo")}
-        </button>
-      </div>
-      {photoInput(camera, "environment")}
-      {photoInput(library)}
-      {busy && <p role="status">{t("Đang đọc ảnh…", "Reading photo…")}</p>}
-      {!!photos.length && (
-        <ul className="citizen-photo-strip">
-          {photos.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                className="citizen-photo-open"
-                aria-label={t("Xem ảnh", "View photo")}
-                onClick={() => setPreview(p)}
-              >
-                <img src={p.preview} alt={p.name} />
-              </button>
-              <button
-                type="button"
-                className="text-button"
-                disabled={busy}
-                onClick={() => setPhotos((v) => v.filter((x) => x.id !== p.id))}
-              >
-                {t("Xóa ảnh", "Remove")}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <VoiceRecorder
-        voice={voice}
-        onChange={setVoice}
-        onBusyChange={setVoiceBusy}
-        locale={locale}
-        active={active}
-        disabled={busy}
-      />
-      <label className="geodata-field">
-        {t("Bạn thấy gì? (có thể bỏ trống)", "What did you see? (optional)")}
+      <section className="citizen-card" aria-labelledby="citizen-photo-title">
+        <h2 id="citizen-photo-title">{t("Ảnh", "Photos")}<small>{photos.length}/{photoLimits.count}</small></h2>
+        <div className="citizen-capture-actions">
+          {canCapture() && (
+            <button
+              type="button"
+              className="button"
+              disabled={busy || photos.length >= photoLimits.count}
+              onClick={() => camera.current?.click()}
+            >
+              <UiIcon name="camera" size={20} />
+              {t("Chụp ảnh", "Take photo")}
+            </button>
+          )}
+          <button
+            type="button"
+            className="button"
+            disabled={busy || photos.length >= photoLimits.count}
+            onClick={() => library.current?.click()}
+          >
+            <UiIcon name="image" size={20} />
+            {canCapture() ? t("Ảnh có sẵn", "From gallery") : t("Chọn ảnh", "Choose photos")}
+          </button>
+        </div>
+        {photoInput(camera, "environment")}
+        {photoInput(library)}
+        {busy && <p role="status" className="citizen-hint">{t("Đang đọc ảnh", "Reading photo")}</p>}
+        {!!photos.length && (
+          <ul className="citizen-photo-strip">
+            {photos.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className="citizen-photo-open"
+                  aria-label={t("Xem ảnh", "View photo")}
+                  onClick={() => setPreview(p)}
+                >
+                  <img src={p.preview} alt={p.name} />
+                </button>
+                <button
+                  type="button"
+                  className="citizen-photo-remove"
+                  disabled={busy}
+                  aria-label={t("Xóa ảnh", "Remove")}
+                  title={t("Xóa ảnh", "Remove")}
+                  onClick={() => setPhotos((v) => v.filter((x) => x.id !== p.id))}
+                >
+                  <UiIcon name="close" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className="citizen-card" aria-labelledby="citizen-note-title">
+        <h2 id="citizen-note-title">{t("Bạn thấy gì?", "What did you see?")}<small>{t("Viết hoặc ghi âm", "Type or record")}</small></h2>
         <textarea
+          aria-labelledby="citizen-note-title"
           rows={3}
           maxLength={2000}
           value={note}
+          placeholder={t("Ví dụ: đất đá lấp kín đường, xe máy không qua được", "For example: rocks cover the road, motorbikes cannot pass")}
           onChange={(e) => setNote(e.target.value)}
         />
-      </label>
+        <VoiceRecorder
+          voice={voice}
+          onChange={setVoice}
+          onBusyChange={setVoiceBusy}
+          locale={locale}
+          active={active}
+          disabled={busy}
+        />
+      </section>
       {locationControl}
-      <details className="field-extra">
-        <summary>
-          {t("Thời gian xảy ra (nếu biết)", "Observation time (if known)")}
-        </summary>
-        <label className="geodata-field">
-          {t("Ngày và giờ", "Date and time")}
-          <input
-            type="datetime-local"
-            value={observed}
-            onChange={(e) => {
-              timeTouched.current = true;
-              setUnknownZone(false);
-              setObserved(e.target.value);
-            }}
-          />
-        </label>
+      <section className="citizen-card" aria-labelledby="citizen-time-title">
+        <h2 id="citizen-time-title">{t("Thời gian xảy ra", "When it happened")}<small>{t("Nếu biết", "If known")}</small></h2>
+        <input
+          type="datetime-local"
+          aria-labelledby="citizen-time-title"
+          value={observed}
+          onChange={(e) => {
+            timeTouched.current = true;
+            setUnknownZone(false);
+            setObserved(e.target.value);
+          }}
+        />
         {unknownZone && (
-          <small>
-            {t(
-              "Giờ trong ảnh chưa có múi giờ.",
-              "The photo time has no recorded time zone.",
-            )}
-          </small>
+          <p className="citizen-hint">
+            {t("Giờ lấy từ ảnh, chưa có múi giờ.", "Time taken from the photo, without a time zone.")}
+          </p>
         )}
-      </details>
+      </section>
       {error && (
         <p className="field-error" role="alert">
           {error}
@@ -257,6 +265,7 @@ export function CitizenReportForm({
           className="button primary"
           disabled={busy || voiceBusy}
         >
+          <UiIcon name="send" size={18} />
           {t("Gửi báo cáo", "Send report")}
         </button>
       </div>

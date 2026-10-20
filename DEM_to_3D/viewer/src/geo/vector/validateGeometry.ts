@@ -7,15 +7,21 @@ import { GeometryError, geometryPositions, type VectorGeometry } from './types';
 
 const same = (a: Position, b: Position) => a[0] === b[0] && a[1] === b[1];
 const epsilon = 1e-12;
-const cross = (a: Position, b: Position, c: Position) => (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+// Cross products have square-coordinate units; a fixed angular tolerance
+// falsely merges centimetre-scale edges in detailed survey outlines.
+const orientation = (a: Position, b: Position, c: Position) => {
+  const left=(b[0]-a[0])*(c[1]-a[1]), right=(b[1]-a[1])*(c[0]-a[0]);
+  const value=left-right, error=8*Number.EPSILON*(Math.abs(left)+Math.abs(right));
+  return Math.abs(value)<=error ? 0 : Math.sign(value);
+};
 function onSegment(a: Position, b: Position, c: Position): boolean {
-  return Math.abs(cross(a, b, c)) <= epsilon && c[0] >= Math.min(a[0], b[0])-epsilon &&
+  return orientation(a, b, c) === 0 && c[0] >= Math.min(a[0], b[0])-epsilon &&
     c[0] <= Math.max(a[0], b[0])+epsilon && c[1] >= Math.min(a[1], b[1])-epsilon && c[1] <= Math.max(a[1], b[1])+epsilon;
 }
 function crosses(a: Position, b: Position, c: Position, d: Position): boolean {
-  const abC = cross(a,b,c), abD = cross(a,b,d), cdA = cross(c,d,a), cdB = cross(c,d,b);
-  return ((abC > epsilon && abD < -epsilon || abC < -epsilon && abD > epsilon) &&
-    (cdA > epsilon && cdB < -epsilon || cdA < -epsilon && cdB > epsilon)) ||
+  const abC = orientation(a,b,c), abD = orientation(a,b,d), cdA = orientation(c,d,a), cdB = orientation(c,d,b);
+  return ((abC > 0 && abD < 0 || abC < 0 && abD > 0) &&
+    (cdA > 0 && cdB < 0 || cdA < 0 && cdB > 0)) ||
     onSegment(a,b,c) || onSegment(a,b,d) || onSegment(c,d,a) || onSegment(c,d,b);
 }
 

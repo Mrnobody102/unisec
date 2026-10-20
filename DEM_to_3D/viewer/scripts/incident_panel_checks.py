@@ -1,4 +1,4 @@
-"""Check the current overview's readable bounds and separate work/reference groups."""
+"""Check the overview's readable bounds and its grouped cards."""
 
 
 def check_incident_layout(page):
@@ -9,22 +9,24 @@ def check_incident_layout(page):
         if (!body || !heading) return ['Missing incident overview'];
         if (panel.scrollWidth > panel.clientWidth + 1 || body.scrollWidth > body.clientWidth + 1)
             errors.push('incident panel overflow');
+        // Title, figure tiles and group cards share one left edge.
         const left = rect(heading).left;
-        body.querySelectorAll('section > h2, .incident-overview-item > strong').forEach(node => {
-            if (rect(node).width && Math.abs(rect(node).left + parseFloat(getComputedStyle(node).paddingLeft) - left) > 1) errors.push('inconsistent content inset: ' + node.textContent);
+        panel.querySelectorAll('.incident-summary-fact:first-child, .incident-overview > *').forEach(node => {
+            if (rect(node).width && Math.abs(rect(node).left - left) > 1) errors.push('inconsistent inset: ' + node.className);
         });
-        body.querySelectorAll('.incident-overview-item').forEach(row => {
-            if (!rect(row).width) return;
-            const style = getComputedStyle(row);
-            if (rect(row).height < 40 || parseFloat(style.paddingLeft) < 12 || parseFloat(style.paddingTop) < 12)
-                errors.push('insufficient list row hit area');
+        body.querySelectorAll('.incident-landslide-row, .incident-work-row').forEach(row => {
+            if (rect(row).width && rect(row).height < 40) errors.push('insufficient list row hit area');
         });
-        const work = body.querySelector('.incident-overview-work');
-        const reference = body.querySelector('.incident-reference');
-        if (!work || !reference || rect(reference).top - rect(work).bottom < 12)
-            errors.push('work and reference groups touch');
-        if (reference && parseFloat(getComputedStyle(reference).borderTopWidth) < 1)
-            errors.push('reference group lacks a boundary');
+        // Each group is a card; its label stays sentence case.
+        const groups = [...body.querySelectorAll(':scope > section')];
+        groups.forEach(group => {
+            if (!parseFloat(getComputedStyle(group).borderTopLeftRadius)) errors.push('group is not a card: ' + group.className);
+            const label = group.querySelector('h2');
+            if (label && getComputedStyle(label).textTransform === 'uppercase') errors.push('uppercase label: ' + label.textContent);
+        });
+        const children = [...body.children];
+        for (let i = 1; i < children.length; i++)
+            if (rect(children[i]).top - rect(children[i - 1]).bottom < 8) errors.push('groups touch');
         return errors;
     }""")
     assert not problems, problems

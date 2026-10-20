@@ -3,7 +3,7 @@ import {scenarioProperties,validProperties} from './scenarioProperties';
 import {validEdit,applyScenarioEdits,type ScenarioEdit} from './scenarioEdits';
 import {deriveIncidentWorkspace} from '../incident/deriveIncidentWorkspace';
 import {validateIncidentPacket} from '../../data/incidentPacket';
-import packetJson from '../../../public/scenarios/che-tao/v0.2/incident.json';
+import packetJson from '../../data/fixtures/che-tao-network.json';
 const packet=()=>validateIncidentPacket(structuredClone(packetJson));
 const edit=(type:ScenarioEdit['target']['type'],id:string,change:ScenarioEdit['change']):ScenarioEdit=>({id:crypto.randomUUID(),at:'2026-10-14T06:00:00Z',author:{id:'manager',name:'Coordinator'},target:{type,id,name:'Edited'},change,note:'Field verification'});
 describe('response feature changes',()=>{

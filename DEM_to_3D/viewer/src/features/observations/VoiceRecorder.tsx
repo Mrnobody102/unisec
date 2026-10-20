@@ -6,6 +6,7 @@ import {
   type FieldVoice,
 } from "./voice";
 import { VoicePlayback } from "./VoicePlayback";
+import { UiIcon } from "../../shared/ui/UiIcon";
 export function VoiceRecorder({
   voice,
   onChange,
@@ -200,7 +201,8 @@ export function VoiceRecorder({
             className="button"
             onClick={() => recorder.current?.stop()}
           >
-            {t("Dừng ghi âm", "Stop recording")} · {seconds}s
+            <span className="voice-live" aria-hidden="true" />
+            {t(`Dừng ghi âm (${seconds} giây)`, `Stop recording (${seconds}s)`)}
           </button>
         ) : (
           <button
@@ -209,10 +211,11 @@ export function VoiceRecorder({
             disabled={disabled || state !== "idle"}
             onClick={() => void start()}
           >
+            <UiIcon name="microphone" size={18} />
             {state === "permission"
-              ? t("Đang mở micro…", "Opening microphone…")
+              ? t("Đang mở micro", "Opening microphone")
               : state === "saving"
-                ? t("Đang lưu…", "Saving…")
+                ? t("Đang lưu", "Saving")
                 : voice
                   ? t("Ghi lại", "Record again")
                   : t("Ghi âm", "Record voice")}
@@ -229,6 +232,7 @@ export function VoiceRecorder({
             disabled={disabled || state !== "idle"}
             onClick={() => input.current?.click()}
           >
+            <UiIcon name="upload" size={16} />
             {t("Chọn tệp ghi âm", "Choose audio file")}
           </button>
         )}
@@ -247,7 +251,7 @@ export function VoiceRecorder({
       />
       {state === "recording" && (
         <p role="status">
-          {t("Đang ghi âm · tối đa 1 phút", "Recording · up to 1 minute")}
+          {t("Đang ghi âm, tối đa 1 phút", "Recording, up to 1 minute")}
         </p>
       )}
       <VoicePlayback voice={voice} locale={locale} />

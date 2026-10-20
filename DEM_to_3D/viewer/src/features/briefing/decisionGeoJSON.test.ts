@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { preparedPacket, buildScenarioRoutes } from '../../data/cheTaoScenario';
+import { preparedPacket, buildScenarioRoutes } from '../../data/fixtures/networkScenario';
 import { assessCommunity } from '../incident/responseAssessment';
 import { createDecisionSnapshot } from './decisionSnapshot';
 import { decisionGeoJSON } from './decisionGeoJSON';

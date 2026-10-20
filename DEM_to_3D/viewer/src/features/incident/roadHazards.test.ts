@@ -12,7 +12,7 @@ import {
 } from "../access/scenarioEdits";
 import { validateIncidentPacket } from "../../data/incidentPacket";
 import { deriveIncidentWorkspace } from "./deriveIncidentWorkspace";
-import source from "../../../public/scenarios/che-tao/v0.2/incident.json";
+import source from "../../data/fixtures/che-tao-network.json";
 const packet = () => validateIncidentPacket(structuredClone(source));
 const edit = (id: string, from: string[], to: string[]): ScenarioEdit => ({
   id: "edit-1",
@@ -25,7 +25,7 @@ const edit = (id: string, from: string[], to: string[]): ScenarioEdit => ({
 describe("road hazard relationships", () => {
   it("retains legacy IDs and records multiple hazards without changing road status", () => {
     const p = packet(),
-      r = p.roads.find((r) => r.hz)!;
+      r = p.roads.find((r) => r.hz && !r.hazardIds)!;
     const updated = setRoadHazards(p.roads, r.id, [
       r.hz!,
       p.hazards.find((h) => h.id !== r.hz)!.id,

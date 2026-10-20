@@ -10,8 +10,11 @@ export function localClock(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function observationTime(iso: string, locale: 'vi' | 'en'): string {
-  return new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-GB', {
-    timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
-  }).format(new Date(iso));
+/** Date first, then clock, in both languages: "30/09/2026, 00:10" (UTC+7). */
+export function observationTime(iso: string, _locale: 'vi' | 'en'): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hourCycle: 'h23'
+  }).formatToParts(new Date(iso));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(item => item.type === type)?.value ?? '';
+  return `${part('day')}/${part('month')}/${part('year')}, ${part('hour')}:${part('minute')}`;
 }

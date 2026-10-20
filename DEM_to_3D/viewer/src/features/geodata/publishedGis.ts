@@ -78,9 +78,29 @@ export function writePublishedGis(
 }
 /** One atomic installation per source revision. Later edits/deletions are retained on reload. */
 export function installPreparedRecords(source: PreparedGeometrySource, storage: Storage = localStorage): PublishedGis {
-  const current = readPublishedGis(storage);
-  const pending = preparedSources(source).filter(item => !current.installedSources?.includes(item.id));
-  if (!pending.length) return current;
+  const stored = readPublishedGis(storage);
+  // Keep locally reviewed records when a prepared source leaves the active dataset.
+  // Hide them without deleting edits; preserve installation history so deleted records stay deleted.
+  const offered = new Set(preparedSources(source).map(item => item.id));
+  const installed = new Set(stored.installedSources ?? []);
+  let changed = false;
+  const records = stored.records.map(record => {
+    const properties = record.feature.properties, sourceId = String(properties.sourceDatasetId ?? '');
+    const previousVisibility = properties.dearInactiveSourceVisibility;
+    if (installed.has(sourceId) && !offered.has(sourceId) && typeof previousVisibility !== 'boolean') {
+      changed = true;
+      return {...record, visible:false, feature:{...record.feature, properties:{...properties, dearInactiveSourceVisibility:record.visible}}};
+    }
+    if (offered.has(sourceId) && typeof previousVisibility === 'boolean') {
+      changed = true;
+      const restored = {...properties};delete restored.dearInactiveSourceVisibility;
+      return {...record, visible:previousVisibility, feature:{...record.feature, properties:restored}};
+    }
+    return record;
+  });
+  const current = changed ? {...stored,records} : stored;
+  const pending = preparedSources(source).filter(item => !installed.has(item.id));
+  if (!pending.length) { if (changed) writePublishedGis(current, storage); return current; }
   const ids = new Set(current.records.map(record => record.id));
   const additions = pending.flatMap(item => item.records).filter(record => {
     if (ids.has(record.id)) return false;

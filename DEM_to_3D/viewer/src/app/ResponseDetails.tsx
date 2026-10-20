@@ -1,3 +1,5 @@
+import { ResponseObservationCard } from '../features/observations/ResponseObservationCard';
+import type { PreparedPhotoPoint } from '../features/fieldPhotos/preparedPhotos';
 import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
 import type { GeometryRecord } from '../geo/vector/types';
 import { UiIcon } from '../shared/ui/UiIcon';
@@ -34,17 +36,18 @@ type Props = Pick<
   | 'onOpenDialog'
   | 'onOpenEvidence'
   | 'onExport'
-  | 'onRename'
   | 'scenarioEdits'
   | 'workTasks'
   | 'workEntries'
   | 'onOpenWork'
-> & { visible: boolean; onReturnFocus: () => void; onEditScenario?: (target:ScenarioTarget)=>void; mappedAreas?: GeometryRecord[]; onOpenMappedArea?: (id: string) => void;
+> & { onCompareImagery?:()=>void; gisRecords?: GeometryRecord[]; gisRecord?: GeometryRecord; gisRoads: ComponentProps<typeof ResponseObservationCard>['roads']; onCloseGis: () => void; onEditGis: () => void; onBackToGisGroup?: () => void; visible: boolean; onReturnFocus: () => void; onEditScenario?: (target:ScenarioTarget)=>void; mappedAreas?: GeometryRecord[]; onOpenMappedArea?: (id: string) => void;
   onSetRoadStatus?: ComponentProps<typeof ObjectDetailView>['onSetRoadStatus']; onRevertEdit?: (editId: string) => boolean;
-  signals?: Record<string, CommunitySignal> };
+  signals?: Record<string, CommunitySignal>; fieldPhotos?: Map<string, PreparedPhotoPoint> };
 
 /** One detail surface: map dock on wide screens, the information pane on compact screens. */
 export function ResponseDetails({
+  onCompareImagery,gisRecords, gisRecord, gisRoads, onCloseGis, onEditGis, onBackToGisGroup,
+  fieldPhotos,
   locale,
   navigation,
   onNavigate,
@@ -67,7 +70,6 @@ export function ResponseDetails({
   onOpenEvidence,
   onExport,
   scenarioEdits,
-  onRename,
   onSetRoadStatus,
   onRevertEdit,
   signals,
@@ -92,7 +94,7 @@ export function ResponseDetails({
   const objectId = selectedMapObject(navigation);
   const panelRef = useRef<HTMLElement>(null);
   const focusedDetail = useRef('');
-  const detailKey =
+  const detailKey = gisRecord ? `gis:${gisRecord.id}` :
     view === 'priority' && community
       ? `community:${community.id}`
       : objectId
@@ -105,7 +107,7 @@ export function ResponseDetails({
       return;
     }
     if (!visible || focusedDetail.current === detailKey) return;
-    const heading = panelRef.current?.querySelector<HTMLElement>('h1');
+    const heading = panelRef.current?.querySelector<HTMLElement>('h1, h2');
     if (heading) {
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
@@ -125,10 +127,15 @@ export function ResponseDetails({
 
   let content: JSX.Element;
   if (!ready) return null;
-  if (view === 'priority' && community && routePair) {
+  if (gisRecord) {
+    content = <ResponseObservationCard onCompare={onCompareImagery} key={gisRecord.id} docked record={gisRecord} records={gisRecords} fieldPhotos={fieldPhotos} locale={locale}
+      roads={gisRoads} onRoad={id => onInspectObject('road:'+id)} onClose={onCloseGis}
+      onEdit={onEditGis} onBack={onBackToGisGroup}/>;
+  } else if (view === 'priority' && community && routePair) {
     content = (
       <CommunityDetailView
         community={community}
+        originName={responseSites.find(site => site.kind === 'staging')?.name[locale === 'vi' ? 0 : 1]}
         terrainCovered={terrainCoverage?.get(community.id) ?? null}
         assessment={assessments.get(community.id)!}
         hazards={hazards}
@@ -154,7 +161,6 @@ export function ResponseDetails({
         onOpenSources={() => onOpenDialog('data')}
         onOpenEvidence={onOpenEvidence}
         onExport={onExport}
-        onRename={onRename && (names => onRename('community', community.id, names))}
         signal={signals?.[community.id]}
       />
     );
@@ -162,6 +168,8 @@ export function ResponseDetails({
     content = (
       <ObjectDetailView
         objectId={objectId}
+        canGoBack={navigation.detailHistory.length > 0}
+        fieldPhotos={fieldPhotos}
         mappedAreas={mappedAreas}
         onOpenMappedArea={onOpenMappedArea}
         parentName={
@@ -190,7 +198,6 @@ export function ResponseDetails({
         onOpenEvidence={onOpenEvidence}
         onOpenPriority={openCommunities}
         scenarioEdits={scenarioEdits}
-        onRenameRoad={onRename && ((id, names) => onRename('road', id, names))}
         onSetRoadStatus={onSetRoadStatus}
         verification={(() => {
           const task = objectId && /^(road|hazard):/.test(objectId) ? workTasks.find(item => item.id === objectId) : undefined;
@@ -211,7 +218,7 @@ export function ResponseDetails({
       aria-label={locale === 'vi' ? 'Chi tiết đang chọn' : 'Selected details'}
     >
       {content}
-      {onEditScenario && detailKey && (() => {
+      {!gisRecord && onEditScenario && detailKey && (() => {
         const target:ScenarioTarget|null = view==='priority'&&community ? {type:'community',id:community.id} : objectId && ['road','hazard','poi'].includes(objectId.split(':')[0]) ?
           {type:objectId.split(':')[0]==='poi'?'site':objectId.split(':')[0] as 'road'|'hazard',id:objectId.slice(objectId.indexOf(':')+1)} : null;
         return target && <div className="response-detail-edit"><button className="button" onClick={()=>onEditScenario(target)}><UiIcon name="edit" size={16}/>{locale==='vi'?'Sửa trong GIS':'Edit in GIS'}</button></div>;

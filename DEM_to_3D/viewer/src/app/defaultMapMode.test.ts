@@ -4,8 +4,8 @@ import { defaultMapMode } from './defaultMapMode';
 const desktop = { search: '', matches: () => false, webgl: () => true };
 
 describe('defaultMapMode', () => {
-  it('opens in 3D on a capable desktop', () => {
-    expect(defaultMapMode(desktop)).toBe('3d');
+  it('opens in the plan view on a capable desktop', () => {
+    expect(defaultMapMode(desktop)).toBe('2d');
   });
   it('opens in 2D without WebGL, on data saver, slow links and phones', () => {
     expect(defaultMapMode({ ...desktop, webgl: () => false })).toBe('2d');
