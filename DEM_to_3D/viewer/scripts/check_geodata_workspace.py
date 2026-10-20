@@ -348,11 +348,13 @@ def run(url, chrome, captures):
         publish_draft(page)
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        # Reference datasets are installed independently when entering response.
+        data_count = sum(not record['feature']['properties'].get('dearLandslideArea') for record in published_records(page))
         for iteration in range(3):
             page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
             expect(page.locator('.geodata-workspace')).to_have_attribute('role','region')
-            # Three prepared survey stations are installed when entering the response workspace.
-            expect(page.locator('.geodata-layers li')).to_have_count(9)
+            # Data lists omit landslide extents, which have their own business task.
+            expect(page.locator('.geodata-layers li')).to_have_count(data_count)
             check_controls(page, page.locator('html').get_attribute('data-theme'))
             assert page.locator('.geodata-title button').count() == 1, 'Duplicate exit controls'
             if iteration == 0:
