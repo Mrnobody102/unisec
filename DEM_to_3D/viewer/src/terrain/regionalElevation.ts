@@ -37,7 +37,7 @@ export function sampleElevationTiles(tiles: Map<string, ElevationTile>, zoom: nu
   return height;
 }
 
-/** Display context only. Never added to the analysis grid, BVH or profile sampler. */
+/** Display context only. Never added to the analysis grid, measurement raycasts or profile sampler. */
 export function createRegionalElevation(metadata: TerrainMetadata, surfaces: ElevationSurface[], tiles: MapTile[], onReady: () => void) {
   const grids = new Map<string, ElevationTile>();
   const toWgs84 = proj4(metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`, 'EPSG:4326');

@@ -1,6 +1,5 @@
+import { createViewImagery, visibleImageryPoints, viewImageryTiles } from '../terrain/viewImagery';
 import {terrainReferencePoints} from '../terrain/terrainReferencePoints';
-import {geometryPositions} from '../geo/vector/types';
-import proj4 from 'proj4';
 import { basemapFrame } from '../terrain/basemapFrame';
 import { planBasemapTiles } from '../terrain/regionalBasemap';
 import { terrainAreaLabel } from '../features/landslides/terrainAreaLabel';
@@ -162,9 +161,11 @@ export function TerrainViewer({
     const stopOrbit = () => {if (controls.autoRotate) {controls.autoRotate = false;orbitChangeRef.current?.(false);}};
     controls.target.set(0, 0, 0);
     let markerLayoutDirty = true;
+    let scheduleViewImagery = () => {};
     const onControlsChange = (): void => {
       markerLayoutDirty = true;
       invalidate();
+      scheduleViewImagery();
       host.parentElement?.style.setProperty('--map-bearing', `${THREE.MathUtils.radToDeg(controls.getAzimuthalAngle())}deg`);
     };
     controls.addEventListener('change', onControlsChange);
@@ -199,9 +200,19 @@ export function TerrainViewer({
     const planned = frame ? planBasemapTiles(frame, imagerySource.maxNativeZoom) : undefined;
     const terrainImageries = located.map(entry => createTerrainImagery(entry.model.metadata!, entry.group, entry.meshes, imagerySource.maxNativeZoom, Math.min(16, renderer.capabilities.getMaxAnisotropy()), planned));
     const basemap = frame && primary
-      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
+      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); if(state.status!=='loading')scheduleViewImagery(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
       : null;
     if (basemap) scene.add(basemap.group);
+    const viewImagery = frame && primary ? createViewImagery(() => {
+      const context = (basemap?.group.children ?? []).filter((child): child is THREE.Mesh => (child as THREE.Mesh).isMesh);
+      const points = visibleImageryPoints(frame,primary.group.matrixWorld,camera,[...located.flatMap(entry=>entry.meshes),...context]);
+      return viewImageryTiles(frame,points,imagerySource.maxNativeZoom,window.matchMedia('(pointer: coarse)').matches?64:256,Math.min(window.matchMedia('(pointer: coarse)').matches?8:32,Math.floor(renderer.capabilities.maxTextureSize/256)));
+    }, Math.min(16,renderer.capabilities.getMaxAnisotropy()), atlas => {
+      terrainImageries.forEach(imagery=>imagery?.setDetail(atlas));basemap?.setDetail(atlas);
+    },()=>invalidate()) : null;
+    if(viewImagery)host.append(viewImagery.status);
+    scheduleViewImagery=()=>viewImagery?.schedule();
+
 
     // Use the same neutral illumination for prepared imagery, online draping and context.
     const sourceMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
@@ -235,6 +246,7 @@ export function TerrainViewer({
       const layers = scenarioPropsRef.current?.layers;
       basemap?.setOptions(layers?.context !== false, layers?.imagery === false ? 'terrain' : 'satellite');
       terrainImageries.forEach(imagery => imagery?.setVisible(layers?.context !== false && layers?.imagery !== false));
+      viewImagery?.setEnabled(layers?.context !== false && layers?.imagery !== false);
       if (!basemap) onBasemapStateRef.current?.({ status: layers?.context === false || !models.length ? 'off' : 'unavailable', style: layers?.imagery === false ? 'terrain' : 'satellite', loaded: 0, total: 0 });
       scene.background = new THREE.Color(themeRef.current === 'dark' ? '#151c1a' : '#e6e8df');
       originalMaterials.forEach((original, material) => {
@@ -287,20 +299,6 @@ export function TerrainViewer({
         mappedAreaGroup = new THREE.Group();
         const chosen = mappedAreasRef.current.records.find(record => record.id === mappedAreasRef.current.selectedId);
         referencePoints = terrainReferencePoints(host,mappedAreasRef.current.records,mappedAreasRef.current.selectedId??null,entries,id=>mappedAreasRef.current.onSelect?.(id));
-        const focusPositions = chosen ? geometryPositions(chosen.feature.geometry) : null;
-        terrainImageries.forEach((imagery,index)=>{
-          if(!imagery)return;
-          if(!imagery.status.isConnected)host.append(imagery.status);
-          const surface=located[index].model;
-          const metadata = surface.metadata!;
-          const crs = metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`;
-          const focus = focusPositions?.map(([lon, lat]) => {
-            const [x, y] = proj4('EPSG:4326', crs, [lon, lat]);
-            return {x, y};
-          }) ?? null;
-          const covered=focus?.some(p=>surface.metadata&&surface.grid&&bilinearElevation(surface.grid,surface.metadata,p.x,p.y).elevation!==undefined);
-          void imagery.focus(covered && sp?.layers.context!==false && sp?.layers.imagery!==false ? focus : null).then(()=>invalidate());
-        });
         for (const entry of entries) {
           if (!entry.model.metadata || !entry.model.grid) continue;
           const group = terrainLandslideAreas(mappedAreasRef.current.records, entry.model.metadata, entry.model.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion);
@@ -480,7 +478,7 @@ export function TerrainViewer({
         resetView: () => {
           setInitialCamera(mapModeRef.current, true);
         },
-        retryBasemap: () => basemap?.retry(),
+        retryBasemap: () => {basemap?.retry();viewImagery?.retry();},
         focusProjected: (point, inset) => {
           const target = projectedWorld(point);if (!target) return;
           const position = camera.position.clone().add(target.clone().sub(controls.target));
@@ -657,7 +655,7 @@ export function TerrainViewer({
       markerLayoutDirty = true;
       invalidate();
     };
-    const resizeObserver = new ResizeObserver(resize);
+    const resizeObserver = new ResizeObserver(() => {resize();scheduleViewImagery();});
     resizeObserver.observe(host);
     const mapUiObserver = new MutationObserver(() => { markerLayoutDirty = true; invalidate(); });
     const mapArea = host.closest('.map-area');
@@ -732,6 +730,7 @@ export function TerrainViewer({
       mappedLabel?.dispose();
       referencePoints?.dispose();
       mapReference.dispose();
+      viewImagery?.dispose();
       terrainImageries.forEach(imagery => imagery?.dispose());
       basemap?.dispose();
       if (scenarioOverlayGroup) {

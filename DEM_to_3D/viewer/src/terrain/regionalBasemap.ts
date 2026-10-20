@@ -1,3 +1,5 @@
+import { imageryDrape } from './imageryDrape';
+import type { ImageryDetailAtlas } from './imageryAtlas';
 import { createRegionalElevation, type ElevationSurface } from './regionalElevation';
 import * as THREE from 'three';
 import proj4 from 'proj4';
@@ -96,7 +98,8 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   let style: BasemapStyle = 'satellite', enabled = false, disposed = false, generation = 0;
   let controller: AbortController | null = null;
   let imageryStatus: BasemapState['status'] = 'off';
-  const cached = new Map<string, { mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>; bitmap: ImageBitmap; style: BasemapStyle; tile: MapTile }>();
+  const cached = new Map<string, { mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>; bitmap: ImageBitmap; style: BasemapStyle; tile: MapTile; setDetail: (atlas:ImageryDetailAtlas|null)=>void }>();
+  let viewAtlas: ImageryDetailAtlas|null = null;
   const relief = elevationSurfaces?.length && tiles.length ? createRegionalElevation(metadata, elevationSurfaces,
     planRegionalTiles(metadata, { padding: 1.2, maxZoom: 11, budget: 48 }), () => {
       if (disposed) return;
@@ -140,7 +143,8 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
           // The DEM writes depth first. Tiles test against it, but do not occlude
           // finer tiles in the same flat context plane.
           mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
-          group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle, tile });
+          const setDetail=imageryDrape(mesh.material,tile);setDetail(runStyle==='satellite'?viewAtlas:null);
+          group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle, tile, setDetail });
           if (runStyle === 'satellite') {
             try {onImageryTile?.(tile, bitmap);} catch { /* The prepared DEM texture remains the fallback. */ }
           }
@@ -163,6 +167,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   };
   return {
     group,
+    setDetail(atlas:ImageryDetailAtlas|null){viewAtlas=atlas;cached.forEach(item=>item.setDetail(item.style==='satellite'?atlas:null));},
     setOptions(nextEnabled: boolean, nextStyle: BasemapStyle): void {
       if (enabled === nextEnabled && style === nextStyle) return;
       enabled = nextEnabled; style = nextStyle; tiles = tilesFor(style); group.visible = enabled;

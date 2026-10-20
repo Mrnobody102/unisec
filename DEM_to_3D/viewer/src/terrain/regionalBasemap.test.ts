@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import * as focusImagery from './focusImagery';
 import * as regionalElevation from './regionalElevation';
 import proj4 from 'proj4';
 import { createTerrainImagery, planImageryAtlases } from './terrainImagery';
@@ -140,54 +139,20 @@ describe('Regional basemap placement', () => {
       coarse.forEach(paint); expect(material.map).not.toBe(previous);
     } finally { imagery.dispose(); source.geometry.dispose(); source.material.dispose(); vi.unstubAllGlobals(); }
   });
-  it('cancels stale detail, retains the base on failure and reuses a completed selection', async () => {
-    const context = {save: vi.fn(), translate: vi.fn(), scale: vi.fn(), drawImage: vi.fn(), restore: vi.fn()};
-    vi.stubGlobal('document', {documentElement: {lang: 'en'}, createElement: () => ({
-      width: 0, height: 0, getContext: () => context, setAttribute: vi.fn(), remove: vi.fn(),
-    })});
-    const root = new THREE.Group();
-    const source = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial());
-    root.add(source);
-    const imagery = createTerrainImagery(metadata, root, [source], 19, 4)!;
-    const bounds = planImageryAtlases(metadata, 19)[0];
-    const point = pixelToProjected(metadata, 100, 100);
-    const nextPoint = {...point, x: point.x + 500};
-    const atlas = () => ({...bounds, texture: new THREE.CanvasTexture(document.createElement('canvas')), dispose: vi.fn()});
-    const stale = atlas(), current = atlas();
-    let resolveStale!: (value: typeof stale) => void;
-    let staleSignal!: AbortSignal;
-    const loader = vi.spyOn(focusImagery, 'loadFocusAtlas')
-      .mockImplementationOnce((_tiles, signal) => {staleSignal = signal; return new Promise(resolve => {resolveStale = resolve;});})
-      .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce(current);
+  it('shares a completed view image without disposing the controller-owned texture', () => {
+    vi.stubGlobal('document', {createElement:()=>({width:0,height:0,getContext:()=>null})});
+    const root=new THREE.Group(),source=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial());root.add(source);
+    const imagery=createTerrainImagery(metadata,root,[source],19,4)!;
+    const bounds=planImageryAtlases(metadata,19)[0],texture=new THREE.CanvasTexture(document.createElement('canvas'));
+    const dispose=vi.spyOn(texture,'dispose');
     try {
-      imagery.setVisible(true);
-      for (let x = bounds.minX; x < bounds.maxX; x++) for (let y = bounds.minY; y < bounds.maxY; y++) imagery.tile({x, y, z: bounds.zoom}, {} as ImageBitmap);
-      const first = imagery.focus([point]);
-      expect(imagery.status.hidden).toBe(false);
-      await imagery.focus([nextPoint]);
-      expect(staleSignal.aborted).toBe(true);
-      expect(imagery.group.visible).toBe(true);
-      expect(imagery.status.hidden).toBe(true);
-      resolveStale(stale);
-      await first;
-      expect(stale.dispose).toHaveBeenCalledOnce();
-      await imagery.focus([nextPoint]);
-      const detail = root.getObjectByName('terrain-detail-imagery')!;
+      imagery.setVisible(true);imagery.setDetail({...bounds,texture,dispose:()=>texture.dispose()});
+      const detail=root.getObjectByName('terrain-detail-imagery')!;
       expect(detail.visible).toBe(true);
-      imagery.setVisible(false);
-      expect(detail.visible).toBe(false);
-      imagery.setVisible(true);
-      await imagery.focus(null);
-      expect(detail.visible).toBe(false);
-      await imagery.focus([nextPoint]);
-      expect(detail.visible).toBe(true);
-      expect(loader).toHaveBeenCalledTimes(3);
-    } finally {
-      imagery.dispose(); source.geometry.dispose(); source.material.dispose();
-      loader.mockRestore(); vi.unstubAllGlobals();
-    }
-    expect(current.dispose).toHaveBeenCalledOnce();
+      imagery.setVisible(false);expect(detail.visible).toBe(false);
+      imagery.setVisible(true);expect(detail.visible).toBe(true);
+      imagery.setDetail(null);expect(detail.visible).toBe(false);expect(dispose).not.toHaveBeenCalled();
+    } finally {imagery.dispose();source.geometry.dispose();source.material.dispose();texture.dispose();vi.unstubAllGlobals();}
   });
   it('stops requesting tiles when the service is unavailable', async () => {
     vi.stubGlobal('window', globalThis);

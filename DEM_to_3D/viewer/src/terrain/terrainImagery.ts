@@ -1,4 +1,4 @@
-import {focusTiles,loadFocusAtlas} from './focusImagery';
+import type { ImageryDetailAtlas } from './imageryAtlas';
 import * as THREE from 'three';
 import proj4 from 'proj4';
 import type { TerrainMetadata } from '../types/terrain';
@@ -79,22 +79,16 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
   focusGroup.visible = false;
   terrain.add(focusGroup);
   const focusMaterial = new THREE.MeshLambertMaterial({
-    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4,
+    transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4,
     polygonOffsetUnits: -4, side: THREE.DoubleSide,
   });
   focusMaterial.onBeforeCompile = shader => {
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>',
-      'if(any(lessThan(vMapUv,vec2(0.0))) || any(greaterThan(vMapUv,vec2(1.0)))) discard;\n#include <map_fragment>');
+      'if(any(lessThan(vMapUv,vec2(0.0))) || any(greaterThan(vMapUv,vec2(1.0)))) discard;\n#include <map_fragment>\nvec2 edge=min(vMapUv,1.0-vMapUv); diffuseColor.a*=smoothstep(0.0,0.015,min(edge.x,edge.y));');
   };
-  let focusController: AbortController | null = null;
-  let focusAtlas: Awaited<ReturnType<typeof loadFocusAtlas>> = null;
-  let focusKey = '', loadedFocusKey = '';
+  let focusTexture: THREE.Texture | null = null;
   let disposed = false, enabled = false, activeZoom = -1;
   const loaded = new Set<string>();
-  const status = document.createElement('span');
-  status.className = 'terrain-detail-status';
-  status.setAttribute('role', 'status');
-  status.hidden = true;
 
   const clearFocusMeshes = () => {
     for (const child of [...focusGroup.children]) {
@@ -105,11 +99,6 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
       focusGroup.remove(child);
     }
   };
-  const cancelFocus = () => {
-    focusController?.abort();
-    focusController = null;
-    status.hidden = true;
-  };
   const buildFocusMeshes = (texture: THREE.Texture) => {
     const {x: sx, y: sy} = texture.repeat, {x: ox, y: oy} = texture.offset;
     for (const object of group.children) {
@@ -117,9 +106,10 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
       const uv = source.geometry.getAttribute('uv'), index = source.geometry.index;
       const chosen: number[] = [];
       for (let i = 0; i < (index?.count ?? uv.count); i += 3) {
-        const ids = [0, 1, 2].map(j => index ? index.getX(i + j) : i + j);
-        const xs = ids.map(j => uv.getX(j) * sx + ox), ys = ids.map(j => uv.getY(j) * sy + oy);
-        if (Math.min(...xs) <= 1 && Math.max(...xs) >= 0 && Math.min(...ys) <= 1 && Math.max(...ys) >= 0) chosen.push(...ids);
+        const a=index?index.getX(i):i,b=index?index.getX(i+1):i+1,c=index?index.getX(i+2):i+2;
+        const ax=uv.getX(a)*sx+ox,bx=uv.getX(b)*sx+ox,cx=uv.getX(c)*sx+ox;
+        const ay=uv.getY(a)*sy+oy,by=uv.getY(b)*sy+oy,cy=uv.getY(c)*sy+oy;
+        if(Math.min(ax,bx,cx)<=1 && Math.max(ax,bx,cx)>=0 && Math.min(ay,by,cy)<=1 && Math.max(ay,by,cy)>=0)chosen.push(a,b,c);
       }
       if (!chosen.length) continue;
       const geometry = new THREE.BufferGeometry();
@@ -132,61 +122,26 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
       focusGroup.add(mesh);
     }
   };
-  const focused = async (points: Array<{x: number; y: number}> | null) => {
+  const setDetail = (atlas: ImageryDetailAtlas | null) => {
     if (disposed) return;
-    const key = JSON.stringify(points);
-    if (key === focusKey && focusController && !focusController.signal.aborted) return;
-    cancelFocus();
-    focusKey = key;
-    focusGroup.visible = false;
-    if (!enabled || !points?.length) return;
-    if (key === loadedFocusKey && focusAtlas) {
-      focusGroup.visible = true;
-      return;
-    }
-    const tiles = focusTiles(metadata, points);
-    if (!tiles.length) return;
-    const controller = new AbortController();
-    focusController = controller;
-    const timer = setTimeout(() => controller.abort(), 15000);
-    status.textContent = document.documentElement.lang === 'en' ? 'Loading detail imagery\u2026' : '\u0110ang t\u1ea3i \u1ea3nh chi ti\u1ebft\u2026';
-    status.hidden = false;
-    try {
-      const atlas = await loadFocusAtlas(tiles, controller.signal, anisotropy);
-      if (!atlas) return;
-      if (disposed || controller.signal.aborted || focusController !== controller) {
-        atlas.dispose();
-        return;
-      }
-      const width = atlas.maxX - atlas.minX, height = atlas.maxY - atlas.minY;
-      const ratio = 2 ** (atlas.zoom - reference.zoom);
-      atlas.texture.repeat.set(columns * ratio / width, rows * ratio / height);
-      atlas.texture.offset.set((reference.minX * ratio - atlas.minX) / width, (atlas.maxY - reference.maxY * ratio) / height);
-      clearFocusMeshes();
-      focusAtlas?.dispose();
-      focusAtlas = atlas;
-      loadedFocusKey = key;
-      focusMaterial.map = atlas.texture;
-      focusMaterial.needsUpdate = true;
-      buildFocusMeshes(atlas.texture);
-      focusGroup.visible = enabled;
-    } catch {
-      controller.abort(); // Retain the complete base image; the same selection may retry.
-    } finally {
-      clearTimeout(timer);
-      if (focusController === controller) {
-        focusController = null;
-        status.hidden = true;
-      }
-    }
+    clearFocusMeshes();
+    focusTexture?.dispose(); focusTexture = null; focusMaterial.map = null; focusGroup.visible = false;
+    if (!atlas) return;
+    const width = atlas.maxX - atlas.minX, height = atlas.maxY - atlas.minY;
+    const ratio = 2 ** (atlas.zoom - reference.zoom);
+    focusTexture = atlas.texture.clone();
+    focusTexture.repeat.set(columns * ratio / width, rows * ratio / height);
+    focusTexture.offset.set((reference.minX * ratio - atlas.minX) / width, (atlas.maxY - reference.maxY * ratio) / height);
+    focusMaterial.map = focusTexture; focusMaterial.needsUpdate = true;
+    buildFocusMeshes(focusTexture);
+    focusGroup.visible = enabled;
   };
   return {
-    group, status, focus: focused,
+    group, setDetail,
     setVisible: (visible: boolean) => {
       enabled = visible;
       group.visible = enabled && activeZoom >= 0;
-      focusGroup.visible = enabled && !!focusAtlas && focusKey === loadedFocusKey;
-      if (!enabled) cancelFocus();
+      focusGroup.visible = enabled && !!focusTexture;
     },
     tile: (tile: MapTile, bitmap: ImageBitmap) => {
       if (disposed) return;
@@ -205,10 +160,8 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     },
     dispose: () => {
       disposed = true;
-      cancelFocus();
-      status.remove();
       clearFocusMeshes();
-      focusAtlas?.dispose();
+      focusTexture?.dispose();
       focusMaterial.dispose();
       focusGroup.removeFromParent();
       group.removeFromParent();
