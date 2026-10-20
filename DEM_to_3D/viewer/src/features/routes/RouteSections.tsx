@@ -1,5 +1,5 @@
 import {roadHazardIds} from '../incident/roadHazards';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { IncidentEvidence, Locale, ScenarioRoute } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { StatusText } from '../../shared/ui/StatusText';
@@ -14,6 +14,8 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
 }): JSX.Element {
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const routeName = t(...route.name);
+  const [listOpen, setListOpen] = useState(false);
+  const expandedList = listOpen || selectedId !== null;
   const sectionRef = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const row = sectionRef.current?.querySelector('.is-selected > .route-section-row');
@@ -25,8 +27,10 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
     else if (target.bottom > bounds.bottom - 64) scroll.scrollTop += target.bottom - bounds.bottom + 64;
   }, [route.id, selectedId]);
   return <section ref={sectionRef} className="route-sections" aria-labelledby="route-sections-title">
-    <h3 id="route-sections-title">{t('Các đoạn trên tuyến', 'Route sections')} <span>({route.segs.length})</span></h3>
-    <ol className="route-section-list">
+    <h3><button id="route-sections-title" className="route-sections-toggle" type="button" aria-expanded={expandedList} onClick={() => {setListOpen(!expandedList);if (expandedList && selectedId) onSelect(null);}}>
+      <span>{t('Các đoạn trên tuyến', 'Route sections')} <small>({route.segs.length})</small></span><UiIcon name={expandedList ? 'collapse' : 'expand'} size={16}/>
+    </button></h3>
+    {expandedList && <ol className="route-section-list">
       {route.segs.map((road, index) => {
         const name = t(...road.name);
         const title = name.startsWith(routeName + ', ') ? name.slice(routeName.length + 2).replace(/^./, c => c.toLocaleUpperCase()) : name;
@@ -51,6 +55,6 @@ export function RouteSections({ route, evidence, locale, selectedId, onSelect, o
           </div>}
         </li>;
       })}
-    </ol>
+    </ol>}
   </section>;
 }

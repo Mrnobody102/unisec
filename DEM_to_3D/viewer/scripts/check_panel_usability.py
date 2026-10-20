@@ -18,6 +18,11 @@ def check_panel(page):
       if (panel.scrollWidth > panel.clientWidth + 1) errors.push('panel overflow');
       const body = panel.querySelector('.sidebar-scroll');
       if (body.scrollWidth > body.clientWidth + 1) errors.push('body overflow');
+      const first = body.firstElementChild;
+      if (first?.matches('.workflow-section') && getComputedStyle(first).borderTopWidth !== '0px') errors.push('orphan divider above first section');
+      body.querySelectorAll('.workflow-section').forEach(section => {
+        if (!section.textContent.trim()) errors.push('empty detail section');
+      });
       panel.querySelectorAll('.filters').forEach(filters => {
         if (filters.scrollWidth > filters.clientWidth + 1) errors.push('filter controls overflow');
       });
@@ -86,7 +91,7 @@ def run(url, chrome, captures):
             check_incident_layout(page)
             if captures and width == 1366:
                 page.screenshot(path=str(captures / 'workspace-incident-vi.png'), animations='disabled')
-            page.locator('.incident-area-link').click()
+            page.get_by_role('button', name='Xem phạm vi trên bản đồ', exact=True).click()
             check_panel(page)
             assert page.locator('.key-facts dd').first.bounding_box()['height'] < 40
             expect(page.locator('.object-reference')).not_to_have_attribute('open', '')
@@ -124,8 +129,11 @@ def run(url, chrome, captures):
                 action = page.locator('.access-primary').bounding_box()
                 panel_box = page.locator('#response-details').bounding_box()
                 assert action['y'] + action['height'] <= panel_box['y'] + panel_box['height'], 'Primary action is below the initial viewport'
-                route = page.locator('.route-metrics').bounding_box()
-                assert route['y'] + route['height'] <= action['y'], 'Route context must appear before its action'
+                route = page.locator('.access-route-choice').bounding_box()
+                assert route['y'] + route['height'] <= action['y'], 'Route choices must appear before their action'
+                assert page.locator('.route-metrics').bounding_box()['y'] >= action['y'] + action['height'], 'Travel estimates must follow the warning/action'
+            expect(page.locator('.route-section-row')).to_have_count(0)
+            page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-section-row')).to_have_count(3)
             page.locator('.route-section-row').first.click()
             expect(page.locator('.route-section-empty')).to_have_text('Chưa có báo cáo hiện trường.')
@@ -141,7 +149,11 @@ def run(url, chrome, captures):
             if metric.count():
                 assert metric.evaluate("node => node.getBoundingClientRect().width > node.parentElement.getBoundingClientRect().width * .8"), 'Single travel metric leaves an empty column'
 
+            if page.locator('.route-sections-toggle').get_attribute('aria-expanded') == 'false':
+                page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-sections')).to_contain_text('vượt khe')
+            if page.locator('.route-sections-toggle').get_attribute('aria-expanded') == 'false':
+                page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-sections')).not_to_contain_text(re.compile('đoạn sạt lở', re.I))
             expect(page.locator('.assessment-action')).to_contain_text('Kiểm tra điểm vượt khe')
             page.get_by_role('button', name='Xem đoạn cần kiểm tra', exact=True).click()
@@ -155,15 +167,21 @@ def run(url, chrome, captures):
             expect(page.locator('.route-card[aria-pressed="true"] .status-text')).to_have_text('Bị chặn')
             expect(page.locator('.assessment-action')).to_contain_text('Tuyến bị chặn')
             expect(page.locator('.route-travel-estimate')).to_have_count(0)
+            if page.locator('.route-sections-toggle').get_attribute('aria-expanded') == 'false':
+                page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-sections')).to_contain_text(re.compile('đoạn sạt lở', re.I))
+            if page.locator('.route-sections-toggle').get_attribute('aria-expanded') == 'false':
+                page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-sections')).not_to_contain_text('vượt khe')
             expect(page.locator('.route-section-detail')).to_have_count(0)
             page.get_by_role('button', name='Xem tuyến khác', exact=True).click()
+            if page.locator('.route-sections-toggle').get_attribute('aria-expanded') == 'false':
+                page.locator('.route-sections-toggle').click()
             expect(page.locator('.route-sections')).to_contain_text('vượt khe')
             expect(page.locator('.route-travel-estimate')).to_contain_text('40')
             expect(page.locator('.route-card').first).to_have_attribute('aria-pressed', 'true')
             page.locator('.decision-tabs button').nth(1).click()
-            expect(page.locator('.assessment-basis')).to_contain_text('Đường tiếp cận bị chặn. Mất liên lạc.')
+            expect(page.locator('.assessment-basis')).to_contain_text('Có tuyến bị chặn, phương án khác chưa xác minh. Mất liên lạc.')
             report = page.locator('.community-finding').filter(has_text='Đường chính vào Nậm Khắt')
             expect(report.locator('.finding-source dt')).to_have_text(['Ghi nhận', 'Tiếp nhận'])
             expect(report.locator('time')).to_have_count(2)
@@ -177,6 +195,13 @@ def run(url, chrome, captures):
             expect(query).to_have_value('nam khat')
             page.locator('.workspace-nav button').nth(1).click()
             road_query = page.get_by_role('searchbox', name='Tìm đường hoặc điểm ảnh hưởng', exact=True)
+            # Sparse road: no report before the update action, no orphan rule.
+            road_query.fill('Đường chính vào Nậm Khắt, đoạn đầu')
+            page.locator('#response-panel .impact-row').click()
+            check_panel(page)
+            expect(page.locator('.object-observation')).to_have_count(0)
+            expect(page.get_by_role('button', name='Mặt cắt địa hình', exact=True)).to_be_visible()
+            page.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
             road_query.fill('khau mang')
             expect(page.locator('.impact-row')).to_have_count(1)
             page.locator('.impact-row').click()
@@ -292,7 +317,17 @@ def run(url, chrome, captures):
         # No fabricated observation on an unreported road; the check remains actionable.
         search.fill('E1')
         search.press('Enter')
-        expect(page.locator('.road-status-switch [aria-checked="true"]')).to_have_text('Chưa ghi nhận chặn')
+        expect(page.locator('.road-status-switch')).to_have_count(0)
+        page.locator('.road-status-edit-trigger').click()
+        expect(page.locator('.road-status-switch').get_by_role('radio',name='Chưa ghi nhận chặn',exact=True)).to_be_checked()
+        status_group = page.locator('.road-status-switch')
+        status_group.get_by_role('radio', name='Chưa ghi nhận chặn', exact=True).focus()
+        page.keyboard.press('ArrowRight')
+        expect(status_group.get_by_role('radio', name='Cần xác minh', exact=True)).to_be_checked()
+        expect(status_group.get_by_role('radio', name='Cần xác minh', exact=True)).to_be_focused()
+        page.locator('.road-status-change').get_by_role('button', name='Hủy', exact=True).click()
+        expect(page.locator('.road-status-edit-trigger')).to_be_focused()
+        expect(status_group).to_have_count(0)
         expect(page.locator('.object-observation')).to_have_count(0)
         expect(page.locator('.object-next-action')).to_have_count(0)
         # Contact time is metadata rather than repeated in the finding sentence.
@@ -303,11 +338,11 @@ def run(url, chrome, captures):
         expect(contact.locator('p')).to_have_text('Mất liên lạc với bản.')
         expect(contact.locator('time').first).to_have_attribute('datetime', '2026-09-29T04:10:00+07:00')
         page.locator('.workspace-nav button').first.click()
-        expect(page.locator('.incident-priority-row').first).to_contain_text('Đường tiếp cận bị chặn. Mất liên lạc.')
+        expect(page.locator('.incident-priority-row').first).to_contain_text('Có tuyến bị chặn, phương án khác chưa xác minh. Mất liên lạc.')
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Xem chi tiết', exact=True).click()
         page.get_by_role('dialog', name='Báo cáo hiện trường', exact=True).get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
-        expect(page.locator('.incident-priority-row').first).to_contain_text('Đường tiếp cận bị chặn. Mất liên lạc.')
+        expect(page.locator('.incident-priority-row').first).to_contain_text('Các tuyến đã biết đều bị chặn. Mất liên lạc.')
         page.locator('.incident-priority-row').first.click()
         page.locator('.decision-tabs button').first.click()
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
@@ -321,7 +356,7 @@ def run(url, chrome, captures):
         expect(page.locator('.route-section-detail')).to_contain_text('09:40')
         expect(page.locator('.route-travel-estimate')).to_have_count(0)
         page.locator('.decision-tabs button').nth(1).click()
-        expect(page.locator('#response-details').get_by_text('Đường tiếp cận bị chặn. Mất liên lạc.', exact=True)).to_have_count(1)
+        expect(page.locator('#response-details').get_by_text('Các tuyến đã biết đều bị chặn. Mất liên lạc.', exact=True)).to_have_count(1)
         expect(page.locator('.sidebar-intro')).to_have_count(0)
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()

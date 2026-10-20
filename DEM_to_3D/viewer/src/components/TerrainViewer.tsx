@@ -170,10 +170,10 @@ export function TerrainViewer({
     controls.addEventListener('change', onControlsChange);
 
     // Lambert diffuse divides irradiance by PI; preserve imagery brightness at unit illumination.
-    const ambient = new THREE.AmbientLight('#ffffff', Math.PI * .78);
+    const ambient = new THREE.AmbientLight('#ffffff', Math.PI * .54);
     scene.add(ambient);
-    const sun = new THREE.DirectionalLight('#ffffff', Math.PI * .28);
-    sun.position.set(-1, 1.6, .5);
+    const sun = new THREE.DirectionalLight('#ffffff', Math.PI * .60);
+    sun.position.set(-1, 1.1, .65);
     scene.add(sun);
 
     const entries: ModelEntry[] = models.map((model, index) => {
@@ -199,7 +199,7 @@ export function TerrainViewer({
     const planned = frame ? planBasemapTiles(frame, imagerySource.maxNativeZoom) : undefined;
     const terrainImageries = located.map(entry => createTerrainImagery(entry.model.metadata!, entry.group, entry.meshes, imagerySource.maxNativeZoom, Math.min(16, renderer.capabilities.getMaxAnisotropy()), planned));
     const basemap = frame && primary
-      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); })
+      ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { onBasemapStateRef.current?.(state); invalidate(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
       : null;
     if (basemap) scene.add(basemap.group);
 
@@ -244,8 +244,8 @@ export function TerrainViewer({
         material.color.copy(imagery ? original.color : new THREE.Color(themeRef.current === 'dark' ? '#354a50' : '#c8d5c4'));
         if (material.vertexColors !== (imagery && original.vertexColors)) { material.vertexColors = imagery && original.vertexColors; material.needsUpdate = true; }
       });
-      ambient.intensity = Math.PI * (layers?.hillshade === false ? 1 : .78);
-      sun.intensity = Math.PI * (layers?.hillshade === false ? 0 : .28);
+      ambient.intensity = Math.PI * (layers?.hillshade === false ? 1 : .54);
+      sun.intensity = Math.PI * (layers?.hillshade === false ? 0 : .60);
       invalidate();
     };
     updateSurface();

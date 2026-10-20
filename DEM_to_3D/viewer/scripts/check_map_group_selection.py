@@ -63,6 +63,10 @@ def run(url,chrome,captures):
    if captures:page.screenshot(path=str(captures/('neutral-map-'+mode+'.png')))
    label=page.locator('.map-pin:not([aria-haspopup]):not(.is-label-hidden) .map-pin-label:visible').first
    expect(label).to_be_visible()
+   # Visible labels change while the camera frames a selected group member.
+   # Retain the feature ID rather than resolving a different first label on click.
+   key=label.evaluate('node=>node.closest(".map-pin").dataset.mapObject')
+   label=page.locator(f'.map-pin[data-map-object="{key}"] .map-pin-label')
    name=label.inner_text()
    label.hover()
    expect(page.locator('.map-hover-target:visible')).to_have_count(0)

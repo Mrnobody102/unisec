@@ -188,8 +188,8 @@ export function GisEditSession({
         <strong>{t("Bản nháp GIS", "GIS draft")}</strong>
         <span>
           {t(
-            `${changes.length + targets.length} đối tượng thay đổi`,
-            `${changes.length + targets.length} changed features`,
+            `${changes.length + targets.length} đối tượng chưa công bố`,
+            `${changes.length + targets.length} unpublished features`,
           )}
         </span>
       </div>
@@ -294,8 +294,8 @@ export function GisEditSession({
                   "The current data stays unchanged.",
                 )
               : t(
-                  "Bản đồ ứng phó sẽ dùng các thay đổi này.",
-                  "The response map will use these changes.",
+                  "Áp dụng lên bản đồ điều phối và thông tin người dân.",
+                  "Apply to the response map and resident information.",
                 )}
           </p>
           <ul className="gis-change-summary">

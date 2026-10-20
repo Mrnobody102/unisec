@@ -12,3 +12,12 @@ const names = {
   , network: ['Liên kết thuộc mạng đường khác. Chọn lại đoạn đường của tình huống hiện tại.', 'These links use another road network. Reassess them against the current network.']
 } as const;
 export function areaLabel(key: LandslideArea['state'] | LandslideArea['part'] | LandslideArea['review'] | AreaSource | 'evidence' | 'image' | 'review' | 'road' | 'network', locale: Locale): string { return names[key][locale === 'vi' ? 0 : 1]; }
+
+/** Default titles already name the type. Keep review state visible without repeating that type. */
+export function areaNameIncludesState(name: string, state: LandslideArea['state'], locale: Locale): boolean {
+  const title = name.normalize('NFC').trim().toLocaleLowerCase().replace(/\s*[-–#]?\s*\d+$/, '').trim();
+  const variants = state === 'potential'
+    ? locale === 'vi' ? ['Vùng nguy cơ', 'Vùng có nguy cơ sạt lở'] : ['Potential extent', 'Potential landslide area']
+    : locale === 'vi' ? ['Vết sạt lở', 'Vết sạt lở đã xảy ra', 'Vùng đã ghi nhận sạt lở'] : ['Observed extent', 'Mapped landslide occurrence', 'Observed landslide area'];
+  return variants.some(kind => title === kind.toLocaleLowerCase());
+}

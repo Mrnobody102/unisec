@@ -11,6 +11,7 @@ import { loadWorkspaceDataset } from '../incident/loadWorkspaceDataset';
 import { readBinary } from '../../shared/http/readResponse';
 
 type Props = { mapMode: '2d' | '3d'; on3DUnavailable: () => void };
+const preparedDisplayExaggeration = 1.15;
 
 /** Owns dataset loading and model resources. It does not choose panels or map tools. */
 export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
@@ -168,8 +169,11 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   }, [geographicMerge, models]);
 
   const placements = useMemo(() => {
-    if ((!models.every(model => model.id.startsWith(manifest?.datasetVersion + ':')) && (mode !== 'merge' || !geographicMerge)) || !models.length) return undefined;
-    try { return createGeographicPlacements(models); } catch { return undefined; }
+    const prepared = Boolean(manifest) && models.every(model => model.id.startsWith(manifest!.datasetVersion + ':'));
+    if (!models.length || (!prepared && (mode !== 'merge' || !geographicMerge))) return undefined;
+    try {
+      return createGeographicPlacements(models, 0, prepared ? preparedDisplayExaggeration : undefined);
+    } catch { return undefined; }
   }, [mode, geographicMerge, models, manifest]);
 
   return { packet, manifest, fieldDataset, defaultTerrain, snapshotReady, startupError, offline, models,

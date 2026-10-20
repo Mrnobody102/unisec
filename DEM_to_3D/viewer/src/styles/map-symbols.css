@@ -51,13 +51,13 @@
 .map-pin.is-label-hidden .map-pin-label {display:none;}
 .map-pin.is-label-hidden:is(:hover,:focus-visible,.is-preview) .map-pin-label {display:block;left:var(--hover-label-left,31px)!important;top:var(--hover-label-top,4px)!important;}
 
-.landslide-map-label { display:block; font:500 12px/1.4 var(--font-sans); max-width:min(260px,calc(100vw - 48px)); white-space:normal; overflow-wrap:anywhere; }
-.landslide-map-label strong { display:block; font-weight:600; }
-.landslide-map-label small { display:block; margin-top:2px; font-size:11px; font-weight:400; }
-.terrain-area-label { position:absolute; left:0; top:0; z-index:4; pointer-events:none; padding:5px 8px; background:#242820e8; border:1px solid #ffffff29; border-radius:2px; color:#f6f5ed; max-width:calc(100% - 24px); white-space:normal; overflow-wrap:anywhere; text-align:center; text-shadow:none; }
+.landslide-map-label { display:block; width:max-content; box-sizing:border-box; font:500 12px/1.4 var(--font-sans); max-width:min(260px,calc(100vw - 48px)); white-space:normal; overflow-wrap:break-word; word-break:normal; }
+.landslide-map-label strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-weight:600; }
+.landslide-map-label small { display:block; margin-top:2px; font-size:11px; font-weight:400; white-space:nowrap; }
+.terrain-area-label { position:absolute; left:0; top:0; z-index:4; pointer-events:none; padding:5px 8px; background:#242820e8; border:1px solid #ffffff29; border-radius:2px; color:#f6f5ed; width:max-content; max-width:min(260px,calc(100% - 24px)); white-space:normal; overflow-wrap:break-word; text-align:left; text-shadow:none; }
 .terrain-area-label[hidden] { display:none; }
 
-.leaflet-tooltip:has(> .landslide-map-label) { padding:5px 8px; border:1px solid #ffffff29; border-radius:2px; background:#242820ed; color:#f6f5ed; box-shadow:0 1px 2px #0003; }
+.leaflet-tooltip:has(> .landslide-map-label) { width:max-content; max-width:min(278px,calc(100vw - 32px)); box-sizing:border-box; white-space:normal; padding:5px 8px; border:1px solid #ffffff29; border-radius:2px; background:#242820ed; color:#f6f5ed; box-shadow:0 1px 2px #0003; }
 .leaflet-tooltip-top:has(> .landslide-map-label)::before { border-top-color:#242820ed; }
 .leaflet-tooltip-bottom:has(> .landslide-map-label)::before { border-bottom-color:#242820ed; }
 .leaflet-tooltip-left:has(> .landslide-map-label)::before { border-left-color:#242820ed; }
@@ -68,7 +68,7 @@
 .terrain-reference-point[hidden] {display:none;}
 .terrain-reference-point.is-selected {height:32px;color:#d93025;}
 .terrain-reference-point.is-selected svg {fill:currentColor;stroke:white;stroke-width:.6;}
-.terrain-reference-label {display:none;position:absolute;left:28px;top:4px;padding:3px 6px;border-radius:2px;background:#242820ed;color:#f6f5ed;font:500 12px/1.4 var(--font-sans);white-space:nowrap;}
+.terrain-reference-label {display:none;position:absolute;width:max-content;max-width:var(--reference-label-width,260px);overflow:hidden;text-overflow:ellipsis;left:28px;top:4px;padding:3px 6px;border-radius:2px;background:#242820ed;color:#f6f5ed;font:500 12px/1.4 var(--font-sans);white-space:nowrap;}
 .terrain-reference-point:is(:hover,:focus-visible,.is-selected) .terrain-reference-label {display:block;}
 .terrain-reference-point:focus-visible {outline:2px solid white;outline-offset:2px;}
 .terrain-detail-status {position:absolute;left:16px;bottom:12px;z-index:5;padding:4px 8px;background:var(--ws-surface);color:var(--ws-muted);font:11px/1.5 var(--font-sans);border:1px solid var(--ws-line);border-radius:2px;pointer-events:none;}

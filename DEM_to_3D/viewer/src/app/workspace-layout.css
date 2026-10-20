@@ -44,7 +44,7 @@
 .incident-overview-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .incident-overview-heading .icon-button { flex:none; }
 
-.incident-overview-work { margin-top:28px; padding-top:16px; border-top:1px solid var(--ws-line); font-size:13px; }
+.incident-overview-work { margin-top:24px; font-size:14px; }
 .incident-overview-work summary { cursor:pointer; }
 .incident-overview-work .text-button { margin-top:12px; }
 .incident-overview-item.incident-priority-row { width:calc(100% + 24px); margin-inline:-12px; padding:14px 12px; gap:6px 12px; border-radius:2px; }
@@ -57,3 +57,18 @@
  .workspace.workspace-shell .response-detail-edit { padding:8px 16px; }
  .workspace.workspace-shell .response-detail-dock .detail-priority { margin-block:4px; }
 }
+
+/* Operational work leads; reference inventories remain available below it. */
+.incident-count-link { display:inline-flex; align-items:center; gap:8px; padding:0; border:0; background:none; color:inherit; font:inherit; }
+.incident-count-link:hover { text-decoration:none; color:var(--select-ink); }
+.incident-report-review { display:flex; align-items:center; gap:12px; width:100%; margin:0 0 24px; padding:14px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); color:var(--ws-text); text-align:left; }
+.incident-report-review > svg { flex:none; }
+.incident-report-review > span { flex:1; min-width:0; }
+.incident-report-review strong { display:block; font-size:14px; font-weight:600; line-height:1.4; }
+.incident-report-review small { display:block; margin-top:4px; color:var(--ws-muted); font-size:13px; line-height:1.45; }
+.incident-report-review:hover { background:var(--hover); }
+.incident-report-review:hover strong { text-decoration:none; }
+.incident-reference { padding-top:20px; border-top:1px solid var(--ws-line); }
+.incident-observations { margin-top:8px; }
+.incident-observations summary { padding:12px 0; cursor:pointer; font-size:13px; }
+.incident-observations summary > span { float:right; color:var(--ws-muted); font-variant-numeric:tabular-nums; }

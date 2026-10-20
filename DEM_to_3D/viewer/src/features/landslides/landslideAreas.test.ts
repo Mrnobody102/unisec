@@ -1,3 +1,4 @@
+import { areaNameIncludesState } from './areaLabels';
 import { describe, expect, it } from 'vitest';
 import { createLandslideArea, landslideAreaOf, landslideAreaKey, newLandslideArea, validateLandslideArea, areaPublicationIssue, roadAreaSection, roadLengthM, revisedLandslideBoundary } from './landslideAreas';
 import { createGeometryRecords } from '../geodata/geometrySession';
@@ -64,4 +65,16 @@ it('requires review again when a checked landslide boundary is changed, retainin
   expect(revised.roadLinks).toEqual(area.roadLinks);
   expect(revised.basis).toBe(area.basis);
   expect(area.review).toBe('field-checked');
+});
+
+
+describe('area heading context', () => {
+  it('suppresses the type only when the title already identifies it', () => {
+    expect(areaNameIncludesState('Vết sạt lở #1', 'occurred', 'vi')).toBe(true);
+    expect(areaNameIncludesState('Vùng nguy cơ 2', 'potential', 'vi')).toBe(true);
+    expect(areaNameIncludesState('Mapped landslide occurrence', 'occurred', 'en')).toBe(true);
+    expect(areaNameIncludesState('Scar 3', 'occurred', 'vi')).toBe(false);
+    expect(areaNameIncludesState('Nghi sạt lở, chưa xác minh', 'occurred', 'vi')).toBe(false);
+    expect(areaNameIncludesState('Vết sạt lở 1', 'potential', 'vi')).toBe(false);
+  });
 });

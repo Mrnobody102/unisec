@@ -682,10 +682,7 @@ export function ResponseWorkspace({
   };
 
   const reportRoad = roads.find((road) => road.id === packet.report.roadId);
-  const pendingReport: [string, string] = [
-    [packet.report.hazard.name[0], reportRoad?.name[0]].filter(Boolean).join(' · '),
-    [packet.report.hazard.name[1], reportRoad?.name[1]].filter(Boolean).join(' · ')
-  ];
+  const pendingReport: [string, string] = reportRoad?.name ?? packet.report.hazard.name;
   // Apply the reviewed field report as a new assessment.
   const handleSimulateUpdate = useCallback(() => {
     if (reportApplied && !historical) return;
@@ -810,7 +807,7 @@ export function ResponseWorkspace({
       cancelAnimationFrame(secondFrame);
       firstFrame = requestAnimationFrame(() => {
         secondFrame = requestAnimationFrame(() => {
-          const frame = kind === 'road' ? road?.points : kind === 'community' ? activeRoute?.points : undefined;
+          const frame = kind === 'road' ? road?.points : kind === 'community' && activeRoute ? [...activeRoute.points, point] : undefined;
           if (frame?.length && viewControlRef.current?.frameProjected) viewControlRef.current.frameProjected(frame,{right:reserve});
           else viewControlRef.current?.focusProjected(point, { right: reserve });
         });

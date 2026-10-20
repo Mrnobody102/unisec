@@ -73,6 +73,7 @@ def run(url, chrome):
         expect(page.locator('.map-pin.bridge')).to_have_count(0)
         expect(page.locator('.map-pin.crossing')).to_have_count(0)
         page.keyboard.press('Escape')
+        page.locator('.incident-observations summary').click()
         page.locator('.incident-overview-hazard').first.click()
         expect(page.locator('.map-pin.landslide.is-selected')).to_have_count(1)
         if page.locator('.workspace').get_attribute('data-response-layout') == 'dock':

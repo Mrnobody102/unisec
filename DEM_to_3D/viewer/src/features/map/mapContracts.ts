@@ -39,6 +39,7 @@ export type MapContextRequest = {
 export type BasemapStyle = 'satellite' | 'terrain';
 export type BasemapState = {
   provider?: 'configured' | 'eox';
+  relief?: 'loading' | 'ready' | 'partial' | 'error';
   status: 'off' | 'loading' | 'ready' | 'partial' | 'error' | 'unavailable';
   style: BasemapStyle;
   loaded: number;

@@ -17,6 +17,21 @@ def run(url, chrome, captures=None):
                    if route.request.url.startswith(url + '/') else route.abort())
         page.goto(url + '/?map=2d&demoRole=manager')
         expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
+        # An overview selection must keep its marker clear of the floating dock.
+        # A pending hover preview used to interrupt the camera framing on click.
+        page.locator('.incident-priority-row').first.click()
+        page.wait_for_function("""() => {
+            const pin = document.querySelector('.map-pin.is-selected[data-map-object^="community:"]');
+            const dock = document.querySelector('#response-details');
+            if (!pin || pin.hidden || !dock) return false;
+            const point = pin.getBoundingClientRect(), panel = dock.getBoundingClientRect();
+            return point.width > 0 && point.right < panel.left - 12;
+        }""")
+        # The rebuilt list can move another row under the stationary pointer.
+        # It must not trigger a second camera move after selection has settled.
+        page.wait_for_timeout(1000)
+        assert page.locator('.map-pin.is-selected').evaluate('node => !node.hidden')
+        page.get_by_role('button', name='Đóng chi tiết địa bàn', exact=True).click()
         page.locator('.workspace-nav button').last.click()
         row = page.locator('#response-panel .community').filter(
             has=page.locator('strong', has_text='Nậm Khắt'))
@@ -38,7 +53,8 @@ def run(url, chrome, captures=None):
             const canvas = document.querySelector('.map-canvas');
             if (!pin || !canvas) return false;
             const point = pin.getBoundingClientRect(), map = canvas.getBoundingClientRect();
-            return point.left > map.left + 16 && point.right < map.right - 16;
+            const dock = document.querySelector('#response-details').getBoundingClientRect();
+            return !pin.hidden && point.left > map.left + 16 && point.right < dock.left - 12;
         }""")
         if captures:
             page.screenshot(path=str(captures / 'community-1440.png'))

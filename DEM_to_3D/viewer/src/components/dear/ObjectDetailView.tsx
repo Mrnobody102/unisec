@@ -4,7 +4,8 @@ import { landslideAreaOf } from '../../features/landslides/landslideAreas';
 import { areaLabel } from '../../features/landslides/areaLabels';
 import { editsFor, type ScenarioEdit } from '../../features/access/scenarioEdits';
 import { EditableTitle } from '../../shared/ui/EditableTitle';
-import React, { useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
+import { ChoiceGroup } from '../../shared/ui/ChoiceGroup';
 import type {
   RoadStatus,
   Community,
@@ -94,6 +95,10 @@ export const ObjectDetailView: React.FC<Props> = ({
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
   // A status change is a decision: it needs a reason, like the same change in GIS.
   // Keyed by object so a half-entered change never carries over to another selection.
+  const statusRef = useRef<HTMLDivElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const reasonErrorId = useId();
+  const restoreStatusFocus = () => requestAnimationFrame(() => statusRef.current?.querySelector<HTMLButtonElement>('[data-road-status-edit]')?.focus());
   const [change, setChange] = useState<{ objectId: string; status: RoadStatus; note: string; error?: string } | null>(null);
   const pending = change?.objectId === objectId ? change : null;
   const [failedFor, setFailedFor] = useState<string | null>(null);
@@ -118,6 +123,7 @@ export const ObjectDetailView: React.FC<Props> = ({
   }) : [];
   const observation = roadRecord ? t(...roadRecord.finding) : road?.note ? t(...road.note).replace(/^(Tin|Report at) \d{2}:\d{2}:\s*/i, '') : null;
   const roadObservation = observation ? observation[0].toLocaleUpperCase() + observation.slice(1) : null;
+  const statusEdit = road ? editsFor(scenarioEdits, 'road', road.id).find(item => item.change.kind === 'status') : undefined;
 
   let title = id;
   if (kind === 'road' && road) title = t(road.name[0], road.name[1]);
@@ -131,8 +137,8 @@ export const ObjectDetailView: React.FC<Props> = ({
         {parentName && <button className="text-button back panel-parent" onClick={onBack}>
           <UiIcon name="back" size={16} /> {parentName}
         </button>}
-        <div className="detail-title">{road ? <EditableTitle id="object-title" title={title} names={road.name} locale={locale} onRename={onRenameRoad && (names => onRenameRoad(road.id, names))} /> : <h1 id="object-title">{title}</h1>}<button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
-        {road && <div className="detail-priority detail-meta">{!onSetRoadStatus && <StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>{t(...roadStatusLabels[road.status])}</StatusText>}<span>{road.len} km</span></div>}
+        <div className="detail-title">{road ? <EditableTitle key={objectId} id="object-title" title={title} names={road.name} locale={locale} onRename={onRenameRoad && (names => onRenameRoad(road.id, names))} /> : <h1 id="object-title">{title}</h1>}<button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button></div>
+        {road && <div className="detail-priority detail-meta"><StatusText tone={road.status === 'blocked' ? 'critical' : road.status === 'uncertain' ? 'warning' : 'neutral'} icon={road.status === 'blocked' ? 'blocked' : road.status === 'uncertain' ? 'uncertain' : undefined}>{t(...roadStatusLabels[road.status])}</StatusText><span>{road.len} km</span></div>}
       </div>
 
       <div className="sidebar-scroll">
@@ -158,40 +164,41 @@ export const ObjectDetailView: React.FC<Props> = ({
             {roadObservation && <section className="object-observation">
               {roadRecord && <h3>{evidencePresentation(roadRecord.type, locale).kind}</h3>}
               <p>{roadObservation}</p>
-              {roadRecord ? <EvidenceMetadata evidence={roadRecord} locale={locale} className="observation-times" showSource={false}/>
+              {roadRecord ? <details className="object-evidence-details"><summary><time dateTime={roadRecord.observedAt}>{evidencePresentation(roadRecord.type, locale).observed} {observationTime(roadRecord.observedAt,locale)}</time></summary><EvidenceMetadata evidence={roadRecord} locale={locale} className="observation-times" showSource={false} showObserved={false}/></details>
                 : relatedHazard && <p className="observation-meta metadata-line"><span>{t(...relatedHazard.src)}</span><time>{relatedHazard.detected}</time></p>}
+              {roadRecord && <button className="text-button evidence-open" onClick={() => onOpenEvidence(roadRecord.hazardId)}>{evidencePresentation(roadRecord.type, locale).action}<UiIcon name="next" size={14}/></button>}
             </section>}
-            <section className="workflow-section detail-next">
-              {onSetRoadStatus && <div className="scenario-status road-status-switch" role="radiogroup" aria-label={t('Tình trạng đường', 'Road status')}>
-                {(['open', 'uncertain', 'blocked'] as const).map(value => <button key={value} type="button" role="radio" className={'is-' + value}
-                  aria-checked={(pending?.status ?? road.status) === value}
-                  onClick={() => setChange(value === road.status ? null : { objectId, status: value, note: pending?.note ?? '' })}>
-                  {t(...roadStatusShortLabels[value])}
-                </button>)}
+            {(onSetRoadStatus || verification || statusEdit) && <section ref={statusRef} className="workflow-section detail-next">
+              {onSetRoadStatus && pending && <div className="road-status-switch">
+                <ChoiceGroup label={t('Tình trạng đường', 'Road status')}
+                  options={(['open', 'uncertain', 'blocked'] as const).map(value => ({value, label:t(...roadStatusShortLabels[value])}))}
+                  value={pending?.status ?? road.status}
+                  onChange={status => setChange({objectId, status, note:pending?.note ?? ''})}/>
               </div>}
               {pending && onSetRoadStatus && <form className="road-status-change" onSubmit={event => {
                 event.preventDefault();
-                if (!pending.note.trim()) { setChange({ ...pending, error: t('Ghi lý do thay đổi.', 'Add a reason for the change.') }); return; }
-                if (onSetRoadStatus(road, pending.status, pending.note.trim())) setChange(null);
+                if (!pending.note.trim()) { setChange({ ...pending, error: t('Ghi lý do thay đổi.', 'Add a reason for the change.') }); reasonRef.current?.focus(); return; }
+                if (onSetRoadStatus(road, pending.status, pending.note.trim())) { setChange(null); restoreStatusFocus(); }
                 else setChange({ ...pending, error: t('Không lưu được thay đổi.', 'Could not save the change.') });
               }}>
                 <label>{t('Lý do', 'Reason')}
-                  <textarea rows={2} maxLength={2000} autoFocus value={pending.note} aria-invalid={!!pending.error}
+                  <textarea ref={reasonRef} name="roadStatusReason" rows={2} maxLength={2000} value={pending.note} aria-invalid={!!pending.error} aria-describedby={pending.error ? reasonErrorId : undefined}
                     onChange={event => setChange({ ...pending, note: event.target.value, error: undefined })}/>
                 </label>
-                {pending.error && <p className="road-status-error" role="alert">{pending.error}</p>}
+                {pending.error && <p id={reasonErrorId} className="road-status-error" role="alert">{pending.error}</p>}
                 <div className="road-status-actions">
-                  <button className="button primary" type="submit">{t('Lưu', 'Save')}</button>
-                  <button className="button" type="button" onClick={() => setChange(null)}>{t('Hủy', 'Cancel')}</button>
+                  <button className="button primary" type="submit" disabled={pending.status === road.status}>{t('Lưu', 'Save')}</button>
+                  <button className="button" type="button" onClick={() => { setChange(null); restoreStatusFocus(); }}>{t('Hủy', 'Cancel')}</button>
                 </div>
               </form>}
               {verification && !pending && <button className="object-row impact-row verification-row" onClick={() => onOpenWork?.(verification.taskId)}>
                 <span><strong>{t('Xác minh khả năng đi qua', 'Verify passage')}</strong><small>{verification.owner || t('Chưa có người phụ trách', 'No owner yet')}</small></span>
                 <StatusText tone={verification.status === 'blocked' ? 'critical' : verification.status === 'pending' ? 'warning' : 'neutral'}>{t(...workStatusText[verification.status])}</StatusText>
               </button>}
+              {onSetRoadStatus && !pending && <button type="button" className="button road-status-edit-trigger" data-road-status-edit onClick={() => { setChange({objectId,status:road.status,note:''}); requestAnimationFrame(() => statusRef.current?.querySelector<HTMLInputElement>('input:checked')?.focus()); }}><UiIcon name="edit" size={16}/>{t('Cập nhật tình trạng', 'Update road status')}</button>}
               {failedFor === objectId && <p className="road-status-error" role="alert">{t('Không lưu được thay đổi.', 'Could not save the change.')}</p>}
               {!pending && (() => {
-                const edit = editsFor(scenarioEdits, 'road', road.id).find((item) => item.change.kind === 'status');
+                const edit = statusEdit;
                 if (edit?.change.kind !== 'status') return null;
                 // A later field report can supersede the edit; then it is history, not something to undo.
                 const effective = road.status === edit.change.to;
@@ -207,12 +214,11 @@ export const ObjectDetailView: React.FC<Props> = ({
                   </div>
                 );
               })()}
-              <div className="detail-actions">
-                {linkedHazards.map(h=><button key={h.id} className="button" onClick={()=>onSelectObject(`hazard:${h.id}`)}>{t(...h.name)}</button>)}
-                {roadRecord && <button className="button" onClick={() => onOpenEvidence(roadRecord.hazardId)}><UiIcon name="info" size={16}/>{evidencePresentation(roadRecord.type, locale).action}</button>}
-                <button className="button road-profile-action" disabled={!hasTerrainProfile} aria-pressed={profileOpen} onClick={onToggleProfile} title={!hasTerrainProfile ? t('Chưa có dữ liệu độ cao cho đoạn đường này', 'No elevation data for this road section') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>
-              </div>
-            </section>
+            </section>}
+            {linkedHazards.length > 0 && <section className="workflow-section">
+              <h3>{t('Sự cố liên quan', 'Related incidents')}</h3>
+              {linkedHazards.map(hazard => <button key={hazard.id} className="object-row related-incident-row" onClick={() => onSelectObject(`hazard:${hazard.id}`)}><strong>{t(...hazard.name)}</strong><UiIcon name="next" size={16}/></button>)}
+            </section>}
             {affectedCommunities.length > 0 && <section className="workflow-section">
               <h3>{t('Thuộc tuyến', 'Related routes')}</h3>
               {affectedCommunities.flatMap(community => {
@@ -226,6 +232,9 @@ export const ObjectDetailView: React.FC<Props> = ({
               const value=landslideAreaOf(record)!, link=value.roadLinks.find(l=>l.roadId===road.id)!;
               return <button className="object-row" key={record.id} onClick={() => onOpenMappedArea?.(record.id)}><span><strong>{record.name}</strong><small>{areaLabel(value.state,locale)}{link.fromM!==undefined?` · ${link.fromM}–${link.toM} m`:''}</small></span><UiIcon name="next" size={16}/></button>;
             })}</section>}
+            <div className="object-profile-tools">
+              <button className="button road-profile-action" disabled={!hasTerrainProfile} aria-pressed={profileOpen} onClick={onToggleProfile} title={!hasTerrainProfile ? t('Chưa có dữ liệu độ cao cho đoạn đường này', 'No elevation data for this road section') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>
+            </div>
           </>
         )}
 

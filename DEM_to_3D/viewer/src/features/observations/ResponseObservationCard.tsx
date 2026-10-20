@@ -59,11 +59,12 @@ export function ResponseObservationCard({
           <UiIcon name="close" />
         </button>
       </header>
+      <div className="field-map-card-body">
       {landslideAreaOf(record) && <LandslideAreaSummary record={record} roads={roads} locale={locale} onRoad={onRoad}/>}
       {observation && (
         <>
           <div className="field-record-heading">
-            <strong>{observationLabel(observation.kind, locale)}</strong>
+            {record.name.trim().toLocaleLowerCase() !== observationLabel(observation.kind, locale).toLocaleLowerCase() && <strong>{observationLabel(observation.kind, locale)}</strong>}
             <span className="field-status">
               {reportReviewLabel(record, locale)}
             </span>
@@ -101,9 +102,10 @@ export function ResponseObservationCard({
       {observation && (
         <PhotoGallery photos={observation.photos} locale={locale} />
       )}
-      <button className="button" onClick={onEdit}>
+      </div>
+      <footer><button className="button" onClick={onEdit}>
         {t('Mở hồ sơ trong GIS', 'Open GIS record')}
-      </button>
+      </button></footer>
     </section>
   );
 }

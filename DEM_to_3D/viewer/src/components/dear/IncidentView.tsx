@@ -41,11 +41,13 @@ type Props = {
 export function IncidentView({
   incident, locale, areaName, tasks, entries, communities, assessments,
   blockedRoadCount, onSelectCommunity, onOpenWork, onOpenArea,
-  hazards, onInspectObject, survey, onShowSurvey
+  hazards, onInspectObject, survey, onShowSurvey, reportPending, pendingReport,
+  onOpenReport, historical, onOpenRoads
 }: Props): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const priorityCommunities = communities.filter(community => community.prio === 1);
-  const openTasks = tasks.filter(task => workState(task, entries).status !== 'done');
+  const openTasks = tasks.filter(task => task.kind !== 'report' && workState(task, entries).status !== 'done');
+  const activeTasks = openTasks.filter(task => workState(task, entries).status === 'active');
   return <>
     <div className="sidebar-top incident-overview-heading">
       <h1>{incident.title ? t(...incident.title) : t('Sạt lở và tiếp cận', 'Landslides and access')}</h1>
@@ -53,23 +55,38 @@ export function IncidentView({
     </div>
     <div className="sidebar-scroll incident-overview">
       <dl className="incident-overview-counts">
-        <div><dt>{t('Đường bị chặn', 'Blocked roads')}</dt><dd>{blockedRoadCount} {t('đoạn', 'sections')}</dd></div>
+        <div><dt>{t('Đường bị chặn', 'Blocked roads')}</dt><dd><button className="incident-count-link" onClick={() => onOpenRoads('blocked')}>{blockedRoadCount} {t('đoạn', 'sections')}<UiIcon name="next" size={14}/></button></dd></div>
         <div><dt>{t('Địa bàn ưu tiên', 'Priority communities')}</dt><dd>{priorityCommunities.length}</dd></div>
       </dl>
+      {!historical && reportPending && <button className="incident-report-review" onClick={onOpenReport}>
+        <UiIcon name="info" size={18}/><span><strong>{t('Báo cáo chờ kiểm tra', 'Report awaiting review')}</strong>
+        {pendingReport && <small>{t(...pendingReport)}</small>}</span><UiIcon name="next" size={16}/>
+      </button>}
       <section><h2>{t('Địa bàn cần chú ý', 'Communities to review')}</h2>
         {priorityCommunities.map(community => <button className="incident-overview-item incident-priority-row" data-map-preview={'community:' + community.id} key={community.id} onClick={() => onSelectCommunity(community.id)}>
           <strong>{community.name}</strong><span>{t(...assessments.get(community.id)!.reason)}</span><UiIcon name="next" size={16}/>
         </button>)}
       </section>
-      {survey && survey.areas + survey.points > 0 && <section><h2>{t('Khảo sát thực địa', 'Field survey')}</h2><button className="incident-overview-item incident-survey-row" onClick={onShowSurvey}><strong>{t('Chế Tạo – Lao Chải', 'Che Tao – Lao Chai')}</strong><span>{survey.areas} {t('vùng khoanh', 'mapped areas')} · {survey.points} {t('điểm khảo sát', 'survey points')}</span><UiIcon name="next" size={16}/></button></section>}
-      <section><h2>{t('Điểm sạt lở', 'Landslide observations')}</h2>
-        {hazards.filter(hazard => hazard.kind === 'landslide').map(hazard => <button className="incident-overview-item incident-overview-hazard" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>
-          <strong>{t(...hazard.name)}</strong><UiIcon name="next" size={16}/>
-        </button>)}
+      <section className="incident-overview-work incident-work">
+        <h2>{t('Xác minh và cứu trợ', 'Verification and relief')}</h2>
+        <button className="incident-overview-item incident-work-row" onClick={() => onOpenWork()}>
+          <strong>{historical ? t('Xem công việc', 'View work records') : `${openTasks.length} ${t('việc chưa hoàn tất', 'open tasks')}`}</strong>
+          {!historical && activeTasks.length > 0 && <span>{activeTasks.length} {t('đang xử lý', 'in progress')}</span>}
+          <UiIcon name="next" size={16}/>
+        </button>
       </section>
-      <details className="incident-overview-work incident-work"><summary>{t('Xác minh và cứu trợ', 'Verification and relief')}</summary>
-        <button className="text-button" onClick={() => onOpenWork()}>{openTasks.length} {t('việc chưa hoàn tất', 'open tasks')}<UiIcon name="next" size={16}/></button>
-      </details>
+      <section className="incident-reference">
+        <h2>{t('Dữ liệu tham chiếu', 'Reference data')}</h2>
+        {survey && survey.areas + survey.points > 0 && <button className="incident-overview-item incident-survey-row" onClick={onShowSurvey}>
+          <strong>{t('Khảo sát Chế Tạo – Lao Chải', 'Che Tao – Lao Chai survey')}</strong>
+          <span>{survey.areas} {t('vùng khoanh', 'mapped areas')} · {survey.points} {t('điểm khảo sát', 'survey points')}</span><UiIcon name="next" size={16}/>
+        </button>}
+        <details className="incident-observations"><summary>{t('Ghi nhận trên bản đồ', 'Mapped observations')}<span>{hazards.filter(hazard => hazard.kind === 'landslide').length}</span></summary>
+          {hazards.filter(hazard => hazard.kind === 'landslide').map(hazard => <button className="incident-overview-item incident-overview-hazard" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>
+            <strong>{t(...hazard.name)}</strong><UiIcon name="next" size={16}/>
+          </button>)}
+        </details>
+      </section>
     </div>
   </>;
 }

@@ -48,20 +48,20 @@ export function AccessPanel({ locale, hazards, evidence, candidate, direct, sele
         <StatusText tone={roadStatusTone(active.status)}>{t(...roadStatusLabels[active.status])}</StatusText>
       </div>}
       {!(candidate && direct) && <h2>{t(...active.name)}</h2>}
-      {(!(candidate && direct) || active.eta) && <dl className="route-metrics">
-        {!(candidate && direct) && <div><dt>{t('Từ điểm tập kết', 'From staging point')}</dt><dd>{active.lengthKm} <small>km</small></dd></div>}
-        {active.eta && <div className="route-travel-estimate"><dt>{t('Ước tính di chuyển', 'Estimated travel')}</dt><dd>{active.eta.minMinutes}–{active.eta.maxMinutes} <small>{t('phút', 'min')}</small></dd><span>{active.eta.mode === 'foot' ? t('Đi bộ', 'On foot') : t('Xe 4x4', '4WD')}</span></div>}
-      </dl>}
       <div className={'next-action ' + (blocked ? 'is-blocked' : 'is-uncertain')}>
         <p id="route-next-action" className="assessment-action route-action"><UiIcon name={blocked ? 'blocked' : 'uncertain'} size={16}/><span>{action}</span></p>
-        <button className="button access-primary" aria-describedby="route-next-action" onClick={primaryAction}>
+        <button className="button primary access-primary" aria-describedby="route-next-action" onClick={primaryAction}>
           {needsOtherRoute ? t('Xem tuyến khác', 'Review other route') : firstConstraint ? t('Xem đoạn cần kiểm tra', 'Inspect road constraint') : t('Xem căn cứ', 'Review evidence')}
         </button>
       </div>
-      <RouteSections route={active} evidence={evidence} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
+      {(!(candidate && direct) || active.eta) && <dl className="route-metrics">
+        {!(candidate && direct) && <div><dt>{t('Từ điểm tập kết', 'From staging point')}</dt><dd>{active.lengthKm} <small>km</small></dd></div>}
+        {active.eta && <div className="route-travel-estimate"><dt>{t('Di chuyển nếu thông tuyến', 'Travel if passable')}</dt><dd>{active.eta.minMinutes}–{active.eta.maxMinutes} <small>{t('phút', 'min')}</small></dd><span>{active.eta.mode === 'foot' ? t('Đi bộ', 'On foot') : t('Xe 4x4', '4WD')}</span></div>}
+      </dl>}
+      <RouteSections key={active.id} route={active} evidence={evidence} locale={locale} selectedId={sectionId} onSelect={onSelectSection}
         onEvidence={onEvidence} onProfile={onProfile} hasProfile={hasProfile}/>
     </section> : <div className="next-action"><p className="assessment-action route-action">{action}</p><button className="button" onClick={onFindings}>{t('Xem thông tin địa bàn', 'Review community findings')}</button></div>}
-    <div className="route-tools access-tools">
+    <div className="route-tools access-tools access-secondary-tools">
       {active && !sectionId && <button className="button" onClick={onProfile} disabled={!hasProfile} title={!hasProfile ? t('Chưa có dữ liệu độ cao cho tuyến này', 'No elevation data for this route') : undefined}><UiIcon name="profile" size={16}/>{t('Mặt cắt địa hình', 'Elevation profile')}</button>}
       <button className="button decision-save" onClick={onExport}><UiIcon name="download" size={16}/>{t('Xuất đánh giá', 'Export assessment')}</button>
     </div>

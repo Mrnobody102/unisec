@@ -143,10 +143,11 @@ def run(url, chrome, captures):
         page.locator('.landslide-area-summary').get_by_role('button', name='Xem đoạn đường', exact=True).click()
         scar = next(r for r in final['records'] if r['feature']['properties'].get('dearLandslideArea', {}).get('state') == 'occurred')
         page.locator('#response-details').get_by_role('button').filter(has_text=scar['name']).click()
-        expect(page.locator('.landslide-area-summary')).to_contain_text('Vết sạt lở đã xảy ra')
+        expect(page.locator('.field-map-card > header')).to_contain_text(scar['name'])
+        expect(page.locator('.landslide-area-summary')).to_contain_text('Chưa rà soát')
         page.locator('.landslide-area-summary').get_by_role('button', name='Xem đoạn đường', exact=True).click()
         page.locator('#response-details').get_by_role('button').filter(has_text=potential['name']).click()
-        expect(page.locator('.landslide-area-summary')).to_contain_text('Vùng có nguy cơ')
+        expect(page.locator('.field-map-card > header')).to_contain_text(potential['name'])
         expect(page.locator('.landslide-area-summary')).to_contain_text('100–250 m')
         if captures:
             page.screenshot(path=str(captures / 'published-areas-2d.png'))

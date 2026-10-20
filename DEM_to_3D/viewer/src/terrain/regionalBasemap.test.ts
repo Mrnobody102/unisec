@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import * as focusImagery from './focusImagery';
+import * as regionalElevation from './regionalElevation';
 import proj4 from 'proj4';
 import { createTerrainImagery, planImageryAtlases } from './terrainImagery';
 import { imagerySource } from '../features/map/imagerySource';
@@ -93,6 +94,22 @@ describe('Regional basemap placement', () => {
       imagerySource.url = originalUrl;
       vi.unstubAllGlobals();
     }
+  });
+  it('keeps a failed imagery request failed when context terrain finishes later', async () => {
+    vi.stubGlobal('window', {setTimeout, clearTimeout});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('imagery offline')));
+    let finish!: () => void;
+    const loader = vi.spyOn(regionalElevation, 'createRegionalElevation').mockImplementation((_metadata, _surfaces, _tiles, onReady) => {
+      finish = onReady;
+      return {sample: () => undefined, load: async () => {}, status: 'ready', dispose: () => {}};
+    });
+    const states: BasemapState[] = [];
+    const basemap = createRegionalBasemap(metadata, new THREE.Matrix4(), state => states.push(state), 1, undefined, [{metadata,grid:new Float32Array()}]);
+    try {
+      basemap.setOptions(true, 'satellite');
+      await vi.waitFor(() => expect(states.at(-1)?.status).toBe('error'));
+      finish(); expect(states.at(-1)).toMatchObject({status:'error',relief:'ready'});
+    } finally {basemap.dispose();loader.mockRestore();vi.unstubAllGlobals();}
   });
   it('replaces imagery only with a complete level, retains it through partial detail and respects visibility', () => {
     const context = {save: vi.fn(), translate: vi.fn(), scale: vi.fn(), drawImage: vi.fn(), restore: vi.fn()};

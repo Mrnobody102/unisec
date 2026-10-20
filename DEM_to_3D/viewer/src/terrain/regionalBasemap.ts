@@ -1,3 +1,4 @@
+import { createRegionalElevation, type ElevationSurface } from './regionalElevation';
 import * as THREE from 'three';
 import proj4 from 'proj4';
 import { imagerySource } from '../features/map/imagerySource';
@@ -61,16 +62,21 @@ export function tileScenePoint(metadata: TerrainMetadata, tile: MapTile, u: numb
   return new THREE.Vector3(point.x, point.y, point.z);
 }
 
-function tileGeometry(metadata: TerrainMetadata, tile: MapTile): THREE.BufferGeometry {
+export function tileGeometry(metadata: TerrainMetadata, tile: MapTile, elevation?: (x: number, y: number) => number | undefined): THREE.BufferGeometry {
   const positions: number[] = [], uv: number[] = [], indices: number[] = [];
-  const steps = 4;
+  const steps = elevation ? Math.max(4, Math.min(128, 2 ** (19 - tile.z))) : 4;
+  const valid: boolean[] = [];
   for (let row = 0; row <= steps; row++) for (let col = 0; col <= steps; col++) {
     const p = tileScenePoint(metadata, tile, col / steps, row / steps);
+    const height = elevation?.(p.x + metadata.world_origin.x, metadata.world_origin.y - p.z);
+    valid.push(!elevation || height !== undefined);
+    if (height !== undefined) p.y = (height - metadata.elevation.base_elevation) * metadata.elevation.exaggeration;
     positions.push(p.x, p.y, p.z); uv.push(col / steps, 1 - row / steps);
   }
   for (let row = 0; row < steps; row++) for (let col = 0; col < steps; col++) {
     const a = row * (steps + 1) + col, b = a + 1, c = a + steps + 1, d = c + 1;
-    indices.push(a, c, b, b, c, d);
+    if (valid[a] && valid[c] && valid[b]) indices.push(a, c, b);
+    if (valid[b] && valid[c] && valid[d]) indices.push(b, c, d);
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -79,7 +85,7 @@ function tileGeometry(metadata: TerrainMetadata, tile: MapTile): THREE.BufferGeo
   return geometry;
 }
 
-export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1, onImageryTile?: (tile: MapTile, bitmap: ImageBitmap) => void) {
+export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1, onImageryTile?: (tile: MapTile, bitmap: ImageBitmap) => void, elevationSurfaces?: ElevationSurface[]) {
   const group = new THREE.Group();
   group.name = 'regional-basemap'; group.matrix.copy(transform); group.matrixAutoUpdate = false;
   const tilesFor = (nextStyle: BasemapStyle): MapTile[] => {
@@ -89,9 +95,19 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   let tiles = tilesFor('satellite');
   let style: BasemapStyle = 'satellite', enabled = false, disposed = false, generation = 0;
   let controller: AbortController | null = null;
-  const cached = new Map<string, { mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>; bitmap: ImageBitmap; style: BasemapStyle }>();
+  let imageryStatus: BasemapState['status'] = 'off';
+  const cached = new Map<string, { mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>; bitmap: ImageBitmap; style: BasemapStyle; tile: MapTile }>();
+  const relief = elevationSurfaces?.length && tiles.length ? createRegionalElevation(metadata, elevationSurfaces,
+    planRegionalTiles(metadata, { padding: 1.2, maxZoom: 11, budget: 48 }), () => {
+      if (disposed) return;
+      cached.forEach(item => {
+        const geometry = tileGeometry(metadata, item.tile, relief!.sample);
+        item.mesh.geometry.dispose(); item.mesh.geometry = geometry;
+      });
+      publish(imageryStatus);
+    }) : null;
   const key = (tile: MapTile, nextStyle = style) => `${nextStyle}/${tile.z}/${tile.x}/${tile.y}`;
-  const publish = (status: BasemapState['status']) => { if (!disposed) onState({ status, style, provider: style === 'satellite' ? 'configured' : 'eox', loaded: tiles.filter(t => cached.has(key(t))).length, total: tiles.length }); };
+  const publish = (status: BasemapState['status']) => { imageryStatus = status; if (!disposed) onState({ status, style, ...(relief ? {relief:relief.status} : {}), provider: style === 'satellite' ? 'configured' : 'eox', loaded: tiles.filter(t => cached.has(key(t))).length, total: tiles.length }); };
   const load = async (): Promise<void> => {
     controller?.abort(); const run = ++generation;
     if (!enabled || disposed) { publish('off'); return; }
@@ -120,11 +136,11 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
           bitmap = await createImageBitmap(await response.blob(), { imageOrientation: 'flipY' });
           if (disposed || run !== generation) { bitmap.close(); continue; }
           const texture = new THREE.Texture(bitmap); texture.flipY = false; texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = anisotropy; texture.needsUpdate = true;
-          const mesh = new THREE.Mesh(tileGeometry(metadata, tile), new THREE.MeshLambertMaterial({ map: texture, depthWrite: false }));
+          const mesh = new THREE.Mesh(tileGeometry(metadata, tile, relief?.sample), new THREE.MeshLambertMaterial({ map: texture, depthWrite: false }));
           // The DEM writes depth first. Tiles test against it, but do not occlude
           // finer tiles in the same flat context plane.
           mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
-          group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle });
+          group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle, tile });
           if (runStyle === 'satellite') {
             try {onImageryTile?.(tile, bitmap);} catch { /* The prepared DEM texture remains the fallback. */ }
           }
@@ -151,11 +167,12 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
       if (enabled === nextEnabled && style === nextStyle) return;
       enabled = nextEnabled; style = nextStyle; tiles = tilesFor(style); group.visible = enabled;
       cached.forEach(item => { item.mesh.visible = item.style === style; });
+      if (enabled) void relief?.load();
       void load();
     },
-    retry: () => { void load(); },
+    retry: () => { if (enabled) void relief?.load(); void load(); },
     dispose(): void {
-      disposed = true; generation++; controller?.abort();
+      disposed = true; generation++; controller?.abort(); relief?.dispose();
       cached.forEach(({ mesh, bitmap }) => { mesh.geometry.dispose(); mesh.material.map?.dispose(); mesh.material.dispose(); bitmap.close(); });
       cached.clear(); group.removeFromParent();
     }

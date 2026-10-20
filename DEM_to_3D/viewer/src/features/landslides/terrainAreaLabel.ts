@@ -21,14 +21,20 @@ export function terrainAreaLabel(host: HTMLElement, record: GeometryRecord, meta
     update: (camera: THREE.Camera) => {
       projected.copy(anchor).project(camera);
       const x = (projected.x + 1)*host.clientWidth/2, y = (1-projected.y)*host.clientHeight/2;
+      if (projected.z < -1 || projected.z > 1 || x < 0 || x > host.clientWidth || y < 0 || y > host.clientHeight || host.clientWidth < 120) {
+        label.hidden = true; return;
+      }
+      // A hidden element has zero dimensions. Measure the actual label before placement.
+      label.hidden = false;
       const width = label.offsetWidth, height = label.offsetHeight;
-      const left = Math.min(host.clientWidth - width - 12,Math.max(12,x - width/2)), top = y - height - 14;
       const bounds = host.getBoundingClientRect();
-      const obscured = [...(host.closest('.map-area')?.querySelectorAll<HTMLElement>('#response-details,.field-map-card,.map-toolbar,.layers-panel,.map-tools,.profile-panel') ?? [])].some(control => {
-        const r = control.getBoundingClientRect();return r.width && r.height && left+bounds.x < r.right && left+bounds.x+width > r.left && top+bounds.y < r.bottom && top+bounds.y+height > r.top;
-      });
-      label.hidden = obscured || projected.z < -1 || projected.z > 1 || x < 0 || x > host.clientWidth || top < 12 || top+height > host.clientHeight;
-      label.style.transform = `translate(${left}px,${top}px)`;
+      const controls = [...(host.closest('.map-area')?.querySelectorAll<HTMLElement>('#response-details,.field-map-card,.map-toolbar,.layers-panel,.map-tools,.profile-panel,.map-attribution') ?? [])]
+        .map(control => control.getBoundingClientRect()).filter(rect => rect.width && rect.height);
+      const left = Math.max(12, Math.min(host.clientWidth - width - 12, x - width/2));
+      const top = [y - height - 14, y + 14].find(candidate => candidate >= 12 && candidate + height <= host.clientHeight - 12 &&
+        !controls.some(rect => left+bounds.x < rect.right && left+bounds.x+width > rect.left && candidate+bounds.y < rect.bottom && candidate+bounds.y+height > rect.top));
+      label.hidden = top === undefined;
+      if (top !== undefined) label.style.transform = `translate(${left}px,${top}px)`;
     },
     dispose: () => label.remove()
   };

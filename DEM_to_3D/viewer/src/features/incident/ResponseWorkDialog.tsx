@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChoiceGroup } from '../../shared/ui/ChoiceGroup';
 import type { Locale } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import { downloadBlob } from '../../shared/downloadBlob';
@@ -248,9 +249,8 @@ function WorkForm({ task, state, locale, readOnly, error, onInvalid, onSubmit }:
           </label>
         </div>
         {finishingCheck && (
-          <div className="scenario-status work-outcome" role="radiogroup" aria-label={t('Kết quả xác minh', 'Verification result')}>
-            {outcomes.map(item => <button key={item.value} type="button" role="radio" className={item.tone} aria-checked={outcome === item.value} onClick={() => setOutcome(item.value)}>{item.label}</button>)}
-          </div>
+          <div className="work-outcome"><ChoiceGroup label={t('Kết quả xác minh', 'Verification result')}
+            options={outcomes} value={outcome} onChange={setOutcome} columns={outcomes.length}/></div>
         )}
         <label>
           {t('Kết quả / lý do chờ', 'Result / reason for waiting')}

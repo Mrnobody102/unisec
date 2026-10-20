@@ -39,7 +39,7 @@ export function MapAttribution({
   const unavailable =
     state.status === 'partial' ||
     state.status === 'error' ||
-    state.status === 'unavailable';
+    state.status === 'unavailable' || (state.status !== 'off' && (state.relief === 'error' || state.relief === 'partial'));
   return (
     <>
       <div className="map-attribution" ref={anchor}>
@@ -86,8 +86,12 @@ export function MapAttribution({
                 </div>
               )}
               {fieldSource && <div><dt>{t('Khảo sát thực địa', 'Field survey')}</dt><dd>{fieldSource}<br/>{t('Lớp ảnh Google Earth không kèm dữ liệu ảnh.', 'Google Earth image layers contain no raster data.')}</dd></div>}
+              {state.relief && <div><dt>{t('Địa hình nền', 'Context terrain')}</dt><dd>
+                <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer">Mapzen Terrain Tiles</a>
+                <br/>{state.relief === 'loading' ? t('Đang tải…', 'Loading…') : state.relief === 'error' ? t('Chưa tải được', 'Unavailable') : t('Chỉ hiển thị, không dùng đo đạc', 'Display only, excluded from measurements')}
+              </dd></div>}
               {terrainDisplay && (
-                <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{terrainDisplay.exaggeration}</dd></div>
+                <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{Number(terrainDisplay.exaggeration.toFixed(2))}</dd></div>
               )}
               <div>
                 <dt>{t('Nền khu vực', 'Regional basemap')}</dt>
@@ -112,7 +116,9 @@ export function MapAttribution({
             </dl>
             {unavailable && (
               <div className="map-source-status" role="status">
-                {state.status === 'partial'
+                {state.relief === 'error' || state.relief === 'partial'
+                  ? t('Địa hình nền chưa đầy đủ', 'Context terrain is incomplete')
+                  : state.status === 'partial'
                   ? t(
                       'Một phần nền chưa tải được',
                       'Some basemap tiles are unavailable'
@@ -126,7 +132,7 @@ export function MapAttribution({
                         'Không tải được nền khu vực',
                         'Regional basemap unavailable'
                       )}
-                {(state.status === 'error' || state.status === 'partial') && (
+                {(state.status === 'error' || state.status === 'partial' || state.relief === 'error' || state.relief === 'partial') && (
                   <button onClick={onRetry}>{t('Thử lại', 'Retry')}</button>
                 )}
               </div>

@@ -68,9 +68,9 @@ export const CommunityDetailView: React.FC<Props> = ({
 
   return (
     <>
-      <div className="sidebar-top">
+      <div className="sidebar-top community-detail-heading">
         <div className="detail-title">
-          <EditableTitle id="place-title" title={community.name} names={[community.name, community.name]} bilingual={false} locale={locale} onRename={onRename} />
+          <EditableTitle key={community.id} id="place-title" title={community.name} names={[community.name, community.name]} bilingual={false} locale={locale} onRename={onRename} />
           <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
         </div>
         <div className="detail-priority">
@@ -83,10 +83,6 @@ export const CommunityDetailView: React.FC<Props> = ({
           { label: t('Liên lạc', 'Contact'), value: signal?.communication === 'lost' ? t('Mất liên lạc', 'Lost')
             : signal?.communication === 'available' ? t('Có liên lạc', 'Available') : t('Chưa rõ', 'Unknown'),
             tone: signal?.communication === 'lost' ? 'critical' : undefined },
-          { label: t('Tiếp cận', 'Access'), value: assessment.access === 'blocked' ? t('Bị chặn', 'Blocked')
-            : assessment.access === 'uncertain' ? t('Cần xác minh', 'To verify')
-            : assessment.access === 'unmapped' ? t('Chưa có tuyến', 'No mapped route') : t('Chưa xác minh', 'Unverified'),
-            tone: assessment.access === 'blocked' ? 'critical' : assessment.access === 'uncertain' ? 'warning' : undefined },
           ...(signal?.urgentNeed ? [{ label: t('Nhu cầu', 'Needs'), value: t('Cần hỗ trợ khẩn', 'Urgent support'), tone: 'critical' as const }] : [])
         ]}/>
 
@@ -96,7 +92,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             aria-pressed={detailTab === 'decision'}
             onClick={() => onChangeDetailTab('decision')}
           >
-            {t('Tiếp cận', 'Access')}
+            {t('Tuyến đường', 'Routes')}
           </button>
           <button
             aria-pressed={detailTab === 'evidence'}

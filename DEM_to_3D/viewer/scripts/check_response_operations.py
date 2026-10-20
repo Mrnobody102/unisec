@@ -15,8 +15,6 @@ def run(url, chrome, captures):
         page.on('pageerror',lambda error:errors.append(str(error)))
         def open_work():
             section = page.locator('.incident-overview-work')
-            if not section.evaluate('node => node.open'):
-                section.locator('summary').click()
             section.get_by_role('button').click()
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-work')).to_be_visible(timeout=25000)
@@ -80,7 +78,7 @@ def run(url, chrome, captures):
         page.locator('.journal-list summary').first.click()
         page.get_by_role('dialog').get_by_role('button',name='Xem báo cáo',exact=True).click()
         page.get_by_role('dialog',name='Báo cáo hiện trường').get_by_role('button',name='Cập nhật bản đồ',exact=True).click()
-        expect(page.locator('.incident-pending-report')).to_have_count(0)
+        expect(page.locator('.incident-report-review')).to_have_count(0)
         page.locator('.incident-priority-row').first.click()
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')

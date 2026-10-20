@@ -3,14 +3,14 @@ import type { GeometryRecord } from '../../geo/vector/types';
 import type { Locale, RoadSegment } from '../../types/dear';
 import { roadStatusLabels } from '../routes/roadStatus';
 import { formatArea } from '../geodata/geometryPresentation';
-import { areaLabel } from './areaLabels';
+import { areaLabel, areaNameIncludesState } from './areaLabels';
 import { landslideAreaOf } from './landslideAreas';
 export function LandslideAreaSummary({ record, roads = [], locale, onRoad }: { record: GeometryRecord; roads?: RoadSegment[]; locale: Locale; onRoad?: (id: string) => void }): JSX.Element | null {
   const value = landslideAreaOf(record);
   if (!value) return null;
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   return <div className="landslide-area-summary">
-    <p><strong>{areaLabel(value.state, locale)}</strong><br/>{areaLabel(value.review, locale)}</p>
+    <p>{!areaNameIncludesState(record.name,value.state,locale) && <><strong>{areaLabel(value.state, locale)}</strong><br/></>}{areaLabel(value.review, locale)}</p>
     <dl className="field-metadata">
       {value.part !== 'undifferentiated' && <div><dt>{t('Phần khoanh', 'Mapped part')}</dt><dd>{areaLabel(value.part, locale)}</dd></div>}
       <div><dt>{t('Diện tích', 'Area')}</dt><dd>≈ {formatArea(area(record.feature), locale)}</dd></div>

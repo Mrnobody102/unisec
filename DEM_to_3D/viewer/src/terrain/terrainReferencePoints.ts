@@ -78,8 +78,10 @@ export function terrainReferencePoints(
         marker.button.hidden = projected.z < -1 || projected.z > 1 || covered ||
           x < 0 || y < 0 || x > host.clientWidth || y > host.clientHeight;
         marker.button.style.transform = `translate(${x - 14}px,${y - (marker.selected ? 28.8 : 25.2)}px)`;
-        // Keep the short hover label inside the map near its right edge.
-        marker.button.classList.toggle('label-left', x > host.clientWidth - 180);
+        // Use the side with room; long survey names remain inspectable in the card.
+        const left = x - 40, right = host.clientWidth - x - 40;
+        marker.button.classList.toggle('label-left', left > right);
+        marker.button.style.setProperty('--reference-label-width', `${Math.max(32, Math.min(260, Math.max(left, right)))}px`);
       }
     },
     dispose: () => layer.remove(),

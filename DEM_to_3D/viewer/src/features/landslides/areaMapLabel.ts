@@ -1,4 +1,5 @@
 import area from '@turf/area';
+import { areaNameIncludesState } from './areaLabels';
 import type { GeometryRecord } from '../../geo/vector/types';
 import type { Locale } from '../../types/dear';
 import { formatArea } from '../geodata/geometryPresentation';
@@ -12,7 +13,7 @@ export function areaMapLabel(record: GeometryRecord, locale: Locale): HTMLSpanEl
   if (mapped) {
     const facts = document.createElement('small');
     const kind = mapped.state === 'potential' ? locale === 'vi' ? 'Vùng nguy cơ' : 'Potential extent' : locale === 'vi' ? 'Vết sạt lở' : 'Observed extent';
-    facts.textContent = `${kind} · ≈ ${formatArea(area(record.feature),locale)}`;label.append(facts);
+    facts.textContent = `${areaNameIncludesState(record.name,mapped.state,locale) ? '' : kind + ' · '}≈ ${formatArea(area(record.feature),locale)}`;label.append(facts);
   }
   return label;
 }
