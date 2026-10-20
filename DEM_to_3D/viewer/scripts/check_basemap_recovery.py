@@ -43,7 +43,8 @@ def run(url, chrome):
         page.get_by_role('button', name='Nguồn bản đồ', exact=True).click()
         expect(page.locator('.map-source-popover')).to_contain_text('Esri World Imagery')
         expect(page.locator('.map-source-popover')).not_to_contain_text('10 m/pixel')
-        expect(page.locator('.map-source-popover')).not_to_contain_text('CC BY 4.0')
+        # Check the imagery license specifically; place references have their own license.
+        expect(page.locator('.map-source-license')).not_to_contain_text('CC BY 4.0')
         assert failures == 2 and not errors, errors
         browser.close()
     print('Basemap recovery passed: repeated tile failures recover, warning clears, detailed tiles draw above the retained local fallback.')
