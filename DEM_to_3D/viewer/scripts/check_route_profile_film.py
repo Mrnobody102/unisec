@@ -57,14 +57,24 @@ def run(url,chrome,captures=None):
         expect(timeline).to_have_attribute('max','25')
         speed=page.get_by_role('combobox',name='Tốc độ phát',exact=True)
         speed.select_option('1.5');expect(speed).to_have_value('1.5')
+        timeline.fill('0');expect(timeline).to_have_value('0')
         before=float(timeline.input_value())
         page.get_by_role('button',name='Tiếp tục',exact=True).click()
         # Shared CI runners render in software. Wait for actual playback rather
         # than treating 500 ms of browser wall time as a frame-rate guarantee.
         # Exact rate multiplication is covered with a controlled controller clock.
-        page.wait_for_function("before => Number(document.querySelector('.flyover-seek').value) > before",arg=before,timeout=10000)
-        page.get_by_role('button',name='Tạm dừng',exact=True).click()
-        assert float(timeline.input_value())>before
+        # Observe progress and pause in one browser task. A separate pointer click
+        # can arrive several software-rendered frames after the sampled position.
+        sample=page.wait_for_function('''before=>{
+            const input=document.querySelector('.flyover-seek');
+            const pause=document.querySelector('.flyover-player button[aria-label="Tạm dừng"]');
+            const time=Number(input?.value);
+            if(!pause || !(time>before))return false;
+            pause.click();return {time};
+        }''',arg=before,timeout=15000).json_value()
+        expect(page.get_by_role('button',name='Tiếp tục',exact=True)).to_be_visible()
+        paused=float(timeline.input_value())
+        assert paused>before,{'before':before,'observed':sample['time'],'paused':paused}
         speed.select_option('1');expect(speed).to_have_value('1')
         for time in [0,6,11,17,21,24.9]:
             timeline.fill(str(time));page.wait_for_timeout(150)
