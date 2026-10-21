@@ -32,11 +32,10 @@ export function ScenarioPropertiesEditor({ value, type, locale, onSave, landingS
       </select>
     </label>}
     {changed && <>
-      <label className="scenario-card-field">{type === 'site' ? t('Nguồn và kết quả khảo sát', 'Survey source and findings') : t('Lý do thay đổi', 'Reason for change')}
-        <textarea value={note} rows={2} maxLength={2000} onChange={e => setNote(e.target.value)} />
-      </label>
+      <details className="status-optional-note"><summary>{t('Thêm ghi chú (tùy chọn)', 'Add note (optional)')}</summary>
+        <textarea aria-label={t('Ghi chú', 'Note')} value={note} rows={2} maxLength={2000} onChange={e => setNote(e.target.value)} />
+      </details>
       <div className="scenario-card-actions"><button className="button primary" onClick={() => {
-        if (!note.trim()) { setError(t('Ghi lý do hoặc nguồn kiểm tra trước khi lưu.', 'Add a reason or verification source before saving.')); return; }
         setError(''); setReview(true);
       }}>{t('Lưu thay đổi', 'Save changes')}</button><button className="button" onClick={() => {setDraft(value);setNote('');setError('');}}>{t('Hủy', 'Cancel')}</button></div>
     </>}
@@ -46,7 +45,7 @@ export function ScenarioPropertiesEditor({ value, type, locale, onSave, landingS
         if (onSave({kind:'properties',from:value,to:draft},note.trim())) {setReview(false);setNote('');setError('');}
         else setError(t('Không lưu được. Bản đồ chưa thay đổi.', 'Could not save. The map is unchanged.'));
       }}>
-      <p>{value.names[locale === 'vi' ? 0 : 1]}</p><p>{note.trim()}</p>
+      <p>{value.names[locale === 'vi' ? 0 : 1]}</p>{note.trim() && <p>{note.trim()}</p>}
       {draft.hazardKind !== value.hazardKind && <p>{t('Ký hiệu và nhóm sự cố trên bản đồ sẽ theo loại đã chọn.', 'The map symbol and hazard category will follow the selected type.')}</p>}
       {draft.siteAssessment !== value.siteAssessment && <p>{t('Đây là ghi nhận khảo sát; không phải phê duyệt hạ cánh.', 'This records a survey; it is not a landing clearance.')}</p>}
     </ConfirmDialog>}

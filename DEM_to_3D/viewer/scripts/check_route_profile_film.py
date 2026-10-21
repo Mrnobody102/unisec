@@ -50,10 +50,10 @@ def run(url,chrome,captures=None):
         if captures:page.screenshot(path=str(captures/'profile-3d.png'))
         page.get_by_role('button',name='Đóng mặt cắt',exact=True).click()
         page.get_by_role('button',name='Công cụ bổ sung',exact=True).click()
-        page.get_by_role('button',name='Hành trình 3D',exact=True).click()
-        page.get_by_role('button',name='Phát hành trình',exact=True).click()
+        page.get_by_role('button',name='Xem tuyến 3D',exact=True).click()
+        page.get_by_role('button',name='Bắt đầu xem',exact=True).click()
         page.get_by_role('button',name='Tạm dừng',exact=True).click(timeout=60000)
-        timeline=page.get_by_role('slider',name='Vị trí trong hành trình',exact=True)
+        timeline=page.get_by_role('slider',name='Tiến trình xem tuyến',exact=True)
         expect(timeline).to_have_attribute('max','25')
         speed=page.get_by_role('combobox',name='Tốc độ phát',exact=True)
         speed.select_option('1.5');expect(speed).to_have_value('1.5')
@@ -69,7 +69,7 @@ def run(url,chrome,captures=None):
         for time in [0,6,11,17,21,24.9]:
             timeline.fill(str(time));page.wait_for_timeout(150)
             if captures:page.screenshot(path=str(captures/f'film-{time}.png'))
-        page.get_by_role('button',name='Thoát hành trình',exact=True).click()
+        page.get_by_role('button',name='Thoát chế độ xem 3D',exact=True).click()
         assert not errors,errors
         browser.close()
     print('Cross-DEM profile passed: E8 has no missing half, cursor stays clear of dock, no GLB in 2D; 25-second film, speed selector and closing overview.')

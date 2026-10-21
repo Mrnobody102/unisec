@@ -1,4 +1,4 @@
-"""Regression: linked-feature back, point zoom, selection across 2D/3D and inbox layout."""
+"""Regression: detail closing, point zoom, selection across 2D/3D and inbox layout."""
 import argparse
 import base64
 import json
@@ -57,12 +57,18 @@ def run(url, chrome, captures):
         print('POINT_SCALE', before, '->', scale(), flush=True)
         assert metres(scale()) < metres(before), (before, scale())
         details.screenshot(path=str(captures/'hazard-detail.png'))
+        expect(details.locator('.sheet-kind,.panel-parent')).to_have_count(0)
         details.locator('.hazard-impact .object-row').first.click()
-        expect(details.get_by_role('button', name='Quay lại', exact=True)).to_be_visible()
-        details.get_by_role('button', name='Quay lại', exact=True).click()
+        expect(details.locator('.sheet-kind,.panel-parent')).to_have_count(0)
+        details.get_by_role('button', name='Đóng chi tiết đối tượng', exact=True).click()
+        expect(details).to_have_count(0)
+        expect(page.locator('.map-pin.is-selected')).to_have_count(0)
+        expect(page.locator('.workspace-nav button[data-view="impact"]')).to_have_attribute('aria-current','page')
+        page.locator('.workspace-nav button[data-view="incident"]').click()
+        page.locator('.incident-landslide-row').filter(has_text=title).click()
         expect(details.locator('h1')).to_have_text(title)
         visible_selection()
-        print('LINKED_ROAD_BACK_OK', flush=True)
+        print('LINKED_ROAD_CLOSE_OK', flush=True)
         for mode in ('3D','2D','3D','2D'):
             page.get_by_role('button', name='Chuyển sang ' + mode, exact=True).click()
             if mode == '3D':
@@ -143,7 +149,7 @@ def run(url, chrome, captures):
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:5174')
-    parser.add_argument('--chrome', default='C:/Program Files/Google/Chrome/Application/chrome.exe')
+    parser.add_argument('--chrome')
     parser.add_argument('--captures', type=Path, required=True)
     args=parser.parse_args()
     run(args.url.rstrip('/'),args.chrome,args.captures)

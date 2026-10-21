@@ -41,6 +41,11 @@ describe('applyScenarioEdits', () => {
 });
 
 describe('validEdit', () => {
+  it('accepts an empty optional note when changing road status', () => {
+    const change = edit({target:{type:'road',id:'R1',name:'R1'},change:{kind:'status',from:'open',to:'blocked'},note:''});
+    expect(validEdit(change)).toBe(true);
+    expect(applyScenarioEdits(packet,[change]).roads[0].status).toBe('blocked');
+  });
   it('rejects a status change on a point feature', () => {
     expect(validEdit(edit({ change: { kind: 'status', from: 'open', to: 'blocked' } }))).toBe(false);
     expect(validEdit(edit({}))).toBe(true);

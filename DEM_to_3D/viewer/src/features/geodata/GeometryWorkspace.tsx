@@ -1,3 +1,4 @@
+import { LandslideFillControl } from '../landslides/LandslideFillControl';
 import type { AnalysisImageryState } from '../imagery/useAnalysisImagery';
 import { distinctSourceRecords } from '../map/sourceRepresentation';
 import { useMapPreview } from '../map/useMapPreview';
@@ -572,6 +573,7 @@ function GeometryWorkspaceView({
           </details>
           <div className="geodata-sidebar-scroll">
             <div hidden={tab !== 'areas'} className="geodata-task-panel" aria-label={t('Vùng sạt lở', 'Landslide areas')}>
+              <LandslideFillControl locale={locale}/>
               <LandslideAreaList records={session.records} selectedId={session.selectedId} locale={locale} disabled={working}
                 onCreate={state => {setAreaPointId(null);setDrawingLandslide(state);setDetail(null);setMobileTab('map');session.setError(null);editor.start('polygon');}}
                 onSelect={select} onVisible={(id, visible) => display([id], visible)}/>

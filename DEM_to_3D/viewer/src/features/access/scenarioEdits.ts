@@ -41,7 +41,7 @@ export function validEdit(raw: unknown): raw is ScenarioEdit {
     return false;
   if (typeof e.note !== 'string' || e.note.length > 2000) return false;
   const c = e.change;
-  if (c?.kind === 'properties') return !!e.note.trim() && validProperties(e.target.type, c.from) && validProperties(e.target.type, c.to);
+  if (c?.kind === 'properties') return validProperties(e.target.type, c.from) && validProperties(e.target.type, c.to);
   if (c?.kind === 'links') return ['hazard','road'].includes(e.target.type) && !!e.note.trim() && [c.from,c.to].every(ids=>Array.isArray(ids)&&ids.length<=128&&new Set(ids).size===ids.length&&ids.every(id=>typeof id==='string'&&id.length>0&&id.length<=160));
   if (c?.kind === 'create') return !!e.note.trim() && validNewPoint(e.target.type, e.target.id, c, e.at);
   if (c?.kind === 'move') return finite(c.from) && finite(c.to) && e.target.type !== 'road' &&

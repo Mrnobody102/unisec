@@ -11,7 +11,8 @@ describe('workspace navigation', () => {
     expect(selectedMapObject(section)).toBe('road:E13');
     const details = navigate(section, { type: 'inspect-object', id: 'road:E13' });
     const returned = navigate(details, { type: 'close-object' });
-    expect(returned.view).toBe('priority');
+    expect(returned.view).toBe('impact');
+    expect(selectedMapObject(returned)).toBeNull();
     expect(returned.routeSectionId).toBe('E13');
     const changed = navigate(returned, { type: 'filters', values: { selectedRouteType: 'direct' } });
     expect(changed.routeSectionId).toBeNull();
@@ -25,9 +26,9 @@ describe('workspace navigation', () => {
     state = navigate(state, { type: 'inspect-object', id: 'road:E13' });
     state = navigate(state, { type: 'inspect-object', id: 'hazard:U-1' });
     state = navigate(state, { type: 'close-object' });
-    expect(selectedMapObject(state)).toBe('road:E13');
+    expect(selectedMapObject(state)).toBeNull();
     state = navigate(state, { type: 'close-object' });
-    expect(state.view).toBe('priority');
+    expect(state.view).toBe('impact');
     expect(state.selectedCommunityId).toBe('NK');
     expect(state.selectedRouteType).toBe('direct');
     expect(state.detailTab).toBe('evidence');
@@ -39,16 +40,19 @@ describe('workspace navigation', () => {
     expect(state.selectedCommunityId).toBeNull();
   });
 
-  it('keeps each object detail separate and closes back to the opening context', () => {
+  it('closes the current detail without switching to the opening tab or its selected object', () => {
     let state = navigate(initial, { type: 'inspect-object', id: 'aoi:AOI' });
     state = navigate(state, { type: 'inspect-object', id: 'road:E3' });
     expect(selectedMapObject(state)).toBe('road:E3');
     state = navigate(state, { type: 'close-object' });
-    expect(state.view).toBe('incident');
-    expect(selectedMapObject(state)).toBe('aoi:AOI');
+    expect(state.view).toBe('impact');
+    expect(selectedMapObject(state)).toBeNull();
     state = navigate(state, { type: 'select-community', id: 'KM' });
     state = navigate(state, { type: 'close-community' });
-    expect(selectedMapObject(state)).toBe('aoi:AOI');
+    expect(state.view).toBe('priority');
+    expect(state.selectedCommunityId).toBeNull();
+    expect(state.routeSectionId).toBeNull();
+    expect(selectedMapObject(state)).toBeNull();
   });
 
   it('opens other places in the road tab without switching tabs', () => {
@@ -58,23 +62,22 @@ describe('workspace navigation', () => {
     expect(selectedMapObject(site)).toBe('poi:staging');
   });
 
-  it('returns from a linked road to the landslide, then to the overview', () => {
+  it('closes a linked road without reopening the landslide and stays closed on a repeated close', () => {
     let state = navigate(initial, { type: 'inspect-object', id: 'hazard:L1' });
     state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
     state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
-    expect(state.detailHistory).toHaveLength(1);
     state = navigate(state, { type: 'close-object' });
-    expect(selectedMapObject(state)).toBe('hazard:L1');
+    expect(selectedMapObject(state)).toBeNull();
     state = navigate(state, { type: 'close-object' });
-    expect(state.view).toBe('incident');
+    expect(state.view).toBe('impact');
     expect(selectedMapObject(state)).toBeNull();
   });
 
-  it('clears old detail history when opening an explicit road list', () => {
+  it('keeps an explicit road list after closing another selected road', () => {
     let state = navigate(initial, { type: 'inspect-object', id: 'hazard:L1' });
     state = navigate(state, { type: 'inspect-object', id: 'road:E1' });
     state = navigate(state, { type: 'road-list', filter: 'blocked' });
-    expect(state.detailHistory).toEqual([]);
+    expect(selectedMapObject(state)).toBeNull();
     state = navigate(state, { type: 'inspect-object', id: 'road:E2' });
     state = navigate(state, { type: 'close-object' });
     expect(state.view).toBe('impact');

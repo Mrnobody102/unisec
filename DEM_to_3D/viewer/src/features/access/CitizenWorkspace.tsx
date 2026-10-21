@@ -1,6 +1,12 @@
+import { LandslideFillControl } from '../landslides/LandslideFillControl';
+import pointOnFeature from '@turf/point-on-feature';
 import { useAnalysisImagery } from '../imagery/useAnalysisImagery';
 import { analysisSourceInfo } from '../imagery/analysisImagery';
-import { CitizenAreaCard } from "./CitizenAreaCard";
+import { supportsBasemapTone } from '../imagery/basemapTone';
+import { CitizenPlaceCard } from "./CitizenPlaceCard";
+import { routeChainage } from "./routeChainage";
+import { roadsForHazard } from "../incident/roadHazards";
+import { usePreparedPhotos } from "../fieldPhotos/preparedPhotos";
 import { visibleMapRecords } from "../map/visibleMapRecords";
 import { landslideAreaOf } from "../landslides/landslideAreas";
 import type { ScenarioEdit } from "./scenarioEdits";
@@ -83,9 +89,16 @@ export function CitizenWorkspace({
       identity.communityId ?? packet.communities[0]?.id ?? "",
     );
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  // A landslide point opened on the map, and a route section shown from the route card.
+  const [selectedHazardId, setSelectedHazardId] = useState<string | null>(null);
+  const [shownRoadId, setShownRoadId] = useState<string | null>(null);
+  const fieldPhotos = usePreparedPhotos(manifest?.fieldPhotos);
   const [layerOptions, setLayerOptions] = useState({landslide:true,status:true,communities:true,imagery:true});
   const analysisImagery=useAnalysisImagery(manifest?.analysisImagery);
-  const analysisDisplay=useMemo(()=>({rasters:layerOptions.imagery?analysisImagery.rasters:[],opacity:1}),[analysisImagery.rasters,layerOptions.imagery]);
+  // The Planet scene is brighter and greener than the basemap; tone the basemap to it, as the coordinator map does.
+  const analysisDisplay=useMemo(()=>({rasters:layerOptions.imagery?analysisImagery.rasters:[],opacity:1,
+    balanceBasemap:supportsBasemapTone(analysisImagery.layers)&&analysisImagery.layers.some(layer=>layer.id===analysisImagery.selection.layer&&layer.kind==='optical')}),
+    [analysisImagery.rasters,analysisImagery.layers,analysisImagery.selection.layer,layerOptions.imagery]);
   // The village access route is the default answer; a free A to B search is the other mode.
   const [roadMode, setRoadMode] = useState<"village" | "journey">("village");
   const [mapOnMobile, setMapOnMobile] = useState(false),
@@ -166,6 +179,24 @@ export function CitizenWorkspace({
     citizenLayers, packet.datasetVersion
   ), [gis.records, own, citizenLayers, packet.datasetVersion]);
   const selectedArea = mapRecords.find(record => record.id === selectedAreaId && landslideAreaOf(record));
+  const chainage = useMemo(() => routeChainage(route), [route]);
+  const routeOrigin = snapshot.responseSites.find(site => site.kind === "staging");
+  const originName = routeOrigin ? t(...routeOrigin.name).replace(/^Điểm tập kết /, "").replace(/ staging point$/i, "") : undefined;
+  // A nearby incident is not evidence that it represents the selected polygon.
+  const placeHazard = snapshot.hazards.find(h => h.id === selectedHazardId);
+  const placeArea = selectedArea ? landslideAreaOf(selectedArea) ?? undefined : undefined;
+  const placeRoad = (() => {
+    const road = placeHazard ? roadsForHazard(snapshot.roads, placeHazard.id)[0]
+      : placeArea?.networkVersion === packet.datasetVersion ? snapshot.roads.find(r => placeArea.roadLinks.some(link => link.roadId === r.id)) : undefined;
+    return road && { road, km: chainage.get(road.id), origin: originName };
+  })();
+  const reportAt = (point: { x: number; y: number }) => {
+    const p = roadGeographic(point);
+    setSelectedHazardId(null); setSelectedAreaId(null);
+    gps.cancel(); setPicking(false); journey.setPicking(null);
+    setTab("report"); setMessage("");
+    position(p.latitude, p.longitude, "map");
+  };
   const roadView = tab === "roads";
   const showRoadMode = (mode: "village" | "journey") => {
     gps.cancel();
@@ -245,11 +276,18 @@ export function CitizenWorkspace({
     journey.setPicking(null);
     setMapOnMobile(false);
     setSelectedAreaId(null);
+    setSelectedHazardId(null);
     setTab(value);
   };
   const onHit = (hit: OverlayHit) => {
+    if (hit.type === "hazard") {
+      setSelectedAreaId(null);
+      setSelectedHazardId(hit.id);
+      return;
+    }
     if (hit.type === "community") {
       setSelectedAreaId(null);
+      setSelectedHazardId(null);
       journey.close();
       setCommunity(hit.id);
       setTab("roads");
@@ -339,8 +377,16 @@ export function CitizenWorkspace({
                         route={route}
                         avoided={advice.avoided}
                         problems={routeProblems(route)}
+                        chainage={chainage}
+                        origin={originName}
+                        hazardCount={(road) => snapshot.hazards.filter(h => roadsForHazard(snapshot.roads, h.id).some(r => r.id === road.id)).length}
                         locale={locale}
-                        onShowMap={() => setMapOnMobile(true)}
+                        onShowMap={() => { setShownRoadId(null); setMapOnMobile(true); }}
+                        onShowSection={(road) => {
+                          setShownRoadId(road.id);
+                          controls.current?.frameProjected?.(road.points);
+                          setMapOnMobile(true);
+                        }}
                       />
                     ) : (
                       <p className="citizen-direction-note">{m.noMappedRouteInTheCurrentDataset}</p>
@@ -671,8 +717,9 @@ export function CitizenWorkspace({
               gisRequest={ownView}
               onGisSelect={(id) => {
                 if (gis.records.some(record => record.id === id && landslideAreaOf(record))) {
+                  setSelectedHazardId(null);
                   setSelectedAreaId(id);
-                } else {setSelectedAreaId(null);setOwnSelected(id);setTab("mine");setMapOnMobile(false);}
+                } else {setSelectedHazardId(null);setSelectedAreaId(null);setOwnSelected(id);setTab("mine");setMapOnMobile(false);}
               }}
               pointPickActive={picking || (journey.open && !!journey.picking)}
               onPointPick={(latitude, longitude) => {
@@ -694,7 +741,7 @@ export function CitizenWorkspace({
                 selectedRoute: !roadView ? null : roadMode === "journey" ? journey.route : route,
                 // In a search the A and B pins mark the places; a second selected pin would cover them.
                 selectedCommunityId: roadView && roadMode === "village" ? community : null,
-                selectedObjectId: null,
+                selectedObjectId: placeHazard ? `hazard:${placeHazard.id}` : shownRoadId && roadView ? `road:${shownRoadId}` : null,
                 layers: citizenLayers,
                 appearance: defaultLayerAppearance,
               }}
@@ -771,9 +818,21 @@ export function CitizenWorkspace({
             <summary><UiIcon name="layers" size={18}/>{t('Lớp', 'Layers')}</summary>
             <fieldset aria-label={t('Lớp bản đồ người dân', 'Resident map layers')}>
               {([['landslide',t('Vùng và điểm sạt lở','Landslide areas and points')],['status',t('Tình trạng đường','Road status')],['communities',t('Thôn, bản','Communities')],['imagery',t('Ảnh nền','Imagery')]] as const).map(([key,label]) => <label key={key}><input type="checkbox" checked={layerOptions[key]} onChange={() => setLayerOptions(previous => ({...previous,[key]:!previous[key]}))}/>{label}</label>)}
+              <LandslideFillControl locale={locale} disabled={!layerOptions.landslide}/>
             </fieldset>
           </details>
-          {selectedArea && !picking && !journey.picking && <CitizenAreaCard record={selectedArea} locale={locale} onClose={() => setSelectedAreaId(null)}/>}
+          {(placeHazard || placeArea) && !picking && !journey.picking && <CitizenPlaceCard
+            key={placeHazard?.id ?? selectedAreaId ?? ""}
+            hazard={placeHazard} area={placeHazard ? undefined : placeArea} road={placeRoad}
+            photos={placeHazard ? fieldPhotos.get(placeHazard.id) : undefined} locale={locale}
+            onReport={() => {
+              if (placeHazard) reportAt(placeHazard.projected);
+              else if (selectedArea) {
+                const [longitude, latitude] = pointOnFeature(selectedArea.feature).geometry.coordinates;
+                setSelectedAreaId(null); setTab("report"); setMessage(""); position(latitude, longitude, "map");
+              }
+            }}
+            onClose={() => { setSelectedHazardId(null); setSelectedAreaId(null); }}/>}
           <MapAttribution
             analysisSource={layerOptions.imagery?analysisSourceInfo(analysisImagery.layers,analysisImagery.selection,locale):undefined}
             locale={locale}

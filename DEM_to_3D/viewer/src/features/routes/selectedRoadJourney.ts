@@ -137,7 +137,7 @@ export function selectedRoadJourney(
     id: `journey:${start.roadId}:${start.station}:${end.roadId}:${end.station}:${avoidBlocked}`,
     communityId: "",
     type: "candidate",
-    name: ["Hành trình đã chọn", "Selected journey"],
+    name: ["Tuyến đã chọn", "Selected route"],
     points,
     segs,
     status: segs.some((s) => s.status === "blocked")

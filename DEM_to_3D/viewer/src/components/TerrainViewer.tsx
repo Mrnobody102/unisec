@@ -1,3 +1,4 @@
+import { useLandslideAppearance } from '../features/landslides/useLandslideAppearance';
 import { setBasemapTone } from '../terrain/basemapTone';
 import { basemapTones,preparedToneAssetId } from '../features/imagery/basemapTone';
 import { ImageryStatus, type ImageryLoadState } from '../features/imagery/ImageryStatus';
@@ -8,6 +9,7 @@ import { createTerrainOverlays } from '../terrain/terrainOverlays';
 import type { TerrainOverlayOptions } from '../features/terrain/useTerrainOverlays';
 import { createViewImagery, visibleImageryPoints, viewImageryTiles } from '../terrain/viewImagery';
 import {terrainReferencePoints} from '../terrain/terrainReferencePoints';
+import { detailInset } from '../features/map/detailInset';
 import { basemapFrame } from '../terrain/basemapFrame';
 import { planBasemapTiles } from '../terrain/regionalBasemap';
 import { terrainAreaLabel } from '../features/landslides/terrainAreaLabel';
@@ -115,6 +117,8 @@ export function TerrainViewer({
   const flyoverStateRef = useRef(onFlyoverState); flyoverStateRef.current = onFlyoverState;
   const surfaceLayersRef = useRef(surfaceLayers); surfaceLayersRef.current = surfaceLayers;
   const overlaysRef = useRef<ReturnType<typeof createTerrainOverlays> | null>(null);
+  const { fillOpacity } = useLandslideAppearance();
+  const fillOpacityRef = useRef(fillOpacity); fillOpacityRef.current = fillOpacity;
   const [imageryState,setImageryState]=useState<ImageryLoadState>('off');
   const analysisRef = useRef<ReturnType<typeof createAnalysisDrape> | null>(null);
   const analysisPropsRef = useRef(analysisImagery); analysisPropsRef.current = analysisImagery;
@@ -373,10 +377,10 @@ export function TerrainViewer({
       if (mappedAreasRef.current.records) {
         mappedAreaGroup = new THREE.Group();
         const chosen = mappedAreasRef.current.records.find(record => record.id === mappedAreasRef.current.selectedId);
-        referencePoints = terrainReferencePoints(host,mappedAreasRef.current.records,mappedAreasRef.current.selectedId??null,entries,id=>mappedAreasRef.current.onSelect?.(id),(x,y)=>basemap?.surfacePoint(x,y));
+        referencePoints = terrainReferencePoints(host,mappedAreasRef.current.records,mappedAreasRef.current.selectedId??null,entries,id=>mappedAreasRef.current.onSelect?.(id),(x,y)=>basemap?.surfacePoint(x,y),()=>!measureModeRef.current);
         for (const entry of entries) {
           if (!entry.model.metadata || !entry.model.grid) continue;
-          const group = terrainLandslideAreas(mappedAreasRef.current.records, entry.model.metadata, entry.model.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion);
+          const group = terrainLandslideAreas(mappedAreasRef.current.records, entry.model.metadata, entry.model.grid, sp?.roads ?? [], mappedAreasRef.current.selectedId ?? null, {width:host.clientWidth,height:host.clientHeight}, sp?.datasetVersion, fillOpacityRef.current);
           group.matrix.copy(entry.group.matrixWorld); group.matrixAutoUpdate = false; mappedAreaGroup.add(group);
           if (chosen && !mappedLabel) mappedLabel = terrainAreaLabel(host,chosen,entry.model.metadata,entry.model.grid,entry.group.matrixWorld,localeRef.current);
         }
@@ -421,10 +425,11 @@ export function TerrainViewer({
         scene.add(scenarioOverlayGroup);
         scenarioMarkers = createScenarioMarkers(host, {
           ...sp, focusId, elevationAt, metadata: primaryModel.metadata, grid: primaryModel.grid,
+          interactive: !measureModeRef.current,
           transform: entries[0].group.matrixWorld, locale: localeRef.current,
           canExpandGroup: () => camera.position.distanceTo(controls.target) > controls.minDistance * 1.15,
           onExpandGroup: points => viewControlRef?.current?.frameProjected?.(points),
-          onPreviewFocus:point=>{const reserve=parseFloat(getComputedStyle(host.closest('.workspace')??host).getPropertyValue('--response-detail-reserve'))||0;viewControlRef?.current?.focusProjected(point,{right:reserve});},
+          onPreviewFocus:point=>viewControlRef?.current?.focusProjected(point,detailInset(host)),
           onSelect: hit => onSelectOverlayHitRef.current?.(hit)
         });
       }
@@ -965,7 +970,7 @@ export function TerrainViewer({
   useEffect(() => { if (terrainOverlays) overlaysRef.current?.setOptions(terrainOverlays); }, [terrainOverlays]);
   useEffect(() => { runtimeRef.current?.updateSurface(); if (!flyoverRef.current?.active && !flyoverRef.current?.exporting) void analysisRef.current?.set(analysisImagery?.rasters ?? [], analysisImagery?.opacity ?? 1); }, [analysisImagery]);
   useEffect(() => { flyoverRef.current?.setInput(flyover ?? null); }, [flyover]);
-  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.appearance, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale, gisRecords, gisSelectedId]);
+  useEffect(() => { runtimeRef.current?.updateScenario(); }, [scenarioProps?.aoi, scenarioProps?.layers, scenarioProps?.appearance, scenarioProps?.communities, scenarioProps?.responseSites, scenarioProps?.hazards, scenarioProps?.roads, scenarioProps?.selectedRoute, scenarioProps?.selectedCommunityId, scenarioProps?.selectedObjectId, locale, gisRecords, gisSelectedId, measureMode, fillOpacity]);
   useLayoutEffect(() => { runtimeRef.current?.setMode(mapMode); }, [mapMode]);
   useEffect(() => { runtimeRef.current?.updateSurface(); }, [theme, surfaceLayers]);
   useEffect(() => { runtimeRef.current?.invalidate(); }, [focusPoint, profile, measureMode, profileMetadata]);

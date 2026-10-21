@@ -28,7 +28,7 @@ import './scenario-card.css';
 type Point = { x: number; y: number };
 const statusLabel = roadStatusShortLabels;
 
-/** Edit panel for one scenario feature. Every change needs a reason and lands in the history. */
+/** Edit panel for one scenario feature, with a recorded change history. */
 export function ScenarioFeatureCard({
   scenario,
   target,
@@ -123,7 +123,7 @@ export function ScenarioFeatureCard({
     return t(`Đổi tên ${c.from} thành ${c.to}`, `Renamed ${c.from} to ${c.to}`);
   };
   const save = (change: ScenarioChange) => {
-    if (!note.trim()) {
+    if (change.kind !== 'status' && !note.trim()) {
       setError(t('Ghi lý do thay đổi.', 'Add a reason for the change.'));
       return;
     }
@@ -137,7 +137,7 @@ export function ScenarioFeatureCard({
       setError(t('Không lưu được thay đổi.', 'Could not save the change.'));
   };
   const prepare = (change: ScenarioChange) => {
-    if (!note.trim()) {setError(t('Ghi lý do thay đổi.', 'Add a reason for the change.'));return;}
+    if (change.kind !== 'status' && !note.trim()) {setError(t('Ghi lý do thay đổi.', 'Add a reason for the change.'));return;}
     setError('');setReview(change);
   };
   const reason = (
@@ -316,7 +316,9 @@ export function ScenarioFeatureCard({
             <span>{pick(statusLabel[value])}</span>
           </label>)}
         </fieldset>
-        {reason}
+        <details className="status-optional-note"><summary>{t('Thêm ghi chú (tùy chọn)', 'Add note (optional)')}</summary>
+          <label className="scenario-card-field">{t('Ghi chú', 'Note')}<textarea rows={2} maxLength={2000} value={note} onChange={event => setNote(event.target.value)}/></label>
+        </details>
       </ConfirmDialog>}
       {coordinatesOpen && position && <ScenarioCoordinatesDialog point={position} locale={locale} onClose={() => setCoordinatesOpen(false)} onPreview={onPreviewPosition} onPick={onPickPosition} />}
       {review && <ConfirmDialog title={review.kind === 'move' ? t('Cập nhật vị trí?', 'Update position?') : t('Cập nhật tình trạng đường?', 'Update road status?')} locale={locale}

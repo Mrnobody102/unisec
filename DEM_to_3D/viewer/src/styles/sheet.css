@@ -65,8 +65,9 @@
 .workspace-shell :is(#response-panel, .response-detail-dock) :is(.workflow-section, .incident-overview > section, .object-observation, .route-sections, .assessment-basis, .route-summary, .access-route-choice) {
   padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card);
 }
-.workspace-shell .response-detail-dock :is(.sidebar-scroll, .hazard-detail, .site-detail, .community-evidence, .decision-route) > * + *,
 .workspace-shell #response-panel .incident-overview > * + * { margin-top: 12px; }
+#response-details :is(.sidebar-scroll, .hazard-detail, .site-detail, .community-evidence, .decision-route) { display:flex; flex-direction:column; gap:12px; }
+#response-details :is(.sidebar-scroll, .hazard-detail, .site-detail, .community-evidence, .decision-route) > * { flex:none; min-width:0; margin-block:0; }
 .workspace-shell :is(#response-panel, .response-detail-dock) :is(.workflow-section > h3, .object-observation > h3, h2.incident-section-title) {
   display: flex; align-items: baseline; gap: 6px; margin: 0 0 6px; padding: 0; border: 0; background: none;
   color: var(--ws-muted); font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.4; text-transform: none;
@@ -419,8 +420,8 @@ body .geodata-aoi-start .button { display: inline-flex; align-items: center; gap
 .workspace-shell .response-detail-dock .detail-actions-group > * + * { margin-top: 12px; }
 .workspace-shell .response-detail-dock .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .workspace-shell .response-detail-dock .detail-actions .button {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; margin: 0; padding: 6px 12px;
-  border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 13px; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content:center; flex:1 1 140px; min-width:0; gap: 6px; min-height: 34px; margin: 0; padding: 6px 12px;
+  border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 13px; line-height:1.35; text-align:center; white-space:normal;
 }
 .workspace-shell .response-detail-dock .detail-actions .button:not(:disabled):hover { border-color: var(--control-border); }
 .workspace-shell .response-detail-dock .detail-actions .button:is([aria-pressed='true'], [aria-expanded='true']) { border-color: var(--select); box-shadow: inset 0 0 0 1px var(--select); }
@@ -433,11 +434,18 @@ body .geodata-aoi-start .button { display: inline-flex; align-items: center; gap
 .workspace-shell .response-detail-dock .road-status-editor .road-status-actions .button { min-height: 34px; border-radius: 8px; font-size: 13px; }
 
 /* The latest manual change: a plain card, not a tinted call-out. */
-.workspace-shell .response-detail-dock .manual-edit-note { display: block; margin: 0; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 13px; }
-.workspace-shell .response-detail-dock .manual-edit-note > p { display: grid; gap: 1px; margin: 0; }
+.workspace-shell .response-detail-dock .manual-edit-note { display: grid; gap:6px; margin: 0; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 13px; }
+.workspace-shell .response-detail-dock .manual-edit-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.workspace-shell .response-detail-dock .manual-edit-heading h3 { margin:0; color:var(--ws-muted); font-size:12px; font-weight:600; }
+.workspace-shell .response-detail-dock .manual-edit-note > p { display: grid; gap: 4px; margin: 0; }
 .workspace-shell .response-detail-dock .manual-edit-note strong { font-size: 14px; font-weight: 600; }
-.workspace-shell .response-detail-dock .manual-edit-note .manual-edit-reason { margin-top: 6px; color: var(--ws-text); line-height: 1.5; }
-.workspace-shell .response-detail-dock .manual-edit-note .text-button { margin-top: 6px; font-size: 13px; }
+.workspace-shell .response-detail-dock .manual-edit-comment { margin:0; }
+.workspace-shell .response-detail-dock .manual-edit-comment summary { cursor:pointer; color:var(--ws-muted); font-size:12px; }
+.workspace-shell .response-detail-dock .manual-edit-comment p { margin:6px 0 0; line-height:1.5; overflow-wrap:anywhere; }
+.workspace-shell .response-detail-dock .manual-edit-note .text-button { margin:0; padding:2px 0; min-height:28px; font-size:12px; }
+.status-optional-note { margin:0; }
+.status-optional-note > summary { min-height:28px; padding:4px 0; cursor:pointer; color:var(--ws-muted); font-size:12px; }
+.status-optional-note textarea { display:block; box-sizing:border-box; width:100%; margin-top:8px; }
 .workspace-shell .response-detail-dock .object-observation .fact-rows time { color: inherit; font-size: inherit; font-variant-numeric: tabular-nums; }
 
 /* Mapped extents: one measure, one evidence block, then related survey photographs. */

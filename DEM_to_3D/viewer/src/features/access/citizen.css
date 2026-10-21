@@ -593,7 +593,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px 9px;
   border-radius: 8px 8px 0 0; color: var(--ws-muted); font-size: 13px; font-weight: 500; line-height: 1.25;
 }
-.citizen-workspace .citizen-panel > nav button:hover { color: var(--ws-text); background: var(--hover); }
+@media (hover: hover) { .citizen-workspace .citizen-panel > nav button:hover { color: var(--ws-text); background: var(--hover); } }
 .citizen-workspace .citizen-panel > nav button[aria-pressed="true"] { color: var(--ws-text); font-weight: 600; border-bottom-color: var(--select); }
 .citizen-workspace .citizen-panel-scroll { padding: 16px; background: var(--sheet-bg); }
 
@@ -739,3 +739,88 @@
   .citizen-workspace .citizen-panel .citizen-report-form .field-form-actions { bottom: -12px; margin: 0 -12px -12px; padding: 12px; }
   .citizen-workspace .citizen-card { padding: 14px; }
 }
+
+/* Fields sit on the card surface with a visible edge; long location labels get a full row. */
+.citizen-workspace .citizen-panel :is(input:not([type="file"]):not([type="checkbox"]), textarea, select:not([multiple])) { background-color: var(--card); }
+.citizen-workspace .citizen-position .citizen-capture-actions { grid-template-columns: 1fr; }
+/* Route verdict: a dot in the status colour, not a warning glyph. */
+.citizen-workspace .citizen-route-verdict > svg { display: none; }
+.citizen-workspace .citizen-route-verdict::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--route-tone); }
+
+/* The north arrow sits under the layer control instead of behind it. */
+.map-area.citizen-map .map-north { margin-top: 52px; }
+
+/* In-app camera: the view fills the dialog, the shutter is the one large control. */
+.camera-capture-overlay { position: fixed; inset: 0; z-index: 2000; width:100%; height:100%; max-width:none; max-height:none; margin:0; border:0; display: grid; place-items: center; padding: 16px; background: rgba(12, 14, 18, 0.72); }
+.camera-capture-overlay::backdrop { background:transparent; }
+.camera-capture { display: grid; width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow: hidden; border-radius: 12px; background: #111418; box-shadow: var(--shadow-overlay); }
+.camera-capture-view { position: relative; display: grid; place-items: center; min-height: 240px; background: #000; }
+.camera-capture-view video { display: block; width: 100%; max-height: calc(100dvh - 140px); object-fit: contain; }
+.camera-capture-view p { position: absolute; margin: 0; padding: 16px; color: #e8eaed; font-size: 14px; text-align: center; }
+.camera-capture-actions { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 16px; }
+.camera-capture-actions .button { justify-self: start; min-height: 40px; border-color: rgba(255, 255, 255, 0.3); border-radius: 8px; background: transparent; color: #fff; }
+.camera-shutter { display: grid; place-items: center; width: 64px; height: 64px; padding: 0; border: 4px solid #fff; border-radius: 50%; background: rgba(255, 255, 255, 0.16); color: #fff; }
+.camera-shutter:not(:disabled):hover { background: rgba(255, 255, 255, 0.3); }
+.camera-shutter:disabled { opacity: 0.4; }
+.camera-shutter:focus-visible { outline: 3px solid var(--focus, #8ab4f8); outline-offset: 3px; }
+
+/* Village route card: verdict, road, what to do; then two figures; then the sections to watch. */
+.citizen-workspace .citizen-village .citizen-route { gap: 0; }
+.citizen-workspace .citizen-route-verdict { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--route-ink); font-size: 16px; font-weight: 600; line-height: 1.35; }
+.citizen-workspace .citizen-route h2 { margin: 4px 0 0; color: var(--ws-muted); font-size: 14px; font-weight: 500; }
+.citizen-workspace .citizen-route-advice { margin: 10px 0 0; color: var(--ws-text); font-size: 15px; line-height: 1.5; }
+.citizen-workspace .citizen-route-figures { display: grid; grid-template-columns: auto 1fr; gap: 24px; margin: 14px 0 0; padding: 12px 0; border-block: 1px solid var(--card-line); }
+.citizen-workspace .citizen-route-figures > div { display: grid; gap: 2px; min-width: 0; }
+.citizen-workspace .citizen-route-figures dt { color: var(--ws-muted); font-size: 12px; }
+.citizen-workspace .citizen-route-figures dd { margin: 0; color: var(--ws-text); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-route-problems { margin: 12px 0 0; padding: 0; border-radius: 0; background: none; }
+.citizen-workspace .citizen-route-problems h3 { margin: 0 0 4px; color: var(--ws-muted); font-size: 12px; font-weight: 600; }
+.citizen-workspace .citizen-route-problems ul { margin: 0; padding: 0; list-style: none; }
+.citizen-workspace .citizen-route-problems li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; color: var(--ws-text); font-size: 14px; }
+.citizen-workspace .citizen-route-problems li + li { border-top: 1px solid var(--card-line); }
+.citizen-workspace .citizen-route-problem-state { display: inline-flex; align-items: center; gap: 6px; flex: none; color: var(--warning-ink); font-size: 13px; font-weight: 500; }
+.citizen-workspace .citizen-route-problem-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.citizen-workspace .citizen-route-problems li[data-status="blocked"] { color: var(--ws-text); }
+.citizen-workspace .citizen-route-problems li[data-status="blocked"] .citizen-route-problem-state { color: var(--critical-ink); }
+.citizen-workspace .citizen-route-why { margin: 10px 0 0; color: var(--ws-muted); font-size: 13px; }
+.citizen-workspace .citizen-village .citizen-route-map { margin-top: 14px; }
+
+/* Watch-out sections are rows that open on the map. */
+.citizen-workspace .citizen-route-problems h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.citizen-workspace .citizen-route-problems h3 small { color: var(--ws-muted); font-size: 12px; font-weight: 400; }
+.citizen-workspace .citizen-route-problems li { display: block; padding: 0; }
+.citizen-workspace .citizen-route-problems li > button {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; width: calc(100% + 12px);
+  min-height: 48px; margin: 0 -6px; padding: 6px; border: 0; border-radius: 6px; background: none; color: var(--ws-text); text-align: left;
+}
+@media (hover: hover) { .citizen-workspace .citizen-route-problems li > button:hover { background: var(--hover); } }
+.citizen-workspace .citizen-route-problems li > button > svg { color: var(--ws-muted); }
+.citizen-workspace .citizen-route-problem-name { display: grid; gap: 1px; min-width: 0; }
+.citizen-workspace .citizen-route-problem-name strong { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-route-problem-name small { color: var(--ws-muted); font-size: 13px; }
+
+/* Landslide card on the resident map: the same sheet and type as the panel. */
+.citizen-workspace .citizen-place { display: grid; gap: 12px; width: min(340px, calc(100% - 24px)); padding: 16px; border-color: var(--card-line); border-radius: 12px; background: var(--card); }
+.citizen-workspace .citizen-place > * { margin: 0; }
+.citizen-workspace .citizen-place header { display: flex; align-items: flex-start; gap: 8px; }
+.citizen-workspace .citizen-place header > div { flex: 1; min-width: 0; }
+.citizen-workspace .citizen-place header h2 { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.citizen-workspace .citizen-place header .icon-button { flex: none; width: 32px; height: 32px; min-height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 6px; background: none; color: var(--ws-muted); }
+.citizen-workspace .citizen-place header .icon-button:hover { background: var(--hover); color: var(--ws-text); }
+.citizen-workspace .citizen-place-kind { margin: 0 0 2px; color: var(--ws-muted); font-size: 13px; }
+.citizen-workspace .citizen-place-state { display: flex; align-items: flex-start; gap: 8px; color: var(--warning-ink); font-size: 14px; line-height: 1.45; }
+.citizen-workspace .citizen-place-state::before { content: ""; flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: currentColor; }
+.citizen-workspace .citizen-place-state[data-checked] { color: var(--ws-text); }
+.citizen-workspace .citizen-place .field-photo-strip { padding: 0; border: 0; background: none; }
+.citizen-workspace .citizen-place .field-photo-strip > h3 { display: none; }
+.citizen-workspace .citizen-place .field-photo-strip-note { margin: 6px 0 0; color: var(--ws-muted); font-size: 12px; order: 2; }
+.citizen-workspace .citizen-place-road { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--fill); }
+.citizen-workspace .citizen-place-road > span:first-child { display: grid; gap: 1px; min-width: 0; }
+.citizen-workspace .citizen-place-road strong { font-size: 14px; font-weight: 600; }
+.citizen-workspace .citizen-place-road small { color: var(--ws-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.citizen-workspace .citizen-place-road-state { display: inline-flex; align-items: center; gap: 6px; flex: none; color: var(--ws-muted); font-size: 13px; font-weight: 500; }
+.citizen-workspace .citizen-place-road-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.citizen-workspace .citizen-place-road[data-status="uncertain"] .citizen-place-road-state { color: var(--warning-ink); }
+.citizen-workspace .citizen-place-road[data-status="blocked"] .citizen-place-road-state { color: var(--critical-ink); }
+.citizen-workspace .citizen-place-date { color: var(--ws-muted); font-size: 13px; }
+.citizen-workspace .citizen-place-report { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 8px; font-size: 14px; font-weight: 600; }

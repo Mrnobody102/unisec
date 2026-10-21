@@ -7,6 +7,12 @@ import packetJson from '../../data/fixtures/che-tao-network.json';
 const packet=()=>validateIncidentPacket(structuredClone(packetJson));
 const edit=(type:ScenarioEdit['target']['type'],id:string,change:ScenarioEdit['change']):ScenarioEdit=>({id:crypto.randomUUID(),at:'2026-10-14T06:00:00Z',author:{id:'manager',name:'Coordinator'},target:{type,id,name:'Edited'},change,note:'Field verification'});
 describe('response feature changes',()=>{
+ it('keeps a hazard status update without requiring a note',()=>{
+  const p=packet(),h=p.hazards[0],from=scenarioProperties(h);
+  const entry={...edit('hazard',h.id,{kind:'properties',from,to:{...from,observation:'reported'}}),note:''};
+  expect(validEdit(entry)).toBe(true);
+  expect(applyScenarioEdits(p,[entry]).hazards.find(value=>value.id===h.id)?.observation).toBe('reported');
+ });
  it('edits an updated hazard after the prepared report so its name and coordinates are retained',()=>{
   const p=packet(),h=p.report.hazard,from=scenarioProperties(h),to={...from,names:['T?n ?? s?a','Edited name'] as [string,string],labelMode:'hide' as const};
   const changes=[edit('hazard',h.id,{kind:'properties',from,to}),edit('hazard',h.id,{kind:'move',from:h.projected,to:{x:h.projected.x+40,y:h.projected.y+80}})];

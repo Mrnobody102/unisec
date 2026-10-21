@@ -1,3 +1,6 @@
+import { LandslideFillControl } from '../../features/landslides/LandslideFillControl';
+import { useLandslideAppearance } from '../../features/landslides/useLandslideAppearance';
+import { defaultLandslideFillOpacity } from '../../features/landslides/landslideAppearance';
 import { supportsBasemapTone } from '../../features/imagery/basemapTone';
 import { TerrainOverlayControls } from '../../features/terrain/TerrainOverlayControls';
 import { AnalysisImageryControl } from '../../features/imagery/AnalysisImageryControl';
@@ -24,6 +27,7 @@ type PreviewProps = { imageryPreview?: string; terrainOverlays?: ReturnType<type
 export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance, onCompare, hasFloodData, hasHLZData, hasSelectedRoute, hasIncidentLayers, areaCount, onShowAreas, onReset, onToggleLayer, onClose, imageryPreview, terrainOverlays, hasTerrainGrid = false, analysisImagery }: Props & PreviewProps): JSX.Element {
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   const panelRef = useRef<HTMLElement>(null);
+  const { setFillOpacity } = useLandslideAppearance();
   const floating = useFloatingPanel(panelRef, 'layers');
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -53,6 +57,7 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
     <div className="layers-content">
       {hasIncidentLayers && <fieldset className="map-layer-group response-layer-group"><legend>{t('Ưu tiên ứng phó', 'Response priorities')}</legend>
         {row('landslide', t('Sạt lở', 'Landslides'))}
+        {areaCount > 0 && <LandslideFillControl locale={locale} disabled={layers.landslide === false}/>}
         {row('status', t('Tình trạng đường', 'Road status'))}
         {row('roads', t('Mạng đường', 'Road network'))}
         {row('communities', t('Địa bàn dân cư', 'Communities'))}
@@ -90,6 +95,6 @@ export function LayersDialog({ locale, layers, appearance, mapMode, onAppearance
       </details>
       {terrainOverlays && mapMode === '3d' && <details className="layer-section layer-terrain"><summary>{t('Phân tích địa hình 3D', '3D terrain analysis')}</summary><TerrainOverlayControls locale={locale} mapMode={mapMode} hasGrid={hasTerrainGrid} overlays={terrainOverlays}/></details>}
     </div>
-    <div className="layers-footer"><button className="text-button" onClick={onReset}>{t('Khôi phục hiển thị mặc định', 'Restore default display')}</button></div>
+    <div className="layers-footer"><button className="text-button" onClick={() => { setFillOpacity(defaultLandslideFillOpacity); onReset(); }}>{t('Khôi phục hiển thị mặc định', 'Restore default display')}</button></div>
   </section>;
 }

@@ -35,8 +35,6 @@ import './hazard-detail.css';
 type Props = {
   objectId: string;
   aoi: AnalysisArea;
-  parentName?: string;
-  canGoBack?: boolean;
   locale: Locale;
   roads: RoadSegment[];
   hazards: Hazard[];
@@ -47,7 +45,7 @@ type Props = {
   hasTerrainProfile: boolean;
   profileOpen: boolean;
   onToggleProfile: () => void;
-  onBack: () => void;
+  onClose: () => void;
   onSelectCommunity: (id: string, routeType?: 'candidate' | 'direct', sectionId?: string) => void;
   onOpenEvidence: (id: string) => void;
   onSelectObject: (id: string) => void;
@@ -65,10 +63,6 @@ type Props = {
   onOpenMappedArea?: (id: string) => void;
   /** Prepared survey photos by hazard ID. */
   fieldPhotos?: Map<string, PreparedPhotoPoint>;
-};
-
-const hazardKindLabels: Record<Hazard['kind'], [string, string]> = {
-  landslide: ['Sạt lở', 'Landslide'], flood: ['Ngập lụt', 'Flooding'], bridge: ['Cầu', 'Bridge'], crossing: ['Điểm vượt suối', 'Stream crossing']
 };
 
 /** An open field task: its name, then state and owner on one quiet line; the dot carries the state. */
@@ -93,8 +87,6 @@ export const ObjectDetailView: React.FC<Props> = ({
   scenarioEdits = [],
   objectId,
   aoi,
-  parentName,
-  canGoBack,
   locale,
   roads,
   hazards,
@@ -105,7 +97,7 @@ export const ObjectDetailView: React.FC<Props> = ({
   hasTerrainProfile,
   profileOpen,
   onToggleProfile,
-  onBack,
+  onClose,
   onSelectCommunity,
   onOpenEvidence,
   onSelectObject,
@@ -113,10 +105,8 @@ export const ObjectDetailView: React.FC<Props> = ({
   , mappedAreas = [], onOpenMappedArea
 }) => {
   const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
-  // A status change is a decision: it needs a reason, like the same change in GIS.
   // Keyed by object so a half-entered change never carries over to another selection.
   const statusRef = useRef<HTMLDivElement>(null);
-  const reasonRef = useRef<HTMLTextAreaElement>(null);
   const reasonErrorId = useId();
   const restoreStatusFocus = () => requestAnimationFrame(() => statusRef.current?.querySelector<HTMLButtonElement>('[data-road-status-edit]')?.focus());
   const [change, setChange] = useState<{ objectId: string; status: RoadStatus; note: string; error?: string } | null>(null);
@@ -162,10 +152,6 @@ export const ObjectDetailView: React.FC<Props> = ({
   const reachableOpen = reachable.filter(item => item.route.status !== 'blocked').length;
 
   // The title block of the sheet: what the object is, its state, and the few measured facts.
-  const objectKind = road ? t('Đoạn đường', 'Road section')
-    : hazard ? t(...hazardKindLabels[hazard.kind])
-    : site ? (site.kind === 'hlz' ? t('Bãi đáp trực thăng', 'Helicopter landing site') : t('Điểm tập kết', 'Staging point'))
-    : kind === 'aoi' ? t('Vùng ứng phó', 'Response area') : undefined;
   const status = road ? <StatusText tone={roadStatusTone(road.status)} icon={roadStatusIcon(road.status)}>{t(...roadStatusLabels[road.status])}</StatusText>
     : hazard ? <StatusText tone="warning">{hazardObservationText(hazard, locale, verification?.status === 'done')}</StatusText>
     : site?.kind === 'hlz' ? <StatusText tone={site.assessment === 'candidate' ? 'warning' : site.assessment === 'unavailable' ? 'critical' : 'neutral'} icon={site.assessment === 'assessed' ? undefined : 'uncertain'}>
@@ -194,15 +180,11 @@ export const ObjectDetailView: React.FC<Props> = ({
   return (
     <>
       <div className="sidebar-top object-detail-heading">
-        {(parentName || canGoBack) && <button className="text-button back panel-parent" onClick={onBack}>
-          <UiIcon name="back" size={16} /> {parentName || t('Quay lại', 'Back')}
-        </button>}
         <div className="detail-title">
           <div className="detail-name">
-            {objectKind && <p className="sheet-kind">{objectKind}</p>}
             <h1 id="object-title">{title}</h1>
           </div>
-          <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button>
+          <button className="icon-button panel-close" onClick={onClose} aria-label={t('Đóng chi tiết đối tượng', 'Close feature details')} title={t('Đóng chi tiết đối tượng', 'Close feature details')}><UiIcon name="close" /></button>
         </div>
         {status && <div className="detail-priority detail-meta">{status}{road && <span className="detail-measure">{formatRoadLength(road.len, locale)} km</span>}</div>}
       </div>
@@ -232,14 +214,14 @@ export const ObjectDetailView: React.FC<Props> = ({
                 </div>
                 <form className="road-status-change" onSubmit={event => {
                   event.preventDefault();
-                  if (!pending.note.trim()) { setChange({ ...pending, error: t('Ghi lý do thay đổi.', 'Add a reason for the change.') }); reasonRef.current?.focus(); return; }
                   if (onSetRoadStatus(road, pending.status, pending.note.trim())) { setChange(null); restoreStatusFocus(); }
                   else setChange({ ...pending, error: t('Không lưu được thay đổi.', 'Could not save the change.') });
                 }}>
-                  <label>{t('Lý do', 'Reason')}
-                    <textarea ref={reasonRef} name="roadStatusReason" rows={2} maxLength={2000} value={pending.note} aria-invalid={!!pending.error} aria-describedby={pending.error ? reasonErrorId : undefined}
+                  <details className="status-optional-note">
+                    <summary>{t('Thêm ghi chú (tùy chọn)', 'Add note (optional)')}</summary>
+                    <textarea aria-label={t('Ghi chú', 'Note')} name="roadStatusReason" rows={2} maxLength={2000} value={pending.note} aria-invalid={!!pending.error} aria-describedby={pending.error ? reasonErrorId : undefined}
                       onChange={event => setChange({ ...pending, note: event.target.value, error: undefined })}/>
-                  </label>
+                  </details>
                   {pending.error && <p id={reasonErrorId} className="road-status-error" role="alert">{pending.error}</p>}
                   <div className="road-status-actions">
                     <button className="button primary" type="submit" disabled={pending.status === road.status}>{t('Lưu', 'Save')}</button>
@@ -256,11 +238,13 @@ export const ObjectDetailView: React.FC<Props> = ({
               const effective = road.status === edit.change.to;
               return (
                 <section className="workflow-section manual-edit-note">
-                  <h3>{t('Thay đổi gần nhất', 'Latest change')}</h3>
-                  <p><strong>{t(`Từ ${roadStatusShortLabels[edit.change.from][0].toLocaleLowerCase('vi-VN')} sang ${roadStatusShortLabels[edit.change.to][0].toLocaleLowerCase('vi-VN')}`, `${roadStatusShortLabels[edit.change.from][1]} to ${roadStatusShortLabels[edit.change.to][1].toLocaleLowerCase('en-GB')}`)}</strong>
+                  <div className="manual-edit-heading">
+                    <h3>{t('Cập nhật gần nhất', 'Latest update')}</h3>
+                    {onRevertEdit && effective && <button type="button" className="text-button" onClick={() => setFailedFor(onRevertEdit(edit.id) ? null : objectId)}>{t('Hoàn tác', 'Undo')}</button>}
+                  </div>
+                  <p><strong>{t(`${roadStatusShortLabels[edit.change.from][0]} → ${roadStatusShortLabels[edit.change.to][0]}`, `${roadStatusShortLabels[edit.change.from][1]} → ${roadStatusShortLabels[edit.change.to][1]}`)}</strong>
                     <small>{edit.author.name}, {observationTime(edit.at, locale)}{edit.reverts && t(' (hoàn tác)', ' (undo)')}</small></p>
-                  {edit.note && <p className="manual-edit-reason">{edit.note}</p>}
-                  {onRevertEdit && effective && <button type="button" className="text-button" onClick={() => setFailedFor(onRevertEdit(edit.id) ? null : objectId)}>{t('Hoàn tác', 'Undo')}</button>}
+                  {edit.note && <details className="manual-edit-comment"><summary>{t('Ghi chú', 'Note')}</summary><p>{edit.note}</p></details>}
                 </section>
               );
             })()}

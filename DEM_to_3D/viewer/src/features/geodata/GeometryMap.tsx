@@ -1,7 +1,9 @@
+import { useLandslideAppearance } from '../landslides/useLandslideAppearance';
 import type { AnalysisImageryState } from '../imagery/useAnalysisImagery';
 import { createAnalysisOverlay2d } from '../imagery/analysisOverlay2d';
 import { areaMapLabel } from '../landslides/areaMapLabel';
 import { removeLeafletMap } from '../map/removeLeafletMap';
+import { panelFitPadding } from '../map/panelFitPadding';
 import { surveyPointSvg } from '../../terrain/poiFrame';
 import { distinctSourceRecords, representedHazard } from '../map/sourceRepresentation';
 import { landslideAreaOf, landslideAreaStyle, landslideBoundaryColor, landslideBoundaryCasing } from '../landslides/landslideAreas';
@@ -83,6 +85,7 @@ type Props = {
 const emptyPointGroup: readonly string[] = [];
 
 export function GeometryMap(props: Props): JSX.Element {
+  const { fillOpacity } = useLandslideAppearance();
   const t = (vi: string, en: string) => (props.locale === 'vi' ? vi : en);
   const host = useRef<HTMLDivElement>(null),
     mapRef = useRef<L.Map | null>(null);
@@ -297,6 +300,11 @@ export function GeometryMap(props: Props): JSX.Element {
   // and move the map away from the object being edited.
   const appliedFocus = useRef<ScenarioTarget | null>(null);
   const focusedView = useRef<typeof props.viewRequest | null>(null);
+  const focusPadding = () => {
+    const canvas = mapRef.current!.getContainer();
+    const card = canvas.closest('.geodata-map')?.querySelector<HTMLElement>('.scenario-card');
+    return panelFitPadding(canvas.getBoundingClientRect(),card?.getBoundingClientRect());
+  };
   useEffect(() => {
     const map=mapRef.current, target=props.scenarioFocus, scenario=props.scenario;
     if(!ready||!map||!target||!scenario||appliedFocus.current===target) return;
@@ -305,8 +313,11 @@ export function GeometryMap(props: Props): JSX.Element {
     const feature=collection.find(f=>f.id===target.id);
     if(!feature) return;
     appliedFocus.current=target; focusedView.current=props.viewRequest;
-    if('projected' in feature) {const g=roadGeographic(feature.projected);map.setView([g.latitude,g.longitude],Math.max(map.getZoom(),14),{animate:false});}
-    else map.fitBounds(L.latLngBounds(feature.points.map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);})),{padding:[48,48],maxZoom:16,animate:false});
+    if('projected' in feature) {
+      const point=feature.projected;
+      const bounds=L.latLngBounds([{x:point.x-250,y:point.y-250},{x:point.x+250,y:point.y+250}].map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);}));
+      map.fitBounds(bounds,{...focusPadding(),maxZoom:17,animate:false});
+    } else map.fitBounds(L.latLngBounds(feature.points.map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);})),{...focusPadding(),maxZoom:16,animate:false});
   },[ready,props.scenarioFocus,props.scenario]);
   const scenarioFitted = useRef(false);
   useEffect(() => {
@@ -400,7 +411,7 @@ export function GeometryMap(props: Props): JSX.Element {
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? pointStyle
-              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state, interactive: !props.editor.active && !props.onPickPoint } : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected, fillOpacity), className: 'landslide-area is-' + mappedArea.state, interactive: !props.editor.active && !props.onPickPoint } : {
                   color,
                   weight: referenceRoad ? selected ? 3 : 2 : selected ? 3 : 1.5,
                   fillOpacity: owner
@@ -620,6 +631,7 @@ export function GeometryMap(props: Props): JSX.Element {
     props.editor.mode,
     props.editor.draft,
     props.previewGeometry,
+    fillOpacity,
     props.intersection,
     showIntersection,
     pointMode,

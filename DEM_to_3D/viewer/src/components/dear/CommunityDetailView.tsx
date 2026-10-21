@@ -23,7 +23,7 @@ type Props = {
   locale: Locale;
   detailTab: DetailTab;
   onChangeDetailTab: (tab: DetailTab) => void;
-  onBack: () => void;
+  onClose: () => void;
   candidateRoute: ScenarioRoute | null;
   directRoute: ScenarioRoute | null;
   selectedRouteType: 'candidate' | 'direct';
@@ -49,7 +49,7 @@ export const CommunityDetailView: React.FC<Props> = ({
   locale,
   detailTab,
   onChangeDetailTab,
-  onBack,
+  onClose,
   candidateRoute,
   directRoute,
   selectedRouteType,
@@ -72,7 +72,7 @@ export const CommunityDetailView: React.FC<Props> = ({
             <h1 id="place-title">{community.name}</h1>
             {community.commune && community.commune !== community.name && <p className="community-parent">{t(`Xã ${community.commune}`, `${community.commune} commune`)}</p>}
           </div>
-          <button className="icon-button panel-close" onClick={onBack} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
+          <button className="icon-button panel-close" onClick={onClose} aria-label={t('Đóng chi tiết địa bàn', 'Close community details')} title={t('Đóng chi tiết địa bàn', 'Close community details')}><UiIcon name="close" /></button>
         </div>
         <div className="detail-priority community-status-summary">
           {signal?.urgentNeed ? <StatusText tone="critical">{t('Cần hỗ trợ khẩn', 'Urgent support')}</StatusText> :

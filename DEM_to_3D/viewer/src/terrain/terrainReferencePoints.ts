@@ -4,7 +4,9 @@ import type { GeometryRecord } from '../geo/vector/types';
 import type { TerrainMetadata } from '../types/terrain';
 import { terrainSurfaceElevation } from './terrainSurface';
 import { projectedToScene } from './coordinate';
-import { surveyPointSvg } from './poiFrame';
+import { markerSize, poiMetrics, surveyPointSvg } from './poiFrame';
+import { observationOf } from '../features/observations/model';
+import { observationSymbol } from '../features/observations/observationSymbol';
 
 type Surface = {
   model: {metadata?: TerrainMetadata | null; grid?: Float32Array | null};
@@ -19,13 +21,14 @@ export function terrainReferencePoints(
   surfaces: Surface[],
   onSelect: (id: string) => void,
   contextPoint?: (x:number,y:number)=>THREE.Vector3|undefined,
+  interactive: () => boolean = () => true,
 ) {
   const layer = document.createElement('div');
   layer.className = 'terrain-reference-layer';
   host.append(layer);
 
   const markers = records.flatMap(record => {
-    if (!record.visible || !record.feature.properties.sourceDatasetId || record.feature.geometry.type !== 'Point') return [];
+    if (!record.visible || record.feature.geometry.type !== 'Point') return [];
     let anchor: THREE.Vector3 | null = null;
     for (const surface of surfaces) {
       const {metadata, grid} = surface.model;
@@ -45,12 +48,17 @@ export function terrainReferencePoints(
     if (!anchor) return [];
 
     const selected = record.id === selectedId;
+    const observation = observationOf(record);
+    const metrics = observation ? poiMetrics(markerSize(false,selected),selected) : poiMetrics(28);
     const button = document.createElement('button');
-    button.className = 'terrain-reference-point' + (selected ? ' is-selected' : '');
+    button.className = 'terrain-reference-point' + (observation ? ' field-map-marker' + (observation.kind === 'survey' ? ' is-survey' : '') : '') + (selected ? ' is-selected' : '');
+    button.style.width = `${metrics.half * 2}px`;
+    button.style.height = `${metrics.height}px`;
     button.setAttribute('aria-label', record.name);
     button.setAttribute('aria-pressed', String(selected));
     button.dataset.mapReference = record.id;
-    button.innerHTML = surveyPointSvg(selected);
+    if (observation) button.append(observationSymbol(record.id,observation,selected));
+    else button.innerHTML = surveyPointSvg(selected);
     const label = document.createElement('span');
     label.className = 'terrain-reference-label';
     label.textContent = record.name;
@@ -60,10 +68,10 @@ export function terrainReferencePoints(
     }
     button.addEventListener('click', e => {
       e.stopPropagation();
-      onSelect(record.id);
+      if (interactive()) onSelect(record.id);
     });
     layer.append(button);
-    return [{button, anchor, selected}];
+    return [{button, anchor, metrics}];
   });
 
   const projected = new THREE.Vector3();
@@ -74,6 +82,8 @@ export function terrainReferencePoints(
         '#response-details,.field-map-card,.map-toolbar,.map-advanced-tools,.layers-panel,.map-tools',
       ) ?? [])].map(element => element.getBoundingClientRect());
       for (const marker of markers) {
+        marker.button.style.pointerEvents = interactive() ? 'auto' : 'none';
+        marker.button.tabIndex = interactive() ? 0 : -1;
         projected.copy(marker.anchor).project(camera);
         const x = (projected.x + 1) * host.clientWidth / 2;
         const y = (1 - projected.y) * host.clientHeight / 2;
@@ -82,7 +92,7 @@ export function terrainReferencePoints(
           y + bounds.y > rect.top - 12 && y + bounds.y < rect.bottom + 12);
         marker.button.hidden = projected.z < -1 || projected.z > 1 || covered ||
           x < 0 || y < 0 || x > host.clientWidth || y > host.clientHeight;
-        marker.button.style.transform = `translate(${x - 14}px,${y - 14}px)`;
+        marker.button.style.transform = `translate(${x - marker.metrics.half}px,${y - marker.metrics.tip}px)`;
         // Use the side with room; long survey names remain inspectable in the card.
         const left = x - 40, right = host.clientWidth - x - 40;
         marker.button.classList.toggle('label-left', left > right);

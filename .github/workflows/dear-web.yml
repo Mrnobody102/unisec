@@ -97,6 +97,11 @@ jobs:
           python scripts/check_map_symbol_consistency.py --url http://127.0.0.1:5213
           python scripts/check_dataset_selection.py --url http://127.0.0.1:5213
           python scripts/check_cartographic_evidence.py --url http://127.0.0.1:5213
+          python scripts/check_selection_navigation.py --url http://127.0.0.1:5213 --captures dist-release/selection
+          python scripts/check_focus_audit.py --url http://127.0.0.1:5213 --captures dist-release/focus
+          python scripts/check_status_update.py --url http://127.0.0.1:5213 --captures dist-release/status
+          python scripts/check_landslide_display.py --url http://127.0.0.1:5213 --captures dist-release/landslides
+          python scripts/check_resident_capture.py --url http://127.0.0.1:5213 --captures dist-release/resident-capture
           python scripts/check_route_profile_film.py --url http://127.0.0.1:5213
           python scripts/check_offline_package.py dist-release/dear-offline.zip
           if [[ "$RUN_EXTENDED" == "true" ]]; then

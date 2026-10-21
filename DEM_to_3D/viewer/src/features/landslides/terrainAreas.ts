@@ -13,7 +13,7 @@ import { landslideAreaOf, landslideAreaStyle, roadAreaSection, landslideBoundary
 
 type XY = { x: number; y: number };
 /** Display drape only: samples the supplied DEM and leaves NoData gaps unfilled. */
-export function terrainLandslideAreas(records: GeometryRecord[], metadata: TerrainMetadata, grid: Float32Array, roads: RoadSegment[], selectedId: string | null, resolution: { width: number; height: number }, networkVersion?: string): THREE.Group {
+export function terrainLandslideAreas(records: GeometryRecord[], metadata: TerrainMetadata, grid: Float32Array, roads: RoadSegment[], selectedId: string | null, resolution: { width: number; height: number }, networkVersion?: string, fillOpacity?: number): THREE.Group {
   const root = new THREE.Group(); root.name = 'mapped-landslide-areas';
   const crs = metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`;
   const spacing = Math.max(40, Math.hypot(metadata.grid_transform.a, metadata.grid_transform.d), Math.hypot(metadata.grid_transform.b, metadata.grid_transform.e));
@@ -39,7 +39,7 @@ export function terrainLandslideAreas(records: GeometryRecord[], metadata: Terra
   for (const record of records) {
     const value = record.visible && landslideAreaOf(record);
     if (!value || (record.feature.geometry.type !== 'Polygon' && record.feature.geometry.type !== 'MultiPolygon')) continue;
-    const selected = record.id === selectedId, style = landslideAreaStyle(value, selected);
+    const selected = record.id === selectedId, style = landslideAreaStyle(value, selected, fillOpacity);
     const polygons = record.feature.geometry.type === 'Polygon' ? [record.feature.geometry.coordinates] : record.feature.geometry.coordinates;
     for (const polygon of polygons) {
       const rings = polygon.map(r => r.map(p => { const [x, y] = proj4('EPSG:4326', crs, [p[0], p[1]]); return { x, y }; }));

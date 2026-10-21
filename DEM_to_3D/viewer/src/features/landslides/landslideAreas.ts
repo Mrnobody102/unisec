@@ -1,3 +1,4 @@
+import { defaultLandslideFillOpacity, landslideFillOpacity } from './landslideAppearance';
 import type { GeometryRecord, VectorGeometry } from '../../geo/vector/types';
 import { isPolygon } from '../../geo/vector/types';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
@@ -89,14 +90,14 @@ export function remapLandslideEvidence(records: GeometryRecord[]): GeometryRecor
   });
 }
 /** The boundary is geographic geometry; evidence and review state are read in its record. */
-export const landslideBoundaryColor = '#e6cb7a';
-export const landslideBoundaryCasing = '#39412c';
-export function landslideAreaStyle(a: Pick<LandslideArea, 'state' | 'review'>, selected = false) {
+export const landslideBoundaryColor = '#ffe36a';
+export const landslideBoundaryCasing = '#3c3921';
+export function landslideAreaStyle(a: Pick<LandslideArea, 'state' | 'review'>, selected = false, fillOpacity = defaultLandslideFillOpacity) {
   return {
     color: landslideBoundaryColor,
-    weight: selected ? 2.5 : 1.7,
+    weight: selected ? 3.5 : 2.5,
     dashArray: a.state === 'potential' ? '8 4' : undefined,
-    fillOpacity: selected ? .10 : .045,
+    fillOpacity: landslideFillOpacity(fillOpacity),
     lineCap: 'round' as const,
     lineJoin: 'round' as const
   };

@@ -1,9 +1,9 @@
 export const en = {
-  journeyBetweenTwoPoints: "Journey between two points",
+  journeyBetweenTwoPoints: "Directions between two points",
   fitJourney: "Show A, B and route",
-  collapseJourney: "Collapse journey",
-  expandJourney: "Expand journey details",
-  closeJourney: "Close journey",
+  collapseJourney: "Collapse directions",
+  expandJourney: "Expand route details",
+  closeJourney: "Close directions",
   start: "Start",
   end: "End",
   chooseStart: "Choose start",

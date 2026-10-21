@@ -1,9 +1,9 @@
 export const vi = {
-  journeyBetweenTwoPoints: "Hành trình giữa hai điểm",
+  journeyBetweenTwoPoints: "Tìm đường giữa hai điểm",
   fitJourney: "Xem A, B và tuyến",
-  collapseJourney: "Thu gọn hành trình",
-  expandJourney: "Mở chi tiết hành trình",
-  closeJourney: "Đóng hành trình",
+  collapseJourney: "Thu gọn kết quả tìm đường",
+  expandJourney: "Mở chi tiết tuyến đường",
+  closeJourney: "Đóng bảng tìm đường",
   start: "Điểm đầu",
   end: "Điểm cuối",
   chooseStart: "Chọn điểm đầu",

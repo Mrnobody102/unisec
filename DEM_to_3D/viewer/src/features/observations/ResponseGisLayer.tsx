@@ -1,5 +1,7 @@
+import { useLandslideAppearance } from '../landslides/useLandslideAppearance';
 import { avoidAreaLabelCollisions } from '../landslides/leafletAreaLabel';
 import {surveyPointSvg} from '../../terrain/poiFrame';
+import { detailInset } from '../map/detailInset';
 import { areaMapLabel } from '../landslides/areaMapLabel';
 import { usePointRendering } from '../map/usePointRendering';
 import { landslideAreaOf, landslideAreaStyle, landslideBoundaryCasing } from '../landslides/landslideAreas';
@@ -48,6 +50,7 @@ export function ResponseGisLayer({
   networkVersion?: string;
 }): null {
   const { mode: pointMode } = usePointRendering();
+  const { fillOpacity } = useLandslideAppearance();
   const action = useRef(onSelect);
   action.current = onSelect;
   const openGroup = useRef(onGroup);
@@ -80,7 +83,7 @@ export function ResponseGisLayer({
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? {}
-              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state } : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected, fillOpacity), className: 'landslide-area is-' + mappedArea.state } : {
                   color,
                   weight: referenceRoad ? selected ? 3 : 2 : selected ? 3 : 1.5,
                   fillOpacity: owner ? 0.18 : 0.03,
@@ -163,7 +166,7 @@ export function ResponseGisLayer({
       group.remove();
     };
     // groupKey stands in for groupIds so a new array with the same members does not redraw.
-  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode, roads, networkVersion]);
+  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode, roads, networkVersion, fillOpacity]);
   useEffect(() => {
     if (pointMode === 'individual' && groupKey) openGroup.current?.([]);
   }, [pointMode, groupKey]);
@@ -178,9 +181,7 @@ export function ResponseGisLayer({
     if (!record) return;
     const bounds = L.geoJSON(record.feature).getBounds();
     if (bounds.isValid()) {
-      const canvas = map.getContainer().getBoundingClientRect();
-      const dock = map.getContainer().closest('.workspace')?.querySelector('#response-details')?.getBoundingClientRect();
-      const reserve = dock?.height ? Math.max(0, Math.min(canvas.right, dock.right) - Math.max(canvas.left, dock.left)) : 0;
+      const reserve = detailInset(map.getContainer()).right;
       map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40 + reserve, 40], maxZoom: 16, animate: false });
     }
   }, [mapRef, request, records, enabled]);

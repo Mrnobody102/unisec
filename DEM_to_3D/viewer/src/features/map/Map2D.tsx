@@ -2,6 +2,7 @@ import { BasemapToneFilters } from '../imagery/BasemapToneFilters';
 import { preparedToneAssetId } from '../imagery/basemapTone';
 import { ImageryStatus, type ImageryLoadState } from '../imagery/ImageryStatus';
 import { DeviceLocationLayer } from './DeviceLocationLayer';
+import { detailInset } from './detailInset';
 import { responseOverviewPoints } from './responseOverview';
 import type { DeviceLocation } from '../../shared/hooks/useDeviceLocation';
 import { removeLeafletMap } from './removeLeafletMap';
@@ -185,7 +186,7 @@ export function Map2D(props: Props): JSX.Element {
           interactive: !propsRef.current.pointPickActive && !propsRef.current.locationOpen && !propsRef.current.drawOpen && !(propsRef.current.measurementOpen && (!propsRef.current.measureSession.finished || propsRef.current.measureSession.editing)),
           allowCounts: () => map.getZoom() < 14,
           canExpandGroup: () => map.getZoom() < 18,
-          onPreviewFocus:point=>{const reserve=parseFloat(getComputedStyle(host.closest('.workspace')??host).getPropertyValue('--response-detail-reserve'))||0;propsRef.current.viewControlRef?.current?.focusProjected(point,{right:reserve});},
+          onPreviewFocus:point=>propsRef.current.viewControlRef?.current?.focusProjected(point,detailInset(host)),
           onExpandGroup: points => {
             const positions = points.map(ll).filter((point): point is L.LatLng => point !== null);
             if (positions.length) map.fitBounds(L.latLngBounds(positions), { paddingTopLeft: [55, 80], paddingBottomRight: [75, 100], maxZoom: 18 });

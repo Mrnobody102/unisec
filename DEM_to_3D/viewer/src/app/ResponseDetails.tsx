@@ -145,7 +145,7 @@ export function ResponseDetails({
         onChangeDetailTab={(detailTab) =>
           onNavigate({ type: 'filters', values: { detailTab } })
         }
-        onBack={() => {
+        onClose={() => {
           onNavigate({ type: 'close-community' });
           onResetTools();
           onReturnFocus();
@@ -168,15 +168,9 @@ export function ResponseDetails({
     content = (
       <ObjectDetailView
         objectId={objectId}
-        canGoBack={navigation.detailHistory.length > 0}
         fieldPhotos={fieldPhotos}
         mappedAreas={mappedAreas}
         onOpenMappedArea={onOpenMappedArea}
-        parentName={
-          navigation.objectOrigins[view] === 'priority'
-            ? community?.name
-            : undefined
-        }
         aoi={aoi}
         locale={locale}
         roads={roads}
@@ -188,7 +182,7 @@ export function ResponseDetails({
         hasTerrainProfile={hasTerrainProfile}
         profileOpen={profileOpen}
         onToggleProfile={onToggleProfile}
-        onBack={() => {
+        onClose={() => {
           onNavigate({ type: 'close-object' });
           onResetTools();
           onReturnFocus();

@@ -20,6 +20,7 @@ describe('one representation of source geometry', () => {
     expect(visibleMapRecords([station],{landslide:true},'network',[hazard])).toEqual([]);
     expect(visibleMapRecords([station],{landslide:true},'network',[hazard],station.id)).toEqual([station]);
     expect(visibleMapRecords([station],{landslide:true},'network',[])).toEqual([station]);
+    expect(visibleMapRecords([station],{landslide:true},'network',[{...hazard,projected:{x:x+400,y}}])).toEqual([station]);
   });
   it('removes identical raw copies from display without changing storage, preferring the selected copy', () => {
     const records = [copy,station];

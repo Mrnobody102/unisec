@@ -6,6 +6,7 @@ import { geometryPositions } from '../geo/vector/types';
 import { AssessmentTimeline } from '../features/incident/AssessmentTimeline';
 import './workspace-layout.css';
 import { visibleMapRecords } from '../features/map/visibleMapRecords';
+import { detailInset } from '../features/map/detailInset';
 import { representedHazard } from '../features/map/sourceRepresentation';
 import { useMapPreview } from '../features/map/useMapPreview';
 import { landslideAreaOf } from '../features/landslides/landslideAreas';
@@ -181,6 +182,7 @@ export function ResponseWorkspace({
     (record) => record.visible && gisGroupIds.includes(record.id)
   );
   const inspectGisRecord = (id: string, keepGroup = false) => {
+    navigation.dispatch({type:'view',view:navigation.view,list:true});
     gis.select(id);
     setGisCardId(id);
     if (!keepGroup) setGisGroupIds([]);
@@ -189,6 +191,7 @@ export function ResponseWorkspace({
     resetTools();
   };
   const showGisOnResponse = (id: string) => {
+    navigation.dispatch({type:'view',view:navigation.view,list:true});
     gis.select(id);
     setGisCardId(id);
     setGisResponseView((previous) => ({ version: previous.version + 1, id }));
@@ -229,6 +232,7 @@ export function ResponseWorkspace({
   const work = useResponseWork(runtime.packet.datasetVersion);
   const [historical, setHistorical] = useState(false);
   const updated = effectiveRevision({ applied: reportApplied, historical });
+  const incidentSnapshot = useIncidentWorkspace(runtime.packet, updated, historical ? undefined : scenarioEdits?.edits, appliedAt);
   const [alertRead, setAlertRead] = useState<boolean>(false);
   const {
     showProfile,
@@ -274,7 +278,7 @@ export function ResponseWorkspace({
     context: !runtime.offline
   }));
 
-  const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion, runtime.packet.hazards, gisCardId), [gis.records, layers, historical, runtime.packet, gisCardId]);
+  const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion, incidentSnapshot.hazards, gisCardId), [gis.records, layers, historical, runtime.packet.datasetVersion, incidentSnapshot.hazards, gisCardId]);
 
   useEffect(() => {
     if (gisCardId && !displayedGis.some(record => record.id === gisCardId)) setGisCardId(null);
@@ -300,6 +304,7 @@ export function ResponseWorkspace({
   const [viewReadyVersion, setViewReadyVersion] = useState(0);
   const onViewReady = useCallback(() => setViewReadyVersion(version => version + 1), []);
   useEffect(() => {
+    if (window.matchMedia('(max-width:900px)').matches && mobileView !== 'map') return;
     if (!gisCard || !models[0]?.metadata) return;
     const metadata = models[0].metadata;
     const points = geometryPositions(gisCard.feature.geometry).map(([lon,lat]) => {
@@ -310,11 +315,11 @@ export function ResponseWorkspace({
       {x:points[0].x + 250, y:points[0].y + 250}
     ] : points;
     const timer = requestAnimationFrame(() => {
-      const reserve = parseFloat(getComputedStyle(document.querySelector('.workspace')!).getPropertyValue('--response-detail-reserve')) || 0;
-      viewControlRef.current?.frameProjected?.(frame,{right:reserve});
+      const map = document.querySelector<HTMLElement>('.map-canvas');
+      viewControlRef.current?.frameProjected?.(frame,map ? detailInset(map) : undefined);
     });
     return () => cancelAnimationFrame(timer);
-  }, [gisCardId, gisCard?.feature.geometry, mapMode, viewReadyVersion]);
+  }, [gisCardId, gisCard?.feature.geometry, mapMode, viewReadyVersion, mobileView, panelCollapsed]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const detailReturnTarget = useRef<HTMLElement | null>(null);
@@ -358,7 +363,6 @@ export function ResponseWorkspace({
     changeMode: handleUploadModeChange,
     changeGeographicMerge: handleGeographicMergeChange
   } = runtime;
-  const incidentSnapshot = useIncidentWorkspace(packet, updated, historical ? undefined : scenarioEdits?.edits, appliedAt);
   // Undo restores the status the road would have without that edit (including a field report
   // applied since), not the stored "from", which can be stale.
   const revertRoadStatus = (edits: ScenarioEdits, id: string): boolean => {
@@ -842,7 +846,7 @@ export function ResponseWorkspace({
     activeDialog !== 'layers';
   useEffect(() => {
     if(showProfile)return; // The profile owns framing while it is open.
-    const selection = view === 'priority' ? selectedCommunityId && `community:${selectedCommunityId}` : selectedObjectId;
+    const selection = view === 'priority' ? selectedObjectId ?? (selectedCommunityId && `community:${selectedCommunityId}`) : selectedObjectId;
     if (!selection || gisCard || gisGroup.length > 1) return;
     if (window.matchMedia('(max-width:900px)').matches && mobileView !== 'map') return;
     let firstFrame = 0,
@@ -1101,6 +1105,7 @@ export function ResponseWorkspace({
                 onGisSelect={inspectGisRecord}
                 gisGroupIds={gisGroupIds}
                 onGisGroup={(ids) => {
+                  navigation.dispatch({type:'view',view:navigation.view,list:true});
                   setPanelCollapsed(false);
                   setGisGroupIds(ids);
                   setGisCardId(null);
@@ -1161,7 +1166,7 @@ export function ResponseWorkspace({
                         selectedRoute: journey.open
                           ? journey.route
                           : activeRoute,
-                        selectedCommunityId: gisCard ? null : selectedCommunityId,
+                        selectedCommunityId: gisCard || view !== 'priority' ? null : selectedCommunityId,
                         selectedObjectId: gisCard ? null : selectedObjectId,
                         layers,
                         appearance: layerAppearance
@@ -1213,7 +1218,7 @@ export function ResponseWorkspace({
                             hazards: mapHazards,
                             roads: roads,
                             selectedRoute: activeRoute,
-                            selectedCommunityId: gisCard ? null : selectedCommunityId,
+                            selectedCommunityId: gisCard || view !== 'priority' ? null : selectedCommunityId,
                             selectedObjectId: gisCard ? null : selectedObjectId,
                             layers: layers,
                             appearance: layerAppearance
@@ -1271,13 +1276,13 @@ export function ResponseWorkspace({
               className="icon-button map-journey-trigger"
               title={
                 locale === 'vi'
-                  ? 'Hành trình giữa hai điểm'
-                  : 'Journey between two points'
+                  ? 'Tìm đường giữa hai điểm'
+                  : 'Directions between two points'
               }
               aria-label={
                 locale === 'vi'
-                  ? 'Hành trình giữa hai điểm'
-                  : 'Journey between two points'
+                  ? 'Tìm đường giữa hai điểm'
+                  : 'Directions between two points'
               }
               aria-pressed={journey.open}
               onClick={() => {
@@ -1286,7 +1291,7 @@ export function ResponseWorkspace({
                 journey.setOpen(!journey.open);
               }}
             >
-              <UiIcon name="route" /><span>{locale === 'vi' ? 'Hành trình' : 'Journey'}</span>
+              <UiIcon name="route" /><span>{locale === 'vi' ? 'Tìm đường' : 'Directions'}</span>
             </button>}
             flyoverControl={snapshotReady && flyoverInput && !historical && <FlyoverBar locale={locale} state={flyoverState} mapMode={mapMode}
             title={locale === 'vi' ? `Từ ${flyoverInput.start[0]} đến ${flyoverInput.end[0]}` : `${flyoverInput.start[1]} to ${flyoverInput.end[1]}`}

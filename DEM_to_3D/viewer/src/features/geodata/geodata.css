@@ -39,7 +39,7 @@
 .geodata-workspace .icon-button[aria-expanded="true"] { background: var(--ws-tint); color: var(--select-ink); }
 .geodata-field { display: grid; gap: 6px; color: var(--ws-muted); font-size: 12px; margin-bottom: 12px; }
 .geodata-workspace select,
-.geodata-workspace input:not([type="checkbox"]),
+.geodata-workspace input:not([type="checkbox"]):not([type="range"]),
 .geodata-workspace textarea { width: 100%; min-width: 0; padding: 7px 10px; min-height: var(--size-control); border: 1px solid var(--ws-line); border-radius: var(--radius-control); background-color: var(--ws-raised); color: var(--ws-text); font: inherit; }
 .geodata-workspace textarea { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; resize: vertical; max-height: 220px; }
 .geodata-workspace textarea[name="geometry"], .geodata-metadata pre { font-family: "JetBrains Mono", monospace; }

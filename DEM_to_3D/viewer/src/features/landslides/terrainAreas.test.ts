@@ -21,6 +21,19 @@ const render = (record = area(), grid = new Float32Array(441).fill(50), roads: R
 const meshes = (group: THREE.Group) => group.children.filter((c): c is THREE.Mesh<THREE.BufferGeometry> => c.type === 'Mesh');
 
 describe('landslide extent terrain display', () => {
+  it('uses the chosen fill opacity in 3D and keeps complete outlines at zero fill', () => {
+    const record = area();
+    const groups = [undefined, 0, .64].map(opacity => terrainLandslideAreas([record],metadata,new Float32Array(441).fill(50),[],record.id,{width:800,height:600},'network-a',opacity));
+    groups.forEach((group,i) => {
+      const material = meshes(group)[0].material as THREE.MeshBasicMaterial;
+      expect(material.opacity).toBe([.22,0,.64][i]);
+      const lines = group.children.filter(c=>c.type === 'Line2');
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.every(line => (line as THREE.Mesh).material && ((line as THREE.Mesh).material as THREE.Material).opacity > 0)).toBe(true);
+      expect(group.children.length).toBe(groups[0].children.length);
+    });
+    groups.forEach(disposeTerrainAreas);
+  });
   it('leaves a missing DEM empty instead of inventing an elevation', () => {
     const group = render(area(), new Float32Array(441).fill(NaN));
     expect(group.children).toHaveLength(0);

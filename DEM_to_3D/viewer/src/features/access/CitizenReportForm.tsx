@@ -11,9 +11,10 @@ import { VoiceRecorder } from "../observations/VoiceRecorder";
 import type { FieldVoice } from "../observations/voice";
 import { PhotoPreview } from "../observations/PhotoPreview";
 import { UiIcon } from "../../shared/ui/UiIcon";
+import { CameraCapture, canStreamCamera } from "./CameraCapture";
 
-/** A camera button only where the browser can open a camera; elsewhere it would repeat the file picker. */
-const canCapture = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+/** Phones open their own camera from the file input; other devices use the in-app camera view. */
+const nativeCapture = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
 export function CitizenReportForm({
   locale,
   observer,
@@ -40,12 +41,22 @@ export function CitizenReportForm({
     [busy, setBusy] = useState(false),
     [voiceBusy, setVoiceBusy] = useState(false),
     [error, setError] = useState(""),
-    [preview, setPreview] = useState<FieldPhoto | null>(null);
+    [preview, setPreview] = useState<FieldPhoto | null>(null),
+    [cameraOpen, setCameraOpen] = useState(false);
   const camera = useRef<HTMLInputElement>(null),
+    cameraButton = useRef<HTMLButtonElement>(null),
+    restoreCameraFocus = useRef(false),
     library = useRef<HTMLInputElement>(null),
     alive = useRef(true),
     reading = useRef(false),
     timeTouched = useRef(false);
+  // Encoding/reading a captured photo briefly disables its trigger while the dialog closes.
+  useEffect(() => {
+    if (restoreCameraFocus.current && !cameraOpen && !busy) {
+      restoreCameraFocus.current = false;
+      cameraButton.current?.focus();
+    }
+  }, [cameraOpen, busy]);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -165,12 +176,13 @@ export function CitizenReportForm({
       <section className="citizen-card" aria-labelledby="citizen-photo-title">
         <h2 id="citizen-photo-title">{t("Ảnh", "Photos")}<small>{photos.length}/{photoLimits.count}</small></h2>
         <div className="citizen-capture-actions">
-          {canCapture() && (
+          {(nativeCapture() || canStreamCamera()) && (
             <button
+              ref={cameraButton}
               type="button"
               className="button"
               disabled={busy || photos.length >= photoLimits.count}
-              onClick={() => camera.current?.click()}
+              onClick={() => (nativeCapture() ? camera.current?.click() : setCameraOpen(true))}
             >
               <UiIcon name="camera" size={20} />
               {t("Chụp ảnh", "Take photo")}
@@ -183,7 +195,7 @@ export function CitizenReportForm({
             onClick={() => library.current?.click()}
           >
             <UiIcon name="image" size={20} />
-            {canCapture() ? t("Ảnh có sẵn", "From gallery") : t("Chọn ảnh", "Choose photos")}
+            {nativeCapture() || canStreamCamera() ? t("Ảnh có sẵn", "From gallery") : t("Chọn ảnh", "Choose photos")}
           </button>
         </div>
         {photoInput(camera, "environment")}
@@ -269,6 +281,7 @@ export function CitizenReportForm({
           {t("Gửi báo cáo", "Send report")}
         </button>
       </div>
+      {cameraOpen && <CameraCapture locale={locale} onCapture={(file) => void attach([file])} onClose={() => {restoreCameraFocus.current = true;setCameraOpen(false);}} />}
       {preview && (
         <PhotoPreview
           photo={preview}

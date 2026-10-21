@@ -94,7 +94,7 @@ def run(url, chrome, captures=None):
             if not radios.nth(index).is_checked():
                 radios.nth(index).check()
                 break
-        detail.get_by_label("Lý do",exact=True).fill("Đã kiểm tra tình trạng đoạn đường trong phiên thử nghiệm.")
+        expect(detail.get_by_label("Ghi chú",exact=True)).to_be_hidden()
         detail.get_by_role("button",name="Lưu",exact=True).click()
         expect(detail.locator("h1")).to_have_text(title)
         expect(edit).to_have_attribute("aria-expanded","false")
