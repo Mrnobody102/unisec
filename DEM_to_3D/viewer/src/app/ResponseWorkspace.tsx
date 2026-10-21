@@ -762,7 +762,7 @@ export function ResponseWorkspace({
 
   const changeView = (view: WorkspaceView) => {
     rememberDetailTrigger();
-    navigation.dispatch({ type: 'view', view, list: true });
+    navigation.dispatch({ type: 'view', view });
     revealPanel();
   };
   const openList = (view: WorkspaceView) => {

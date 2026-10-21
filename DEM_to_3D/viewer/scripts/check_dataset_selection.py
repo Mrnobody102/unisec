@@ -64,14 +64,16 @@ def run(url, chrome=None):
         page.locator('#response-panel .community').click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
-        # Inspect a road and return to the original community without resetting it.
+        # Close a road detail, then explicitly reopen the community tab without resetting it.
         page.locator('#response-details').get_by_role('button', name='Xem đoạn cần kiểm tra', exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
         expect(page.locator('.route-section-row[aria-expanded="true"]')).to_have_attribute('aria-controls', 'section-' + packet['report']['roadId'])
         page.locator('.route-section-tools button').first.click()
         page.locator('.evidence-road').click()
         expect(page.locator('#response-details h1')).to_have_text(next(road for road in packet['roads'] if road['id'] == packet['report']['roadId'])['name'][0])
-        page.locator('#response-details .panel-parent').click()
+        page.locator('#response-details').get_by_role('button',name='Đóng chi tiết đối tượng',exact=True).click()
+        expect(page.locator('#response-details')).to_have_count(0)
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
         expect(page.locator('.route-section-row[aria-expanded="true"]')).to_have_attribute('aria-controls', 'section-' + packet['report']['roadId'])
         page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
