@@ -55,6 +55,9 @@ def run(url, chrome):
           const catalog=await (await fetch('/scenarios/che-tao/field-photos/photos.json')).json();
           const sample=document.createElement('canvas');sample.width=32;sample.height=32;
           const sc=sample.getContext('2d',{willReadFrequently:true});
+          // Area-filter both source and decoded video; sparse bilinear samples
+          // alias differently after the film's intermediate photo resizing.
+          sc.imageSmoothingQuality='high';
           const photos=await Promise.all(['IMG_0926','IMG_0850','IMG_0830'].map(async name=>{
             const photo=catalog.points.flatMap(p=>p.photos).find(p=>p.name===name);
             const bitmap=await createImageBitmap(await (await fetch('/scenarios/che-tao/field-photos/'+photo.image.url)).blob());
