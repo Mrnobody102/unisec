@@ -131,9 +131,34 @@ jobs:
             python scripts/check_panel_usability.py --url http://127.0.0.1:5213
             python scripts/check_session.py --url http://127.0.0.1:5213 --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json
           fi
+  map-fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: DEM_to_3D/viewer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: DEM_to_3D/viewer/.nvmrc
+          cache: npm
+          cache-dependency-path: DEM_to_3D/viewer/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run prepare:dataset
+      - name: Install browser checks
+        run: |
+          python -m pip install -r scripts/requirements-browser.txt
+          python -m playwright install --with-deps chromium
       - name: Verify map selection and storage synchronization fixtures
         run: |
           trap 'echo "::error title=Browser regression failed::$BASH_COMMAND"' ERR
+          mkdir -p dist-release
           node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5214 --strictPort > dist-release/fixture-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
