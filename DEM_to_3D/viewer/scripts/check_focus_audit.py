@@ -125,11 +125,14 @@ def run(url, captures, only=None, chrome=None):
             page.locator('.incident-landslide-row').first.click()
             page.get_by_role('button',name='Chuyển sang 3D',exact=True).click()
             ensure_selection(page,'.map-pin.is-selected')
+            # Enabling a terrain tool rebuilds the screen marker layer. Save the geographic
+            # target before that transition instead of reading a detached/hidden marker.
+            marker=page.locator('.map-pin.is-selected').bounding_box()
+            assert marker is not None
             page.get_by_role('button',name='Công cụ bổ sung',exact=True).click()
             page.get_by_role('button',name='Thông tin vị trí',exact=True).click()
             expect(page.locator('.terrain-viewer .map-marker-layer')).to_have_attribute('inert','')
             # A marker must not intercept a coordinate pick on the terrain underneath it.
-            marker=page.locator('.map-pin.is-selected').bounding_box()
             page.mouse.click(marker['x']+marker['width']/2,marker['y']+marker['height']-5)
             expect(page.locator('.map-location-panel dd').first).not_to_have_text('—',timeout=15000)
             expect(page.locator('.map-location-panel dd').first).to_contain_text('21.')
