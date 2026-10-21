@@ -9,6 +9,16 @@ import tempfile
 from playwright.sync_api import expect, sync_playwright
 
 
+_current_phase = 'initialization'
+
+
+def checkpoint(name):
+    """Only fixed phase names enter public CI annotations, never browser data."""
+    global _current_phase
+    _current_phase = name
+    print(f'::notice title=Terrain overlay check::{name}', flush=True)
+
+
 def sar_fixture(path):
     """Write a small two-band Float32 GeoTIFF with explicit UTM georeferencing."""
     xml = b'<GDALMetadata><Item name="DESCRIPTION" sample="0" role="description">VV</Item><Item name="DESCRIPTION" sample="1" role="description">VH</Item></GDALMetadata>\0'
@@ -75,6 +85,7 @@ def run(url, chrome):
         errors=[]; page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('console',lambda message: errors.append(message.text) if message.type=='error' and ('THREE.WebGLProgram' in message.text or 'GL_INVALID' in message.text) else None)
         page.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
+        checkpoint('initial 3D terrain load')
         page.goto(url+'/?offline=1&map=3d&demoRole=manager')
         expect(page.locator('.terrain-canvas')).to_be_visible(timeout=30000)
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()
@@ -82,11 +93,14 @@ def run(url, chrome):
         layers.locator('.layer-terrain > summary').click()
         expect(layers.get_by_label('Đường đồng mức',exact=True)).to_be_enabled(timeout=30000)
         page.evaluate('window.originalTerrainCanvas=document.querySelector(".terrain-canvas")')
+        checkpoint('enable contours')
         layers.get_by_label('Đường đồng mức',exact=True).check()
         expect(page.locator('.terrain-contour-label').first).to_be_attached(timeout=30000)
+        checkpoint('change contour interval')
         layers.get_by_label('Khoảng cao độ',exact=True).select_option('200')
         expect(page.locator('.terrain-contour-label').first).to_be_attached(timeout=30000)
         layers.locator('.terrain-sar-controls > summary').click()
+        checkpoint('import SAR raster')
         layers.get_by_label('Nhập lớp SAR GeoTIFF',exact=True).set_input_files(str(root/'sar.tif'))
         expect(layers.get_by_label('Kênh SAR',exact=True)).to_be_visible(timeout=15000)
         expect(layers.get_by_label('Kênh SAR',exact=True).locator('option')).to_have_text(['VV','VH'])
@@ -95,8 +109,10 @@ def run(url, chrome):
         layers.get_by_label('Kênh SAR',exact=True).select_option('1')
         layers.get_by_label('Độ rõ lớp SAR',exact=True).fill('40')
         expect(layers.locator('[role=alert]')).to_have_count(0)
+        checkpoint('retain terrain renderer after SAR update')
         assert page.evaluate('window.originalTerrainCanvas===document.querySelector(".terrain-canvas")'), 'Overlay controls reset the renderer'
         layers.get_by_role('button',name='Gỡ lớp SAR',exact=True).click()
+        checkpoint('remove contour labels')
         layers.get_by_label('Đường đồng mức',exact=True).uncheck()
         expect(page.locator('.terrain-contour-label')).to_have_count(0)
         page.keyboard.press('Escape')
@@ -104,6 +120,7 @@ def run(url, chrome):
         page.get_by_text('Phiên làm việc',exact=True).click()
         page.get_by_role('button',name='Mô hình địa hình',exact=True).click()
         dialog=page.get_by_role('dialog',name='Mô hình địa hình',exact=True)
+        checkpoint('import local tile model')
         dialog.locator('input[webkitdirectory]').set_input_files(str(package))
         expect(dialog).not_to_be_visible(timeout=15000)
         expect(page.locator('.terrain-canvas')).to_be_visible(timeout=15000)
@@ -111,35 +128,44 @@ def run(url, chrome):
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()
         layers=page.locator('.layers-panel')
         layers.locator('.layer-terrain > summary').click()
+        checkpoint('enable contours')
         layers.get_by_label('Đường đồng mức',exact=True).check()
         expect(page.locator('.terrain-contour-label').first).to_be_attached(timeout=15000)
         canvas=page.locator('.terrain-canvas').bounding_box()
         clip={'x':canvas['x']+canvas['width']*.55,'y':canvas['y']+canvas['height']*.46,'width':80,'height':80}
+        checkpoint('capture local imagery reference')
         tile_image=page.screenshot(clip=clip)
+        checkpoint('hide local imagery')
         layers.get_by_role('radio',name='Địa hình',exact=True).check()
         assert page.screenshot(clip=clip)!=tile_image, 'Turning imagery off did not hide local tiles'
+        checkpoint('restore local imagery')
         layers.get_by_role('radio',name='Ảnh nền',exact=True).check()
         page.wait_for_timeout(300)
         assert page.screenshot(clip=clip)==tile_image, 'Turning imagery on did not restore local tiles'
         layers.locator('.terrain-sar-controls > summary').click()
+        checkpoint('import SAR raster')
         layers.get_by_label('Nhập lớp SAR GeoTIFF',exact=True).set_input_files(str(root/'sar.tif'))
         expect(layers.get_by_label('Kênh SAR',exact=True)).to_be_visible(timeout=15000)
         page.wait_for_timeout(500)
+        checkpoint('verify SAR shades local tile model')
         assert page.screenshot(clip=clip)!=tile_image, 'SAR did not shade the local tile model'
         layers.get_by_label('Kênh SAR',exact=True).select_option('1')
         page.wait_for_timeout(300)
         layers.get_by_role('button',name='Gỡ lớp SAR',exact=True).click()
         page.wait_for_timeout(100)
+        checkpoint('verify SAR removal restores local imagery')
         assert page.screenshot(clip=clip)==tile_image, 'Removing SAR did not restore the local tile material'
         page.keyboard.press('Escape')
         page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
         page.get_by_role('button',name='Tối',exact=True).click()
         page.keyboard.press('Escape')
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()
+        checkpoint('mobile layer panel layout')
         page.set_viewport_size({'width':390,'height':844})
         expect(page.locator('.layers-panel')).to_be_visible()
         panel=page.locator('.layers-panel').bounding_box()
         assert panel['x']>=0 and panel['x']+panel['width']<=391, panel
+        checkpoint('verify no browser or GPU errors')
         assert not errors, errors
         page.screenshot(path=str(Path(tempfile.gettempdir())/'dear-terrain-overlays.png'))
         browser.close()
@@ -148,4 +174,8 @@ def run(url, chrome):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(); parser.add_argument('--url',default='http://127.0.0.1:5217'); parser.add_argument('--chrome'); args=parser.parse_args()
-    run(args.url.rstrip('/'),args.chrome)
+    try:
+        run(args.url.rstrip('/'),args.chrome)
+    except Exception:
+        print(f'::error title=Terrain overlay check failed::{_current_phase}', flush=True)
+        raise
