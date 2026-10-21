@@ -29,7 +29,7 @@ def run(url, captures):
         expect(page.locator('.map-pin.hazard.landslide:not([hidden]):not(.is-label-hidden)')).to_have_count(3)
         expect(page.locator('.incident-landslide-row .photo-thumb img').first).to_be_visible(timeout=15000)
         page.screenshot(path=str(captures/'original-kml-overview.png'))
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         cdp = context.new_cdp_session(page)
         cdp.send('DOM.enable')
         cdp.send('CSS.enable')

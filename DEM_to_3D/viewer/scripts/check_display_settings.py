@@ -17,6 +17,7 @@ def run(url, chrome, captures):
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(url + '/?map=2d&offline=1&demoRole=manager')
             expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
+            initial_assessment = page.locator('.assessment-moment[aria-pressed="true"] time').get_attribute('datetime')
             expect(page.locator('html')).to_have_attribute('data-theme', expected)
             assert page.evaluate("localStorage.getItem('dear.theme')") == expected
             if saved is not None:
@@ -24,17 +25,19 @@ def run(url, chrome, captures):
                 assert not errors, errors
                 continue
 
-            trigger = page.get_by_role('button', name='Cài đặt hiển thị', exact=True)
+            trigger = page.get_by_role('button', name='Cài đặt', exact=True)
             trigger.click()
-            expect(page.get_by_role('dialog', name='Cài đặt hiển thị', exact=True)).to_be_visible()
+            expect(page.get_by_role('dialog', name='Cài đặt', exact=True)).to_be_visible()
             settings = page.locator('.settings-menu')
             expect(settings).to_be_visible()
             expect(settings.get_by_role('button', name='Sáng', exact=True)).to_have_attribute('aria-pressed', 'true')
             expect(settings.get_by_role('combobox', name='Kiểu chữ', exact=True)).to_have_value('source')
             expect(settings.locator('.font-sample')).to_have_count(0)
-            expect(settings.get_by_role('button', name='Mô hình địa hình', exact=True)).not_to_be_visible()
-            expect(settings.get_by_role('button', name='Đặt lại phiên làm việc', exact=True)).not_to_be_visible()
-            assert settings.bounding_box()['height'] < 260, settings.bounding_box()
+            # Role switch and session tools are visible without expanding anything.
+            expect(settings.get_by_role('button', name='Đổi vai trò', exact=True)).to_be_visible()
+            expect(settings.get_by_role('button', name='Mô hình địa hình', exact=True)).to_be_visible()
+            expect(settings.get_by_role('button', name='Đặt lại phiên làm việc', exact=True)).to_be_visible()
+            assert settings.bounding_box()['height'] < 480, settings.bounding_box()
             for width in [1366, 390, 320]:
                 page.set_viewport_size({'width': width, 'height': 850})
                 bounds = settings.bounding_box()
@@ -53,29 +56,28 @@ def run(url, chrome, captures):
             page.evaluate('document.fonts.ready')
             assert page.locator('.sidebar').evaluate("node => getComputedStyle(node).fontFamily.startsWith('\"Source Sans 3\"')")
             assert page.evaluate("document.fonts.check('400 14px \"Source Sans 3\"', 'Ghi nhận hiện trường')")
-            settings.locator('.settings-workspace summary').click()
             expect(settings.get_by_role('button', name='Terrain model', exact=True)).to_be_visible()
             expect(settings.get_by_role('button', name='Reset workspace', exact=True)).to_be_visible()
             if captures:
                 page.screenshot(path=str(captures / 'display-settings-dark-en-expanded.png'), animations='disabled')
             page.keyboard.press('Escape')
             expect(settings).to_have_count(0)
-            expect(page.get_by_role('button', name='Display settings', exact=True)).to_be_focused()
+            expect(page.get_by_role('button', name='Settings', exact=True)).to_be_focused()
             page.reload()
             expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
             expect(page.locator('html')).to_have_attribute('data-font', 'source')
             expect(page.locator('html')).to_have_attribute('lang', 'en')
-            page.get_by_role('button', name='Display settings', exact=True).click()
+            page.get_by_role('button', name='Settings', exact=True).click()
             expect(page.get_by_role('combobox', name='Typography', exact=True)).to_have_value('source')
             page.get_by_role('button', name='Close settings', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
-            # Session reset stays available after deliberately expanding its section.
-            page.get_by_role('button', name='Display settings', exact=True).click()
-            page.locator('.settings-workspace summary').click()
+            # Session reset stays available directly in settings.
+            page.get_by_role('button', name='Settings', exact=True).click()
             page.get_by_role('button', name='Reset workspace', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
-            expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
+            expect(page.locator('.assessment-moment[aria-pressed="true"] time')).to_have_attribute('datetime', initial_assessment)
+            expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('Initial assessment')
             assert not errors, errors
             context.close()
         # A restricted browser must retain a usable light interface.
@@ -91,7 +93,7 @@ def run(url, chrome, captures):
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
         context.close()

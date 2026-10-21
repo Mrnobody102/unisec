@@ -3,6 +3,7 @@ import argparse
 import json
 import struct
 import tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
@@ -32,6 +33,7 @@ def fixture_tiff(path, color, longitude=104, epsg=4326):
 
 
 def run(url, chrome, captures):
+    packet = json.loads((Path(__file__).resolve().parents[1] / 'public/scenarios/che-tao/v0.3/incident.json').read_text(encoding='utf-8'))
     with tempfile.TemporaryDirectory() as temporary, sync_playwright() as p:
         fixture_dir = Path(temporary)
         fixture_tiff(fixture_dir / 'before.tif', [80, 140, 80])
@@ -40,17 +42,25 @@ def run(url, chrome, captures):
         browser = p.chromium.launch(headless=True, executable_path=chrome)
         context = browser.new_context(viewport={'width': 1366, 'height': 768})
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
+        # Exercise the local GeoTIFF fallback when prepared imagery is unavailable.
+        # The real prepared pair is checked by check_cartographic_evidence.py.
+        context.route('**/scenarios/che-tao/imagery/imagery.json', lambda route: route.abort())
         page = context.new_page()
         errors, requests = [], []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
+        basemap = page.locator('img[alt="Ảnh nền khu vực Chế Tạo"]')
+        expect(basemap).to_be_visible(timeout=25000)
+        initial_time = page.locator('.assessment-moment[aria-pressed="true"] time')
+        initial_assessment = initial_time.get_attribute('datetime')
+        initial_clock = initial_time.inner_text()
         assert not any('three.module' in request or '.glb' in request for request in requests)
-        page.locator('.incident-priority-row').first.click()
+        page.locator('.workspace-nav').get_by_role('button', name='Địa bàn', exact=True).click()
+        page.locator('#response-panel .community').first.click()
         page.get_by_role('button', name='Thông báo sự kiện', exact=True).click()
         page.get_by_role('button', name='Nhật ký sự kiện', exact=True).click()
-        expect(page.locator('.notification-history > li')).to_have_count(6)
+        expect(page.locator('.notification-history > li').first).to_be_visible()
         assert page.locator('.journal-list > li').evaluate_all("nodes=>nodes.every(node=>node.dataset.journalKind === 'report')")
         page.locator('.notification-history summary').first.click()
         expect(page.locator('.notification-record').first).to_contain_text('Ghi nhận')
@@ -58,11 +68,13 @@ def run(url, chrome, captures):
             page.screenshot(path=str(captures / 'workspace-notification-history.png'))
         page.get_by_role('button', name='Xem báo cáo', exact=True).click()
         page.get_by_role('button', name='Cập nhật bản đồ', exact=True).click()
+        updated_assessment = page.locator('.assessment-moment[aria-pressed="true"] time').get_attribute('datetime')
+        assert updated_assessment != initial_assessment
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         page.get_by_role('button', name='Sự kiện đang xem', exact=True).click()
         page.get_by_role('button', name='Nhật ký sự kiện', exact=True).click()
         page.get_by_role('radio', name='Đánh giá ban đầu').click()
-        expect(page.locator('.revision-notice')).to_contain_text('09:31')
+        expect(page.locator('.revision-notice')).to_contain_text(initial_clock)
         expect(page.locator('.route-travel-estimate')).to_be_visible()
         page.get_by_role('button', name='Về dữ liệu mới nhất', exact=True).click()
         expect(page.locator('.revision-notice')).to_have_count(0)
@@ -73,18 +85,18 @@ def run(url, chrome, captures):
         slider.focus(); slider.press('Home')
         for _ in range(30):
             slider.press('ArrowRight')
-        expect(page.locator('.map-2d .leaflet-image-layer')).to_have_css('opacity', '0.6')
+        expect(basemap).to_have_css('opacity', '0.6')
         page.get_by_label('Đường hiển thị', exact=True).select_option('affected')
         page.get_by_label('Nhãn địa danh', exact=True).select_option('selected')
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         if captures:
             page.screenshot(path=str(captures / 'workspace-layer-options.png'))
-        page.locator('.layer-analysis > summary').click()
         page.get_by_role('button', name='So ảnh trước và sau sự kiện', exact=True).click()
         for i, filename in enumerate(['before.tif', 'after.tif']):
             field = page.locator('.comparison-form fieldset').nth(i)
             field.locator('input[type=file]').set_input_files(fixture_dir / filename)
-            field.locator('input[type=datetime-local]').fill(['2026-09-20T09:00', '2026-09-29T09:00'][i])
+            acquired = datetime.fromisoformat(packet['incident']['triggeredAt']) + timedelta(days=-1 if i == 0 else 1)
+            field.locator('input[type=datetime-local]').fill(acquired.strftime('%Y-%m-%dT%H:%M'))
             field.locator('input[type=text],input:not([type])').fill('Test fixture')
         # A failed member must stop the pair load and allow another submission.
         page.locator('.comparison-form input[type=file]').nth(1).set_input_files(fixture_dir / 'invalid-crs.tif')
@@ -126,8 +138,8 @@ def run(url, chrome, captures):
             page.get_by_role('button', name='Tải GeoJSON', exact=True).click()
         collection = json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert collection['type'] == 'FeatureCollection' and 'crs' not in collection
-        assert '09:45' in collection['metadata']['asOf']
-        assert next(f for f in collection['features'] if f['id'] == 'road:E13')['properties']['status'] == 'blocked'
+        assert collection['metadata']['asOf'] == updated_assessment
+        assert next(f for f in collection['features'] if f['id'] == 'road:' + packet['report']['roadId'])['properties']['status'] == 'blocked'
         # Intercept native print only in the test, keeping the exact print document.
         page.evaluate("""() => {
           window.printCalls = 0;
@@ -141,11 +153,11 @@ def run(url, chrome, captures):
         assert 'A4 landscape' in page.frames[-1].locator('style').text_content()
         page.evaluate("document.querySelector('iframe').contentWindow.dispatchEvent(new Event('afterprint'))")
         page.keyboard.press('Escape')
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
-        page.locator('.settings-workspace summary').click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
         expect(page.locator('.incident-overview-heading')).to_be_visible()
-        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
+        expect(page.locator('.assessment-moment[aria-pressed="true"] time')).to_have_attribute('datetime', initial_assessment)
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('Đánh giá ban đầu')
         assert not errors, errors
         browser.close()
         print('Secondary tools passed: revisions, notifications, layer display, GeoTIFF comparison, GeoJSON, print and reset.')

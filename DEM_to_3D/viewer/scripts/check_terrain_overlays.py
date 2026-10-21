@@ -117,8 +117,7 @@ def run(url, chrome):
         layers.get_by_label('Đường đồng mức',exact=True).uncheck()
         expect(page.locator('.terrain-contour-label')).to_have_count(0)
         page.keyboard.press('Escape')
-        page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
-        page.get_by_text('Phiên làm việc',exact=True).click()
+        page.get_by_role('button',name='Cài đặt',exact=True).click()
         page.get_by_role('button',name='Mô hình địa hình',exact=True).click()
         dialog=page.get_by_role('dialog',name='Mô hình địa hình',exact=True)
         checkpoint('import local tile model')
@@ -191,7 +190,7 @@ def run(url, chrome):
         checkpoint('verify SAR removal restores local imagery')
         assert page.screenshot(clip=clip)==tile_image, 'Removing SAR did not restore the local tile material'
         page.keyboard.press('Escape')
-        page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+        page.get_by_role('button',name='Cài đặt',exact=True).click()
         page.get_by_role('button',name='Tối',exact=True).click()
         page.keyboard.press('Escape')
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()

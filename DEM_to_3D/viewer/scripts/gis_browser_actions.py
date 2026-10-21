@@ -104,5 +104,5 @@ def map_tool(page, name):
 
 
 def open_header_help(page):
-    page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+    page.get_by_role('button',name='Cài đặt',exact=True).click()
     page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True).click()

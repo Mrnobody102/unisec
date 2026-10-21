@@ -29,9 +29,8 @@ def run(url,chrome,captures):
     expect(details).to_contain_text('INC-2026-0412')
     expect(details.locator('time')).to_have_attribute('dateTime',page.locator('.incident-context-trigger time').get_attribute('dateTime'))
     page.keyboard.press('Escape');expect(details).to_have_count(0);expect(trigger).to_be_focused()
-    settings=page.get_by_role('button',name='Cài đặt hiển thị',exact=True);settings.click()
+    settings=page.get_by_role('button',name='Cài đặt',exact=True);settings.click()
     popup=page.locator('.settings-menu');inside(popup,width,height)
-    popup.locator('.settings-workspace summary').click()
     expect(popup.get_by_role('button',name='Đổi vai trò',exact=True)).to_be_visible()
     page.keyboard.press('Escape');expect(settings).to_be_focused()
     if captures and theme=='light':
@@ -43,10 +42,10 @@ def run(url,chrome,captures):
   page.keyboard.press('Escape');expect(trigger).to_be_focused()
   for width in [1440,320]:
    page.set_viewport_size({'width':width,'height':900})
-   help_button=page.get_by_role('button',name='Cài đặt hiển thị',exact=True);help_button.click()
+   help_button=page.get_by_role('button',name='Cài đặt',exact=True);help_button.click()
    page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True).click()
    guide=page.get_by_role('dialog',name='Hướng dẫn sử dụng',exact=True)
-   for topic in ['Đọc tình huống','Ảnh và kiểm tra ghi nhận','Bản đồ và hành trình','Dữ liệu GIS và ảnh','Lưu và xuất']:
+   for topic in ['Đọc tình huống','Ảnh và kiểm tra ghi nhận','Bản đồ và tìm đường','Dữ liệu GIS và ảnh','Lưu và xuất']:
     guide.get_by_role('button',name=topic,exact=False).click()
     image=guide.locator('.user-guide-shot img')
     expect(image).to_be_visible();assert image.evaluate('(n)=>n.complete&&n.naturalWidth>0')
@@ -54,7 +53,7 @@ def run(url,chrome,captures):
     assert guide.evaluate('n=>n.scrollWidth<=n.clientWidth')
    page.keyboard.press('Escape');expect(help_button).to_be_focused()
   # A saved alternative remains a choice, rather than being overwritten on every visit.
-  page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+  page.get_by_role('button',name='Cài đặt',exact=True).click()
   page.get_by_role('combobox',name='Kiểu chữ',exact=True).select_option('plex')
   page.keyboard.press('Escape');page.reload()
   expect(page.locator('html')).to_have_attribute('data-font','plex')

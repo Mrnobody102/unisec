@@ -37,7 +37,7 @@ def run(url, chrome, captures):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
         page.keyboard.press('Escape')
         overview = page.locator('.map-overview')

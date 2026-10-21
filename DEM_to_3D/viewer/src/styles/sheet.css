@@ -456,3 +456,7 @@ body .geodata-aoi-start .button { display: inline-flex; align-items: center; gap
 .workspace-shell .field-map-card .fact-rows dd { overflow-wrap:anywhere; font-size:13px; line-height:1.5; }
 .workspace-shell .response-detail-dock .hazard-basis .fact-rows dt { color:var(--ws-muted); }
 .workspace-shell .verification-row::before { box-shadow:none; }
+
+/* A community row may carry a second note (route state and time): it takes its own line. */
+.workspace-shell :is(#response-panel, .response-detail-dock) .impact-row small { min-width: 0; flex-wrap: wrap; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .impact-row small + small { grid-column: 1 / -1; grid-row: 3; }

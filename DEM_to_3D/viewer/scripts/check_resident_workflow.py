@@ -10,8 +10,7 @@ def switch_role(page):
  account=page.get_by_role('button',name='Tài khoản',exact=True)
  if account.count(): account.click()
  elif page.locator('.settings-anchor').count():
-  page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
-  page.locator('.settings-workspace summary').click()
+  page.get_by_role('button',name='Cài đặt',exact=True).click()
  page.get_by_role('button',name='Đổi vai trò',exact=True).click()
 
 def run(url,chrome,captures):

@@ -42,12 +42,12 @@ def run(url, chrome):
         page.get_by_role('button',name='Thu gọn diễn biến',exact=True).click()
         expect(page.locator('.map-timeline-toggle')).to_be_focused()
         assert page.locator('.work-area').bounding_box()['height'] >= expanded_height+60
-        page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+        page.get_by_role('button',name='Cài đặt',exact=True).click()
         page.get_by_role('button',name='Thu gọn tiêu đề',exact=True).click()
         expect(page.locator('.app-header')).not_to_be_visible()
         expect(page.locator('.map-header-restore')).to_be_focused()
         page.get_by_role('button',name='Hiện tiêu đề',exact=True).click()
-        expect(page.get_by_role('button',name='Cài đặt hiển thị',exact=True)).to_be_focused()
+        expect(page.get_by_role('button',name='Cài đặt',exact=True)).to_be_focused()
         map_tool(page,'Đo trên bản đồ 2D').click()
         page.locator('.map-tool-toggle').click()
         page.get_by_role('button',name='Đóng công cụ đo',exact=True).click()
@@ -120,7 +120,7 @@ def run(url, chrome):
         assert baseline==page.evaluate("localStorage.getItem('dear.gis.v2')"), 'Viewing and filtering changed saved records'
         page.screenshot(path=str(Path(tempfile.gettempdir())/'dear-gis-layout-light.png'))
         page.get_by_role('button',name='Đóng dữ liệu GIS',exact=True).click()
-        page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+        page.get_by_role('button',name='Cài đặt',exact=True).click()
         page.get_by_role('button',name='Tối',exact=True).click()
         page.keyboard.press('Escape')
         map_tool(page, 'Dữ liệu GIS').click()

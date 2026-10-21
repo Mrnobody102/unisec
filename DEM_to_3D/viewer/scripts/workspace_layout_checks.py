@@ -78,7 +78,7 @@ def check_workspace_layout(browser, url, captures=None):
             tools = page.locator('.map-tools').bounding_box()
             canvas = page.locator('.map-canvas').bounding_box()
             assert abs(tools['y'] + tools['height'] - canvas['y']) < 1, ('Gap below map tools', width, tools, canvas)
-            for label, selector in [('Thông báo sự kiện', '.notification-popover'), ('Cài đặt hiển thị', '.settings-menu')]:
+            for label, selector in [('Thông báo sự kiện', '.notification-popover'), ('Cài đặt', '.settings-menu')]:
                 trigger = page.get_by_role('button', name=label, exact=True)
                 trigger.click()
                 surface = page.locator(selector)

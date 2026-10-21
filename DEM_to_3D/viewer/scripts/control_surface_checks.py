@@ -17,7 +17,7 @@ def check_control_surfaces(browser, url, captures=None):
             expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             page.evaluate('document.fonts.ready')
             check_incident_layout(page)
-            page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+            page.get_by_role('button', name='Cài đặt', exact=True).click()
             page.get_by_role('button', name='English', exact=True).click()
             page.keyboard.press('Escape')
             page.locator('.panel-resize-handle').focus()

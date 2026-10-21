@@ -32,7 +32,7 @@ def run(url, chrome, captures):
         expect(panel).to_be_visible()
         expect(panel.locator('.map-measure-result')).to_have_text(result)
         # Popover clicks and keyboard commands must not consume measurement points.
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
         page.get_by_role('combobox', name='Typography', exact=True).select_option('plex')

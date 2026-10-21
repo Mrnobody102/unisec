@@ -119,7 +119,7 @@ def run(url, chrome, captures):
         expect(guide).to_be_visible();guide.get_by_role('button',name='Dữ liệu GIS và ảnh',exact=False).click()
         expect(guide).to_contain_text('vẽ vùng nghi ảnh hưởng')
         page.keyboard.press('Escape');expect(guide).to_have_count(0)
-        expect(page.get_by_role('button',name='Cài đặt hiển thị',exact=True)).to_be_focused()
+        expect(page.get_by_role('button',name='Cài đặt',exact=True)).to_be_focused()
         assert not errors,errors
         browser.close()
     print('Field areas: selected-record layout, file time, draw/edit/cancel/undo, AOI isolation, KML associations, responsive themes and guide passed.')

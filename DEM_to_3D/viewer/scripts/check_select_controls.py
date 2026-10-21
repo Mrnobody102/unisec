@@ -154,6 +154,9 @@ def run(url, chrome, captures):
         page.get_by_label('Tên của bạn', exact=True).fill('Kiểm tra giao diện')
         page.get_by_role('button', name='Vào ứng dụng', exact=True).click()
         expect(page.locator('.citizen-workspace')).to_be_visible()
+        # The current village summary has no selector when there is one village.
+        # The report form always exposes its explicit village selector.
+        page.get_by_role('button', name='Gửi ghi nhận', exact=True).click()
         for width in [1440, 390, 320]:
             page.set_viewport_size({'width': width, 'height': 960})
             check_controls(page)
@@ -161,7 +164,7 @@ def run(url, chrome, captures):
 
         page = new_page()
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click(timeout=25000)
+        page.get_by_role('button', name='Cài đặt', exact=True).click(timeout=25000)
         check_controls(page)
         page.locator('.settings-menu select').click()
         page.keyboard.press('Home')

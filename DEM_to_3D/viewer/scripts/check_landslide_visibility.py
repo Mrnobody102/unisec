@@ -71,7 +71,7 @@ def run(url, chrome, captures):
             expect(panel).to_have_count(0)
         assert page.evaluate("localStorage.getItem('dear.gis.v2')") == saved
         page.set_viewport_size({'width': 1440, 'height': 960})
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()
         page.keyboard.press('Escape')
         page.get_by_role('button', name='Lớp bản đồ', exact=True).click()

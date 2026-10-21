@@ -977,7 +977,6 @@ export function ResponseWorkspace({
           if (!defaultTerrainData) reloadTerrain();
           showToast(['Đã đặt lại phiên làm việc', 'Workspace reset']);
         }}
-        activeModelName={models[0]?.name}
       />
 
       <main className="work-area">

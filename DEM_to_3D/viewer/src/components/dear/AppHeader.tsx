@@ -44,7 +44,6 @@ type Props = {
   onOpenTimeline: () => void;
   onOpenNotifications: () => void;
   onReset: () => void;
-  activeModelName?: string;
 };
 
 export const AppHeader: React.FC<Props> = ({
@@ -75,7 +74,6 @@ export const AppHeader: React.FC<Props> = ({
   onOpenTimeline,
   onOpenNotifications,
   onReset,
-  activeModelName,
   collapsed = false, onCollapse,
   locked = false
 }) => {
@@ -186,11 +184,11 @@ export const AppHeader: React.FC<Props> = ({
               setNotificationsOpen(false);
               setPrefOpen(!prefOpen);
             }}
-            aria-label={t('Cài đặt hiển thị', 'Display settings')}
+            aria-label={t('Cài đặt', 'Settings')}
             aria-expanded={prefOpen}
             aria-haspopup="dialog"
             aria-controls="display-settings"
-            title={t('Cài đặt hiển thị', 'Display settings')}
+            title={t('Cài đặt', 'Settings')}
           >
             <UiIcon name="settings" />
           </button>
@@ -205,7 +203,7 @@ export const AppHeader: React.FC<Props> = ({
             >
               <div className="settings-heading">
                 <h2 id="display-settings-title">
-                  {t('Cài đặt hiển thị', 'Display settings')}
+                  {t('Cài đặt', 'Settings')}
                 </h2>
                 <button
                   className="icon-button"
@@ -219,6 +217,11 @@ export const AppHeader: React.FC<Props> = ({
                 >
                   <UiIcon name="close" />
                 </button>
+              </div>
+              <div className="settings-account">
+                <span className="settings-avatar" aria-hidden="true"><UiIcon name="account" size={20}/></span>
+                <span className="settings-account-name"><strong>{identityName}</strong></span>
+                <button className="button settings-switch" onClick={() => {setPrefOpen(false);onSignOut();}}>{t('Đổi vai trò', 'Switch role')}</button>
               </div>
               <div className="settings-group">
                 <strong className="settings-label">
@@ -289,33 +292,11 @@ export const AppHeader: React.FC<Props> = ({
               <div className="settings-group settings-utilities">
                 <button className="settings-link" onClick={() => {prefRef.current?.querySelector<HTMLButtonElement>('button')?.focus();setPrefOpen(false);onOpenHelp();}}><UiIcon name="help" size={16}/>{t('Hướng dẫn sử dụng', 'User guide')}</button>
                 {onCollapse && <button className="settings-link" onClick={() => {setPrefOpen(false);setNotificationsOpen(false);onCollapse();}}><UiIcon name="collapse" size={16}/>{t('Thu gọn tiêu đề', 'Hide header')}</button>}
+                <button className="settings-link" onClick={() => {setPrefOpen(false);onOpenUpload();}}>
+                  <UiIcon name="upload" size={16}/>{t('Mô hình địa hình', 'Terrain model')}
+                </button>
+                <button className="settings-link" onClick={() => {setPrefOpen(false);onReset();}}><UiIcon name="undo" size={16}/>{t('Đặt lại phiên làm việc', 'Reset workspace')}</button>
               </div>
-              <details className="settings-workspace">
-                <summary>{t('Phiên làm việc', 'Workspace session')}</summary>
-                <div className="settings-workspace-actions">
-                  <button
-                    className="settings-link"
-                    onClick={() => {
-                      setPrefOpen(false);
-                      onOpenUpload();
-                    }}
-                  >
-                    {t('Mô hình địa hình', 'Terrain model')}
-                  </button>
-                  <button
-                    className="settings-link"
-                    onClick={() => {
-                      setPrefOpen(false);
-                      onReset();
-                    }}
-                  >
-                    {t('Đặt lại phiên làm việc', 'Reset workspace')}
-                  </button>
-                  <span className="settings-identity">{identityName}</span>
-                  <button className="settings-link" onClick={() => {setPrefOpen(false);onSignOut();}}>{t('Đổi vai trò', 'Switch role')}</button>
-                  {activeModelName && <small>{activeModelName}</small>}
-                </div>
-              </details>
             </div>
           )}
         </div>

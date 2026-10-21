@@ -382,7 +382,7 @@ def run(url, chrome, captures):
         page.locator('.decision-tabs button').nth(1).click()
         expect(page.locator('#response-details').get_by_text('Các tuyến đã biết đều bị chặn. Mất liên lạc.', exact=True)).to_have_count(1)
         expect(page.locator('.sidebar-intro')).to_have_count(0)
-        page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
         page.get_by_role('button', name='English', exact=True).click()
         search = page.get_by_role('combobox', name='Search map', exact=True)
         search.fill('pung hoc')
@@ -396,7 +396,7 @@ def run(url, chrome, captures):
         expect(panel.locator('.sidebar-intro')).to_have_count(0)
         check_panel(page)
         assert not errors, errors
-        page.get_by_role('button', name='Display settings', exact=True).click()
+        page.get_by_role('button', name='Settings', exact=True).click()
         page.get_by_role('combobox', name='Typography', exact=True).select_option('classic')
         page.reload()
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)

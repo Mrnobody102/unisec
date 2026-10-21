@@ -44,8 +44,7 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
                                           **cdp.send('Memory.getDOMCounters')})
 
             def reset():
-                page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
-                page.locator('.settings-workspace summary').click()
+                page.get_by_role('button', name='Cài đặt', exact=True).click()
                 page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
                 expect(page.locator('.incident-overview-heading')).to_be_visible()
 

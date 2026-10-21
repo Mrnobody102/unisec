@@ -52,6 +52,15 @@ def run(url, chrome, captures=None):
         expect(comparison).to_be_visible()
         expect(comparison.get_by_role("status")).to_have_count(0,timeout=30000)
         expect(comparison.locator('img[alt="Ảnh Planet gốc"]')).to_have_count(2)
+        # Tone matching belongs to the new context basemap; the two comparison
+        # scenes and their ancestor panes must retain their original pixel colours.
+        expect(comparison.locator('.leaflet-tile-pane > .leaflet-layer')).to_have_count(1)
+        assert comparison.locator('img[alt="Ảnh Planet gốc"]').evaluate_all('''images=>images.every(image=>{
+            for(let node=image;node&&node.closest('.prepared-comparison-map');node=node.parentElement){
+                if(getComputedStyle(node).filter!=='none')return false;
+            }
+            return true;
+        })''')
         comparison.get_by_role("slider",name="Vị trí so ảnh",exact=True).fill("35")
         assert comparison.locator(".leaflet-comparison-before-pane").evaluate('el=>el.style.clip')
         assert comparison.locator(".leaflet-comparison-after-pane").evaluate('el=>el.style.clip')

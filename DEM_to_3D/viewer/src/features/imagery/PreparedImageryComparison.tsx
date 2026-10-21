@@ -6,6 +6,11 @@ import {UiIcon} from '../../shared/ui/UiIcon';
 import {acquisitionLabel,rasterUrl,selectedRasters,type AnalysisLayer} from './analysisImagery';
 import {landslideAreaOf,landslideAreaStyle} from '../landslides/landslideAreas';
 import {removeLeafletMap} from '../map/removeLeafletMap';
+import {basemapTileOptions,imagerySource} from '../map/imagerySource';
+import {retryTileErrors} from '../map/tileRetry';
+import {supportsBasemapTone} from './basemapTone';
+import {BasemapToneFilters} from './BasemapToneFilters';
+import './analysis-imagery.css';
 import './prepared-comparison.css';
 
 /** Co-registered raw optical previews on a single map, with the original KML overlay.
@@ -32,6 +37,8 @@ export function PreparedImageryComparison({layers,records,selected,locale,onClos
     const run=new AbortController();
     const map=L.map(host.current,{attributionControl:false,zoomControl:false,maxZoom:19});mapRef.current=map;
     L.control.zoom({position:'topright'}).addTo(map);
+    // The same satellite basemap as the main map, under both Planet scenes, so their extent reads in context.
+    retryTileErrors(L.tileLayer(imagerySource.url,{maxNativeZoom:imagerySource.maxNativeZoom,maxZoom:19,noWrap:true,...basemapTileOptions})).addTo(map);
     const pane=map.createPane('comparison-before');pane.style.zIndex='310';
     const afterPane=map.createPane('comparison-after');afterPane.style.zIndex='300';mask.current={before:pane,after:afterPane};
     map.on('move zoom resize',applyMask);
@@ -64,9 +71,11 @@ export function PreparedImageryComparison({layers,records,selected,locale,onClos
   return <div className="modal-overlay" onClick={onClose}><section className="modal-dialog prepared-comparison" role="dialog" aria-modal="true" aria-labelledby="prepared-comparison-title" onClick={event=>event.stopPropagation()}>
     <header className="modal-head"><h2 id="prepared-comparison-title">{t('Đối chiếu vùng sạt trên ảnh','Compare mapped extents with imagery')}</h2><button className="icon-button" aria-label={t('Đóng','Close')} onClick={onClose}><UiIcon name="close"/></button></header>
     <div className="prepared-comparison-map" ref={host}/>
+    {/* The basemap takes the Planet scene's measured tone, as on the main map; Planet pixels stay original. */}
+    <BasemapToneFilters host={host} active={supportsBasemapTone(layers)&&!imagerySource.custom}/>
     <div className="prepared-comparison-dates"><span>{acquisitionLabel(before)}</span><span>{acquisitionLabel(after)}</span></div>
     <label className="prepared-comparison-slider"><span>{t('Trước','Before')}</span><input type="range" min="0" max="100" aria-label={t('Vị trí so ảnh','Image comparison position')} value={position} onChange={event=>setPosition(Number(event.target.value))}/><span>{t('Sau','After')}</span></label>
-    <footer><p>{t('Màu ảnh gốc. Ranh KML chưa xác nhận cùng ngày ảnh.','Original image colours. KML extents have not been verified against these acquisition dates.')}</p><small>© Planet Labs PBC</small>
+    <footer><p>{t('Màu ảnh gốc. Ranh KML chưa xác nhận cùng ngày ảnh.','Original image colours. KML extents have not been verified against these acquisition dates.')}</p><small>© Planet Labs PBC. {t('Ảnh nền','Basemap')}: {imagerySource.name}</small>
       {status==='loading'&&<span role="status">{t('Đang tải ảnh','Loading imagery')}</span>}
       {status==='error'&&<span role="status">{t('Chưa tải được cặp ảnh.','Could not load the image pair.')} <button className="text-button" onClick={()=>setAttempt(value=>value+1)}>{t('Thử lại','Retry')}</button></span>}
     </footer>
