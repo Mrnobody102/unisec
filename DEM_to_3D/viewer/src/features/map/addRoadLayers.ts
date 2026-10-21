@@ -1,6 +1,6 @@
 import * as L from 'leaflet';
 import type { RoadSegment } from '../../types/dear';
-import { roadColors } from '../../terrain/roadStyle';
+import { roadColors, roadStroke } from '../../terrain/roadStyle';
 import { mapPane } from './mapLayerOrder';
 
 type Props = {
@@ -14,10 +14,10 @@ export function addRoadLayers({ road, points, layer, selected, inspected, warnin
   const pane = mapPane(warning ? 'roadStatus' : selected ? 'route' : 'roads');
   const color = warning ? roadColors[road.status as 'blocked' | 'uncertain']
     : selected ? roadColors.selected : imagery ? roadColors.networkImagery : roadColors.networkTerrain;
-  const weight = selected || inspected ? 4 : 2.5;
+  const weight = selected || inspected ? roadStroke.emphasis : roadStroke.normal;
   const opacity = selected || inspected || warning ? 1 : networkOpacity;
   const casingColor = inspected ? roadColors.inspectedCasing : selected && !warning ? roadColors.selectedCasing : roadColors.neutralCasing;
-  const casing = L.polyline(points, { pane, color: casingColor, weight: weight + (inspected ? 4 : 2), opacity: opacity * 0.8, interactive: false }).addTo(layer);
+  const casing = L.polyline(points, { pane, color: casingColor, weight: weight + (inspected ? roadStroke.inspectedCasing : roadStroke.casing), opacity: opacity * 0.8, interactive: false }).addTo(layer);
   L.polyline(points, { pane, color, weight, opacity, interactive: false, className: selected ? 'map-road-route-line' : 'map-road-network-line',
     dashArray: warning && road.status === 'uncertain' ? '7 5' : undefined }).addTo(layer);
   const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -26,6 +26,6 @@ export function addRoadLayers({ road, points, layer, selected, inspected, warnin
   target.getElement()?.setAttribute('data-road-id', road.sourceRoadId ?? road.id);
   if (selected) target.getElement()?.setAttribute('data-route-segment', road.id);
   target.on('click', onSelect);
-  target.on('mouseover', () => casing.setStyle({ color: roadColors.inspectedCasing, opacity: 0.85, weight: weight + 4 }));
-  target.on('mouseout', () => casing.setStyle({ color: casingColor, opacity: opacity * 0.8, weight: weight + (inspected ? 4 : 2) }));
+  target.on('mouseover', () => casing.setStyle({ color: roadColors.inspectedCasing, opacity: 0.85, weight: weight + roadStroke.inspectedCasing }));
+  target.on('mouseout', () => casing.setStyle({ color: casingColor, opacity: opacity * 0.8, weight: weight + (inspected ? roadStroke.inspectedCasing : roadStroke.casing) }));
 }

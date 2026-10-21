@@ -1,6 +1,7 @@
+import {poiGeometry} from '../map/poiGeometry';
 import * as L from "leaflet";
 import type { GeometryRecord } from "../../geo/vector/types";
-import { poiFrameSvg } from "../../terrain/poiFrame";
+import { observationSymbol } from './observationSymbol';
 import type { FieldObservation } from "./model";
 import "./observations.css";
 /** Evidence remains a source point, never an automatically confirmed incident. */
@@ -10,13 +11,7 @@ export function observationMarker(
   observation: FieldObservation,
   options: { pane: string; selected: boolean; interactive: boolean },
 ): L.Marker {
-  const icon = document.createElement("span"),
-    glyph = document.createElement("b");
-  glyph.textContent = observation.kind === "survey" ? "i" : "!";
-  icon.setAttribute("aria-hidden", "true");
-  icon.dataset.fieldId = record.id;
-  icon.innerHTML = poiFrameSvg(options.selected);
-  icon.append(glyph);
+  const icon = observationSymbol(record.id, observation, options.selected);
   return L.marker(position, {
     pane: options.pane,
     keyboard: options.interactive,
@@ -28,8 +23,7 @@ export function observationMarker(
         "field-map-marker" +
         (observation.kind === "survey" ? " is-survey" : "") +
         (options.selected ? " is-selected map-selected-reference" : ""),
-      iconSize: [28, options.selected?32:28],
-      iconAnchor: [14, options.selected?28.8:25.2],
+      ...poiGeometry(options.selected),
       tooltipAnchor: [0, -30],
     }),
   });

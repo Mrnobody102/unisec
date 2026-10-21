@@ -1,3 +1,4 @@
+import { validAdministrativeMetadata } from './administrativeMetadata';
 import type { TerrainMetadata } from '../types/terrain';
 
 export class TerrainAssetError extends Error {
@@ -69,6 +70,7 @@ export function validateMetadata(value: unknown): TerrainMetadata {
   }
   if (metadata.hole_mode !== undefined && metadata.hole_mode !== 'mask' && metadata.hole_mode !== 'fill') errors.push('hole_mode must be mask or fill');
   if (metadata.mesh !== undefined && (!metadata.mesh || typeof metadata.mesh !== 'object' || !safeAssetFilename(metadata.mesh.file) || !Number.isInteger(metadata.mesh.vertex_count) || metadata.mesh.vertex_count < 0 || !Number.isInteger(metadata.mesh.triangle_count) || metadata.mesh.triangle_count < 0)) errors.push('mesh metadata is invalid');
+  if (metadata.administrative !== undefined && !validAdministrativeMetadata(metadata.administrative)) errors.push('administrative metadata is invalid');
   if (errors.length) throw new TerrainAssetError(`Asset contract validation failed:\n- ${errors.join('\n- ')}`);
   return metadata as TerrainMetadata;
 }

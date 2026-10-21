@@ -1,4 +1,5 @@
 """Simulated resident/coordinator workflow; no external delivery or real authentication."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import publish_draft, reviewed_records_json
 import argparse,json,re,tempfile
 from pathlib import Path
@@ -8,6 +9,9 @@ from field_photo_fixture import create_field_photo
 def switch_role(page):
  account=page.get_by_role('button',name='Tài khoản',exact=True)
  if account.count(): account.click()
+ elif page.locator('.settings-anchor').count():
+  page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+  page.locator('.settings-workspace summary').click()
  page.get_by_role('button',name='Đổi vai trò',exact=True).click()
 
 def run(url,chrome,captures):
@@ -26,7 +30,6 @@ def run(url,chrome,captures):
   resident_identity=page.evaluate("localStorage.getItem('dear.demo-session.v1')")
   expect(page.locator('.citizen-workspace')).to_be_visible();assert page.get_by_role('button',name='Ghi nhận gửi đến',exact=True).count()==0
   # Village access summaries are separate from the explicit start/end directions form.
-  page.locator('.citizen-road-catalog summary').click()
   card=page.locator('.citizen-route');expect(card).to_be_visible()
   expect(card.locator('.citizen-route-verdict')).to_have_text(re.compile('Chưa ghi nhận đoạn bị chặn|Có đoạn cần kiểm tra|Tuyến đang có đoạn bị chặn'))
   expect(card.locator('.citizen-route-advice')).not_to_be_empty()
@@ -40,13 +43,13 @@ def run(url,chrome,captures):
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'citizen-photo-first.png'))
   page.locator('.citizen-report-form').get_by_role('button',name='Gửi báo cáo',exact=True).click()
   expect(page.locator('.citizen-submission')).to_contain_text('Chờ kiểm tra')
-  submitted=json.loads(reviewed_records_json(page))[0];oid=submitted['id']
+  submitted=next(r for r in json.loads(reviewed_records_json(page)) if 'dearSubmission' in r['feature']['properties']);oid=submitted['id']
   assert submitted['feature']['properties']['dearSubmission']['authorName']=='Người dân A'
   assert submitted['feature']['properties']['dearObservation']['observedLocalTime']=='2026-09-29T08:30:15'
   switch_role(page)
   expect(page.locator('.demo-signin')).to_be_visible()
   page.get_by_role('radio',name='Điều phối viên',exact=False).check();page.get_by_role('button',name='Vào ứng dụng',exact=True).click()
-  expect(page.locator('.incident-priority-row').first).to_be_visible()
+  expect(page.locator('.incident-overview-heading')).to_be_visible()
   page.get_by_role('button',name='Ghi nhận gửi đến',exact=True).click()
   inbox=page.get_by_role('dialog',name='Ghi nhận gửi đến',exact=False)
   inbox.get_by_role('button',name='Người dân A',exact=False).click()
@@ -56,11 +59,11 @@ def run(url,chrome,captures):
   expect(photo_details).to_contain_text('Test Camera');expect(photo_details).to_contain_text('SHA-256')
   photo_details.locator('summary').click()
   inbox.get_by_label('Nhận xét kiểm tra',exact=True).fill('Đã đối chiếu ảnh và vị trí, cần khảo sát khả năng đi qua.')
-  inbox.get_by_role('button',name='Lưu kết quả kiểm tra',exact=True).click();expect(inbox).to_contain_text('Đã lưu kết quả kiểm tra')
+  inbox.get_by_role('button',name='Lưu kết quả',exact=True).click();expect(inbox).to_contain_text('Đã lưu kết quả kiểm tra')
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'manager-inbox.png'))
   page.get_by_role('button',name='Đóng tiếp nhận',exact=True).click()
   # Names are edited directly at the selected community; source IDs and states stay unchanged.
-  search=page.get_by_role('combobox',name='Tìm trên bản đồ',exact=True);search.fill('Nậm Khắt');search.press('Enter')
+  search=page.get_by_role('combobox',name='Tìm trên bản đồ',exact=True);search.fill('Chế Tạo');search.press('Enter')
   page.locator('#response-details').get_by_role('button',name='Sửa trong GIS',exact=True).click()
   card=page.locator('.scenario-card');card.get_by_role('button',name='Đổi tên',exact=True).click()
   card.get_by_label('Tên',exact=True).fill('Địa bàn thử nghiệm')
@@ -70,8 +73,8 @@ def run(url,chrome,captures):
   card.get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
   expect(page.locator('#response-details h1')).to_have_text('Địa bàn thử nghiệm')
   # Arbitrary start/end includes a complete staging-to-community route and DEM profile.
-  page.get_by_role('button',name='Hành trình giữa hai điểm',exact=True).click()
-  journey=page.get_by_role('region',name='Hành trình giữa hai điểm',exact=True)
+  map_tool(page, 'Tìm đường giữa hai điểm').click()
+  journey=page.get_by_role('region',name='Tìm đường giữa hai điểm',exact=True)
   start=journey.get_by_label('Điểm đầu',exact=True)
   start.select_option(start.locator('option[value^="site:"]').first.get_attribute('value'))
   end=journey.get_by_label('Điểm cuối',exact=True)
@@ -80,7 +83,7 @@ def run(url,chrome,captures):
   journey.get_by_role('button',name='Mặt cắt địa hình',exact=True).click()
   expect(page.get_by_role('region',name='Địa hình dọc tuyến',exact=True)).to_be_visible(timeout=15000)
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'manager-journey-profile.png'))
-  journey.get_by_role('button',name='Đóng hành trình',exact=True).click()
+  journey.get_by_role('button',name='Đóng bảng tìm đường',exact=True).click()
   switch_role(page)
   page.evaluate("value=>localStorage.setItem('dear.demo-session.v1',value)",resident_identity);page.reload()
   page.get_by_role('button',name='Đã gửi',exact=True).click()

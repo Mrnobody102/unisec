@@ -87,7 +87,7 @@ export function GeometryImport({
               accept=".kml,.geojson,.json,.wkt,.txt"
               title={
                 busy
-                  ? t('Đang đọc…', 'Reading…')
+                  ? t('Đang đọc tệp', 'Reading file')
                   : t('Chọn hoặc kéo thả tệp', 'Choose or drop files')
               }
               hint="KML, GeoJSON, WKT"

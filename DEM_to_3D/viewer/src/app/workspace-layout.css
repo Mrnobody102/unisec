@@ -1,0 +1,64 @@
+/* Existing list and detail panels, with recorded assessments below. */
+/* Time is read left to right; an incoming report is not a published assessment. */
+.assessment-timeline { display:flex; align-items:center; min-width:0; gap:24px; padding:6px 20px; border-top:1px solid var(--ws-line); background:var(--ws-surface); z-index:26; }
+.assessment-timeline-title { flex:none; font-size:12px; color:var(--ws-text); }
+.assessment-timeline-title small { display:block; margin-top:1px; color:var(--ws-muted); font-size:10px; font-weight:400; }
+.assessment-timeline-track { display:flex; flex:1; min-width:0; align-items:center; justify-content:space-between; position:relative; padding:0 5px; }
+.assessment-timeline-track::before { content:''; position:absolute; left:5px; right:5px; top:7px; height:1px; background:var(--ws-line); }
+.assessment-moment { position:relative; display:flex; gap:8px; align-items:baseline; min-width:0; padding:19px 0 2px; color:var(--ws-muted); background:none; border:0; font-size:12px; }
+.assessment-moment::after { content:''; position:absolute; top:3px; left:0; width:8px; height:8px; border:1px solid var(--ws-muted); border-radius:50%; background:var(--ws-surface); }
+.assessment-moment:last-child::after { left:auto; right:0; }
+.assessment-moment[aria-pressed="true"] { color:var(--ws-text); font-weight:600; }
+.assessment-moment[aria-pressed="true"]::after { background:var(--ws-text); border-color:var(--ws-text); }
+.assessment-moment:hover { color:var(--ws-text); }
+.assessment-moment time { font-variant-numeric:tabular-nums; }
+.assessment-pending::after { border-radius:0; width:6px; height:6px; top:4px; transform:rotate(45deg); }
+.incident-overview-heading h1 { margin:0; }
+.incident-overview-item { text-align:left; color:var(--ws-text); }
+@media(min-width:901px) {
+ .workspace.workspace-shell[data-response-gis-detail="true"] .field-map-card { z-index:19; }
+ .workspace.workspace-shell[data-panel-collapsed="true"] .field-map-card { display:none; }
+}
+@media(max-width:900px) {
+ .assessment-timeline { gap:8px; padding:6px 8px; }
+ .assessment-timeline-title { display:none; }
+ .assessment-moment { flex-direction:column; align-items:flex-start; gap:0; padding:17px 0 0; font-size:11px; }
+ .assessment-moment:last-child { align-items:flex-end; }
+}
+
+
+.incident-overview-work { font-size:14px; }
+@media(min-width:901px) and (max-height:700px) {
+ .workspace.workspace-shell .response-detail-dock .sidebar-top { padding:12px 16px 8px; }
+ .workspace.workspace-shell .response-detail-dock .key-facts { gap:6px 12px; margin-top:8px; }
+ .workspace.workspace-shell .response-detail-edit { padding:8px 16px; }
+ .workspace.workspace-shell .response-detail-dock .detail-priority { margin-block:4px; }
+}
+
+/* Operational work leads; reference inventories remain available below it. */
+.incident-report-review { display:flex; align-items:center; gap:12px; width:100%; margin:0 0 16px; padding:12px; border:1px solid var(--ws-line); border-radius:3px; background:var(--ws-raised); color:var(--ws-text); text-align:left; }
+.incident-report-review > svg { flex:none; }
+.incident-report-review > span { flex:1; min-width:0; }
+.incident-report-review strong { display:block; font-size:14px; font-weight:600; line-height:1.4; }
+.incident-report-review small { display:block; margin-top:4px; color:var(--ws-muted); font-size:13px; line-height:1.45; }
+.incident-report-review:hover { background:var(--hover); }
+.incident-report-review:hover strong { text-decoration:none; }
+
+/* Timeline and header reclaim their actual grid space when collapsed. */
+.workspace.workspace-shell { --size-header:48px; --timeline-height:0px; grid-template-rows:var(--size-header) minmax(0,1fr) var(--timeline-height); }
+.workspace.workspace-shell[data-timeline-expanded="true"] { --timeline-height:62px; }
+.workspace.workspace-shell[data-header-collapsed="true"] { --size-header:0px; }
+.workspace.workspace-shell[data-gis-open="true"] { --timeline-height:0px; }
+.workspace-shell > .app-header { grid-row:1; }
+.workspace-shell > .work-area { grid-row:2; }
+.workspace-shell > .assessment-timeline { grid-row:3; }
+.assessment-timeline .assessment-collapse { flex:none; width:28px; height:32px; min-height:32px; padding:0; border:0; background:transparent; color:var(--ws-muted); }
+.assessment-timeline { gap:16px; }
+.workspace[data-response-layout="dock"]:has(.map-advanced-tools:not([hidden])) .response-detail-dock { top:calc(var(--size-workspace-toolbar) + 60px); }
+@media(max-width:900px) {
+ .workspace.workspace-shell { grid-template-rows:var(--size-header) minmax(0,1fr) 56px var(--timeline-height); }
+ .workspace.workspace-shell[data-timeline-expanded="true"] { --timeline-height:62px; }
+ .workspace-shell > .mobile-view-switch { grid-row:3; }
+ .workspace-shell > .assessment-timeline { grid-row:4; }
+ .assessment-timeline { gap:8px; padding-inline:8px; }
+}

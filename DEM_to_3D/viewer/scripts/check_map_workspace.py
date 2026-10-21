@@ -1,4 +1,5 @@
 """Check map workspace controls, movable tool windows and label visibility."""
+from gis_browser_actions import map_tool
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -264,7 +265,7 @@ def run(url, chrome, captures):
         if captures: page.screenshot(path=str(captures / 'workspace-map-only.png'))
         toolbar.get_by_role('button', name='Show information panel', exact=True).click()
 
-        page.get_by_role('button', name='Location information', exact=True).click()
+        map_tool(page, 'Location information').click()
         assert road.evaluate("path => getComputedStyle(path).pointerEvents") == 'none'
         assert_marker_interaction(True)
         location = page.locator('.map-location-panel')

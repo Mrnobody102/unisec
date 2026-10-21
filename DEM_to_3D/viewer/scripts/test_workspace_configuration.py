@@ -15,7 +15,7 @@ class WorkspaceConfigurationTests(unittest.TestCase):
         (self.root / 'workspace-config.json').write_text(json.dumps({'dataSource': 'prepared', **extra}))
 
     def test_selects_another_dataset_and_keeps_legacy_launchers_compatible(self):
-        self.assertEqual(workspace_manifest_path(self.root)[0], self.root / 'scenarios/che-tao/v0.2/manifest.json')
+        self.assertEqual(workspace_manifest_path(self.root)[0], self.root / 'scenarios/che-tao/v0.3/manifest.json')
         self.write_config(manifestUrl='/scenarios/alternate/v1/manifest.json', offline=True)
         path, config = workspace_manifest_path(self.root)
         self.assertEqual(path, self.root / 'scenarios/alternate/v1/manifest.json')

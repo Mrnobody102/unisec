@@ -1,3 +1,4 @@
+import { validateGeometry } from '../../geo/vector/validateGeometry';
 import { describe, expect, it, vi } from 'vitest';
 import { GEOMETRY_LIMITS as limits, textBytes } from '../../geo/vector/limits';
 import { validateGeometryBudget } from '../../geo/vector/geometryBudget';
@@ -25,8 +26,9 @@ describe('GIS import budgets and persistence', () => {
   });
   it('checks total vertices before topology and retains a per-feature bound', () => {
     const line: VectorGeometry = { type: 'LineString', coordinates: Array.from({ length: limits.verticesPerFeature }, (_, i) => [104 + i / 100_000, 21]) };
-    expect(() => validateGeometryBudget(Array(33).fill(line))).not.toThrow();
-    expect(() => validateGeometryBudget(Array(34).fill(line))).toThrow('vertex-limit');
+    const count=Math.floor(limits.verticesPerWorkspace/limits.verticesPerFeature);
+    expect(() => validateGeometryBudget(Array(count).fill(line))).not.toThrow();
+    expect(() => validateGeometryBudget(Array(count+1).fill(line))).toThrow('vertex-limit');
     expect(() => validateGeometryBudget([{ ...line, coordinates: [...line.coordinates, [105, 21]] }])).toThrow('vertex-limit');
   });
   it('measures UTF-8 bytes and rejects oversized saved attributes without changing previous records', () => {
@@ -99,4 +101,10 @@ describe('Pasted survey coordinates', () => {
       expect(() => parseSpatialInput(input)).toThrow();
     }
   });
+});
+
+
+it('retains fine survey vertices without mistaking small turns for self intersections', () => {
+  const geometry = {type:'Polygon',coordinates:[[[104,21],[104.0000001,21.0000001],[104.0000002,21],[104.0001,21],[104.0001,21.0001],[104,21.0001],[104,21]]]} as const;
+  expect(validateGeometry(geometry)).toEqual(geometry);
 });

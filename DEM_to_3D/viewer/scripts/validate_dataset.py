@@ -92,6 +92,77 @@ def main(prepare: bool = False, manifest_path: Path | None = None) -> None:
     paths = set()
     assets = {}
     copies = []
+
+    def additional_asset(asset, name, pattern, canonical=False):
+        if not isinstance(asset, dict):
+            fail(f'invalid {name} contract')
+        url = asset.get('url', '')
+        if not isinstance(url, str) or not re.fullmatch(pattern, url) or '..' in url:
+            fail(f'invalid {name} URL')
+        if url in paths:
+            fail(f'duplicate asset path: {url}')
+        if type(asset.get('byteLength')) is not int or asset['byteLength'] <= 0 or not isinstance(asset.get('sha256'), str) or not re.fullmatch(r'[0-9a-f]{64}', asset['sha256']):
+            fail(f'invalid {name} contract')
+        paths.add(url)
+        path = PUBLIC / url.lstrip('/')
+        source = PUBLIC.parents[1] / path.name if prepare and canonical else path
+        if error := check_asset(source, asset):
+            fail(error)
+        if prepare and canonical and check_asset(path, asset):
+            copies.append((source, path))
+        assets[name] = path
+        return source
+
+    if manifest.get('fieldData') is not None:
+        additional_asset(manifest['fieldData'], 'fieldData', r'/scenarios/[A-Za-z0-9._/-]+\.kml')
+
+    if manifest.get('referenceData') is not None:
+        additional_asset(manifest['referenceData'], 'referenceData', r'/scenarios/[A-Za-z0-9._/-]+\.geojson')
+
+    if manifest.get('fieldPhotos') is not None:
+        catalog_path = additional_asset(manifest['fieldPhotos'], 'fieldPhotos', r'/scenarios/[A-Za-z0-9._/-]+/photos\.json')
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+        folder = manifest['fieldPhotos']['url'].rsplit('/', 1)[0]
+        photos = [photo for point in catalog.get('points', []) for photo in point.get('photos', [])]
+        if not photos:
+            fail('empty field photo catalog')
+        for photo in photos:
+            for view in ('image', 'thumb'):
+                item = photo.get(view)
+                if not isinstance(item, dict) or not re.fullmatch(r'[a-z0-9._-]+\.webp', str(item.get('url', ''))):
+                    fail('invalid field photo file')
+                additional_asset({**item, 'url': f"{folder}/{item['url']}"}, f"fieldPhotos.{item['url']}", r'/scenarios/[A-Za-z0-9._/-]+\.webp')
+
+    if manifest.get('analysisImagery') is not None:
+        catalog_path = additional_asset(manifest['analysisImagery'], 'analysisImagery', r'/scenarios/[A-Za-z0-9._/-]+/imagery\.json')
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+        folder = manifest['analysisImagery']['url'].rsplit('/', 1)[0]
+        rasters = [part for layer in catalog.get('layers', []) for part in layer.get('parts', [])]
+        rasters += [layer['mosaic'] for layer in catalog.get('layers', []) if layer.get('mosaic')]
+        rasters += [mode for layer in catalog.get('layers', []) for mode in layer.get('modes', {}).values()]
+        if not rasters:
+            fail('empty analysis imagery catalog')
+        for raster in rasters:
+            for view in ('terrain', 'web'):
+                item = raster.get(view)
+                if not isinstance(item, dict) or not re.fullmatch(r'[a-z0-9.-]+\.webp', str(item.get('url', ''))):
+                    fail('invalid analysis imagery file')
+                additional_asset({**item, 'url': f"{folder}/{item['url']}"}, f"analysisImagery.{item['url']}", r'/scenarios/[A-Za-z0-9._/-]+\.webp')
+
+    contexts = manifest.get('terrainContext', [])
+    if not isinstance(contexts, list) or len(contexts) > 3:
+        fail('invalid terrainContext')
+    for index, group in enumerate(contexts):
+        if not isinstance(group, dict):
+            fail('invalid terrainContext')
+        sources = {key: additional_asset(group.get(key), f'terrainContext.{index}.{key}', r'/terrain/[A-Za-z0-9._-]+', canonical=True)
+                   for key in ('glb', 'grid', 'metadata')}
+        context_metadata = json.loads(sources['metadata'].read_text(encoding='utf-8'))
+        if manifest['crs'] != f"{context_metadata['crs']['authority']}:{context_metadata['crs']['code']}":
+            fail('terrainContext CRS mismatch')
+        if context_metadata['mesh']['file'] != sources['glb'].name or context_metadata['grid']['file'] != sources['grid'].name:
+            fail('terrainContext reference mismatch')
+
     for key in ("glb", "grid", "metadata"):
         asset = manifest.get("terrain", {}).get(key)
         if not isinstance(asset, dict):

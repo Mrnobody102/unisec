@@ -1,6 +1,6 @@
 import type { Locale, ScenarioRoute } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
-import { roadStatusIcon, roadStatusLabels, roadStatusTone } from './roadStatus';
+import { formatRoadLength, roadStatusIcon, roadStatusLabels, roadStatusTone } from './roadStatus';
 
 export function RouteOption({ route, selected, locale, onSelect }: {
   route: ScenarioRoute; selected: boolean; locale: Locale; onSelect: () => void;
@@ -12,7 +12,7 @@ export function RouteOption({ route, selected, locale, onSelect }: {
       <strong>{t(route.name[0], route.name[1])}</strong>
     </span>
     <span className="route-option-meta">
-      <span>{route.lengthKm} km</span>
+      <span>{formatRoadLength(route.lengthKm,locale)} km</span>
     </span>
     <span className="route-bottom">
       <StatusText tone={roadStatusTone(route.status)} icon={roadStatusIcon(route.status)}>

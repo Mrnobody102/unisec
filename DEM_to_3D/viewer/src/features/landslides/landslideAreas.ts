@@ -1,3 +1,4 @@
+import { defaultLandslideFillOpacity, landslideFillOpacity } from './landslideAppearance';
 import type { GeometryRecord, VectorGeometry } from '../../geo/vector/types';
 import { isPolygon } from '../../geo/vector/types';
 import { validateGeometry } from '../../geo/vector/validateGeometry';
@@ -88,8 +89,18 @@ export function remapLandslideEvidence(records: GeometryRecord[]): GeometryRecor
     return {...record, feature:{...record.feature,properties:{...record.feature.properties,[landslideAreaKey]:{...value,observationIds:value.observationIds.map(id => ids.get(id) ?? (id.startsWith('external:') ? id : 'external:'+id))}}}};
   });
 }
-export function landslideAreaStyle(a: LandslideArea, selected = false) {
-  return { color: a.state === 'potential' ? '#b77b28' : '#b45147', weight: selected ? 2.5 : 1.5, dashArray: a.state === 'potential' ? '6 4' : undefined, fillOpacity: selected ? .19 : .1 };
+/** The boundary is geographic geometry; evidence and review state are read in its record. */
+export const landslideBoundaryColor = '#ffe36a';
+export const landslideBoundaryCasing = '#3c3921';
+export function landslideAreaStyle(a: Pick<LandslideArea, 'state' | 'review'>, selected = false, fillOpacity = defaultLandslideFillOpacity) {
+  return {
+    color: landslideBoundaryColor,
+    weight: selected ? 3.5 : 2.5,
+    dashArray: a.state === 'potential' ? '8 4' : undefined,
+    fillOpacity: landslideFillOpacity(fillOpacity),
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const
+  };
 }
 
 /** Review applies to the mapped boundary that was checked, not to later geometry edits. */

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
+import * as regionalElevation from './regionalElevation';
 import proj4 from 'proj4';
+import { createTerrainImagery, planImageryAtlases } from './terrainImagery';
 import { imagerySource } from '../features/map/imagerySource';
 import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import metadataJson from '../../public/terrain/che_tao_v2_tex.terrain.json';
@@ -30,13 +32,13 @@ describe('Regional basemap placement', () => {
       })).toBe(true);
     }
   });
-  it('adds detail around the DEM without unbounded regional requests or duplicate tiles', () => {
-    const tiles = planBasemapTiles(metadata, 14);
-    const context = planRegionalTiles(metadata, { budget: 32 });
-    expect(tiles.length).toBeLessThanOrEqual(96);
+  it.each([14, 19])('adds detail around the DEM without unbounded regional requests or duplicate tiles (native zoom=%s)', maxZoom => {
+    const tiles = planBasemapTiles(metadata, maxZoom);
+    const context = planRegionalTiles(metadata, { budget: 64 });
+    expect(tiles.length).toBeLessThanOrEqual(224);
     expect(new Set(tiles.map(t => `${t.z}/${t.x}/${t.y}`)).size).toBe(tiles.length);
     expect(Math.max(...tiles.map(t => t.z))).toBeGreaterThan(Math.max(...context.map(t => t.z)));
-    expect(tiles.every(t => t.z <= 14)).toBe(true);
+    expect(tiles.every(t => t.z <= maxZoom)).toBe(true);
     for (const t of context) expect(tiles).toContainEqual(t);
     expect(planBasemapTiles(metadata, 8).every(t => t.z <= 8)).toBe(true);
     expect(planBasemapTiles(metadata, 14.5).every(t => Number.isInteger(t.z) && t.z <= 14)).toBe(true);
@@ -72,7 +74,7 @@ describe('Regional basemap placement', () => {
       basemap.setOptions(true, 'satellite');
       await vi.waitFor(() => expect(states.at(-1)?.status).toBe('ready'));
       expect(states.at(-1)?.provider).toBe('configured');
-      expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(96);
+      expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(224);
       expect(fetchMock.mock.calls.every(args => String(args[0]).startsWith('https://imagery.example.test/'))).toBe(true);
       for (const child of basemap.group.children) {
         const mesh = child as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
@@ -91,6 +93,83 @@ describe('Regional basemap placement', () => {
       imagerySource.url = originalUrl;
       vi.unstubAllGlobals();
     }
+  });
+  it('keeps a failed imagery request failed when context terrain finishes later', async () => {
+    vi.stubGlobal('window', {setTimeout, clearTimeout});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('imagery offline')));
+    let finish!: () => void;
+    const loader = vi.spyOn(regionalElevation, 'createRegionalElevation').mockImplementation((_metadata, _surfaces, _tiles, onReady) => {
+      finish = onReady;
+      return {sample: () => undefined, load: async () => {}, status: 'ready', dispose: () => {}};
+    });
+    const states: BasemapState[] = [];
+    const basemap = createRegionalBasemap(metadata, new THREE.Matrix4(), state => states.push(state), 1, undefined, [{metadata,grid:new Float32Array()}]);
+    try {
+      basemap.setOptions(true, 'satellite');
+      await vi.waitFor(() => expect(states.at(-1)?.status).toBe('error'));
+      finish(); expect(states.at(-1)).toMatchObject({status:'error',relief:'ready'});
+    } finally {basemap.dispose();loader.mockRestore();vi.unstubAllGlobals();}
+  });
+  it('replaces imagery only with a complete level, retains it through partial detail and respects visibility', () => {
+    const context = {save: vi.fn(), translate: vi.fn(), scale: vi.fn(), drawImage: vi.fn(), restore: vi.fn()};
+    vi.stubGlobal('document', {createElement: () => ({width: 0, height: 0, getContext: () => context, setAttribute: vi.fn(), remove: vi.fn()})});
+    const root = new THREE.Group();
+    const source = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial()); root.add(source);
+    const imagery = createTerrainImagery(metadata, root, [source], 19, 4)!;
+    const levels = planImageryAtlases(metadata, 19);
+    expect(levels.length).toBe(3);
+    const tiles = (level: typeof levels[number]) => {
+      const result = [];
+      for (let x = level.minX; x < level.maxX; x++) for (let y = level.minY; y < level.maxY; y++) result.push({x, y, z: level.zoom});
+      return result;
+    };
+    const paint = (tile: {x: number; y: number; z: number}) => imagery.tile(tile, {} as ImageBitmap);
+    const material = (imagery.group.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>).material;
+    try {
+      imagery.setVisible(true);
+      const coarse = tiles(levels[0]); coarse.slice(0, -1).forEach(paint);
+      expect(imagery.group.visible).toBe(false); expect(material.map).toBeNull();
+      paint(coarse.at(-1)!);
+      expect(imagery.group.visible).toBe(true); const previous = material.map;
+      const detail = tiles(levels.at(-1)!); detail.slice(0, -1).forEach(paint);
+      expect(material.map).toBe(previous);
+      imagery.setVisible(false); paint(detail.at(-1)!);
+      expect(material.map).not.toBe(previous); expect(imagery.group.visible).toBe(false);
+      imagery.setVisible(true); expect(imagery.group.visible).toBe(true);
+      coarse.forEach(paint); expect(material.map).not.toBe(previous);
+    } finally { imagery.dispose(); source.geometry.dispose(); source.material.dispose(); vi.unstubAllGlobals(); }
+  });
+  it('shares a completed view image without disposing the controller-owned texture', () => {
+    vi.stubGlobal('document', {createElement:()=>({width:0,height:0,getContext:()=>null})});
+    const root=new THREE.Group(),source=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial());root.add(source);
+    const imagery=createTerrainImagery(metadata,root,[source],19,4)!;
+    const bounds=planImageryAtlases(metadata,19)[0],texture=new THREE.CanvasTexture(document.createElement('canvas'));
+    const dispose=vi.spyOn(texture,'dispose');
+    try {
+      imagery.setVisible(true);imagery.setDetail({...bounds,texture,dispose:()=>texture.dispose()});
+      const detail=root.getObjectByName('terrain-detail-imagery')!;
+      expect(detail.visible).toBe(true);
+      imagery.setVisible(false);expect(detail.visible).toBe(false);
+      imagery.setVisible(true);expect(detail.visible).toBe(true);
+      imagery.setDetail(null);expect(detail.visible).toBe(false);expect(dispose).not.toHaveBeenCalled();
+    } finally {imagery.dispose();source.geometry.dispose();source.material.dispose();texture.dispose();vi.unstubAllGlobals();}
+  });
+  it('reuses prepared stop geometry through page switches and releases it before source canvases are cleared',()=>{
+    vi.stubGlobal('document',{createElement:()=>({width:0,height:0,getContext:()=>null})});
+    const root=new THREE.Group(),source=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial());root.add(source);
+    const imagery=createTerrainImagery(metadata,root,[source],19,4)!;
+    const bounds=planImageryAtlases(metadata,19)[0];
+    const a={...bounds,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+    const b={...bounds,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+    try{
+      imagery.setVisible(true);const texture=imagery.primeDetail(a)!;imagery.primeDetail(b);
+      const dispose=vi.spyOn(texture,'dispose');imagery.setDetail(a);
+      const group=root.getObjectByName('terrain-detail-imagery')!,patch=group.children[0];
+      imagery.setDetail(b);imagery.setDetail(a);
+      expect(group.children[0]).toBe(patch);expect(dispose).not.toHaveBeenCalled();
+      imagery.primeDetail(null);expect(dispose).toHaveBeenCalledOnce();expect(group.children).toHaveLength(0);
+      expect(a.dispose).not.toHaveBeenCalled();expect(b.dispose).not.toHaveBeenCalled();
+    }finally{imagery.dispose();source.geometry.dispose();source.material.dispose();a.texture.dispose();b.texture.dispose();vi.unstubAllGlobals();}
   });
   it('stops requesting tiles when the service is unavailable', async () => {
     vi.stubGlobal('window', globalThis);

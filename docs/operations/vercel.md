@@ -36,11 +36,13 @@ Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu
 |---|---|
 | Mở web và reload | Màn vào hai vai trò; vào điều phối để xem sự kiện và bản đồ 2D |
 | `/workspace-config.json` | JSON có `dataSource: "prepared"` |
-| `/scenarios/che-tao/v0.2/manifest.json` | JSON, không trả HTML |
+| `/scenarios/che-tao/v0.3/manifest.json` | JSON, không trả HTML |
 | Chuyển 3D rồi về 2D | Tải được địa hình, 2D tiếp tục hoạt động |
 | Chọn Nậm Khắt → kiểm tra tuyến → áp dụng tin mới | Tuyến và nhận định đổi theo tin mới |
 | Lưu đánh giá | PNG/JSON/GeoJSON tải được; PDF mở hộp in |
 | Đổi ngôn ngữ, font, độ rộng panel | Bố cục và nội dung giữ đúng |
+
+Khi kiểm tra bản triển khai, đọc `manifestUrl` trong `/workspace-config.json` và đối chiếu với commit cần phát hành; URL production không tự chứng minh đã dùng source mới nhất. Nếu tài nguyên `.bin` nhận trang HTML báo chặn của cổng mạng doanh nghiệp, đó không phải JSON hoặc lỗi nội suy DEM. Giữ nguyên kiểm tra HTTP/checksum và xác minh trên mạng được phép tải tài nguyên; không đổi đuôi tệp để lách chính sách mạng.
 
 ## Xử lý lỗi build
 
@@ -71,9 +73,9 @@ QR nên trỏ URL production công khai, mở được ở cửa sổ riêng tư
 
 ## Nguồn ảnh nền chi tiết
 
-Đã bỏ việc ảnh prepared thô che tile trực tuyến sau khi tile tải đủ. Ảnh tải theo mức zoom. EOxCloudless mặc định có pixel khoảng 10 m, nên zoom lớn vẫn không thể có chi tiết tương đương ảnh hàng không/sub-meter. Nguồn: [EOX viewing products](https://cloudless.eox.at/products/viewing).
+Mặc định dùng Esri World Imagery, cùng endpoint XYZ với EO VSP và GEE_testing, thay EOX Sentinel-2 cloudless 2016. GIS, bản đồ ứng phó 2D và nền ngữ cảnh 3D dùng chung nguồn; DEAR yêu cầu tile tới zoom 19. Tile trực tuyến vẽ trên ảnh prepared thô trong 2D; ảnh prepared bên dưới lấp chỗ chưa tải được hoặc khi mất mạng. Độ phân giải và thời điểm ảnh thay đổi theo khu vực; mức zoom không chứng minh độ phân giải ảnh gốc. Nguồn/attribution: [World Imagery](https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer).
 
-Có thể cấu hình cùng một nguồn XYZ HTTPS cho GIS và bản đồ ứng phó 2D bằng các biến build:
+Có thể cấu hình nguồn XYZ HTTPS khác cho cả ba nơi bằng các biến build:
 
 ```dotenv
 VITE_DEAR_IMAGERY_URL=https://tiles.example.org/imagery/{z}/{x}/{y}.jpg
@@ -83,4 +85,4 @@ VITE_DEAR_IMAGERY_LINK=https://example.org/imagery-terms
 VITE_DEAR_IMAGERY_MAX_ZOOM=18
 ```
 
-URL và attribution phải cùng có mới bật. Khai báo mức zoom gốc đúng tài liệu nguồn; không nâng thông số này để phóng lớn pixel cũ. Khóa đưa vào `VITE_*` phải là khóa công khai giới hạn domain/quyền; không dùng khóa bí mật. Nguồn này cần quyền hiển thị phù hợp và CORS nếu phục vụ xuất ảnh. Nền 3D vẫn dùng nguồn EOX hiện hành. Không tự lấy tile Google Earth hoặc bỏ thông tin bản quyền.
+URL và attribution phải cùng có mới bật. Khai báo mức zoom gốc đúng tài liệu nguồn; không nâng thông số này để phóng lớn pixel cũ. Khóa đưa vào `VITE_*` phải là khóa công khai giới hạn domain/quyền; không dùng khóa bí mật. Nguồn này cần quyền hiển thị phù hợp và CORS để tải texture nền 3D. Kiểu nền địa hình vẫn dùng EOX Terrain Light. Texture phủ DEM cục bộ là dữ liệu riêng, không được thay bằng các tile nền ngữ cảnh. Không tự lấy tile Google Earth hoặc bỏ thông tin bản quyền.

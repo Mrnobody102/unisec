@@ -8,6 +8,7 @@ type Props = {
   incident: IncidentModel;
   areaName: [string, string];
   snapshot: string;
+  snapshotDisplay?: 'full' | 'date';
   available: boolean;
   onOpenTimeline: () => void;
   onOpenData: () => void;
@@ -19,6 +20,7 @@ export function IncidentContext({
   incident,
   areaName,
   snapshot,
+  snapshotDisplay = 'full',
   available,
   onOpenTimeline,
   onOpenData
@@ -59,8 +61,8 @@ export function IncidentContext({
           <span className="incident-context-revision">
             {available ? (
               <>
-                {t('Dữ liệu đến ', 'Data as of ')}
-                <time dateTime={snapshot}>{time}</time>
+                {snapshotDisplay === 'full' && t('Dữ liệu đến ', 'Data as of ')}
+                <time dateTime={snapshot}>{snapshotDisplay === 'full' ? time : date.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric' })}</time>
               </>
             ) : (
               t('Chưa tải dữ liệu', 'Data not loaded')

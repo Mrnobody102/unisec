@@ -2,6 +2,7 @@
 import runpy
 import sys
 import types
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -35,6 +36,15 @@ class BrowserCliTests(unittest.TestCase):
     def test_explicit_browser_override_is_preserved(self):
         browser = '/custom/chromium'
         self.assertEqual(self.launch_options('check_gis_draft_publish.py', '--chrome', browser)['executable_path'], browser)
+
+    def test_map_review_checks_use_the_ci_browser_and_allow_an_override(self):
+        for script in ['check_focus_audit.py','check_status_update.py','check_landslide_display.py',
+                       'check_selection_navigation.py','check_resident_capture.py']:
+            with self.subTest(script=script):
+                options=self.launch_options(script,'--captures',tempfile.gettempdir())
+                self.assertIsNone(options.get('executable_path'))
+                options=self.launch_options(script,'--captures',tempfile.gettempdir(),'--chrome','/custom/chromium')
+                self.assertEqual(options['executable_path'],'/custom/chromium')
 
 
 if __name__ == '__main__':

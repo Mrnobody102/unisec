@@ -1,0 +1,1603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ex="http://earth.google.com/kml/ext">
+<Document id="1hfjx_VJq0FZSa2ZueiLWKsXoQ4hO8Oz_">
+	<ex:extension>base64;Co4BCoEBCn8KAggBEnkKdwokCiAKAwjQDxoHCNLtZRD_ASEAAAAAAADwPykAAAAAAAAAABgAEg8KCAitgO8HEP8BEKAfGAAaGgoHCP___wcQQBIICK2A7wcQ_wEYoB8gACgAIgkIARIFCP___wcqFwgBEggI____BxD_ARkAAAAAAADwPyAAEgQIARAAGgIIAA</ex:extension>
+	<name>CheTao-Landslide-Scars</name>
+	<gx:CascadingStyle kml:id="__managed_style_1F177C639A42891C15D0_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3.2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>402f2fd3</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_1F177C639A42891C15D0_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4.8</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>402f2fd3</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_1F177C639A42891C15D0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_1F177C639A42891C15D0_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_1F177C639A42891C15D0_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_05AFB1830F42891C15D0_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4.8</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>402f2fd3</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_2EBA38346742891C15D0_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=d32f2f&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4.8</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_05AFB1830F42891C15D0_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3.2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>402f2fd3</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_2EBA38346742891C15D0_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=d32f2f&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3.2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_12BC15CA2B42891C15D1">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_12BC15CA2B42891C15D1_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_12BC15CA2B42891C15D1_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="__managed_style_05AFB1830F42891C15D0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_05AFB1830F42891C15D0_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_05AFB1830F42891C15D0_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="__managed_style_2EBA38346742891C15D0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_2EBA38346742891C15D0_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_2EBA38346742891C15D0_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_12BC15CA2B42891C15D1_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=d32f2f&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4.8</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_12BC15CA2B42891C15D1_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=d32f2f&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3.2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0B3C6B57D342891C15D1_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>3.2</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0B3C6B57D342891C15D1_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4.8</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0B3C6B57D342891C15D1">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0B3C6B57D342891C15D1_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0B3C6B57D342891C15D1_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<GroundOverlay id="a20ee405-da47-4442-aea8-74028d0f7c1e">
+		<name>081026.kml</name>
+		<LookAt>
+			<longitude>104.06242775</longitude>
+			<latitude>21.79459166666668</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>13268.76311995476</range>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAYSJDA1YWQ4YzNiLWQxYTMtNDgwYi1hYjdhLTRhZmVmMzRmMTAyOQ</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+	<GroundOverlay id="525d3efb-68bc-4ad9-8b70-12e58d01bec9">
+		<name>TaskingStrip.kml</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>104.0530674688947</longitude>
+			<latitude>21.78279833484059</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>157147.0927459179</range>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAYSJDQ4ZGFiZDBiLWY3OTgtNDdlZC1hNzZhLTMxOGU0ZjQ3ODIzMA</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+	<Placemark id="0F93626CA842502542A3">
+		<name>Scar 1 [0830]</name>
+		<LookAt>
+			<longitude>104.0467669556738</longitude>
+			<latitude>21.75748330637144</latitude>
+			<altitude>1784.258932151621</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>215.6237795574634</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_12BC15CA2B42891C15D1</styleUrl>
+		<Point>
+			<coordinates>104.0467911061554,21.75744467431061,1782.874820916556</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="02C1D9D250425028F1B0">
+		<name>Scar 2 [0850]</name>
+		<LookAt>
+			<longitude>104.0454750185116</longitude>
+			<latitude>21.76329213127143</latitude>
+			<altitude>1977.525923089132</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>211.2153769816359</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_2EBA38346742891C15D0</styleUrl>
+		<Point>
+			<coordinates>104.0455555339436,21.76333815072582,1979.752291418078</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="08628CC04242502DFCA1">
+		<name>Scar 3 [0926]</name>
+		<LookAt>
+			<longitude>104.0443583012726</longitude>
+			<latitude>21.78380749467793</latitude>
+			<altitude>1617.083674522699</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>236.4030304682819</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_2EBA38346742891C15D0</styleUrl>
+		<Point>
+			<coordinates>104.0443985889399,21.78370568781054,1625.005220182346</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="069B3B17E84260177ABC">
+		<name>Scar 3 </name>
+		<LookAt>
+			<longitude>104.0446175958449</longitude>
+			<latitude>21.7839824624758</latitude>
+			<altitude>1613.450088585461</altitude>
+			<heading>91.93229671948953</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>272.079219815605</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0448729192822,21.78399573266168,0 104.044824427988,21.78407631244309,0 104.044783271389,21.78423008244621,0 104.0447158679746,21.78431489110475,0 104.0445860921163,21.7844008875795,0 104.0444953925689,21.78437843690532,0 104.0444584128869,21.78435400808438,0 104.0444198671339,21.7843042440985,0 104.0443621010089,21.78427370633655,0 104.0443382615211,21.7841999738069,0 104.044345462822,21.78411785298897,0 104.0443582427536,21.78402273639719,0 104.0443612869384,21.78391656785763,0 104.0443801643602,21.78382415913375,0 104.0443861933873,21.7837354603967,0 104.0444078686303,21.78374062027216,0 104.0444389999565,21.78374537562607,0 104.044475326838,21.78374742870843,0 104.0445200036588,21.78374741004128,0 104.0445832778422,21.78374732748068,0 104.0446394173605,21.78374715982935,0 104.0447199057385,21.78374941004121,0 104.0447738392698,21.78376094794934,0 104.0448193756027,21.78381927168039,0 104.0448826071512,21.78389891622348,0 104.0448729192822,21.78399573266168,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="074486F81E42604A4158">
+		<name>Talus</name>
+		<LookAt>
+			<longitude>104.0264133216867</longitude>
+			<latitude>21.73780047755329</latitude>
+			<altitude>1393.359959499984</altitude>
+			<heading>-0.0009135385993528137</heading>
+			<tilt>0.1215903876046376</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>159.1645729394259</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0261525233742,21.73779603702221,0 104.0261227984403,21.73779203171184,0 104.026085987855,21.73778703288882,0 104.0260543319965,21.73777629001782,0 104.0260429197887,21.7377619832033,0 104.0260458772288,21.73774350056131,0 104.0260603728443,21.73772553486764,0 104.0260781694362,21.7377022666081,0 104.0261041748171,21.73769396411303,0 104.0261445602713,21.73767230200051,0 104.0261935263866,21.73766779599345,0 104.0261915553922,21.73768614482946,0 104.0261906578871,21.73770997825077,0 104.0261870732189,21.73773810075383,0 104.0261865759196,21.73776086251773,0 104.0261958771086,21.73779914357982,0 104.0261525233742,21.73779603702221,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="055101D57D42604EAD08">
+		<name>Scar</name>
+		<LookAt>
+			<longitude>104.0261866001642</longitude>
+			<latitude>21.73774812184864</latitude>
+			<altitude>1391.318496475113</altitude>
+			<heading>0.02831899788231921</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>140.3061655755482</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0262389888132,21.73778722965574,0 104.0262317665278,21.73775761070692,0 104.0262320617654,21.7377380561236,0 104.0262336909115,21.73770763252285,0 104.0262344777297,21.73767878539845,0 104.026234625901,21.73766935914553,0 104.0262836945333,21.73764936908913,0 104.0263220694868,21.73764247865043,0 104.026362738397,21.73763205369399,0 104.0263890360403,21.73762899566298,0 104.0263986060442,21.7376506686728,0 104.0263970724847,21.73767082715169,0 104.0263878067036,21.73768528735763,0 104.0263812875146,21.73770367727672,0 104.0263590247889,21.73771918739529,0 104.0263316843313,21.73773735626719,0 104.0263018493286,21.73775790540603,0 104.0262389888132,21.73778722965574,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="01C159EBB54260500923">
+		<name>Talus (with big hard rock)</name>
+		<LookAt>
+			<longitude>104.030009125925</longitude>
+			<latitude>21.74165950706059</latitude>
+			<altitude>1372.948066702023</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>91.33258766193649</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0298454726206,21.7415912740363,0 104.0298822121032,21.74161175030573,0 104.0299218156969,21.74161321272192,0 104.0299614806439,21.74160961265213,0 104.0299913565303,21.74160147595296,0 104.0300213282018,21.74158656799266,0 104.0300346564166,21.7415768135124,0 104.030039080665,21.74161504545844,0 104.0300382600192,21.74163847573301,0 104.0300321925879,21.74165550828249,0 104.0300262537899,21.7416760914975,0 104.0300161492973,21.74169398574613,0 104.0299914926922,21.7417059614393,0 104.0299728333584,21.74171536608677,0 104.0299606415839,21.74172681843901,0 104.0299343310292,21.74173143519166,0 104.0299066680576,21.7417148732211,0 104.0298821804082,21.74169126388824,0 104.0298648256883,21.7416617272044,0 104.0298487419492,21.74163459091663,0 104.0298461241482,21.74161135967488,0 104.0298454726206,21.7415912740363,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="09D014A1AB4260512C37">
+		<name>Scar (a lot of rocks)</name>
+		<LookAt>
+			<longitude>104.0300669555656</longitude>
+			<latitude>21.7415433457363</latitude>
+			<altitude>1367.182273077058</altitude>
+			<heading>21.98071140056565</heading>
+			<tilt>50.55422076565271</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>130.5618160751146</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.029864569077,21.74153055679862,0 104.0298585159566,21.74150626641021,0 104.0298704272035,21.74147648750408,0 104.0299101512394,21.74145197239215,0 104.0299449284269,21.74144265422324,0 104.0299640674532,21.74145742238846,0 104.0299757777314,21.74147411764957,0 104.0299934419675,21.74149922579032,0 104.0300173922816,21.74154457897789,0 104.0300029077761,21.74155911524878,0 104.0299753809973,21.74156777629391,0 104.029939216725,21.7415806221318,0 104.0299110075168,21.74157578618823,0 104.0298782165105,21.74154024944344,0 104.029864569077,21.74153055679862,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0463C4E054426057D908">
+		<name>Talus 3</name>
+		<LookAt>
+			<longitude>104.0446175958449</longitude>
+			<latitude>21.7839824624441</latitude>
+			<altitude>1613.450088585461</altitude>
+			<heading>91.93229671948953</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>272.079219815605</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0448990099397,21.78382217475437,0 104.0448216432861,21.78373485582452,0 104.0447705482026,21.78370325744722,0 104.0446920094782,21.78369313632021,0 104.0446331196419,21.78369305000116,0 104.0445373850485,21.78370401316754,0 104.0444633313784,21.78370349144001,0 104.0444228999774,21.7836896789252,0 104.0444043284972,21.7836829901476,0 104.044497955342,21.78356860526163,0 104.0445188894577,21.78353898593599,0 104.0445622560784,21.7835101790814,0 104.0446080804816,21.78350674280301,0 104.0446536972128,21.78350122850155,0 104.044697776035,21.78350147356717,0 104.0447434235529,21.78350175290183,0 104.0448071363745,21.78351794377651,0 104.0448541801689,21.78355494973954,0 104.0449050945776,21.78360762765953,0 104.0449368299876,21.78365998195898,0 104.044946228847,21.7837425850637,0 104.0448990099397,21.78382217475437,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="08E6E0E5054263D52991">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0469017140572</longitude>
+			<latitude>21.75733425304636</latitude>
+			<altitude>1778.834824850928</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>283.5907222016249</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0468998357558,21.75745724053896,0 104.0467564373613,21.75748561380447,0 104.046580788724,21.7574824277831,0 104.0463481768748,21.75746825625335,0 104.046353089616,21.75739304538175,0 104.0465128369115,21.75699733532001,0 104.0467952001683,21.75709593054897,0 104.0469969359516,21.75708247399444,0 104.0470767102852,21.75708233123979,0 104.0468998357558,21.75745724053896,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="07D3FECB26426414643B">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0655054474908</longitude>
+			<latitude>21.81516972224195</latitude>
+			<altitude>1841.118022846301</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35.00000000000001</gx:fovy>
+			<range>145.9921753720846</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.065329200802,21.81495837262163,0 104.0653993531037,21.81499963274078,0 104.0654532789735,21.81504864078889,0 104.0654233670818,21.81508308726066,0 104.0652985055837,21.8150006001337,0 104.065329200802,21.81495837262163,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="07E68A5C73426415AC04">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0636942588423</longitude>
+			<latitude>21.81475798680537</latitude>
+			<altitude>1824.598613445683</altitude>
+			<heading>359.8209506257726</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35.00000000000001</gx:fovy>
+			<range>151.4318999978241</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0632356264546,21.81473495031749,0 104.0632108081864,21.81465576023593,0 104.0633199886561,21.81460785672545,0 104.0633538271029,21.81466677406095,0 104.0633590128191,21.81472835869017,0 104.0632356264546,21.81473495031749,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0EA956C590426416DC80">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0586823771271</longitude>
+			<latitude>21.81326495501664</latitude>
+			<altitude>1722.855394736274</altitude>
+			<heading>359.8209426759056</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35.00000000000001</gx:fovy>
+			<range>73.17813614021361</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0585868691879,21.81315649458375,0 104.0586076987516,21.81314913202682,0 104.0586130229252,21.81322525155078,0 104.0585849295876,21.8132304695906,0 104.0585868691879,21.81315649458375,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0111DAA650426417B27F">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.057283061463</longitude>
+			<latitude>21.81250597396004</latitude>
+			<altitude>1694.098845678463</altitude>
+			<heading>359.8209410110762</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35.00000000000001</gx:fovy>
+			<range>129.1241675308265</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0572881109277,21.81302432504437,0 104.0572355701862,21.81304344915914,0 104.0572094907112,21.8130434029183,0 104.0571592955864,21.81301784121738,0 104.0571573347289,21.81298715034222,0 104.0572334717728,21.8129029048193,0 104.0573015684287,21.81285446601167,0 104.0573228831955,21.81287324978583,0 104.0573468057269,21.81289177406929,0 104.057312176816,21.81296655212812,0 104.0572881109277,21.81302432504437,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0E6BF620934264194CCE">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.056304347763</longitude>
+			<latitude>21.81172478687576</latitude>
+			<altitude>1693.607273275119</altitude>
+			<heading>-91.86768455501029</heading>
+			<tilt>56.52822821983065</tilt>
+			<gx:fovy>35.00000000000001</gx:fovy>
+			<range>54.30843549104794</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0563670675472,21.8117313452494,0 104.0564123056141,21.81177427728878,0 104.0563843203859,21.81181392283749,0 104.0563661825384,21.81180412811715,0 104.056339683996,21.81178061264438,0 104.0563270344811,21.8117597191359,0 104.0563670675472,21.8117313452494,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="03035A6E4B42641AA913">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0548591513861</longitude>
+			<latitude>21.80901499361151</latitude>
+			<altitude>1639.473772077545</altitude>
+			<heading>-74.8962235854614</heading>
+			<tilt>52.02504047683303</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>28.90881126945715</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0548964334578,21.80901781365836,0 104.0549045479199,21.80903754218359,0 104.0548833648244,21.80904678672291,0 104.0548808128744,21.80904189038818,0 104.0548749723625,21.80901931259185,0 104.0548964334578,21.80901781365836,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="09BEA4B5B842641B6D6C">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0557972865218</longitude>
+			<latitude>21.80867982528048</latitude>
+			<altitude>1599.898681740808</altitude>
+			<heading>-74.89553948478816</heading>
+			<tilt>52.02303124861349</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>85.25131288031845</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0541066683384,21.80758130319198,0 104.0540813587952,21.80756652151634,0 104.0540617770963,21.80751586493178,0 104.0540575517051,21.80740794516654,0 104.0541324667565,21.80743910055266,0 104.0541595667565,21.80755539678778,0 104.0541066683384,21.80758130319198,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="069E051E5A42641BD0E6">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0557972865218</longitude>
+			<latitude>21.80867982528048</latitude>
+			<altitude>1599.898681740808</altitude>
+			<heading>-74.89553948478816</heading>
+			<tilt>52.02303124861349</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>85.25131288031845</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0558745848419,21.80865890186107,0 104.0559084234774,21.8086691090111,0 104.0558439111338,21.80868669937438,0 104.0558745848419,21.80865890186107,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0480102AC142641D8580">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0563903401646</longitude>
+			<latitude>21.80642459776644</latitude>
+			<altitude>1577.361423296881</altitude>
+			<heading>83.23655085922476</heading>
+			<tilt>52.24135125735762</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>236.7175273139947</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0562682000697,21.80775159412767,0 104.0563039238639,21.80775881942639,0 104.0563342974483,21.80776655125056,0 104.0563516698516,21.80777966857573,0 104.0563651454645,21.80782241642831,0 104.0563497798021,21.80786446232857,0 104.0563361707097,21.80789174393755,0 104.0563124417645,21.80788677464015,0 104.0562978898232,21.80788445286923,0 104.0562682000697,21.80775159412767,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0BD97F3D55426426CBA4">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0594635079962</longitude>
+			<latitude>21.80032612244377</latitude>
+			<altitude>1481.920852905546</altitude>
+			<heading>88.92708593730447</heading>
+			<tilt>52.24371066578461</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>568.6423748460949</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.056707624879,21.80561756702189,0 104.0569710465339,21.80566992809906,0 104.0570474396736,21.80600161804915,0 104.0569267742507,21.80593522228618,0 104.0567759743636,21.80591094547072,0 104.0566081240155,21.80586903930673,0 104.056707624879,21.80561756702189,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="016149754C42642D97D0">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.059686104127</longitude>
+			<latitude>21.80198974323978</latitude>
+			<altitude>1491.907188679564</altitude>
+			<heading>-2.677276623505158</heading>
+			<tilt>47.70223257123825</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>197.2010183511521</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0593293800602,21.80190463813931,0 104.0594576502064,21.80192566941604,0 104.0595556780322,21.80192661947316,0 104.0596343852454,21.80192832796611,0 104.0597256741456,21.80191418556426,0 104.0598210329244,21.80189738522834,0 104.0598730687253,21.80188143482262,0 104.0598744037108,21.80195823567977,0 104.0598411038897,21.80202931684032,0 104.0597296190123,21.80204905659993,0 104.0595907535142,21.80204518521291,0 104.0594794485074,21.80202882332184,0 104.0593666145982,21.80199884242991,0 104.0593213544954,21.80196547084357,0 104.0593293800602,21.80190463813931,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0B8B24687A42642DDFC0">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0596784536947</longitude>
+			<latitude>21.80186131901268</latitude>
+			<altitude>1484.914005795136</altitude>
+			<heading>-2.677277914387272</heading>
+			<tilt>47.70230167701959</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>207.5923241825149</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0595449629794,21.80154495404544,0 104.0597143915622,21.80153185366036,0 104.0598574619818,21.80182872204902,0 104.0597069706879,21.80185514200947,0 104.0595878868291,21.8018640319278,0 104.0595054019807,21.80186699027171,0 104.0593649054216,21.80185657394206,0 104.0595449629794,21.80154495404544,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0FA2ED229142643BC51E">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0573594060618</longitude>
+			<latitude>21.80060882907134</latitude>
+			<altitude>1467.826045348275</altitude>
+			<heading>-41.80373309977932</heading>
+			<tilt>47.70326478701246</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>352.4156532188863</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0567637463898,21.8002596258321,0 104.0568892144476,21.80013516806116,0 104.0569691418425,21.80004972314786,0 104.0570479468605,21.80001583125426,0 104.0571585008152,21.80001285111814,0 104.0571797600562,21.80007561710681,0 104.0571454559687,21.80018673758129,0 104.0570285452278,21.80027490550689,0 104.0569234087716,21.80030519946648,0 104.0568130347818,21.80033171831749,0 104.056756378184,21.80029366394156,0 104.0567637463898,21.8002596258321,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="01F40C444342643D34A8">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0551403416597</longitude>
+			<latitude>21.79557412277826</latitude>
+			<altitude>1436.2414658614</altitude>
+			<heading>-41.80456826578475</heading>
+			<tilt>47.701928191432</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>151.4296170042872</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0534349329964,21.79767762948523,0 104.053618434912,21.79760315290879,0 104.0537709998574,21.79751795132697,0 104.0539184744059,21.79738651608739,0 104.0540572559385,21.79728416238196,0 104.0541232739414,21.79722561188695,0 104.054176254561,21.79719434233684,0 104.054182612605,21.79725769586866,0 104.0539932302808,21.797452515483,0 104.0538264967163,21.79761238040919,0 104.0536126140018,21.79775195339827,0 104.0534969535934,21.79780201195853,0 104.0534349329964,21.79767762948523,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0B8BB22C374264427534">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0543046485491</longitude>
+			<latitude>21.79569398548914</latitude>
+			<altitude>1423.816209525193</altitude>
+			<heading>-41.80523137776007</heading>
+			<tilt>47.70430217742486</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>508.4056019628042</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0553678721017,21.79531020866748,0 104.0554375831057,21.79532558017693,0 104.0554888904723,21.79534694549539,0 104.0555248450413,21.79536785996082,0 104.0555475917462,21.79540928434941,0 104.0555624994446,21.79543879292525,0 104.0555834936565,21.79546710182666,0 104.055603749382,21.79550145549458,0 104.0556075689352,21.79552734141919,0 104.0551346825534,21.79597936995382,0 104.0551049814482,21.79587863270713,0 104.0550664662396,21.79578810593769,0 104.0549992308953,21.79574432579748,0 104.0549559657358,21.79572457738111,0 104.0553678721017,21.79531020866748,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0274A1E9E14264446156">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0550424073955</longitude>
+			<latitude>21.79137525350343</latitude>
+			<altitude>1404.372989526608</altitude>
+			<heading>69.97730923147491</heading>
+			<tilt>44.75207526896174</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>928.370027578203</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0540408725538,21.79548210996061,0 104.0540586678753,21.79559176178653,0 104.0542768589459,21.79573037655213,0 104.0545041892258,21.79579250514197,0 104.0542851911466,21.79594417400442,0 104.0541800714331,21.79603559993885,0 104.0540954124032,21.7961043655312,0 104.0539543060678,21.7960723029189,0 104.0538172227035,21.79599136749995,0 104.0537695966351,21.79589975633116,0 104.0538351857198,21.79570478377654,0 104.0538189092095,21.79561498887603,0 104.0538959020617,21.79548677734941,0 104.0540532112113,21.79537171223884,0 104.0540408725538,21.79548210996061,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0E3CB37B1A42644D75FB">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0486643485899</longitude>
+			<latitude>21.79250103655898</latitude>
+			<altitude>1403.449516660409</altitude>
+			<heading>24.69416823929284</heading>
+			<tilt>0.3772889938658437</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>390.8165547917453</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0484191709923,21.79233473311482,0 104.0483618159936,21.79254447330845,0 104.0482400253362,21.79265184471059,0 104.0482067106234,21.79271189357346,0 104.0481436330026,21.79278643978274,0 104.0480323571236,21.79280535751173,0 104.0479872591091,21.7926695698731,0 104.0479463178267,21.79250691165621,0 104.0479349599276,21.79239107447993,0 104.0479798569529,21.79219565987424,0 104.048100046518,21.79184232362386,0 104.048510686122,21.79205604398623,0 104.0484191709923,21.79233473311482,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0B7DD1DB6E42645081A4">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.052666750365</longitude>
+			<latitude>21.78892637168276</latitude>
+			<altitude>1468.99959264408</altitude>
+			<heading>35.08112692724145</heading>
+			<tilt>0.1570231652664093</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>159.2324601279506</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.052708257734,21.7890472327829,0 104.0526438476595,21.78910529901624,0 104.0525528044852,21.78917792411218,0 104.0524070935768,21.78924053923894,0 104.0522984626531,21.78925445257103,0 104.0522150347956,21.78915642399289,0 104.0521717529148,21.78907500790309,0 104.0521569889292,21.78895602560443,0 104.0521602405972,21.78886430332027,0 104.0522144800835,21.78881334669146,0 104.0522923387991,21.78878706766264,0 104.0524170697281,21.78876673394765,0 104.0525591720174,21.78880653430347,0 104.0526430792094,21.78887156088514,0 104.0527220852618,21.78894026417477,0 104.0527545058626,21.78900745744643,0 104.052708257734,21.7890472327829,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="09CD4E177E426450C3E3">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0525761994198</longitude>
+			<latitude>21.78881525590994</latitude>
+			<altitude>1470.52196174502</altitude>
+			<heading>35.08109331406276</heading>
+			<tilt>0.1570231266109423</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>157.7100742804032</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0528244359442,21.7889203124118,0 104.0526951845079,21.78880390101684,0 104.0525919770022,21.78872523346365,0 104.0524880536802,21.78867531998769,0 104.052378713062,21.78867030371942,0 104.052238265184,21.78872246772653,0 104.052260599327,21.78867567924248,0 104.0524360369631,21.7886305796638,0 104.052545840611,21.78862372524841,0 104.0526296231516,21.78866776243064,0 104.0527175325511,21.78874888090686,0 104.0527770809359,21.78881741189456,0 104.0528244359442,21.7889203124118,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0A810411F84264553D50">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0470860131177</longitude>
+			<latitude>21.7849945668025</latitude>
+			<altitude>1588.480750845878</altitude>
+			<heading>43.26950847578266</heading>
+			<tilt>0.5268175524512949</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>54.85244851442076</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0470345112904,21.78501130786923,0 104.04699034631,21.78496098331874,0 104.0470204717204,21.78494689251194,0 104.0470408404682,21.78494198914762,0 104.0470621818206,21.78493884470546,0 104.047075902949,21.78493998665562,0 104.0470887922899,21.7849454537185,0 104.0470891434548,21.78496119459182,0 104.0470755675836,21.78497098494262,0 104.0470564291445,21.78499609059538,0 104.0470345112904,21.78501130786923,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0AAD7E26F44264565B7F">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0465248805923</longitude>
+			<latitude>21.78498647795683</latitude>
+			<altitude>1586.713685113951</altitude>
+			<heading>43.83432094576719</heading>
+			<tilt>1.773197756372717</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>104.7665038772539</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0463194895068,21.78505055638346,0 104.0462949891693,21.78503895849816,0 104.0462817304122,21.7850013958559,0 104.0463092495536,21.78496133431227,0 104.0463142062714,21.78497991025977,0 104.0463348957934,21.78502204527294,0 104.0463550373491,21.78506089422055,0 104.0463194895068,21.78505055638346,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="074A8D28194264569CF1">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0465248805923</longitude>
+			<latitude>21.78498647795683</latitude>
+			<altitude>1586.713685113951</altitude>
+			<heading>43.83432094576719</heading>
+			<tilt>1.773197756372717</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>104.7665038772539</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0464132974339,21.7850413146201,0 104.0463939452365,21.78499861983821,0 104.0463833304807,21.78495659697064,0 104.0463770022684,21.78493193091828,0 104.046371825583,21.7849158393426,0 104.0465136352889,21.78487108481184,0 104.0465486270281,21.78495305932602,0 104.0464132974339,21.7850413146201,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="096C02B1CE426460DEE8">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0450825242613</longitude>
+			<latitude>21.78297900855113</latitude>
+			<altitude>1659.311759591614</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35.00000000000002</gx:fovy>
+			<range>158.7316385609847</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_1F177C639A42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0447679995147,21.78277195365052,0 104.0448937648818,21.78272175699282,0 104.0449208129429,21.78277112737763,0 104.0449054869206,21.78280184836912,0 104.0448422211678,21.78282733164556,0 104.0448042158681,21.78282446333449,0 104.0447679995147,21.78277195365052,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0C9F2E96BB426470A614">
+		<name>scar2_d</name>
+		<LookAt>
+			<longitude>104.0451678324599</longitude>
+			<latitude>21.76354276443714</latitude>
+			<altitude>1991.400171549909</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>501.7369430750114</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0449977492282,21.76323623065268,0 104.0450412027585,21.76286583983167,0 104.0451523642096,21.76247102461507,0 104.0457591108594,21.76213696243806,0 104.0462808485462,21.76221319138936,0 104.046413726297,21.76264359759621,0 104.0465254940022,21.76337686066352,0 104.0462609803956,21.76333320890265,0 104.045959108534,21.76329329664982,0 104.0456206766498,21.76328084286515,0 104.0452101402797,21.76336720173692,0 104.0450304423985,21.76344962272592,0 104.0449977492282,21.76323623065268,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="061B6910E2426471466E">
+		<name>scar2_u</name>
+		<LookAt>
+			<longitude>104.0450735330918</longitude>
+			<latitude>21.76354010725736</latitude>
+			<altitude>1990.050141230441</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>503.0869918825193</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0450383114546,21.76350228433801,0 104.0451644430223,21.7634750856622,0 104.0453924562283,21.76342168036474,0 104.045701684097,21.76336796801318,0 104.0460825266692,21.76339463366989,0 104.0463903792776,21.76343145630276,0 104.0464902704801,21.76344904943243,0 104.0463725262276,21.76358705580175,0 104.0461958856202,21.76362307537989,0 104.0458261133453,21.76357025144509,0 104.0455079695577,21.76358814949363,0 104.04532063839,21.76357646820387,0 104.0451526657167,21.76354821711801,0 104.0450383114546,21.76350228433801,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0A2199610C42647786FF">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.044497372509</longitude>
+			<latitude>21.78085038281661</latitude>
+			<altitude>1690.594024412386</altitude>
+			<heading>4.014190954410013e-09</heading>
+			<tilt>0.3763895088702458</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>178.4718261037051</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0440515532958,21.78122460425555,0 104.0438766174276,21.78122296052766,0 104.0437607658062,21.78114917262719,0 104.0437011876698,21.78107540482995,0 104.0438023520543,21.78090730217475,0 104.0440288407681,21.78062125547542,0 104.044075852248,21.78066709155658,0 104.0441536711734,21.78071354363705,0 104.0442542152315,21.780775277646,0 104.0443730471309,21.78085915905196,0 104.0440515532958,21.78122460425555,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0684AFB9A9426477C2B6">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0446708603793</longitude>
+			<latitude>21.7813616655678</latitude>
+			<altitude>1657.133405514346</altitude>
+			<heading>0.1513406251867638</heading>
+			<tilt>1.439683819733091</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>557.7073688889506</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0444187477796,21.78078680702984,0 104.0442954334521,21.78069281462575,0 104.0441962623577,21.78063257354971,0 104.04415229108,21.7805909393837,0 104.0441299584602,21.78054645064617,0 104.0442101914967,21.78053608126745,0 104.044306734202,21.78056808119654,0 104.0444123974067,21.78061118735431,0 104.0444433214544,21.78064566194715,0 104.0444569849429,21.78069352985768,0 104.0444187477796,21.78078680702984,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="022AB3A6CC426479FF84">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0448032603546</longitude>
+			<latitude>21.78006829692928</latitude>
+			<altitude>1695.999008999644</altitude>
+			<heading>0.1513405211156937</heading>
+			<tilt>1.439583579186843</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>113.9164638421062</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0446865985002,21.7799682090901,0 104.0447666201504,21.7799149447664,0 104.0447760261967,21.77995433885329,0 104.044769172399,21.77997924124749,0 104.0447514100043,21.77999684515551,0 104.044739119615,21.78000162111977,0 104.0447127339983,21.7800006834402,0 104.0446788678282,21.7799824275565,0 104.0446865985002,21.7799682090901,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="05616090FF42647A2721">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0448032603546</longitude>
+			<latitude>21.78006829692928</latitude>
+			<altitude>1695.999008999644</altitude>
+			<heading>0.1513405211156937</heading>
+			<tilt>1.439583579186843</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>113.9164638421062</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.044614817966,21.77984385408935,0 104.0446435730305,21.77981161492933,0 104.044740478046,21.77987162089698,0 104.0446585176023,21.77992847456441,0 104.044614817966,21.77984385408935,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="01429CBF374264837200">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0453711040847</longitude>
+			<latitude>21.77871403231195</latitude>
+			<altitude>1702.136042299253</altitude>
+			<heading>0.1513405174805645</heading>
+			<tilt>1.439579853245913</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>97.42600750561905</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0450123965412,21.77866140537727,0 104.045121994216,21.77849933389465,0 104.0452959707914,21.77853411500567,0 104.0452541986867,21.77860463391307,0 104.045224356075,21.77865564125119,0 104.0451958836023,21.77871063353415,0 104.0451248683983,21.77878206117011,0 104.0450123965412,21.77866140537727,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0993DE2B92426483A040">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0453197295722</longitude>
+			<latitude>21.77879450170768</latitude>
+			<altitude>1702.580222896215</altitude>
+			<heading>0.1513405447878179</heading>
+			<tilt>1.439605576447871</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>211.3111468221905</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0452116547063,21.77880126551703,0 104.0452708487907,21.77870987445098,0 104.0453605573123,21.77856960610342,0 104.0453854275259,21.77860794017754,0 104.0453887163756,21.77866276760238,0 104.0453450394166,21.77873444953659,0 104.0452946018166,21.77878997329853,0 104.0452677188752,21.77881336763143,0 104.0452116547063,21.77880126551703,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0E28BFC51842649DF9F0">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0441866901908</longitude>
+			<latitude>21.7694594459037</latitude>
+			<altitude>1958.160923817374</altitude>
+			<heading>24.00802291088767</heading>
+			<tilt>12.54325929013293</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>312.5044297389468</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0440811604148,21.7690845602093,0 104.0440707961175,21.76913269334073,0 104.0440545795896,21.76917406639816,0 104.0440212162983,21.76919855252595,0 104.0439615000172,21.76920980751203,0 104.0438758629394,21.76922439323926,0 104.0437864466488,21.76925911409829,0 104.0437602291054,21.769167189164,0 104.0437330102432,21.76910273565591,0 104.043740361676,21.76902463013555,0 104.0437457024957,21.76898329098644,0 104.0437704455438,21.76893572474157,0 104.0438457163158,21.76891432407673,0 104.0439736824266,21.76894246435264,0 104.0440811604148,21.7690845602093,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0EE5A47D764264A035DC">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0441042934229</longitude>
+			<latitude>21.76931828390233</latitude>
+			<altitude>1958.060782327069</altitude>
+			<heading>24.00795816660149</heading>
+			<tilt>12.542860808386</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>108.4081103446624</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0438596083896,21.76930056635981,0 104.0440442771515,21.76923736322518,0 104.0440347869879,21.76928542079213,0 104.0439892582399,21.76931117362499,0 104.0439510439918,21.7693277473854,0 104.0439024816286,21.76932519798474,0 104.0438746565453,21.76933055590278,0 104.0438596083896,21.76930056635981,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="04737C59AE4264AE2994">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0473493054784</longitude>
+			<latitude>21.76297324742095</latitude>
+			<altitude>1958.051834787706</altitude>
+			<heading>24.00951661237507</heading>
+			<tilt>12.54297754301431</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>168.1979264018992</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0474148906649,21.76298139743989,0 104.0474032445774,21.76291036185215,0 104.0473514755567,21.76283721841841,0 104.0473281074204,21.76278881353076,0 104.0474938202036,21.76273596626181,0 104.0476117681812,21.76274855842989,0 104.0476702163925,21.76279158660247,0 104.047656144201,21.76284658194361,0 104.0476156142783,21.76288615030739,0 104.047551633366,21.76291238924377,0 104.0474148906649,21.76298139743989,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0B392DF56E4264AE61E7">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0475054695238</longitude>
+			<latitude>21.76307951661512</latitude>
+			<altitude>1969.445052157071</altitude>
+			<heading>24.20340693253686</heading>
+			<tilt>11.50425950006679</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>401.7879495798844</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0471932760118,21.76309297303364,0 104.0471389329901,21.76304231324766,0 104.0470748367582,21.76294710970683,0 104.0469758419764,21.76284058076791,0 104.0468750081406,21.76276666996489,0 104.0468998398616,21.76272026251413,0 104.0472071704637,21.76281407353486,0 104.0472539450248,21.76284956879585,0 104.0472941555001,21.76291777500641,0 104.0473142042595,21.76296774991319,0 104.0472862874919,21.7630599064531,0 104.0471932760118,21.76309297303364,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0CCFF903874264B5C08E">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0480714052219</longitude>
+			<latitude>21.75393602219287</latitude>
+			<altitude>1750.208782699977</altitude>
+			<heading>24.3892991205214</heading>
+			<tilt>11.50404443469671</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>281.8275790407279</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0473900079624,21.75397164299508,0 104.0473402580322,21.75383418016928,0 104.0473202206664,21.75364999945128,0 104.0473299035385,21.75352208405206,0 104.0474524970756,21.75344737708469,0 104.047596309705,21.75351253626745,0 104.0476808715664,21.75361041100258,0 104.0477747178374,21.75369655978321,0 104.0478211387418,21.75386035328284,0 104.0478157707629,21.75390285251886,0 104.0477504836455,21.75394426940747,0 104.0476022994727,21.75399269108573,0 104.047512822095,21.75403391481825,0 104.0474194078127,21.75403054250962,0 104.0473900079624,21.75397164299508,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0B486FEA7B4264B5FF71">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0480802920024</longitude>
+			<latitude>21.7539321825813</latitude>
+			<altitude>1750.638645912112</altitude>
+			<heading>24.26174050625915</heading>
+			<tilt>11.50404364816628</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>281.3889429728442</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0474643606754,21.75411799914151,0 104.0475706883405,21.75408837684225,0 104.0476923509445,21.75403847261664,0 104.0477948550952,21.75399657679142,0 104.0478599259555,21.75396856994546,0 104.0479086881852,21.75407722170919,0 104.0478766352706,21.75417830427435,0 104.047814078877,21.75422515839456,0 104.0476951797203,21.75428593679007,0 104.047572738269,21.75428128084836,0 104.0474990366447,21.7542249119875,0 104.0474643606754,21.75411799914151,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0456B5C47B4264BDA73B">
+		<name>Đa giác không có tiêu đề</name>
+		<LookAt>
+			<longitude>104.0439448034799</longitude>
+			<latitude>21.75155657157458</latitude>
+			<altitude>1603.081700683427</altitude>
+			<heading>-18.8420417739483</heading>
+			<tilt>36.82255580706794</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>122.3498303787528</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.043912562488,21.75161741035348,0 104.0439016825104,21.75136744656138,0 104.044006804339,21.75135016097207,0 104.0441360889782,21.75136825469219,0 104.0441863761391,21.75138307196228,0 104.0442396730519,21.75140264407591,0 104.0442685047658,21.7514778415616,0 104.0442647651227,21.75157968671058,0 104.044242179104,21.75166248764599,0 104.0441593455984,21.75168252789467,0 104.0440123780851,21.75164755600883,0 104.043912562488,21.75161741035348,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<Placemark id="0F34A1FCC74264BDDB06">
+		<name>Đa giác không có tiêu đề</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>104.0439496019564</longitude>
+			<latitude>21.75155294819239</latitude>
+			<altitude>1602.901564941403</altitude>
+			<heading>-18.84203999567419</heading>
+			<tilt>36.82255701964748</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>122.5748616909368</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0437301094176,21.75162888544787,0 104.0436563428865,21.75161072004517,0 104.0435786590543,21.75157910590037,0 104.043572568351,21.75153879516422,0 104.0436324213661,21.7514642243073,0 104.0437486627068,21.75141785156951,0 104.0438482796283,21.75137594662714,0 104.0438492918826,21.75160245852776,0 104.0437301094176,21.75162888544787,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<GroundOverlay id="03A54AF22E42650E0A66">
+		<name>Đường đồng mức (mức chênh lệch độ cao 40m)</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>-105</longitude>
+			<latitude>44</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>10000000</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<drawOrder>1</drawOrder>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAESJGQzZTA5MDdjLTIzYWYtNGNiZS04ZmQyLTZlOWRlNmQ4N2Q3NA</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+	<Placemark id="0BDA16FBA342650E5853">
+		<name>Đa giác không có tiêu đề</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>104.0423827887639</longitude>
+			<latitude>21.74137150063526</latitude>
+			<altitude>1561.34432686762</altitude>
+			<heading>-15.24551378910964</heading>
+			<tilt>36.82339283201385</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>277.6823812832299</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_05AFB1830F42891C15D0</styleUrl>
+		<Polygon>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						104.0424197821539,21.7411850454737,0 104.0424021558287,21.74105772261322,0 104.0423619363803,21.74090388201849,0 104.0423553493717,21.74078659566521,0 104.0424400300216,21.74081354815437,0 104.0425583913619,21.74090110129143,0 104.0426632527258,21.74116088322372,0 104.0426461676203,21.74117133603233,0 104.042568648146,21.74124379455576,0 104.0425122412298,21.74130741872203,0 104.0424197821539,21.7411850454737,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+	</Placemark>
+	<GroundOverlay id="0FDCC60D8A4268948734">
+		<name>Administrative area level 1</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>-105</longitude>
+			<latitude>44</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>10000000</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<drawOrder>1</drawOrder>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAESJDRjNjU3M2Y2LTM0ZjYtNDQxNC1hOWNlLTMwMjU4OWVlOTllOQ</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+	<GroundOverlay id="082B96899B4268B3F838">
+		<name>Administrative area level 2</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>-105</longitude>
+			<latitude>44</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>10000000</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<drawOrder>2</drawOrder>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAESJDkyNTU4MzMwLTM4ZmQtNDQxNC1hNTI4LTk2M2Y1NzYwMmQ1Ng</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+	<GroundOverlay id="00FE1A0D3A4268B7AC77">
+		<name>Administrative area level 1</name>
+		<visibility>0</visibility>
+		<LookAt>
+			<longitude>-105</longitude>
+			<latitude>44</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<gx:fovy>30</gx:fovy>
+			<range>10000000</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B3C6B57D342891C15D1</styleUrl>
+		<drawOrder>3</drawOrder>
+		<Icon>
+			<href>data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==</href>
+		</Icon>
+		<LatLonBox>
+			<north>85</north>
+			<south>-85</south>
+			<east>180</east>
+			<west>-180</west>
+		</LatLonBox>
+		<gx:MapTilePyramid>
+			<Link>
+				<href>files/earthdatalayer:0:CAESJDRjNjU3M2Y2LTM0ZjYtNDQxNC1hOWNlLTMwMjU4OWVlOTllOQ</href>
+			</Link>
+			<gx:minLevel>0</gx:minLevel>
+			<gx:maxLevel>22</gx:maxLevel>
+		</gx:MapTilePyramid>
+	</GroundOverlay>
+</Document>
+</kml>

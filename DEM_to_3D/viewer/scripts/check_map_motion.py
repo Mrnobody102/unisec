@@ -10,6 +10,13 @@ def run(url, chrome, captures=None):
         page=browser.new_page(viewport={'width':1440,'height':960})
         page.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page.add_init_script("""{window.mapDrawCalls=0;
+          for(const Type of [WebGLRenderingContext,WebGL2RenderingContext])
+            for(const name of ['drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced']) {
+              const original=Type.prototype[name];
+              if(original) Type.prototype[name]=function(...args){mapDrawCalls++;return original.apply(this,args);};
+            }
+        }""")
         def audit_symbols():
             result=page.evaluate('''() => {
               const visible=[...document.querySelectorAll('.map-pin:not([hidden])')];
@@ -54,11 +61,13 @@ def run(url, chrome, captures=None):
               window.idleMarkerObserver=new MutationObserver(rows=>{idleMarkerChanges+=rows.length;idleMarkerMutations.push(...rows.map(r=>({name:r.attributeName,node:r.target.className,value:r.attributeName?r.target.getAttribute(r.attributeName):''})));});
               idleMarkerObserver.observe(document.querySelector('.map-marker-layer'),{subtree:true,childList:true,attributes:true});
             }''')
+            draws=page.evaluate('mapDrawCalls')
             for i in range(15):
                 page.mouse.move(520+i*10,520+(i%3)*8)
                 page.wait_for_timeout(25)
             idle=page.evaluate('idleMarkerObserver.disconnect(); idleMarkerChanges')
             assert idle==0,(mode,'idle marker DOM changes',idle,page.evaluate('idleMarkerMutations.slice(0,20)'))
+            if mode=='3d':assert page.evaluate('mapDrawCalls')==draws,'Stationary map still renders WebGL frames'
             area=page.locator('.terrain-canvas').first.bounding_box()
             x=area['x']+area['width']*.42;y=area['y']+area['height']*.62
             # Pan, zoom and orbit through the actual input surface.

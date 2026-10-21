@@ -16,7 +16,7 @@ def run(url, chrome, captures):
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-            expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+            expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             expect(page.locator('html')).to_have_attribute('data-theme', expected)
             assert page.evaluate("localStorage.getItem('dear.theme')") == expected
             if saved is not None:
@@ -62,7 +62,7 @@ def run(url, chrome, captures):
             expect(settings).to_have_count(0)
             expect(page.get_by_role('button', name='Display settings', exact=True)).to_be_focused()
             page.reload()
-            expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+            expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
             expect(page.locator('html')).to_have_attribute('data-font', 'source')
             expect(page.locator('html')).to_have_attribute('lang', 'en')
@@ -75,7 +75,7 @@ def run(url, chrome, captures):
             page.locator('.settings-workspace summary').click()
             page.get_by_role('button', name='Reset workspace', exact=True).click()
             expect(page.locator('.settings-menu')).to_have_count(0)
-            expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
+            expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
             assert not errors, errors
             context.close()
         # A restricted browser must retain a usable light interface.
@@ -89,7 +89,7 @@ def run(url, chrome, captures):
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         page = context.new_page()
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.get_by_role('button', name='Tối', exact=True).click()

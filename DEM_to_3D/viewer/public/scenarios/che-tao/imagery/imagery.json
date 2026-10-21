@@ -1,0 +1,594 @@
+{
+ "layers": [
+  {
+   "id": "planet-post",
+   "name": [
+    "PlanetScope sau mưa",
+    "PlanetScope post-monsoon"
+   ],
+   "kind": "optical",
+   "parts": [
+    {
+     "id": "planet-post-roadpart1",
+     "part": "RoadPart1",
+     "acquired": "2026-09-01T03:38:21.296325Z",
+     "source": "Planet PSScene visual, strip 8992030",
+     "gsdM": 3.9,
+     "pixelM": 3.0,
+     "cloudPercent": 33,
+     "clearPercent": 36,
+     "terrain": {
+      "url": "planet-post-roadpart1.utm.webp",
+      "byteLength": 729634,
+      "sha256": "d237b55fda016cad829082875620baa4b22b040438ae8479da6821df1abe68e9",
+      "width": 522,
+      "height": 1040,
+      "crs": "EPSG:32648",
+      "bounds": [
+       402066.0,
+       2410038.0,
+       403632.0,
+       2413158.0
+      ]
+     },
+     "web": {
+      "url": "planet-post-roadpart1.web.webp",
+      "byteLength": 674432,
+      "sha256": "1b4cd8f5021cf4ce6acbb76f954b0e23d4c38881b7364e9f3c3f14211cb61f86",
+      "width": 517,
+      "height": 1044,
+      "latLngBounds": [
+       [
+        21.7914551,
+        104.0526183
+       ],
+       [
+        21.8195834,
+        104.0676212
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-post-roadpart2",
+     "part": "RoadPart2",
+     "acquired": "2026-09-12T03:43:27.846499Z",
+     "source": "Planet PSScene visual, strip 9010265",
+     "gsdM": 3.8,
+     "pixelM": 3.0,
+     "cloudPercent": 36,
+     "clearPercent": 45,
+     "terrain": {
+      "url": "planet-post-roadpart2.utm.webp",
+      "byteLength": 1046854,
+      "sha256": "8bc44b2ad0d21e2a63fae4930def853250519964e36229a252737a286dcabf38",
+      "width": 585,
+      "height": 1406,
+      "crs": "EPSG:32648",
+      "bounds": [
+       400644.0,
+       2406000.0,
+       402399.0,
+       2410218.0
+      ]
+     },
+     "web": {
+      "url": "planet-post-roadpart2.web.webp",
+      "byteLength": 959508,
+      "sha256": "f330ee988b99f07aaae44109805d4be8cfaa053ea0eaf5ec5715a62f7555e5ac",
+      "width": 577,
+      "height": 1411,
+      "latLngBounds": [
+       [
+        21.7549323,
+        104.0390966
+       ],
+       [
+        21.7929569,
+        104.0558406
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-post-roadpart3",
+     "part": "RoadPart3",
+     "acquired": "2026-09-12T03:43:27.846499Z",
+     "source": "Planet PSScene visual, strip 9010265",
+     "gsdM": 3.8,
+     "pixelM": 3.0,
+     "cloudPercent": 36,
+     "clearPercent": 45,
+     "terrain": {
+      "url": "planet-post-roadpart3.utm.webp",
+      "byteLength": 2338394,
+      "sha256": "5071631c12705e21d2817edb1db1735dc78f9ef81a4875a9e8e3e940f6fff859",
+      "width": 1508,
+      "height": 1157,
+      "crs": "EPSG:32648",
+      "bounds": [
+       398712.0,
+       2402691.0,
+       403236.0,
+       2406162.0
+      ]
+     },
+     "web": {
+      "url": "planet-post-roadpart3.web.webp",
+      "byteLength": 2115634,
+      "sha256": "93ac266e52a5221da9d376fb6c4de5df175c3c1ac0c3f4f834d7c15afa798c0b",
+      "width": 1502,
+      "height": 1155,
+      "latLngBounds": [
+       [
+        21.725068,
+        104.0205999
+       ],
+       [
+        21.756201,
+        104.0641866
+       ]
+      ]
+     }
+    }
+   ],
+   "mosaic": {
+    "terrain": {
+     "url": "planet-post-mosaic.utm.webp",
+     "byteLength": 4138998,
+     "sha256": "a019d56796655d6a997dce10e9c9abec5a0e42583ce76a073161450d01612812",
+     "width": 1640,
+     "height": 3489,
+     "crs": "EPSG:32648",
+     "bounds": [
+      398712.0,
+      2402691.0,
+      403632.0,
+      2413158.0
+     ]
+    },
+    "web": {
+     "url": "planet-post-mosaic.web.webp",
+     "byteLength": 3774228,
+     "sha256": "de1ad143cd54954d089afd9e603b7b0fae1c4b789f6bfe088eafcdfb27b36857",
+     "width": 1620,
+     "height": 3507,
+     "latLngBounds": [
+      [
+       21.7250732,
+       104.0206057
+      ],
+      [
+       21.8195834,
+       104.0676166
+      ]
+     ]
+    }
+   },
+   "displayProcessing": "Valid-pixel overlap feathering, 60 m; no gap fill; source acquisition dates retained."
+  },
+  {
+   "id": "planet-pre",
+   "name": [
+    "PlanetScope trước mưa",
+    "PlanetScope pre-monsoon"
+   ],
+   "kind": "optical",
+   "parts": [
+    {
+     "id": "planet-pre-roadpart1",
+     "part": "RoadPart1",
+     "acquired": "2026-04-12T04:16:28.861784Z",
+     "source": "Planet PSScene visual, strip 8719210",
+     "gsdM": 3.4,
+     "pixelM": 3.0,
+     "cloudPercent": 0,
+     "clearPercent": 100,
+     "terrain": {
+      "url": "planet-pre-roadpart1.utm.webp",
+      "byteLength": 795626,
+      "sha256": "ceb0631500312a1bc6dd287dbf57afa0d406f154c48b1bc729ef1ca0781ba979",
+      "width": 522,
+      "height": 1040,
+      "crs": "EPSG:32648",
+      "bounds": [
+       402066.0,
+       2410038.0,
+       403632.0,
+       2413158.0
+      ]
+     },
+     "web": {
+      "url": "planet-pre-roadpart1.web.webp",
+      "byteLength": 736674,
+      "sha256": "969f3b442007f2056e5ca8fd5fcc515ad0743d60ae653b65de48e4f4cde03e22",
+      "width": 517,
+      "height": 1044,
+      "latLngBounds": [
+       [
+        21.7914551,
+        104.0526183
+       ],
+       [
+        21.8195834,
+        104.0676212
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-pre-roadpart2",
+     "part": "RoadPart2",
+     "acquired": "2026-04-12T04:16:30.907393Z",
+     "source": "Planet PSScene visual, strip 8719210",
+     "gsdM": 3.4,
+     "pixelM": 3.0,
+     "cloudPercent": 0,
+     "clearPercent": 100,
+     "terrain": {
+      "url": "planet-pre-roadpart2.utm.webp",
+      "byteLength": 1230054,
+      "sha256": "0608d393f174de7e480974e983e55b63c697a23118dff3ebd3518bacad8f2631",
+      "width": 585,
+      "height": 1406,
+      "crs": "EPSG:32648",
+      "bounds": [
+       400644.0,
+       2406000.0,
+       402399.0,
+       2410218.0
+      ]
+     },
+     "web": {
+      "url": "planet-pre-roadpart2.web.webp",
+      "byteLength": 1113036,
+      "sha256": "8a42ac57027b75f00f8469108145c16b7752f5a24aa80c37c42498710b9504da",
+      "width": 577,
+      "height": 1411,
+      "latLngBounds": [
+       [
+        21.7549323,
+        104.0390966
+       ],
+       [
+        21.7929569,
+        104.0558406
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-pre-roadpart3",
+     "part": "RoadPart3",
+     "acquired": "2026-04-12T04:16:30.907393Z",
+     "source": "Planet PSScene visual, strip 8719210",
+     "gsdM": 3.4,
+     "pixelM": 3.0,
+     "cloudPercent": 0,
+     "clearPercent": 100,
+     "terrain": {
+      "url": "planet-pre-roadpart3.utm.webp",
+      "byteLength": 2446334,
+      "sha256": "857118477e889f32dc85565ddc2bc249d3aede7fc5330543a3391c7bcaa290bc",
+      "width": 1508,
+      "height": 1157,
+      "crs": "EPSG:32648",
+      "bounds": [
+       398712.0,
+       2402691.0,
+       403236.0,
+       2406162.0
+      ]
+     },
+     "web": {
+      "url": "planet-pre-roadpart3.web.webp",
+      "byteLength": 2219348,
+      "sha256": "0ffa84c70c7325cdccc2a018e0b4e6559bf109444e9ec54762a4d0fe7f656e6c",
+      "width": 1502,
+      "height": 1155,
+      "latLngBounds": [
+       [
+        21.725068,
+        104.0205999
+       ],
+       [
+        21.756201,
+        104.0641866
+       ]
+      ]
+     }
+    }
+   ],
+   "mosaic": {
+    "terrain": {
+     "url": "planet-pre-mosaic.utm.webp",
+     "byteLength": 4467714,
+     "sha256": "cde58f40bc38b6105f1af2ed7eddf06fc5adfdc092176734cab79438b051c3bb",
+     "width": 1640,
+     "height": 3489,
+     "crs": "EPSG:32648",
+     "bounds": [
+      398712.0,
+      2402691.0,
+      403632.0,
+      2413158.0
+     ]
+    },
+    "web": {
+     "url": "planet-pre-mosaic.web.webp",
+     "byteLength": 4092052,
+     "sha256": "b881b1d6217f561cf378ffa7644d3c7474771fa52d9129171d39697244037255",
+     "width": 1620,
+     "height": 3507,
+     "latLngBounds": [
+      [
+       21.7250732,
+       104.0206057
+      ],
+      [
+       21.8195834,
+       104.0676166
+      ]
+     ]
+    }
+   },
+   "displayProcessing": "Valid-pixel overlap feathering, 60 m; no gap fill; source acquisition dates retained."
+  },
+  {
+   "id": "planet-sep01",
+   "name": [
+    "PlanetScope đối chiếu",
+    "PlanetScope reference"
+   ],
+   "kind": "optical",
+   "parts": [
+    {
+     "id": "planet-sep01-roadpart1",
+     "part": "RoadPart1",
+     "acquired": "2026-09-01T03:38:21.296325Z",
+     "source": "Planet PSScene visual, strip 8992030",
+     "gsdM": 3.9,
+     "pixelM": 3.0,
+     "cloudPercent": 33,
+     "clearPercent": 36,
+     "terrain": {
+      "url": "planet-sep01-roadpart1.utm.webp",
+      "byteLength": 729842,
+      "sha256": "2b15bf1b139212833b06970c6e24171db0e9580bbf60e0ef886d20e5fa8fe56f",
+      "width": 522,
+      "height": 1040,
+      "crs": "EPSG:32648",
+      "bounds": [
+       402066.0,
+       2410038.0,
+       403632.0,
+       2413158.0
+      ]
+     },
+     "web": {
+      "url": "planet-sep01-roadpart1.web.webp",
+      "byteLength": 674432,
+      "sha256": "c8a04c99e04c326190a06000ccfb5cb54821f2877c9d76942fdc11493e6af793",
+      "width": 517,
+      "height": 1044,
+      "latLngBounds": [
+       [
+        21.7914551,
+        104.0526183
+       ],
+       [
+        21.8195834,
+        104.0676212
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-sep01-roadpart2",
+     "part": "RoadPart2",
+     "acquired": "2026-09-01T03:38:21.296325Z",
+     "source": "Planet PSScene visual, strip 8992030",
+     "gsdM": 3.9,
+     "pixelM": 3.0,
+     "cloudPercent": 33,
+     "clearPercent": 36,
+     "terrain": {
+      "url": "planet-sep01-roadpart2.utm.webp",
+      "byteLength": 1063936,
+      "sha256": "9e429e53503e9f9a316939d9d522cd7e434a81a05846962b8b3ba459d19660d3",
+      "width": 585,
+      "height": 1406,
+      "crs": "EPSG:32648",
+      "bounds": [
+       400644.0,
+       2406000.0,
+       402399.0,
+       2410218.0
+      ]
+     },
+     "web": {
+      "url": "planet-sep01-roadpart2.web.webp",
+      "byteLength": 984552,
+      "sha256": "fcc5c0b57d41facdab21a4be5a43ed9760eb330bd88e94d69d66f529df3745da",
+      "width": 577,
+      "height": 1411,
+      "latLngBounds": [
+       [
+        21.7549323,
+        104.0390966
+       ],
+       [
+        21.7929569,
+        104.0558406
+       ]
+      ]
+     }
+    }
+   ],
+   "mosaic": {
+    "terrain": {
+     "url": "planet-sep01-mosaic.utm.webp",
+     "byteLength": 1765452,
+     "sha256": "6bccd14c0bc88b12b05f9949c48608c8f4d82f68c3337e107194ca25c2d8e0dd",
+     "width": 996,
+     "height": 2386,
+     "crs": "EPSG:32648",
+     "bounds": [
+      400644.0,
+      2406000.0,
+      403632.0,
+      2413158.0
+     ]
+    },
+    "web": {
+     "url": "planet-sep01-mosaic.web.webp",
+     "byteLength": 1638594,
+     "sha256": "ec44d1c88a157857fa0ac0e6c61d2996cdc0686b9203574c244401e0b599c6bc",
+     "width": 982,
+     "height": 2400,
+     "latLngBounds": [
+      [
+       21.7549125,
+       104.0391225
+      ],
+      [
+       21.8195834,
+       104.0676192
+      ]
+     ]
+    }
+   },
+   "displayProcessing": "Valid-pixel overlap feathering, 60 m; no gap fill; source acquisition dates retained."
+  },
+  {
+   "id": "sentinel1",
+   "name": [
+    "Sentinel-1 SAR",
+    "Sentinel-1 SAR"
+   ],
+   "kind": "sar",
+   "acquired": "2026-10-18T11:05:38Z",
+   "source": "Copernicus Sentinel-1D IW GRDH 1SDV (Google Earth Engine COPERNICUS/S1_GRD)",
+   "pixelM": 10.0,
+   "polarizations": [
+    "VV",
+    "VH"
+   ],
+   "rangesDb": {
+    "vv": [
+     -20.0,
+     5.0
+    ],
+    "vh": [
+     -27.0,
+     -2.0
+    ],
+    "ratio": [
+     0.0,
+     15.0
+    ]
+   },
+   "modes": {
+    "vv": {
+     "terrain": {
+      "url": "sentinel1-vv.utm.webp",
+      "byteLength": 613630,
+      "sha256": "e502d4fab73299abd5de54fe820aece9cb564fd1dcc722799ee2050fc171c3b3",
+      "width": 1945,
+      "height": 1604,
+      "crs": "EPSG:32648",
+      "bounds": [
+       392172.416,
+       2393490.381,
+       411622.416,
+       2409530.381
+      ]
+     },
+     "web": {
+      "url": "sentinel1-vv.web.webp",
+      "byteLength": 531068,
+      "sha256": "d760e49027c68a53b19309da2d8fba961ef166d7e33ab6c8db08459eea218b1b",
+      "width": 1951,
+      "height": 1606,
+      "latLngBounds": [
+       [
+        21.6420881,
+        103.9571616
+       ],
+       [
+        21.7864135,
+        104.1458824
+       ]
+      ]
+     }
+    },
+    "vh": {
+     "terrain": {
+      "url": "sentinel1-vh.utm.webp",
+      "byteLength": 632940,
+      "sha256": "13657f5ab415f3050bb1920f0942928e0485613e5e889ea5b1eb1814bf92e393",
+      "width": 1945,
+      "height": 1604,
+      "crs": "EPSG:32648",
+      "bounds": [
+       392172.416,
+       2393490.381,
+       411622.416,
+       2409530.381
+      ]
+     },
+     "web": {
+      "url": "sentinel1-vh.web.webp",
+      "byteLength": 550578,
+      "sha256": "f63b44c24488265e1da4f8fc72f7956d72252cac92a5a170fc8a2e63fedceaec",
+      "width": 1951,
+      "height": 1606,
+      "latLngBounds": [
+       [
+        21.6420881,
+        103.9571616
+       ],
+       [
+        21.7864135,
+        104.1458824
+       ]
+      ]
+     }
+    },
+    "rgb": {
+     "terrain": {
+      "url": "sentinel1-rgb.utm.webp",
+      "byteLength": 753686,
+      "sha256": "7b66288eedecf2458af28091845191bdc274ba1b0cfb8d01929065e4d967bf05",
+      "width": 1945,
+      "height": 1604,
+      "crs": "EPSG:32648",
+      "bounds": [
+       392172.416,
+       2393490.381,
+       411622.416,
+       2409530.381
+      ]
+     },
+     "web": {
+      "url": "sentinel1-rgb.web.webp",
+      "byteLength": 667144,
+      "sha256": "119cb66c2a1cf8c75cab3003f1055e7815ce5204162f8011436c477a5de80a2a",
+      "width": 1951,
+      "height": 1606,
+      "latLngBounds": [
+       [
+        21.6420881,
+        103.9571616
+       ],
+       [
+        21.7864135,
+        104.1458824
+       ]
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

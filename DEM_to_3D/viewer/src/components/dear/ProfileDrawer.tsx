@@ -16,7 +16,10 @@ type Props = {
 export function ProfileDrawer({ locale, name, profile, onHoverDistance, onClose }: Props): JSX.Element | null {
   const [distance, setDistance] = useState(0);
   const metrics = useMemo(() => profile ? profileMetrics(profile) : null, [profile]);
-  useEffect(() => { setDistance(0); onHoverDistance(profile ? 0 : null); }, [profile, onHoverDistance]);
+  // The keyed drawer resets for a different route; changing its DEM set must
+  // retain the position being read (e.g. when the 3D model finishes loading).
+  useEffect(() => { setDistance(previous=>profile?Math.min(previous,profile.length):0); },[profile]);
+  useEffect(() => {onHoverDistance(profile?distance:null);},[profile,distance,onHoverDistance]);
   const t = (vi: string, en: string) => locale === 'en' ? en : vi;
   if (!profile || !metrics) return null;
   const current = nearestProfileSample(profile, distance);
@@ -26,7 +29,6 @@ export function ProfileDrawer({ locale, name, profile, onHoverDistance, onClose 
     if (next === null) return;
     const sample = nearestProfileSample(profile, next);
     setDistance(sample.distance);
-    onHoverDistance(sample.distance);
   };
   return <section className="profile-panel" aria-label={t('Địa hình dọc tuyến', 'Terrain along route')}>
     <div className="profile-heading">

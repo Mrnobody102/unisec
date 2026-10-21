@@ -33,6 +33,8 @@ ICONS = {
     'ruler': 'ruler', 'area': 'area--custom', 'undo': 'undo', 'trash': 'trash-can',
     'check': 'checkmark', 'blocked': 'misuse', 'uncertain': 'warning--alt',
     'priority': 'flag', 'account': 'user--avatar', 'history': 'time',
+    'camera': 'camera', 'microphone': 'microphone', 'send': 'send', 'upload': 'upload',
+    'map': 'map', 'myLocation': 'location--current', 'swap': 'arrows--vertical', 'home': 'home',
 }
 
 

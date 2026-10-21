@@ -1,6 +1,6 @@
 import {poiMetrics,markerSize} from './poiFrame';
 export type ScreenRect = { x: number; y: number; width: number; height: number };
-export type ScreenMarker = { id: string; x: number; y: number; priority: number; selected?: boolean; category?: string };
+export type ScreenMarker = { id: string; x: number; y: number; priority: number; selected?: boolean; category?: string; featured?: boolean };
 
 /** Display rank: the selection, reported hazards, priority communities, unverified hazards, then staging. */
 export function markerPriority(marker: { selected: boolean; hazard?: boolean; suspected?: boolean; priorityCommunity?: boolean; staging?: boolean }): number {
@@ -25,7 +25,10 @@ const markerRect = (point: ScreenMarker, size: number): ScreenRect => {
 
 const byPriority = (a: ScreenMarker, b: ScreenMarker) => b.priority - a.priority || a.id.localeCompare(b.id);
 const covers = (a: ScreenMarker, b: ScreenMarker): boolean => {
-  const r = markerRect(a, 32), other = markerRect(b, 32), x = other.x + other.width / 2, y = other.y + other.height / 2;
+  // The chosen pin is anchored at its tip, not at its visual centre. Compare
+  // the other feature's actual coordinate so selecting it cannot split a group
+  // of coincident features or hide a neighbour under the enlarged pin.
+  const r=markerRect(a,32),x=b.x,y=b.y;
   return x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height;
 };
 
@@ -51,7 +54,9 @@ export function layoutMarkerGroups(points: ScreenMarker[], width: number, height
       changed = false;
       for (let i = remaining.length - 1; i >= 0; i--) {
         if (remaining[i].category === members[0].category &&
-            members.some(p => overlaps(markerRect(p, 32), markerRect(remaining[i], 32), 6))) {
+            members.some(p => p.featured || remaining[i].featured
+              ? covers(p, remaining[i]) || covers(remaining[i], p)
+              : overlaps(markerRect(p, 32), markerRect(remaining[i], 32), 6))) {
           members.push(remaining.splice(i, 1)[0]); changed = true;
         }
       }
@@ -73,4 +78,19 @@ export function layoutMarkerGroups(points: ScreenMarker[], width: number, height
     groups.push({ anchor, members, rect: markerRect(anchor, size) });
   }
   return groups;
+}
+
+/** Place a contextual label near its geographic anchor without covering symbols or controls.
+ * Suppress the label when space is exhausted; never displace the geographic feature. */
+export function placeMapLabel(anchor: {x:number;y:number}, size: {width:number;height:number}, viewport: {width:number;height:number}, obstacles: ScreenRect[]): ScreenRect | undefined {
+  const {x,y}=anchor, {width,height}=size, margin=10;
+  const candidates=[14,40,64].flatMap(gap=>[
+    {x:x-width/2,y:y-height-gap}, {x:x-width/2,y:y+gap},
+    {x:x+gap,y:y-height/2}, {x:x-width-gap,y:y-height/2},
+    {x:x+gap,y:y-height-gap}, {x:x-width-gap,y:y-height-gap},
+    {x:x+gap,y:y+gap}, {x:x-width-gap,y:y+gap}
+  ]);
+  return candidates.map(p=>({...p,width,height})).find(rect=>
+    rect.x>=margin && rect.y>=margin && rect.x+width<=viewport.width-margin && rect.y+height<=viewport.height-margin &&
+    !obstacles.some(obstacle=>overlaps(rect,obstacle,6)));
 }

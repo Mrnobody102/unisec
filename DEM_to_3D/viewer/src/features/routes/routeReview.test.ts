@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { routeNextAction, selectAccessRoute } from './routeReview';
-import { buildScenarioRoutes, initialRoadSegments, initialHazards } from '../../data/cheTaoScenario';
+import { buildScenarioRoutes, initialRoadSegments, initialHazards } from '../../data/fixtures/networkScenario';
 
 const routes = buildScenarioRoutes(initialRoadSegments);
 describe('selected route review', () => {

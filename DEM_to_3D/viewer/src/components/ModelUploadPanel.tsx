@@ -31,8 +31,9 @@ export function ModelUploadPanel({ locale = 'vi', mode, geographicMerge, fileNam
     </div>
     {mode === 'merge' && <label className="geographic-toggle"><input type="checkbox" disabled={busy} checked={geographicMerge} onChange={event => onGeographicMergeChange(event.target.checked)} /><span><strong>{t('Ghép theo tọa độ', 'Align by coordinates')}</strong><small>{t('Các mô hình cần cùng hệ tọa độ theo mét.', 'Models require the same coordinate system in meters.')}</small></span></label>}
     <FileDropZone multiple disabled={busy} accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp,.tif,.tiff,.terrain.json"
-      title={busy ? t('Đang tải mô hình…', 'Loading model…') : t('Chọn hoặc kéo thả tệp mô hình', 'Choose or drop model files')}
+      title={busy ? t('Đang tải mô hình', 'Loading model') : t('Chọn hoặc kéo thả tệp mô hình', 'Choose or drop model files')}
       hint="GLB, GLTF" onFiles={onFiles}/>
+    <label className="upload-dropzone">{t('Chọn thư mục mô hình kèm tile', 'Choose model and tile folder')}<input type="file" multiple disabled={busy} {...({ webkitdirectory: '' } as Record<string, string>)} onChange={event => { const files = Array.from(event.target.files ?? []); event.target.value = ''; if (files.length) onFiles(files); }}/><small>{t('Thư mục chứa GLB, .terrain.json, .tiles.json và thư mục tile cùng tên mô hình.', 'Folder containing GLB, .terrain.json, .tiles.json and the model_tiles folder.')}</small></label>
     {fileNames.length > 0 && <div className="upload-files" aria-live="polite">{fileNames.map(name => <span key={name}>{name}</span>)}</div>}
     {fileNames.length > 0 && <button type="button" className="upload-clear" disabled={busy} onClick={onClear}>{t('Gỡ mô hình đã tải', 'Remove uploaded models')}</button>}
     {error && <div className="upload-error" role="alert">{error}</div>}

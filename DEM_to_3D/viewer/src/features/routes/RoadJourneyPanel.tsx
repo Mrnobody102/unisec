@@ -97,16 +97,8 @@ export function RoadJourneyPanel({
       return endpoint.problem === "blocked"
         ? m.blockedConnection
         : m.tooFarFromRoads;
-    const geo = roadGeographic(endpoint.origin);
-    return [
-      endpoint.source === "map" &&
-        `${geo.latitude.toFixed(5)}°, ${geo.longitude.toFixed(5)}°`,
-      endpoint.anchor &&
-        endpoint.anchor.distance > 1 &&
-        m.accessDistance.replace("{d}", length(endpoint.anchor.distance)),
-    ]
-      .filter(Boolean)
-      .join(" · ");
+    // Distances to the road are in the result figures; the stop only reports problems.
+    return "";
   };
   const route = journey.route,
     access =
@@ -200,7 +192,7 @@ export function RoadJourneyPanel({
                       ))}
                     </optgroup>
                     {groups.map((group) => (
-                      <optgroup key={group} label={`${m.gisData} · ${group}`}>
+                      <optgroup key={group} label={`${m.gisData}: ${group}`}>
                         {places
                           .filter((p) => p.group === group)
                           .map((p) => (
@@ -283,40 +275,34 @@ export function RoadJourneyPanel({
 
         {route ? (
           <section className="journey-result" aria-live="polite">
-            <div className="journey-total">
-              <div className="journey-distance">
-                <small>{m.alongRoads}</small>
-                <strong>
+            <span className={"journey-status is-" + status}>
+              {status === "blocked"
+                ? m.statusBlocked
+                : status === "uncertain"
+                  ? m.statusUncertain
+                  : m.statusOpen}
+            </span>
+            {/* Along-road length, then any straight off-road leg at either end. */}
+            <dl className="journey-figures">
+              <div>
+                <dt>{m.alongRoads}</dt>
+                <dd>
                   {route.lengthKm < 1
                     ? Math.round(route.lengthKm * 1000)
-                    : number(route.lengthKm)}
-                  <span> {route.lengthKm < 1 ? "m" : "km"}</span>
-                </strong>
+                    : number(route.lengthKm)}{" "}
+                  {route.lengthKm < 1 ? "m" : "km"}
+                </dd>
               </div>
-              <span className={"journey-status is-" + status}>
-                {status === "blocked"
-                  ? m.statusBlocked
-                  : status === "uncertain"
-                    ? m.statusUncertain
-                    : m.statusOpen}
-              </span>
-            </div>
-            {access > 1 && (
-              <dl className="journey-breakdown">
-                {sides.map((side) => {
-                  const distance = journey[side]?.anchor?.distance ?? 0;
-                  return distance > 1 ? (
-                    <div key={side}>
-                      <dt>{side === "start" ? m.startToRoad : m.roadToEnd}</dt>
-                      <dd>{length(distance)}</dd>
-                    </div>
-                  ) : null;
-                })}
-              </dl>
-            )}
-            <p className="journey-message">
-              {access > 1 ? m.accessNote : m.networkNote}
-            </p>
+              {access > 1 && sides.map((side) => {
+                const distance = journey[side]?.anchor?.distance ?? 0;
+                return distance > 1 ? (
+                  <div key={side}>
+                    <dt>{side === "start" ? m.startToRoad : m.roadToEnd}</dt>
+                    <dd>{length(distance)}</dd>
+                  </div>
+                ) : null;
+              })}
+            </dl>
             {onProfile && (
               <button className="button journey-profile" onClick={onProfile}>
                 <UiIcon name="route" />

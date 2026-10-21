@@ -17,6 +17,11 @@ export type ScenarioManifest = {
   counts: { communities: number; roads: number; hazards: number };
   terrain: { glb: ScenarioAsset; grid: ScenarioAsset; metadata: ScenarioAsset; image?: ScenarioAsset };
   workspace?: ScenarioAsset;
+  fieldData?: ScenarioAsset;
+  referenceData?: ScenarioAsset;
+  analysisImagery?: ScenarioAsset;
+  fieldPhotos?: ScenarioAsset;
+  terrainContext?: Array<{glb: ScenarioAsset; grid: ScenarioAsset; metadata: ScenarioAsset}>;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -32,10 +37,10 @@ function requireCount(value: unknown, field: string): number {
   return value as number;
 }
 
-function requireAsset(value: unknown, field: string, business = false): ScenarioAsset {
+function requireAsset(value: unknown, field: string, kind: 'terrain' | 'workspace' | 'field' | 'reference' | 'imagery' | 'photos' = 'terrain'): ScenarioAsset {
   if (!isRecord(value)) throw new Error(`Invalid manifest: ${field}`);
   const url = requireString(value.url, `${field}.url`);
-  const validUrl = business ? /^\/scenarios\/[a-zA-Z0-9._/-]+\/incident\.json$/.test(url) : /^\/terrain\/[a-zA-Z0-9._-]+$/.test(url);
+  const validUrl = kind === 'photos' ? /^\/scenarios\/[a-zA-Z0-9._/-]+\/photos\.json$/.test(url) : kind === 'imagery' ? /^\/scenarios\/[a-zA-Z0-9._/-]+\/imagery\.json$/.test(url) : kind === 'reference' ? /^\/scenarios\/[a-zA-Z0-9._/-]+\.geojson$/.test(url) : kind === 'field' ? /^\/scenarios\/[a-zA-Z0-9._/-]+\.kml$/.test(url) : kind === 'workspace' ? /^\/scenarios\/[a-zA-Z0-9._/-]+\/incident\.json$/.test(url) : /^\/terrain\/[a-zA-Z0-9._-]+$/.test(url);
   if (!validUrl || url.includes('..')) {
     throw new Error(`Invalid manifest: ${field}.url`);
   }
@@ -76,10 +81,22 @@ export function validateScenarioManifest(value: unknown): ScenarioManifest {
   if (new Set(Object.values(terrain).map(asset => asset.url)).size !== Object.keys(terrain).length) {
     throw new Error('Invalid manifest: duplicate terrain URLs');
   }
+  if (value.terrainContext !== undefined && (!Array.isArray(value.terrainContext) || value.terrainContext.length > 3)) throw new Error('Invalid manifest: terrainContext');
+  const terrainContext = (value.terrainContext as unknown[] | undefined)?.map((item, index) => {
+    if (!isRecord(item)) throw new Error('Invalid manifest: terrainContext');
+    return {glb: requireAsset(item.glb, `terrainContext.${index}.glb`), grid: requireAsset(item.grid, `terrainContext.${index}.grid`), metadata: requireAsset(item.metadata, `terrainContext.${index}.metadata`)};
+  });
+  const terrainUrls = [...Object.values(terrain), ...(terrainContext ?? []).flatMap(group => Object.values(group))].map(asset => asset.url);
+  if (new Set(terrainUrls).size !== terrainUrls.length) throw new Error('Invalid manifest: duplicate terrain URLs');
   return {
     schemaVersion: 1, datasetVersion, dataKind: value.dataKind,
     reviewStatus: value.reviewStatus, incidentId, snapshotAt, crs, counts, terrain,
-    ...(value.workspace ? { workspace: requireAsset(value.workspace, 'workspace', true) } : {})
+    ...(value.workspace ? { workspace: requireAsset(value.workspace, 'workspace', 'workspace') } : {}),
+    ...(value.fieldData ? { fieldData: requireAsset(value.fieldData, 'fieldData', 'field') } : {}),
+    ...(value.referenceData ? {referenceData:requireAsset(value.referenceData,'referenceData','reference')} : {}),
+    ...(value.fieldPhotos ? { fieldPhotos: requireAsset(value.fieldPhotos, 'fieldPhotos', 'photos') } : {}),
+    ...(value.analysisImagery ? { analysisImagery: requireAsset(value.analysisImagery, 'analysisImagery', 'imagery') } : {}),
+    ...(terrainContext?.length ? {terrainContext} : {})
   };
 }
 

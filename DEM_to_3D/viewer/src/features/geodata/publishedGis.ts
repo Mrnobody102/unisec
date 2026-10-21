@@ -13,10 +13,13 @@ export function gisValueKey(value: unknown): string {
       : item,
   );
 }
+export type PreparedGeometrySource = {id:string; records:GeometryRecord[]; additionalSources?:Array<{id:string;records:GeometryRecord[]}>};
+export const preparedSources = (source: PreparedGeometrySource) => [source, ...(source.additionalSources ?? [])];
 export type PublishedGis = {
   schema: "dear-gis/v2";
   records: GeometryRecord[];
   scenarios: Record<string, ScenarioEdit[]>;
+  installedSources?: string[];
 };
 const legacyRecords = "dear.geodata.v1",
   prefix = "dear.scenario-edits.v1:";
@@ -32,7 +35,8 @@ export function readPublishedGis(
       !raw.scenarios ||
       typeof raw.scenarios !== "object" ||
       Array.isArray(raw.scenarios) ||
-      !Object.values(raw.scenarios).every(Array.isArray)
+      !Object.values(raw.scenarios).every(Array.isArray) ||
+      (raw.installedSources !== undefined && (!Array.isArray(raw.installedSources) || !raw.installedSources.every(id => typeof id === 'string' && /^[0-9a-f]{64}$/.test(id))))
     )
       throw new Error("Invalid GIS workspace");
     return { ...raw, records: restoreGeometryRecords(raw.records) };
@@ -72,6 +76,42 @@ export function writePublishedGis(
     /* Canonical publication succeeded. */
   }
 }
+/** One atomic installation per source revision. Later edits/deletions are retained on reload. */
+export function installPreparedRecords(source: PreparedGeometrySource, storage: Storage = localStorage): PublishedGis {
+  const stored = readPublishedGis(storage);
+  // Keep locally reviewed records when a prepared source leaves the active dataset.
+  // Hide them without deleting edits; preserve installation history so deleted records stay deleted.
+  const offered = new Set(preparedSources(source).map(item => item.id));
+  const installed = new Set(stored.installedSources ?? []);
+  let changed = false;
+  const records = stored.records.map(record => {
+    const properties = record.feature.properties, sourceId = String(properties.sourceDatasetId ?? '');
+    const previousVisibility = properties.dearInactiveSourceVisibility;
+    if (installed.has(sourceId) && !offered.has(sourceId) && typeof previousVisibility !== 'boolean') {
+      changed = true;
+      return {...record, visible:false, feature:{...record.feature, properties:{...properties, dearInactiveSourceVisibility:record.visible}}};
+    }
+    if (offered.has(sourceId) && typeof previousVisibility === 'boolean') {
+      changed = true;
+      const restored = {...properties};delete restored.dearInactiveSourceVisibility;
+      return {...record, visible:previousVisibility, feature:{...record.feature, properties:restored}};
+    }
+    return record;
+  });
+  const current = changed ? {...stored,records} : stored;
+  const pending = preparedSources(source).filter(item => !installed.has(item.id));
+  if (!pending.length) { if (changed) writePublishedGis(current, storage); return current; }
+  const ids = new Set(current.records.map(record => record.id));
+  const additions = pending.flatMap(item => item.records).filter(record => {
+    if (ids.has(record.id)) return false;
+    ids.add(record.id); return true;
+  });
+  const next = {...current, records:[...current.records,...additions],
+    installedSources:[...(current.installedSources ?? []),...pending.map(item => item.id)]};
+  writePublishedGis(next, storage);
+  return next;
+}
+
 /** Another tab (e.g. a resident submitting a report) may have written since `base` was
  * read. Keep its changes and apply only what this tab added, changed or removed. */
 export function mergeRecords(

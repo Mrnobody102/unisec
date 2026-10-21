@@ -28,6 +28,8 @@ Hướng dẫn dân tới nơi an toàn cần nơi trú được xác nhận và
 
 ## Màn hình và thông tin
 
+Danh sách và bộ lọc ở panel trái; bản đồ ở giữa; chi tiết đối tượng ở panel phải khi đủ chỗ. Panel trái giữ danh sách và vị trí cuộn; màn hình hẹp dùng một panel thông tin. Thanh diễn biến ở dưới chỉ chọn các bản đánh giá đã có; báo cáo chờ kiểm tra mở hồ sơ, không tự công bố dữ liệu. Không có chế độ hoặc các bước trình chiếu riêng. Nguồn và tính chất dữ liệu được trình bày trong Nguồn dữ liệu và các tệp xuất.
+
 | Vị trí | Thông tin chính | Mở khi cần |
 |---|---|---|
 | Sự kiện | Mốc mở đánh giá, dữ liệu đến, địa bàn ưu tiên, số đoạn bị chặn/cần xác minh | Nhật ký sự kiện, nguồn dữ liệu |
@@ -72,12 +74,12 @@ Toolbar cố định: tìm kiếm và **Lớp / GIS / Đo / Vị trí** bên tr�
 | Nhật ký | Chung một màn cho báo cáo, phân tích, công việc và cập nhật bản đồ. Phân biệt giờ quan sát, nhận tin và thao tác tại trình duyệt; có lọc và xuất JSON. Không coi mốc phân tích là cảnh báo được ban hành |
 | Xác minh tuyến | Hiện phương thức dự kiến, tình trạng xác minh toàn tuyến và giờ ghi nhận mới nhất trên tuyến. Ghi nhận tại một điểm không xác nhận đã kiểm tra toàn tuyến |
 | So ảnh | Chọn hai GeoTIFF có ngày, nguồn và vùng chung. Pan/zoom cùng bản đồ, kéo thanh để so. Vùng thiếu ảnh để trống. Không tự xác nhận sạt lở |
-| Đặt lại phiên | Về dữ liệu ban đầu, bỏ lựa chọn/bộ lọc/hình đo, cặp ảnh tạm và lịch sử công việc cục bộ. Giữ font, theme và chiều rộng panel |
+| Đặt lại phiên | Về dữ liệu ban đầu, bỏ lựa chọn/bộ lọc/hình đo, cặp ảnh tạm và lịch sử công việc cục bộ. Giữ font và theme |
 | Đổi tuyến khi mở mặt cắt | Lấy mẫu tuyến mới, đặt vị trí đọc về đầu tuyến |
 | Nhiều điểm quá gần nhau | Số đếm cho nhóm cùng loại trên 2D. Nhóm khác loại hoặc 3D có danh sách chọn. Giữ tên địa bàn ưu tiên và đối tượng đang xem khi có chỗ. Xem khu vực để tách các điểm |
 | GLB hoặc GPU lỗi | Chuyển về 2D, giữ lựa chọn. 2D không tải mô hình GLB |
 | Lưu đánh giá | Chụp snapshot khi mở xem trước. Mọi định dạng dùng cùng snapshot. Đóng và mở lại sau khi đổi tuyến hoặc cập nhật tin để lấy đánh giá mới |
 
-Thời điểm `triggeredAt` là **Mở đánh giá**, chưa phải giờ ban hành cảnh báo. Theo dõi xác minh dùng nguồn hiện có và thao tác nhập của người trực; lịch sử tối đa 500 bản ghi theo dataset, không đồng bộ hoặc xác thực người nhập. Khi xem bản cũ, yêu cầu chỉ đọc. Hoàn tất không xác nhận thông đường hoặc an toàn. Quản lý ứng phó thực cần mục tiêu, đơn vị/nguồn lực, thời gian thực hiện, thẩm quyền phê duyệt và cập nhật hiện trường; chưa triển khai điều động hoặc phát cảnh báo. Tham khảo [ArcGIS Operations Management](https://doc.arcgis.com/en/arcgis-solutions/latest/reference/use-operations-management.htm) và [FEMA ICS](https://training.fema.gov/emiweb/is/icsresource/icsforms/), cần đối chiếu quy trình của đơn vị vận hành. Dữ liệu mô phỏng được ghi trong **Nguồn dữ liệu** và nhật ký.
+Thời điểm `triggeredAt` là **Mở đánh giá**, chưa phải giờ ban hành cảnh báo. Theo dõi xác minh dùng nguồn hiện có và thao tác nhập của người trực; lịch sử tối đa 500 bản ghi theo dataset, không đồng bộ hoặc xác thực người nhập. Khi xem bản cũ, yêu cầu chỉ đọc. Hoàn tất không xác nhận thông đường hoặc an toàn. Quản lý ứng phó thực cần mục tiêu, đơn vị/nguồn lực, thời gian thực hiện, thẩm quyền phê duyệt và cập nhật hiện trường; chưa triển khai điều động hoặc phát cảnh báo. Tham khảo [ArcGIS Operations Management](https://doc.arcgis.com/en/arcgis-solutions/latest/reference/use-operations-management.htm) và [FEMA ICS](https://training.fema.gov/emiweb/is/icsresource/icsforms/), cần đối chiếu quy trình của đơn vị vận hành. Tính chất dữ liệu được ghi trong **Nguồn dữ liệu** và các tệp xuất.
 
 Quy tắc tính ưu tiên và tuyến: [phân tích ứng phó](../architecture/response-analysis.md). Thành phần: [design system](design-system.md). Ký hiệu và mặt cắt: [hiển thị bản đồ](cartography.md). Luồng trình diễn: [walkthrough](../operations/walkthrough.md).

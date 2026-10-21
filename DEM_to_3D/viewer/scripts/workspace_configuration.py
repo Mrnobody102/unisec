@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-DEFAULT_MANIFEST_URL = '/scenarios/che-tao/v0.2/manifest.json'
+DEFAULT_MANIFEST_URL = '/scenarios/che-tao/v0.3/manifest.json'
 
 
 def load_workspace_configuration(directory):

@@ -12,13 +12,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(url, chrome=None):
-    folder = ROOT / 'public/scenarios/che-tao/v0.2'
+    folder = ROOT / 'public/scenarios/che-tao/v0.3'
     packet = json.loads((folder / 'incident.json').read_text(encoding='utf-8'))
     manifest = json.loads((folder / 'manifest.json').read_text(encoding='utf-8'))
+    manifest.pop('fieldData', None)
+    manifest.pop('referenceData', None)
+    manifest.pop('terrainContext', None)
+    manifest.pop('analysisImagery', None)
+    manifest.pop('fieldPhotos', None)
     packet['incident']['id'] = 'INC-ALTERNATE'
     packet['incident']['title'] = ['Sự kiện kiểm thử', 'Test incident']
     packet['datasetVersion'] = 'alternate-v1'
-    community = next(item for item in packet['communities'] if item['id'] == 'NK')
+    community = packet['communities'][0]
     community['name'] = 'Địa bàn kiểm thử'
     x, y = community['projected']['x'], community['projected']['y']
     packet['aoi']['name'] = ['Vùng kiểm thử', 'Test area']
@@ -53,21 +58,24 @@ def run(url, chrome=None):
         page.get_by_role('button', name='Sự kiện đang xem', exact=True).click()
         expect(page.locator('.header-context-popover')).to_contain_text('INC-ALTERNATE')
         page.keyboard.press('Escape')
-        expect(page.locator('.incident-priority-row')).to_have_count(1)
+        page.locator('.workspace-nav').get_by_role('button', name='Địa bàn', exact=True).click()
+        expect(page.locator('#response-panel .community')).to_have_count(1)
         expect(page.locator('[data-map-object="community:KM"]')).to_have_count(0)
-        page.locator('.incident-priority-row').click()
+        page.locator('#response-panel .community').click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
-        # Inspect a road and return to the original community without resetting it.
+        # Close a road detail, then explicitly reopen the community tab without resetting it.
         page.locator('#response-details').get_by_role('button', name='Xem đoạn cần kiểm tra', exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
-        expect(page.locator('.route-section-row[aria-expanded="true"]')).to_contain_text('vượt khe')
-        page.locator('.route-section-tools').get_by_role('button', name='Xem báo cáo', exact=True).click()
+        expect(page.locator('.route-section-row[aria-expanded="true"]')).to_have_attribute('aria-controls', 'section-' + packet['report']['roadId'])
+        page.locator('.route-section-tools button').first.click()
         page.locator('.evidence-road').click()
-        expect(page.locator('#response-details h1')).to_have_text('Đường vòng qua sườn núi, đoạn vượt khe')
-        page.locator('#response-details .panel-parent').click()
+        expect(page.locator('#response-details h1')).to_have_text(next(road for road in packet['roads'] if road['id'] == packet['report']['roadId'])['name'][0])
+        page.locator('#response-details').get_by_role('button',name='Đóng chi tiết đối tượng',exact=True).click()
+        expect(page.locator('#response-details')).to_have_count(0)
+        page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
         expect(page.locator('#response-details h1')).to_have_text('Địa bàn kiểm thử')
-        expect(page.locator('.route-section-row[aria-expanded="true"]')).to_contain_text('vượt khe')
+        expect(page.locator('.route-section-row[aria-expanded="true"]')).to_have_attribute('aria-controls', 'section-' + packet['report']['roadId'])
         page.get_by_role('button', name='Xuất đánh giá', exact=True).click()
         page.locator('.export-formats summary').click()
         with page.expect_download() as download:
@@ -78,7 +86,7 @@ def run(url, chrome=None):
         assert exported['community']['name'] == 'Địa bàn kiểm thử'
         assert exported['aoi']['name'] == packet['aoi']['name']
         assert exported['route']['status'] == 'blocked' and not exported['route'].get('eta')
-        assert not any(request.endswith('/scenarios/che-tao/v0.2/manifest.json') for request in requests)
+        assert not any(request.endswith('/scenarios/che-tao/v0.3/manifest.json') for request in requests)
         assert not errors, errors
         context.close()
         # A missing selected dataset must not display the prepared default.

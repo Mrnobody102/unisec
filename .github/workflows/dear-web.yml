@@ -2,9 +2,9 @@ name: DEAR web
 
 on:
   push:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/**', '.gitattributes', '.github/workflows/dear-web.yml']
   pull_request:
-    paths: ['DEM_to_3D/viewer/**', 'DEM_to_3D/che_tao_v2_tex.*', '.gitattributes', '.github/workflows/dear-web.yml']
+    paths: ['DEM_to_3D/**', '.gitattributes', '.github/workflows/dear-web.yml']
   workflow_dispatch:
     inputs:
       extended:
@@ -20,6 +20,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  terrain-tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy rasterio pillow pyshp 'affine>=3'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_imagery_mosaic.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_basemap_tone.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_planet_sources.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_tile_texture.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_commune_tools.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_terrain_contract.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_phase7.py'
   validate:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -61,11 +79,16 @@ jobs:
         env:
           RUN_EXTENDED: ${{ inputs.extended || false }}
         run: |
+          trap 'echo "::error title=Browser regression failed::$BASH_COMMAND"' ERR
           python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/wait_for_server.py http://127.0.0.1:5213
+          python scripts/check_terrain_overlays.py --url http://127.0.0.1:5213
           python scripts/check_workspace.py --prepared --url http://127.0.0.1:5213
+          python scripts/check_workspace_layers.py --url http://127.0.0.1:5213
+          python scripts/check_ui_layout.py --url http://127.0.0.1:5213
+          python scripts/check_landslide_visibility.py --url http://127.0.0.1:5213
           python scripts/check_geodata_workspace.py --url http://127.0.0.1:5213
           python scripts/check_basemap_recovery.py --url http://127.0.0.1:5213
           python scripts/check_gis_draft_publish.py --url http://127.0.0.1:5213
@@ -73,6 +96,13 @@ jobs:
           python scripts/check_citizen_mobile.py --url http://127.0.0.1:5213
           python scripts/check_map_symbol_consistency.py --url http://127.0.0.1:5213
           python scripts/check_dataset_selection.py --url http://127.0.0.1:5213
+          python scripts/check_cartographic_evidence.py --url http://127.0.0.1:5213
+          python scripts/check_selection_navigation.py --url http://127.0.0.1:5213 --captures dist-release/selection
+          python scripts/check_focus_audit.py --url http://127.0.0.1:5213 --captures dist-release/focus
+          python scripts/check_status_update.py --url http://127.0.0.1:5213 --captures dist-release/status
+          python scripts/check_landslide_display.py --url http://127.0.0.1:5213 --captures dist-release/landslides
+          python scripts/check_resident_capture.py --url http://127.0.0.1:5213 --captures dist-release/resident-capture
+          python scripts/check_route_profile_film.py --url http://127.0.0.1:5213
           python scripts/check_offline_package.py dist-release/dear-offline.zip
           if [[ "$RUN_EXTENDED" == "true" ]]; then
             python scripts/check_measurement_tools.py --url http://127.0.0.1:5213
@@ -101,11 +131,40 @@ jobs:
             python scripts/check_panel_usability.py --url http://127.0.0.1:5213
             python scripts/check_session.py --url http://127.0.0.1:5213 --duration-seconds 30 --cycle-interval-seconds 0 --output dist-release/session-ci.json
           fi
+  map-fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: DEM_to_3D/viewer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: DEM_to_3D/viewer/.nvmrc
+          cache: npm
+          cache-dependency-path: DEM_to_3D/viewer/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run prepare:dataset
+      - name: Install browser checks
+        run: |
+          python -m pip install -r scripts/requirements-browser.txt
+          python -m playwright install --with-deps chromium
       - name: Verify map selection and storage synchronization fixtures
         run: |
+          trap 'echo "::error title=Browser regression failed::$BASH_COMMAND"' ERR
+          mkdir -p dist-release
           node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5214 --strictPort > dist-release/fixture-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/wait_for_server.py http://127.0.0.1:5214
           python scripts/check_map_group_selection.py --url http://127.0.0.1:5214
+          python scripts/check_analysis_imagery.py --url http://127.0.0.1:5214
+          python scripts/check_surface_lines.py --url http://127.0.0.1:5214
+          python scripts/check_flyover.py --url http://127.0.0.1:5214
           python scripts/check_gis_storage_sync.py --url http://127.0.0.1:5214

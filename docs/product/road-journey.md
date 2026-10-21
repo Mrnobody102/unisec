@@ -34,3 +34,10 @@ Case hồi quy chính: A `21.74276, 104.05581`, B `21.72291, 104.08018`. Mã cũ
 Kiểm thử thuần trong `journeyAnalysis.test.ts`, `selectedRoadJourney.test.ts`, `journeyPlaces.test.ts`, `routeRoadDisplay.test.ts`; kiểm thử trình duyệt trong `scripts/check_route_logic.py` và luồng người dân/điều phối hiện có.
 
 Đóng công cụ, đổi A/B, xóa điểm hoặc nhấn Escape đều hủy chế độ chọn điểm. Các điều khiển bản đồ, overview và popup không được coi là tọa độ A/B khi người dùng đang chọn điểm.
+## Tuyến Mù Cang Chải – Chế Tạo và yêu cầu ảnh
+
+Phạm vi cần bao phủ cả đường từ Mù Cang Chải đến Chế Tạo, không dừng tại ranh giới xã. Điểm giải đoán bắt buộc là **21.74146° N, 104.03000° E**, lưu GeoJSON theo thứ tự `[104.03, 21.74146]`. Tuyến đi tiếp tới khu vực trung tâm xã Chế Tạo; điểm yêu cầu ảnh không phải điểm kết thúc. GeoTIFF đầu ra phải có pixel hợp lệ tại điểm này; bbox/footprint và ảnh KML nhúng dạng placeholder không chứng minh đủ ảnh. Chưa chốt ngày ảnh/cảm biến thì không tự điền.
+
+Lớp tham chiếu `public/scenarios/che-tao/reference/mcc-chetao.geojson` giữ hình học OSM tới khu vực bản Chế Tạo (GeoNames 8526472, `[104.03196, 21.72206]`), mã node/way, phiên bản nguồn và sai lệch hai đầu. AOI ảnh đệm 500 m được tính trong EPSG:32648, là phạm vi đặt yêu cầu, không phải vùng sạt lở. Tạo lại bằng QGIS Python: `scripts/prepare_reference_corridor.py --osm <north.osm> <centre.osm> <south.osm> --output <corridor.geojson>`. Mốc GeoNames đại diện khu vực trung tâm, chưa xác minh tọa độ trụ sở xã. Không làm trơn hoặc nắn đường cho khớp tình huống.
+
+Bộ 8 đoạn đường, địa bàn/dân số, sự cố và trạng thái chặn trong `v0.2/incident.json` vẫn là tình huống giả lập; lớp OSM không thay thế ngầm graph này. Không gắn các chặn đường/ETA giả lập lên đường OSM. Đường tham chiếu chưa được kiểm tra khả năng đi qua hoặc đầy đủ cấm rẽ/điều kiện phương tiện. Proposal mô tả hành trình hơn 35 km; đường tới **điểm giải đoán** chưa phải toàn tuyến đó. Cần chốt điểm cuối và đối chiếu dấu vết thực địa/ảnh trước khi dùng một mạng đường thực cho nghiệp vụ.

@@ -30,6 +30,8 @@ export function DataDialog({ incident, locale, updated, manifest, terrainMetadat
   const texture = terrainMetadata && 'texture' in terrainMetadata ? terrainMetadata.texture : undefined;
   const imagerySource = texture && typeof texture === 'object' && 'source' in texture && typeof texture.source === 'string'
     ? texture.source : null;
+  const administrative = terrainMetadata?.administrative;
+  const administrativeUnits = administrative ? administrative.units ?? [administrative] : [];
   const sourceRow = (source: IncidentModel['sources'][number]) => <div className="data-source-row" key={source.id}>
     <div><strong>{t(...source.name)}</strong><small>{t(...source.note)}</small></div>
     <time dateTime={sourceObservedAt(source, updated)}>{localClock(sourceObservedAt(source, updated))}</time>
@@ -52,9 +54,6 @@ export function DataDialog({ incident, locale, updated, manifest, terrainMetadat
         {manifest?.dataKind === 'synthetic' && <p className="data-context data-review-status">
           {t('Dữ liệu trình diễn.', 'Demonstration data.')}
         </p>}
-        {manifest?.dataKind === 'synthetic' && <p className="data-context">
-          {t('NR-18, PR-7 và T-5 là mã đường nội bộ.', 'NR-18, PR-7 and T-5 are internal road codes.')}
-        </p>}
         <h3 className="data-section-title">{t('Dữ liệu và báo cáo', 'Data and reports')}</h3>
         <div className="data-source-list">
           {incident.sources.filter(source => source.id !== 'route').map(sourceRow)}
@@ -67,6 +66,13 @@ export function DataDialog({ incident, locale, updated, manifest, terrainMetadat
           <div><dt>{t('Nguồn DEM', 'DEM source')}</dt><dd>{t('Chưa khai báo', 'Not provided')}</dd></div>
           {imagerySource && <div><dt>{t('Tệp ảnh nền', 'Imagery file')}</dt><dd style={{ overflowWrap: 'anywhere' }}>{imagerySource}</dd></div>}
         </dl> : <p className="data-context">{t('Chưa có thông tin về dữ liệu địa hình.', 'Terrain metadata unavailable.')}</p>}
+        {administrativeUnits.length > 0 && <><h3 className="data-section-title">{t('Thông tin hành chính', 'Administrative information')}</h3>{administrativeUnits.map((unit, index) => <dl className="fact-rows data-terrain" key={index}>
+          {unit.commune_name && <div><dt>{t('Xã', 'Commune')}</dt><dd>{unit.commune_name}</dd></div>}
+          {unit.province_name && <div><dt>{t('Tỉnh', 'Province')}</dt><dd>{unit.province_name}</dd></div>}
+          {unit.headquarters && <div><dt>{t('Trụ sở', 'Headquarters')}</dt><dd>{unit.headquarters}</dd></div>}
+          {unit.area_km2 !== undefined && <div><dt>{t('Diện tích', 'Area')}</dt><dd>{unit.area_km2.toLocaleString(locale)} km²</dd></div>}
+          {unit.population !== undefined && <div><dt>{t('Dân số', 'Population')}</dt><dd>{unit.population.toLocaleString(locale)}</dd></div>}
+        </dl>)}{administrative?.source && <p className="data-context">{t('Nguồn', 'Source')}: {administrative.source}</p>}</>}
         <h3 className="data-section-title">{t('Cách đánh giá', 'Assessment method')}</h3>
         <dl className="assessment-method"><div><dt>{t('Ưu tiên địa bàn', 'Community priority')}</dt><dd>{t('Dựa vào ảnh hưởng trên đường tiếp cận, tình trạng liên lạc và yêu cầu hỗ trợ khẩn cấp.', 'Uses reported road impacts, community contact and urgent assistance requests.')}</dd></div><div><dt>{t('Phương án tiếp cận', 'Access options')}</dt><dd>{t('Tìm tuyến trên mạng đường hiện có, tránh đoạn bị chặn và hạn chế đoạn cần xác minh. Kiểm tra khả năng đi qua trước khi sử dụng tuyến.', 'Routing uses the available road network, excludes blocked sections and penalises uncertain ones. Check passage conditions before using a route.')}</dd></div></dl>
       </div>

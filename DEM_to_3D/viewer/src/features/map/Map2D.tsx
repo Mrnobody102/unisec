@@ -1,7 +1,14 @@
+import { BasemapToneFilters } from '../imagery/BasemapToneFilters';
+import { preparedToneAssetId } from '../imagery/basemapTone';
+import { ImageryStatus, type ImageryLoadState } from '../imagery/ImageryStatus';
 import { DeviceLocationLayer } from './DeviceLocationLayer';
+import { detailInset } from './detailInset';
+import { responseOverviewPoints } from './responseOverview';
 import type { DeviceLocation } from '../../shared/hooks/useDeviceLocation';
 import { removeLeafletMap } from './removeLeafletMap';
 import { PIN, teardropPinSvg } from '../../terrain/pinShape';
+/** Half the 28 px place symbol: a journey pin on a named place stands on it instead of covering it. */
+const PLACE_SYMBOL_CLEARANCE = 14;
 import { createTileProgress } from './tileProgress';
 import { retryTileErrors } from './tileRetry';
 import { basemapTileOptions, imagerySource } from './imagerySource';
@@ -14,7 +21,7 @@ import { addRoadLayers } from './addRoadLayers';
 import { routeRoadDisplay } from '../../terrain/routeRoadDisplay';
 import { mapLayerOrder, mapPane, type MapPane } from './mapLayerOrder';
 import type { TerrainData } from '../../types/terrain';
-import type { MapContextRequest, MapDisplayProps, OverlayHit } from './mapContracts';
+import type { MapContextRequest, MapDisplayProps, OverlayHit, ViewControls } from './mapContracts';
 import { createRaster2d, type Raster2D } from './raster2d';
 import { ResponseGisLayer } from '../observations/ResponseGisLayer';
 import type { GeometryRecord } from '../../geo/vector/types';
@@ -23,12 +30,13 @@ import { MapMeasurement, measurementGeometry, type MeasureAction, type Measureme
 import { DrawPanel, type DrawAction, type DrawSession } from '../drawing';
 import { showRoad, defaultLayerAppearance } from './layerAppearance';
 import { readMapLocation, type MapLocation } from './mapLocation';
+import { createAnalysisOverlay2d } from '../imagery/analysisOverlay2d';
 
 type Props = MapDisplayProps & {
   userLocation?: DeviceLocation | null;
   userLocationRequest?: number;
   journeyFitRequest?: number;
-  journeyEndpoints?: Array<{latitude:number;longitude:number;label:string;road?:{latitude:number;longitude:number}}>;
+  journeyEndpoints?: Array<{latitude:number;longitude:number;label:string;place?:boolean;road?:{latitude:number;longitude:number}}>;
   pointPickActive?: boolean; onPointPick?: (latitude:number,longitude:number)=>void;
   onMapContextMenu?: (request: MapContextRequest) => void;
   gisEnabled?: boolean; gisRecords?: GeometryRecord[]; gisSelectedId?:string|null; gisRequest?:{version:number;id:string|null}; onGisSelect?:(id:string)=>void; gisGroupIds?:string[]; onGisGroup?:(ids:string[])=>void;
@@ -57,6 +65,17 @@ export function Map2D(props: Props): JSX.Element {
   const propsRef = useRef(props); propsRef.current = props;
   const runtime = useRef<{ refresh: () => void } | null>(null);
   const focusLayer = useRef<L.CircleMarker | null>(null);
+  const profileFollowing=useRef(true);
+  const [imageryState,setImageryState]=useState<ImageryLoadState>('off');
+  const analysisRef = useRef<ReturnType<typeof createAnalysisOverlay2d> | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+    const overlay = createAnalysisOverlay2d(map, mapPane('analysis'), props.locale === 'en' ? 'Analysis imagery' : 'Ảnh phân tích',setImageryState);
+    analysisRef.current = overlay;
+    return () => { overlay.dispose(); analysisRef.current = null; };
+  }, [mapReady]);
+  useEffect(() => { analysisRef.current?.set(props.analysisImagery?.rasters ?? [], props.analysisImagery?.opacity ?? 1); }, [mapReady, props.analysisImagery]);
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -80,7 +99,7 @@ export function Map2D(props: Props): JSX.Element {
     // any tile not loaded yet; a faded basemap would show both, so it is hidden then.
     const localOpacity = () => { const opacity = propsRef.current.scenarioProps?.appearance?.imageryOpacity ?? 1; return onlineImageryReady && opacity < 1 ? 0 : opacity; };
     const imageryPane = map.getPane(mapPane('imagery'))!;
-    let rasterAbort: AbortController | null = null, rasterKey = '', tileKey = '', frame = 0, disposed = false;
+    let rasterAbort: AbortController | null = null, rasterKey = '', tileKey = '', frame = 0, disposed = false, basemapGeneration = 0;
     let hasFit = Boolean(saved), localData: TerrainData | null = null;
     let lastSelection = '';
     const ll = (point: { x: number; y: number }) => {
@@ -94,22 +113,26 @@ export function Map2D(props: Props): JSX.Element {
     };
     const updateLayout = () => {
       frame = 0; markers?.update(project);
+      if (!host.clientWidth) return;
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
     };
     const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(updateLayout); };
     const fit = () => {
       const scenario = propsRef.current.scenarioProps;
-      const points = [...(scenario?.communities.map(c => c.projected) ?? []), ...(scenario?.roads.flatMap(r => r.points) ?? []), ...(scenario?.aoi?.points ?? [])].map(ll).filter((p): p is L.LatLng => p !== null);
+      const metadata = propsRef.current.terrain?.metadata;
+      const points = (scenario && metadata ? responseOverviewPoints(scenario, propsRef.current.gisRecords ?? [], metadata) : []).map(ll).filter((p): p is L.LatLng => p !== null);
       if (points.length) map.fitBounds(L.latLngBounds(points), { paddingTopLeft: [45, 70], paddingBottomRight: [65, 120], animate: false });
     };
     const setTiles = (imagery: boolean, enabled: boolean) => {
       const key = `${imagery}:${enabled}`;
       if (tileKey === key) return;
+      const generation = ++basemapGeneration;
       tileKey = key; tileLayer?.remove(); tileLayer = null; onlineImageryReady = false; raster?.setOpacity(localOpacity());
       const style = imagery ? 'satellite' : 'terrain';
       // Satellite tiles draw over the local raster; the terrain basemap stays beneath it.
       imageryPane.style.zIndex = imagery && enabled ? '150' : String(200 + mapLayerOrder.imagery * 30);
       const publish = (status: 'off' | 'loading' | 'ready' | 'partial' | 'error', loaded = 0, total = 0) => {
+        if (disposed || generation !== basemapGeneration) return;
         if (status === 'ready') onlineImageryReady = imagery && loaded > 0;
         else if (['off','partial','error'].includes(status)) onlineImageryReady = false;
         raster?.setOpacity(localOpacity());
@@ -136,7 +159,8 @@ export function Map2D(props: Props): JSX.Element {
       north.title = locale === 'vi' ? 'Bắc địa lý' : 'True north'; north.setAttribute('aria-label', north.title);
       setTiles(layers.imagery !== false, layers.context !== false);
       tileLayer?.setOpacity(layers.imagery !== false ? appearance.imageryOpacity : 1);
-      if (terrain && !hasFit && scenario) { fit(); hasFit = true; }
+      // A hidden map (the phone layout opens on the panel) has no size yet; it is fitted once shown.
+      if (terrain && !hasFit && scenario && host.clientWidth > 0) { fit(); hasFit = true; }
       if (!terrain && localData) {
         rasterAbort?.abort(); raster?.remove(); raster = null;
         localData = null; rasterKey = ''; hasFit = false; lastSelection = '';
@@ -161,10 +185,11 @@ export function Map2D(props: Props): JSX.Element {
         markers = createScreenMarkers(host, { ...scenario, locale, focusId,
           interactive: !propsRef.current.pointPickActive && !propsRef.current.locationOpen && !propsRef.current.drawOpen && !(propsRef.current.measurementOpen && (!propsRef.current.measureSession.finished || propsRef.current.measureSession.editing)),
           allowCounts: () => map.getZoom() < 14,
-          onPreviewFocus:point=>{const reserve=parseFloat(getComputedStyle(host.closest('.workspace')??host).getPropertyValue('--response-detail-reserve'))||0;propsRef.current.viewControlRef?.current?.focusProjected(point,{right:reserve});},
+          canExpandGroup: () => map.getZoom() < 18,
+          onPreviewFocus:point=>propsRef.current.viewControlRef?.current?.focusProjected(point,detailInset(host)),
           onExpandGroup: points => {
             const positions = points.map(ll).filter((point): point is L.LatLng => point !== null);
-            if (positions.length) map.fitBounds(L.latLngBounds(positions), { paddingTopLeft: [55, 80], paddingBottomRight: [75, 100], maxZoom: 17 });
+            if (positions.length) map.fitBounds(L.latLngBounds(positions), { paddingTopLeft: [55, 80], paddingBottomRight: [75, 100], maxZoom: 18 });
           },
           onSelect: hit => propsRef.current.onSelectOverlayHit?.(hit) });
         if (scenario.aoi && layers.aoi) {
@@ -186,7 +211,7 @@ export function Map2D(props: Props): JSX.Element {
             onSelect: () => onSelectOverlayHit?.({ type: 'road', id: sourceId }) });
         });
         const selection = scenario.selectedObjectId ?? (scenario.selectedCommunityId ? `community:${scenario.selectedCommunityId}` : '');
-        if (selection && selection !== lastSelection) {
+        if (selection && selection !== lastSelection && !propsRef.current.profileOpen) {
           const [kind, id] = selection.split(':');
           const road = scenario.roads.find(item => item.id === id);
           const position = kind === 'community' ? scenario.communities.find(item => item.id === id)?.projected
@@ -202,18 +227,50 @@ export function Map2D(props: Props): JSX.Element {
       updateLayout();
     };
     runtime.current = { refresh }; refresh();
-    if (props.viewControlRef) props.viewControlRef.current = {
+    const viewApi: ViewControls = {
       zoomIn: () => map.zoomIn(0.5), zoomOut: () => map.zoomOut(0.5), resetView: fit,
-      focusProjected: (point, inset) => { const p = ll(point); if (!p) return; const shift = (inset?.right ?? 0) / 2; const target = shift ? map.unproject(map.project(p).add([shift, 0])) : p; map.panTo(target, { animate: true, duration: 0.3 }); },
+      focusProjected: (point, inset) => {
+        const p = ll(point); if (!p) return;
+        const zoom = Math.min(map.getMaxZoom(), Math.max(map.getZoom(), 16));
+        const right = Math.min(inset?.right ?? 0, Math.max(0, host.clientWidth - 240));
+        const target = right ? map.unproject(map.project(p, zoom).add([right / 2, 0]), zoom) : p;
+        map.stop(); map.setView(target, zoom, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.45 });
+      },
+      frameProjected: (points, inset) => {
+        const positions = points.map(ll).filter((p): p is L.LatLng => p !== null);
+        if (!positions.length) return;
+        map.stop();
+        const right = Math.min(inset?.right ?? 0, Math.max(0, host.clientWidth - 240));
+        map.fitBounds(L.latLngBounds(positions), {paddingTopLeft:[65,90],paddingBottomRight:[right + 65,100],maxZoom:17,animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches,duration:.5});
+      },
       retryBasemap: () => { tileKey = ''; refresh(); }
     };
+    if (props.viewControlRef) props.viewControlRef.current = viewApi;
     propsRef.current.onViewReady?.();
-    const resize = new ResizeObserver(() => { map.invalidateSize({ pan: false }); schedule(); }); resize.observe(host);
+    const resize = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+      if (!hasFit && host.clientWidth > 0 && propsRef.current.terrain && propsRef.current.scenarioProps) { fit(); hasFit = true; }
+      schedule();
+    }); resize.observe(host);
     const ui = new MutationObserver(schedule);
     const area = host.closest('.map-area');
     if (area) ui.observe(area, { childList: true, subtree: true });
     area?.addEventListener('dear:map-layout', schedule);
     map.on('move zoom resize viewreset', schedule);
+    let adjustingProfile=false;
+    const keepProfileFocus=()=>{
+      const current=propsRef.current;
+      if(adjustingProfile || !profileFollowing.current || !current.profileOpen || !current.focusPoint || !current.profileMetadata)return;
+      const p=projectedToWgs84(current.profileMetadata,sceneToProjected(current.profileMetadata,current.focusPoint).projected);
+      if(p.latitude===undefined || p.longitude===undefined)return;
+      adjustingProfile=true;
+      try{map.panInside([p.latitude,p.longitude],{paddingTopLeft:[60,80],paddingBottomRight:[profileInset()+60,80],animate:false});}
+      finally{adjustingProfile=false;}
+    };
+    const releaseProfileFocus=()=>{profileFollowing.current=false;};
+    map.on('moveend resize',keepProfileFocus);map.on('dragstart',releaseProfileFocus);
+    surface.addEventListener('wheel',releaseProfileFocus,{passive:true});
+
     const contextMenu = (event: MouseEvent) => {
       const current = propsRef.current;
       if (!current.onMapContextMenu) return;
@@ -239,8 +296,11 @@ export function Map2D(props: Props): JSX.Element {
       area?.removeEventListener('dear:map-layout', schedule);
       host.removeEventListener('contextmenu', contextMenu);
       const center = map.getCenter(); propsRef.current.viewportRef.current = { center: [center.lat, center.lng], zoom: map.getZoom() };
+      map.off('moveend resize',keepProfileFocus);map.off('dragstart',releaseProfileFocus);surface.removeEventListener('wheel',releaseProfileFocus);
       removeLeafletMap(map); north.remove(); surface.remove(); mapRef.current = null; runtime.current = null; focusLayer.current = null;
-      if (props.viewControlRef) props.viewControlRef.current = null;
+      // The 3D layout effect can already have installed its controls before this
+      // passive cleanup runs. Only release the controller owned by this map.
+      if (props.viewControlRef?.current === viewApi) props.viewControlRef.current = null;
     };
   }, []);
   useLayoutEffect(() => {
@@ -253,31 +313,59 @@ export function Map2D(props: Props): JSX.Element {
     props.scenarioProps?.communities, props.scenarioProps?.responseSites, props.scenarioProps?.hazards, props.scenarioProps?.roads, props.scenarioProps?.aoi,
     props.scenarioProps?.selectedRoute, props.scenarioProps?.selectedCommunityId,
     props.scenarioProps?.selectedObjectId, props.scenarioProps?.layers, props.scenarioProps?.appearance]);
+  const profileInset = () => {
+    const host=hostRef.current,detail=host?.closest('.workspace')?.querySelector<HTMLElement>('#response-details');
+    if(!host||!detail||getComputedStyle(detail).visibility==='hidden')return 0;
+    const mapBox=host.getBoundingClientRect(),box=detail.getBoundingClientRect();
+    return box.left>=mapBox.left && box.left<mapBox.right && box.bottom>mapBox.top ? Math.min(mapBox.right-box.left,mapBox.width-240) : 0;
+  };
   useLayoutEffect(() => {
     const map = mapRef.current, metadata = props.terrain?.metadata, path = props.profilePoints;
     if (!map || !metadata || !path || !props.profileOpen) return;
-    map.invalidateSize({ pan: false });
     const points = path.map(point => projectedToWgs84(metadata, point))
       .filter((p): p is { latitude: number; longitude: number } => p.latitude !== undefined && p.longitude !== undefined)
       .map(p => L.latLng(p.latitude, p.longitude));
-    if (points.length) map.fitBounds(L.latLngBounds(points), { paddingTopLeft: [45, 90], paddingBottomRight: [65, 100], maxZoom: 14, animate: false });
-  }, [props.profileOpen, props.profilePoints]);
+    const fitProfile=()=>{
+      map.stop();map.invalidateSize({ pan: false });
+      if (points.length) map.fitBounds(L.latLngBounds(points), { paddingTopLeft: [45, 90], paddingBottomRight: [profileInset()+65, 100], maxZoom: 14, animate: false });
+      const current=propsRef.current;
+      if(current.focusPoint && current.profileMetadata){
+        const position=projectedToWgs84(current.profileMetadata,sceneToProjected(current.profileMetadata,current.focusPoint).projected);
+        if(position.latitude!==undefined && position.longitude!==undefined)map.panInside([position.latitude,position.longitude],{paddingTopLeft:[60,80],paddingBottomRight:[profileInset()+60,80],animate:false});
+      }
+    };
+    fitProfile();
+    // Opening a profile changes map height after React commits. Fit again at that size.
+    const resize=new ResizeObserver(fitProfile);if(hostRef.current)resize.observe(hostRef.current);
+    return ()=>resize.disconnect();
+  }, [props.profileOpen, props.profilePoints,mapReady]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     focusLayer.current?.remove(); focusLayer.current = null;
     if (!props.focusPoint || !props.profileMetadata) return;
+    profileFollowing.current=true;
     const projected = sceneToProjected(props.profileMetadata, props.focusPoint).projected;
     const { latitude, longitude } = projectedToWgs84(props.profileMetadata, projected);
     if (latitude === undefined || longitude === undefined) return;
-    map.panInside([latitude, longitude], { paddingTopLeft: [60, 80], paddingBottomRight: [60, 140], animate: false });
-    const point = L.circleMarker([latitude, longitude], { pane: mapPane('selection'), radius: 4, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map);
-    point.getElement()?.classList.add('map-profile-point-2d'); focusLayer.current = point;
-  }, [props.focusPoint, props.profileMetadata]);
+    let second=0;
+    const first=requestAnimationFrame(()=>{second=requestAnimationFrame(()=>{
+      map.stop();map.invalidateSize({pan:false});
+      map.panInside([latitude, longitude], { paddingTopLeft: [60, 80], paddingBottomRight: [profileInset()+60, 80], animate: false });
+      const point = L.circleMarker([latitude, longitude], { pane: mapPane('selection'), radius: 4, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map);
+      point.getElement()?.classList.add('map-profile-point-2d'); focusLayer.current = point;
+    });});
+    return ()=>{cancelAnimationFrame(first);cancelAnimationFrame(second);};
+  }, [props.focusPoint, props.profileMetadata,props.profileOpen,props.profilePoints,mapReady]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!mapReady || !map || !props.locationOpen) return;
-    const pick = (event: L.LeafletMouseEvent) => propsRef.current.onLocation(readMapLocation(event.latlng.lat, event.latlng.lng, propsRef.current.terrain));
+    const pick = (event: L.LeafletMouseEvent) => {
+      if(event.originalEvent.target instanceof Element && event.originalEvent.target.closest('.analysis-load-status'))return;
+      propsRef.current.onLocation(readMapLocation(event.latlng.lat,event.latlng.lng,propsRef.current.terrain));
+    };
     map.on('click', pick);
     const point = props.locationPoint;
     const marker = point ? L.circleMarker([point.latitude, point.longitude], { radius: 5, color: 'white', weight: 2, fillColor: '#166553', fillOpacity: 1, interactive: false }).addTo(map) : null;
@@ -289,7 +377,7 @@ export function Map2D(props: Props): JSX.Element {
     if (!map || !props.pointPickActive) return;
     const host=map.getContainer();
     const pick=(event:MouseEvent)=>{
-      if (event.target instanceof Element && event.target.closest('.leaflet-control,.map-overview,.leaflet-popup,.map-object-chooser,.field-map-card')) return;
+      if (event.target instanceof Element && event.target.closest('.leaflet-control,.map-overview,.leaflet-popup,.map-object-chooser,.field-map-card,.analysis-load-status')) return;
       event.stopImmediatePropagation(); event.preventDefault(); const p=map.mouseEventToLatLng(event); propsRef.current.onPointPick?.(p.lat,p.lng); };
     host.addEventListener('click',pick,true);
     return ()=>host.removeEventListener('click',pick,true);
@@ -304,7 +392,7 @@ export function Map2D(props: Props): JSX.Element {
         L.circleMarker([p.road.latitude,p.road.longitude],{pane:mapPane('selection'),radius:4,color:'#246b9a',weight:2,fillColor:'#fff',fillOpacity:1,interactive:false}).addTo(group);
       }
       const pin=document.createElement('span');pin.innerHTML=teardropPinSvg();const letter=document.createElement('b');letter.textContent=p.label;pin.append(letter);
-      L.marker([p.latitude,p.longitude],{pane:mapPane('selection'),interactive:false,keyboard:false,icon:L.divIcon({html:pin,className:'journey-map-pin is-'+p.label.toLowerCase(),iconSize:[PIN.width,PIN.height],iconAnchor:[PIN.tipX,PIN.tipY]})}).addTo(group);
+      L.marker([p.latitude,p.longitude],{pane:mapPane('selection'),interactive:false,keyboard:false,icon:L.divIcon({html:pin,className:'journey-map-pin is-'+p.label.toLowerCase(),iconSize:[PIN.width,PIN.height],iconAnchor:[PIN.tipX,PIN.tipY+(p.place?PLACE_SYMBOL_CLEARANCE:0)]}),zIndexOffset:1000}).addTo(group);
     }
     return ()=>{group.remove();};
   },[mapReady,props.journeyEndpoints]);
@@ -326,6 +414,8 @@ export function Map2D(props: Props): JSX.Element {
     map.fitBounds(L.latLngBounds(points),{paddingTopLeft:[40,top],paddingBottomRight:[right,80],maxZoom:16,animate:false});
   },[mapReady,props.journeyFitRequest]);
   return <div className={`terrain-viewer map-2d${interacting ? ' is-measuring' : ''}${props.locationOpen ? ' is-locating' : ''}`} ref={hostRef} aria-label={props.locale === 'en' ? '2D response map' : 'Bản đồ ứng phó 2D'}>
+    <BasemapToneFilters host={hostRef} active={!!props.analysisImagery?.balanceBasemap && props.scenarioProps?.layers.imagery!==false && !imagerySource.custom} prepared={props.terrain?.metadata.asset_id===preparedToneAssetId}/>
+    <ImageryStatus state={imageryState} locale={props.locale ?? 'vi'} onRetry={()=>analysisRef.current?.set(props.analysisImagery?.rasters ?? [],props.analysisImagery?.opacity ?? 1)}/>
     {mapReady && <DeviceLocationLayer mapRef={mapRef} location={props.userLocation ?? null} request={props.userLocationRequest ?? 0} locale={props.locale ?? 'vi'}/>}
     {mapReady && props.gisRecords && props.onGisSelect && <ResponseGisLayer mapRef={mapRef} records={props.gisRecords} roads={props.scenarioProps?.roads} networkVersion={props.scenarioProps?.datasetVersion} selectedId={props.gisSelectedId ?? null} request={props.gisRequest ?? {version:0,id:null}} enabled={props.gisEnabled !== false} interactive={!props.pointPickActive && !props.measurementOpen && !props.locationOpen && !props.drawOpen} locale={props.locale ?? 'vi'} groupIds={props.gisGroupIds} onSelect={props.onGisSelect} onGroup={props.onGisGroup}/>}
     <MapOverview mapRef={mapRef} raster={overviewRaster} area={overviewArea} locale={props.locale ?? 'vi'}

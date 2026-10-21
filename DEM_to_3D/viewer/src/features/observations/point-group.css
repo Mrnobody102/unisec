@@ -117,7 +117,6 @@
   background: transparent;
   color: var(--select-ink);
 }
-.point-group-list > li[aria-current='true'] strong {text-decoration:underline;text-underline-offset:3px;}
 .point-group-list strong {
   font-weight: 500;
   overflow-wrap: anywhere;

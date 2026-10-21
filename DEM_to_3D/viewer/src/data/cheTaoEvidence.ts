@@ -1,7 +1,4 @@
-import type { IncidentEvidence } from '../types/dear';
-import { preparedPacket } from './cheTaoScenario';
+import packetJson from '../../public/scenarios/che-tao/v0.3/incident.json';
+import { preparedScenario } from './cheTaoScenario';
 
-export const initialEvidence = preparedPacket.evidence;
-export function scenarioEvidence(updated: boolean): IncidentEvidence[] {
-  return initialEvidence.map(evidence => updated && evidence.hazardId === preparedPacket.report.evidence.hazardId ? preparedPacket.report.evidence : evidence);
-}
+export const { initialEvidence, scenarioEvidence } = preparedScenario(packetJson);

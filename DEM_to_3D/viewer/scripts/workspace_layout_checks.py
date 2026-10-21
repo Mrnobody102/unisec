@@ -1,4 +1,5 @@
 """Check overlapping controls at the narrowest supported desktop map width."""
+from gis_browser_actions import map_tool
 from playwright.sync_api import expect
 
 
@@ -15,7 +16,7 @@ def check_workspace_layout(browser, url, captures=None):
     page = context.new_page()
     try:
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         handle = page.locator('.panel-resize-handle')
         handle.focus()
         page.keyboard.press('End')
@@ -42,12 +43,12 @@ def check_workspace_layout(browser, url, captures=None):
         if captures: page.screenshot(path=str(captures / 'workspace-narrow-search.png'))
         search.press('Escape')
         for name, surface in [('Lớp bản đồ', '.layers-panel'), ('Đo trên bản đồ 2D', '.map-measure-panel'), ('Thông tin vị trí', '.map-location-panel')]:
-            page.get_by_role('button', name=name, exact=True).click()
+            (page.get_by_role('button',name=name,exact=True) if name=='Lớp bản đồ' else map_tool(page,name)).click()
             expect(page.locator(surface)).to_be_visible()
             controls = page.locator('.map-tools').bounding_box()
             box = page.locator(surface).bounding_box()
             assert box['y'] >= controls['y'] + controls['height'] + 8, (name, box, controls)
-        page.get_by_role('button', name='Thông tin vị trí', exact=True).click()
+        map_tool(page, 'Thông tin vị trí').click()
         legend, overview = page.locator('.map-bottom-bar'), page.locator('.map-overview')
         expect(overview).to_be_visible()
         for expanded in [False, True]:
@@ -70,6 +71,7 @@ def check_workspace_layout(browser, url, captures=None):
         assert box['y'] >= tools['y'] + tools['height'] + 8, ('Legend overlaps tools in short window', box, tools)
         check_front(legend.get_by_role('button', name='Chú giải', exact=True))
         legend.get_by_role('button', name='Chú giải', exact=True).click()
+        page.locator('.map-tool-toggle').click()
         # Header overlays stay above both toolbar rows in all supported views.
         for width in [1366, 1024, 390, 320]:
             page.set_viewport_size({'width': width, 'height': 768})

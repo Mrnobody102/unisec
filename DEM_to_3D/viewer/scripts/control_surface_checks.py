@@ -1,4 +1,5 @@
 """Check English controls in both themes and all fonts, including narrow panels."""
+from gis_browser_actions import map_tool
 from playwright.sync_api import expect
 from itertools import product
 from incident_panel_checks import check_incident_layout
@@ -13,7 +14,7 @@ def check_control_surfaces(browser, url, captures=None):
         page = context.new_page()
         try:
             page.goto(url+'/?map=2d&demoRole=manager')
-            expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+            expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
             page.evaluate('document.fonts.ready')
             check_incident_layout(page)
             page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
@@ -43,7 +44,7 @@ def check_control_surfaces(browser, url, captures=None):
                 }""")
                 assert not problems, (theme, font, width, problems)
             page.set_viewport_size({'width': 1366, 'height': 768})
-            page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+            map_tool(page, 'Measure on 2D map').click()
             expect(page.locator('.map-measure-panel')).to_have_css('opacity', '1')
             page.mouse.move(0, 0)
             heading = page.locator('.map-measure-heading')

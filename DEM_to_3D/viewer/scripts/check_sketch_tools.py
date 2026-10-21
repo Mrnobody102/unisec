@@ -1,4 +1,5 @@
 """Vertex editing in the measurement panel and shapes saved by the drawing tool."""
+from gis_browser_actions import map_tool
 import argparse, json
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -17,7 +18,7 @@ def run(url, chrome, captures=None):
         at = lambda x, y: (box['x'] + box['width'] * x, box['y'] + box['height'] * y)
 
         # Measurement: the table lists every vertex while drawing; rows and map vertices select each other.
-        page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
+        map_tool(page, 'Đo trên bản đồ 2D').click()
         panel = page.locator('.map-measure-panel')
         for x, y in [(.45, .25), (.62, .32), (.7, .55)]: page.mouse.click(*at(x, y))
         page.mouse.move(*at(.78, .6))
@@ -57,7 +58,7 @@ def run(url, chrome, captures=None):
         panel.get_by_role('button', name='Đóng công cụ đo', exact=True).click()
 
         # Drawing: circles and notes become GIS reference records that stay on the map.
-        page.get_by_role('button', name='Vẽ trên bản đồ 2D', exact=True).click()
+        map_tool(page, 'Vẽ trên bản đồ 2D').click()
         draw = page.locator('.map-draw-panel')
         expect(page.locator('.map-measure-panel')).to_have_count(0)
         draw.get_by_role('radio', name='Hình tròn', exact=True).check()

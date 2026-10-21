@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { initialRoadSegments } from "../data/cheTaoScenario";
+import { initialRoadSegments } from "../data/fixtures/networkScenario";
 import { analyseRoadJourney } from "../features/routes/journeyAnalysis";
 import { roadProjected } from "../features/routes/selectedRoadJourney";
 import { routeRoadDisplay } from "./routeRoadDisplay";
 describe("partial journey map geometry", () => {
-  const a = { origin: roadProjected(21.74276, 104.05581), source: "map" },
-    b = { origin: roadProjected(21.72291, 104.08018), source: "map" };
+  const a = { origin: roadProjected(21.77797, 104.03868), source: "map" },
+    b = { origin: roadProjected(21.75074, 104.05062), source: "map" };
   const route = analyseRoadJourney(initialRoadSegments, a, b, true).route!;
   it("highlights the selected parts, retains their source links, and preserves warning status", () => {
     const display = routeRoadDisplay(initialRoadSegments, route, true),

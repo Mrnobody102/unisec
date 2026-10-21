@@ -191,7 +191,7 @@ export function useSketchLayer(props: Props) {
       if (active && enabled && canEdit) edges(mode, points).forEach(({ insertAt, a, b }) => {
         const mid = midpoint(a, b);
         if (!mid) return;
-        const label = m.insertVertex.replace('{n}', String(insertAt)) + ' · ' + formatDistance(horizontalLength([a, b]), units, locale);
+        const label = m.insertVertex.replace('{n}', String(insertAt)) + ', ' + formatDistance(horizontalLength([a, b]), units, locale);
         const handle = L.marker([mid.lat, mid.lng], { draggable: true, keyboard: true, bubblingMouseEvents: false, title: label,
           icon: L.divIcon({ className: `map-sketch-midpoint map-${tool}-midpoint`, html: '<span></span>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(layer);
         let draggedAt = -Infinity;
@@ -222,10 +222,10 @@ export function useSketchLayer(props: Props) {
       }
     };
     // The active result is drawn once, as the sketch, and follows its visibility toggle.
-    (props.results ?? []).filter(item => item.visible && item.id !== props.activeId).forEach(item => draw(item.mode, item.points, true, false, `#${item.id}`));
+    (props.results ?? []).filter(item => item.visible && item.id !== props.activeId).forEach(item => draw(item.mode, item.points, true, false));
     const active = props.results?.find(item => item.id === props.activeId);
     if ((enabled || sketch.finished) && active?.visible !== false)
-      draw(sketch.mode, sketch.points, sketch.finished, true, active && `#${active.id}`);
+      draw(sketch.mode, sketch.points, sketch.finished, true);
     positionMeasurementLabels(map, resultLabels.current);
   }, [props.sketch, props.results, props.activeId, props.enabled, props.units, props.locale, props.labels, props.highlight, props.mapRef, props.tool]);
   // Preview of the next point, with a label beside the pointer.
@@ -245,9 +245,9 @@ export function useSketchLayer(props: Props) {
     const segment = horizontalLength([last, hover.point]);
     const text = takesVertices(sketch.mode)
       ? m.segmentAndTotal.replace('{segment}', formatDistance(segment, units, locale)).replace('{total}', formatDistance(horizontalLength(points), units, locale))
-      : sketch.mode === 'bearing' ? `${(gridBearing(last, hover.point) ?? 0).toFixed(1)}° · ${formatDistance(segment, units, locale)}`
+      : sketch.mode === 'bearing' ? `${(gridBearing(last, hover.point) ?? 0).toFixed(1)}°, ${formatDistance(segment, units, locale)}`
       : sketch.mode === 'rectangle' ? measurementResults('rectangle', [last, hover.point], units, locale)[0][1]
-      : sketch.mode === 'radius' ? `${m.radius} ${formatDistance(segment, units, locale)} · ${formatArea(Math.PI * segment ** 2, units, locale)}`
+      : sketch.mode === 'radius' ? `${m.radius} ${formatDistance(segment, units, locale)}, ${formatArea(Math.PI * segment ** 2, units, locale)}`
       : formatDistance(segment, units, locale);
     L.tooltip({ permanent: true, direction: 'right', offset: [16, 0], className: 'map-sketch-cursor' }).setLatLng([hover.point.lat, hover.point.lng]).setContent(text).addTo(layer);
   }, [hover, props.enabled, props.sketch, props.units, props.locale, props.tool]);

@@ -2,21 +2,24 @@
 .map-hover-target{position:absolute;z-index:6;width:8px;height:8px;border:2px solid #fff;border-radius:50%;background:#d93025;transform:translate(-50%,-50%);box-shadow:0 1px 2px #0008;pointer-events:none;}
 .map-hover-target[hidden]{display:none;}
 :root {
- --sym-community:#6c8790; --sym-priority:#8f7b61; --sym-landslide:#b04d48;
- --sym-flood:#497e98; --sym-verify:#9a7b4d; --sym-staging:#638471;
- --sym-hlz:#6c7984; --sym-report:#987b4e; --sym-survey:#627f94;
- --sym-ink:#283b44; --sym-shadow:0 1px 2px #0004;
+ --sym-community:#4f6d8a; --sym-priority:#b0651d; --sym-landslide:#c0452c;
+ --sym-flood:#2f72a6; --sym-verify:#8c6a28; --sym-staging:#2e7a4d;
+ --sym-hlz:#55657a; --sym-report:#8c6a28; --sym-survey:#566d75;
+ --sym-ink:#283b44;
 }
+/* Web-map POIs: a disc in the category colour with a white glyph and a white rim, lifted by a
+   soft shadow so it reads on imagery and on the terrain basemap alike. The selected place
+   becomes a larger teardrop of the same colour whose tip sits on the coordinate. */
 .map-marker-layer {position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;}
 .map-pin {
  --pin:var(--sym-community);position:absolute;top:0;left:0;display:block;
  width:28px;height:28px;padding:0;border:0;border-radius:0;background:transparent;
- color:var(--pin);box-shadow:none;pointer-events:auto;cursor:pointer;
+ color:#fff;box-shadow:none;pointer-events:auto;cursor:pointer;
 }
 .map-pin[hidden] {display:none;}
-.map-pin-shape {position:absolute;inset:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0004);}
-.map-pin-shape svg {display:block;width:100%;height:100%;fill:#fbfcfa;stroke:var(--pin);stroke-width:1.1;stroke-linejoin:round;}
-.map-pin-icon {position:absolute;top:4px;left:6px;width:16px;height:16px;display:grid;place-items:center;pointer-events:none;}
+.map-pin-shape {position:absolute;inset:0;pointer-events:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.38));transition:scale 120ms ease;}
+.map-pin-shape svg {display:block;width:100%;height:100%;fill:var(--pin);stroke:#fff;stroke-width:1.5;stroke-linejoin:round;}
+.map-pin-icon {position:absolute;top:6px;left:6px;width:16px;height:16px;display:grid;place-items:center;color:#fff;pointer-events:none;transition:scale 120ms ease;}
 .map-pin-icon svg {width:16px;height:16px;}
 .map-pin-icon[hidden],.map-pin-count[hidden] {display:none;}
 .map-pin.community {--pin:var(--sym-community);}
@@ -26,27 +29,64 @@
 .map-pin.bridge,.map-pin.crossing {--pin:var(--sym-verify);}
 .map-pin.staging {--pin:var(--sym-staging);}
 .map-pin.hlz {--pin:var(--sym-hlz);}
-.map-pin.is-suspected:not(.is-selected) .map-pin-icon {opacity:.78;}
 .map-pin.hlz.is-suspected {--pin:var(--sym-verify);}
-.map-pin.is-unavailable .map-pin-icon::after {content:'';position:absolute;width:18px;height:1.5px;background:var(--pin);rotate:-45deg;}
+.map-pin.is-unavailable .map-pin-icon::after {content:'';position:absolute;width:18px;height:2px;border-radius:1px;background:#fff;rotate:-45deg;}
 .map-pin:where(.hazard) {z-index:2;}
 .map-pin:where(.hazard:not(.is-suspected)) {z-index:3;}
 .map-pin:hover {z-index:4;}
-.map-pin:hover:not(.is-selected) .map-pin-icon,.map-pin.is-preview .map-pin-icon {filter:drop-shadow(0 0 2px white) drop-shadow(0 1px 1px #0009);}
-.map-pin:focus-visible {z-index:4;outline:2px solid #fff;outline-offset:2px;border-radius:3px;}
-.map-pin.is-selected {z-index:5;}
-.map-pin.is-selected {width:28px;height:32px;}
-.map-pin.is-selected .map-pin-shape svg {fill:#d93025;stroke:#fff;stroke-width:.6;}
-.map-pin.is-selected .map-pin-icon {display:none;}
+@media (hover:hover) {
+ .map-pin:hover:not(.is-selected) :is(.map-pin-shape,.map-pin-icon),.map-pin.is-preview :is(.map-pin-shape,.map-pin-icon) {scale:1.14;}
+}
+.map-pin:focus-visible {z-index:4;outline:2px solid #fff;outline-offset:2px;border-radius:50%;}
+.map-pin.is-selected {z-index:5;width:34px;height:46px;}
+.map-pin.is-selected:focus-visible {border-radius:4px;}
+.map-pin.is-selected .map-pin-shape {filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));}
+.map-pin.is-selected .map-pin-shape svg {stroke-width:2;}
+.map-pin.is-selected .map-pin-icon {top:8px;left:8px;width:18px;height:18px;}
+.map-pin.is-selected .map-pin-icon svg {width:18px;height:18px;}
 .map-pin.is-cluster:not(.is-selected),.map-pin.has-overlap:not(.is-selected) {width:32px;height:32px;}
-.map-pin.is-cluster .map-pin-icon,.map-pin.has-overlap .map-pin-icon {left:8px;top:6px;}
+.map-pin.is-cluster:not(.is-selected) .map-pin-icon,.map-pin.has-overlap:not(.is-selected) .map-pin-icon {left:8px;top:8px;}
 .map-pin.has-overlap .map-pin-icon svg {width:16px;height:16px;}
-.map-pin.is-cluster .map-pin-count {position:absolute;top:17px;right:-2px;color:#fff;text-align:right;font:700 11px/14px var(--font-sans);font-variant-numeric:tabular-nums;text-shadow:-1px -1px 0 #25353d,1px -1px 0 #25353d,-1px 1px 0 #25353d,1px 1px 0 #25353d;pointer-events:none;}
-.map-pin.has-overlap::after {content:'';position:absolute;right:0;top:23px;width:7px;height:7px;border:1px solid #fff;border-radius:50%;background:var(--sym-ink);box-sizing:border-box;}
+.map-pin.is-cluster .map-pin-count {position:absolute;top:-4px;right:-6px;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;background:#fff;color:var(--pin);text-align:center;font:700 10px/16px var(--font-map);font-variant-numeric:tabular-nums;box-shadow:0 1px 2px rgba(0,0,0,.35);pointer-events:none;}
+.map-pin.has-overlap::after {content:'';position:absolute;right:1px;top:22px;width:8px;height:8px;border:1.5px solid #fff;border-radius:50%;background:var(--sym-ink);box-sizing:border-box;}
 .map-pin.has-overlap.has-hazard::after {background:var(--sym-landslide);}
-/* Same face as the GIS map, whose markers inherit Leaflet's container font. */
-.map-pin-label {position:absolute;left:31px;top:4px;padding:1px 0;color:#fff;font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;font-weight:500;white-space:nowrap;pointer-events:auto;cursor:pointer;text-shadow:0 1px 2px #1b2a30,0 0 3px #1b2a30,0 0 1px #1b2a30;}
-.map-pin.is-selected .map-pin-label {font-weight:600;}
+/* Map labels have their own typography, independent of panel font preferences. */
+.map-pin-label {position:absolute;left:31px;top:4px;padding:1px 0;color:#fff;font-family:var(--font-map);font-size:13px;line-height:1.35;font-weight:400;white-space:nowrap;pointer-events:auto;cursor:pointer;text-shadow:0 1px 2px #101c1ccc,0 0 2px #101c1caa;}
+.map-pin.is-selected .map-pin-label {left:38px;top:8px;font-weight:600;}
 .map-marker-layer[data-basemap="terrain"] .map-pin .map-pin-label {color:#24363b;text-shadow:0 0 2px #fff,0 0 4px #fff;}
+[data-theme="dark"] .map-marker-layer[data-basemap="terrain"] .map-pin .map-pin-label {color:#edf2ed;text-shadow:0 1px 2px #111b16,0 0 3px #111b16;}
 .map-pin.is-label-hidden .map-pin-label {display:none;}
 .map-pin.is-label-hidden:is(:hover,:focus-visible,.is-preview) .map-pin-label {display:block;left:var(--hover-label-left,31px)!important;top:var(--hover-label-top,4px)!important;}
+
+.landslide-map-label { display:block; width:max-content; box-sizing:border-box; font:500 12px/1.4 var(--font-map); max-width:min(260px,calc(100vw - 48px)); white-space:normal; overflow-wrap:break-word; word-break:normal; }
+.landslide-map-label strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-weight:500; }
+.landslide-map-label small { display:block; margin-top:2px; font-size:11px; font-weight:400; white-space:nowrap; }
+.terrain-area-label { position:absolute; left:0; top:0; z-index:4; pointer-events:none; padding:5px 8px; background:#242820e8; border:1px solid #ffffff29; border-radius:2px; color:#f6f5ed; width:max-content; max-width:min(260px,calc(100% - 24px)); white-space:normal; overflow-wrap:break-word; text-align:left; text-shadow:none; }
+.terrain-area-label[hidden] { display:none; }
+
+.leaflet-tooltip:has(> .landslide-map-label) { width:max-content; max-width:min(278px,calc(100vw - 32px)); box-sizing:border-box; white-space:normal; padding:5px 8px; border:1px solid #ffffff29; border-radius:2px; background:#242820ed; color:#f6f5ed; box-shadow:0 1px 2px #0003; }
+.leaflet-tooltip-top:has(> .landslide-map-label)::before { border-top-color:#242820ed; }
+.leaflet-tooltip-bottom:has(> .landslide-map-label)::before { border-bottom-color:#242820ed; }
+.leaflet-tooltip-left:has(> .landslide-map-label)::before { border-left-color:#242820ed; }
+.leaflet-tooltip-right:has(> .landslide-map-label)::before { border-right-color:#242820ed; }
+
+.terrain-reference-layer {position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:4;}
+.terrain-reference-point {position:absolute;top:0;left:0;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;background:transparent;color:#7b5737;pointer-events:auto;}
+.terrain-reference-point[hidden] {display:none;}
+.terrain-reference-point.is-selected {height:28px;}
+.terrain-reference-label {display:none;position:absolute;width:max-content;max-width:var(--reference-label-width,260px);overflow:hidden;text-overflow:ellipsis;left:28px;top:4px;padding:3px 6px;border-radius:2px;background:#242820ed;color:#f6f5ed;font:500 12px/1.4 var(--font-map);white-space:nowrap;}
+.terrain-reference-point:is(:hover,:focus-visible,.is-selected) .terrain-reference-label {display:block;}
+.terrain-reference-point:focus-visible {outline:2px solid white;outline-offset:2px;}
+.terrain-detail-status {position:absolute;left:16px;bottom:12px;z-index:5;padding:4px 8px;background:var(--ws-surface);color:var(--ws-muted);font:11px/1.5 var(--font-map);border:1px solid var(--ws-line);border-radius:2px;pointer-events:none;}
+.terrain-detail-status[hidden] {display:none;}
+
+.survey-reference-point { background:transparent; border:0; color:#746650; }
+.survey-reference-point svg { display:block; fill:currentColor; }
+
+.terrain-reference-point.label-left .terrain-reference-label { left:auto; right:32px; }
+
+.map-object-chooser .map-object-chooser-heading { display:flex; align-items:center; gap:12px; padding:3px 4px 7px 8px; border-bottom:1px solid var(--ws-line); }
+.map-object-chooser .map-chooser-close { flex:none; width:28px; height:28px; min-height:28px; margin-left:auto; padding:0; justify-content:center; color:var(--ws-muted); font-size:21px; line-height:1; }
+.map-object-chooser .map-object-choice { align-items:flex-start; gap:9px; min-height:40px; padding:9px 8px; line-height:1.35; }
+.map-object-chooser .map-object-choice > span:last-child { min-width:0; overflow-wrap:break-word; }
+.map-object-chooser .map-object-choice > span:first-child { margin-top:1px; }

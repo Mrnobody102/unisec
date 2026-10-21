@@ -1,3 +1,6 @@
+import { PreparedImageryComparison } from '../features/imagery/PreparedImageryComparison';
+import type {GeometryRecord} from '../geo/vector/types';
+import type { AnalysisImageryState } from '../features/imagery/useAnalysisImagery';
 import type { ScenarioTarget } from '../features/geodata/scenarioOverlay';
 import type { ScenarioEdits } from '../features/access/scenarioEdits';
 import { ReportInbox } from '../features/access/ReportInbox';
@@ -27,6 +30,8 @@ import type { TerrainData, TerrainMetadata } from '../types/terrain';
 import type { WorkspaceDialog } from './workspaceInteraction';
 
 type Props = {
+  analysisImagery?: AnalysisImageryState;
+  comparisonRecord?:GeometryRecord;
   identity: DemoIdentity; onRename: RenameScenario; scenarioEdits?: ScenarioEdits; onEditGis: (id:string)=>void;
   scenarioRequest?: ScenarioTarget | null; onResponseScenario?: (target:ScenarioTarget)=>void;
   gisSession: ReturnType<typeof useGeometrySession>; onGisResponse:(id:string)=>void;
@@ -58,7 +63,7 @@ type Props = {
 };
 
 /** Global dialogs share the workspace's focus boundary; Layers stays attached to the map. */
-export function WorkspaceDialogs({ identity,onRename,scenarioEdits,scenarioRequest,onResponseScenario,onEditGis,gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
+export function WorkspaceDialogs({ analysisImagery,comparisonRecord, identity,onRename,scenarioEdits,scenarioRequest,onResponseScenario,onEditGis,gisSession,onGisResponse,dialog, locale, offline, packet, snapshot, updated, reportApplied,
   historical, workTasks,workTaskId,workEntries,workStorageError,onRecordWork,onVerifyRoad,onVerifyHazard,appliedAt,comparisonPair, onComparisonPair, decisionSnapshot, evidenceId, terrain,
   terrainMetadata, manifest, upload, onClose, onOpenReport, onApplyReport, onRevision,
   onInspectObject }: Props): JSX.Element | null {
@@ -72,9 +77,10 @@ export function WorkspaceDialogs({ identity,onRename,scenarioEdits,scenarioReque
     case 'help':
       return <UserGuide locale={locale} onClose={onClose}/>;
     case 'comparison':
+      if(analysisImagery && analysisImagery.layers.filter(layer=>layer.kind==='optical').length>=2 && !comparisonPair)return <PreparedImageryComparison layers={analysisImagery.layers} records={gisSession.records} selected={comparisonRecord} locale={locale} onClose={onClose}/>;
       return <ImageCompareDialog pair={comparisonPair} onPair={onComparisonPair} triggeredAt={incident.triggeredAt} locale={locale} onClose={onClose} />;
     case 'geodata':
-      return <GeometryWorkspace scenarioRequest={scenarioRequest} onResponseScenario={onResponseScenario} locale={locale} offline={offline} onClose={onClose} session={gisSession} annotationProperties={(id,records)=>{const record=records.find(r=>r.id===id);return {[submissionKey]:record&&submissionOf(record) || newSubmission(identity,'manual')};}} onResponse={onGisResponse} scenario={{ datasetVersion: packet.datasetVersion, communities: snapshot.communities, responseSites: snapshot.responseSites, hazards, roads }} scenarioEdits={scenarioEdits} onRenameScenario={onRename}/>;
+      return <GeometryWorkspace analysisImagery={analysisImagery} scenarioRequest={scenarioRequest} onResponseScenario={onResponseScenario} locale={locale} offline={offline} onClose={onClose} session={gisSession} annotationProperties={(id,records)=>{const record=records.find(r=>r.id===id);return {[submissionKey]:record&&submissionOf(record) || newSubmission(identity,'manual')};}} onResponse={onGisResponse} scenario={{ datasetVersion: packet.datasetVersion, communities: snapshot.communities, responseSites: snapshot.responseSites, hazards, roads }} scenarioEdits={scenarioEdits} onRenameScenario={onRename}/>;
     case 'exportDecision':
       return decisionSnapshot ? <DecisionExportDialog snapshot={decisionSnapshot} terrain={terrain} imageUrl={manifest?.terrain.image?.url} locale={locale} onClose={onClose} /> : null;
     case 'alerts':

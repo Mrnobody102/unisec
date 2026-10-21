@@ -73,13 +73,13 @@ export const vi: GuideContent = {
     {
       id: 'map',
       audience: 'manager',
-      title: 'Bản đồ và hành trình',
+      title: 'Bản đồ và tìm đường',
       image: 'guide/map.jpg',
       steps: [
         {
           icon: 'route',
-          title: 'Hành trình giữa hai điểm',
-          text: 'Chọn A và B từ danh sách, hoặc bấm biểu tượng vị trí rồi bấm lên bản đồ. Tránh đoạn bị chặn áp dụng cả khi chọn điểm nối vào đường. Nét đứt chỉ là đoạn nối thẳng chưa xác nhận lối đi; độ dài kết quả chỉ tính phần theo đường. Bấm Xem A, B và tuyến để đưa cả hành trình vào khung nhìn; trên điện thoại, mở lại chi tiết bằng nút mở rộng.'
+          title: 'Tìm đường giữa hai điểm',
+          text: 'Chọn A và B từ danh sách, hoặc bấm biểu tượng vị trí rồi bấm lên bản đồ. Tránh đoạn bị chặn áp dụng cả khi chọn điểm nối vào đường. Nét đứt chỉ là đoạn nối thẳng chưa xác nhận lối đi; độ dài kết quả chỉ tính phần theo đường. Bấm Xem A, B và tuyến để đưa cả tuyến đường vào khung nhìn; trên điện thoại, mở lại chi tiết bằng nút mở rộng.'
         },
         {
           icon: 'layers',

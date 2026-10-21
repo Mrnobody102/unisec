@@ -22,7 +22,7 @@ export function deriveIncidentWorkspace(source: IncidentPacket, updated: boolean
   const staging = packet.responseSites.find(site => site.kind === 'staging');
   if (!staging) throw new Error('Incident workspace requires a staging site');
   const baseline: Community[] = packet.communities.filter(community => withinArea(community.projected, packet.aoi.points)).map(community => ({ ...community, prio: 2 }));
-  const routes = buildNetworkRoutes(roads, baseline, staging.projected);
+  const routes = buildNetworkRoutes(roads, baseline, staging.projected, packet.routingAssumptions);
   for (const pair of routes.values()) for (const route of [pair.candidate, pair.direct]) {
     if (route) route.eta = estimateTravel(route, packet.routingAssumptions);
   }

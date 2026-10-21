@@ -1,6 +1,13 @@
+import { useLandslideAppearance } from '../landslides/useLandslideAppearance';
+import type { AnalysisImageryState } from '../imagery/useAnalysisImagery';
+import { createAnalysisOverlay2d } from '../imagery/analysisOverlay2d';
+import { areaMapLabel } from '../landslides/areaMapLabel';
 import { removeLeafletMap } from '../map/removeLeafletMap';
-import { selectedPinSvg } from '../../terrain/poiFrame';
-import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
+import { panelFitPadding } from '../map/panelFitPadding';
+import { surveyPointSvg } from '../../terrain/poiFrame';
+import { distinctSourceRecords, representedHazard } from '../map/sourceRepresentation';
+import { landslideAreaOf, landslideAreaStyle, landslideBoundaryColor, landslideBoundaryCasing } from '../landslides/landslideAreas';
+import { roadColors } from '../../terrain/roadStyle';
 import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
 import type { RenameScenario } from '../access/ScenarioLabels';
 import { PointRenderingControl } from '../map/PointRenderingControl';
@@ -64,17 +71,21 @@ type Props = {
   onRenameScenario?: RenameScenario;
   scenarioFocus?: ScenarioTarget | null;
   onResponseScenario?: (target: ScenarioTarget) => void;
+  onSelectScenario: (target: ScenarioTarget) => void;
   onScenarioNotice?: (message: [string,string]) => void;
   onPickPoint?: (point: {latitude:number;longitude:number}) => void;
   onCancelPick?: () => void;
   pickLabel?: [string, string];
   pickAnchor?: {latitude:number;longitude:number};
   onPickScenarioPosition?: () => void;
+  /** Shared with the response map so a scar can be digitised on the chosen scene. */
+  analysisImagery?: AnalysisImageryState;
 };
 
 const emptyPointGroup: readonly string[] = [];
 
 export function GeometryMap(props: Props): JSX.Element {
+  const { fillOpacity } = useLandslideAppearance();
   const t = (vi: string, en: string) => (props.locale === 'vi' ? vi : en);
   const host = useRef<HTMLDivElement>(null),
     mapRef = useRef<L.Map | null>(null);
@@ -90,6 +101,18 @@ export function GeometryMap(props: Props): JSX.Element {
       props.offline ? 'none' : 'satellite'
     );
   const { mode: pointMode } = usePointRendering();
+  const analysis = props.analysisImagery;
+  const analysisLayer = analysis?.layers.find(layer => layer.id === analysis.selection.layer);
+  const analysisChoice = !analysisLayer ? '' : analysisLayer.kind === 'sar' ? `${analysisLayer.id}:${analysis!.selection.sarMode}` : analysisLayer.id;
+  const analysisOverlay = useRef<ReturnType<typeof createAnalysisOverlay2d> | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const overlay = createAnalysisOverlay2d(map, 'analysis', props.locale === 'en' ? 'Analysis imagery' : 'Ảnh phân tích');
+    analysisOverlay.current = overlay;
+    return () => { overlay.dispose(); analysisOverlay.current = null; };
+  }, [ready]);
+  useEffect(() => { analysisOverlay.current?.set(analysis?.rasters ?? [], analysis?.selection.opacity ?? 1); }, [ready, analysis?.rasters, analysis?.selection.opacity]);
   const [showIntersection, setShowIntersection] = useState(true),
     [showScenario, setShowScenario] = useState(true),
     [cursor, setCursor] = useState('');
@@ -122,6 +145,7 @@ export function GeometryMap(props: Props): JSX.Element {
     mapRef.current = map;
     setReady(true);
     for (const [pane, zIndex] of [
+      ['analysis', 300],
       ['footprint', 420],
       ['reference', 440],
       ['aoi', 460],
@@ -276,6 +300,11 @@ export function GeometryMap(props: Props): JSX.Element {
   // and move the map away from the object being edited.
   const appliedFocus = useRef<ScenarioTarget | null>(null);
   const focusedView = useRef<typeof props.viewRequest | null>(null);
+  const focusPadding = () => {
+    const canvas = mapRef.current!.getContainer();
+    const card = canvas.closest('.geodata-map')?.querySelector<HTMLElement>('.scenario-card');
+    return panelFitPadding(canvas.getBoundingClientRect(),card?.getBoundingClientRect());
+  };
   useEffect(() => {
     const map=mapRef.current, target=props.scenarioFocus, scenario=props.scenario;
     if(!ready||!map||!target||!scenario||appliedFocus.current===target) return;
@@ -284,8 +313,11 @@ export function GeometryMap(props: Props): JSX.Element {
     const feature=collection.find(f=>f.id===target.id);
     if(!feature) return;
     appliedFocus.current=target; focusedView.current=props.viewRequest;
-    if('projected' in feature) {const g=roadGeographic(feature.projected);map.setView([g.latitude,g.longitude],Math.max(map.getZoom(),14),{animate:false});}
-    else map.fitBounds(L.latLngBounds(feature.points.map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);})),{padding:[48,48],maxZoom:16,animate:false});
+    if('projected' in feature) {
+      const point=feature.projected;
+      const bounds=L.latLngBounds([{x:point.x-250,y:point.y-250},{x:point.x+250,y:point.y+250}].map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);}));
+      map.fitBounds(bounds,{...focusPadding(),maxZoom:17,animate:false});
+    } else map.fitBounds(L.latLngBounds(feature.points.map(p=>{const g=roadGeographic(p);return L.latLng(g.latitude,g.longitude);})),{...focusPadding(),maxZoom:16,animate:false});
   },[ready,props.scenarioFocus,props.scenario]);
   const scenarioFitted = useRef(false);
   useEffect(() => {
@@ -311,7 +343,10 @@ export function GeometryMap(props: Props): JSX.Element {
     if (!ready || !map || !showScenario || !props.scenario) return;
     if (!map.getPane('scenario')) map.createPane('scenario').style.zIndex = '410';
     const pending = scenarioPending && roadGeographic(scenarioPending);
-    const layer = scenarioOverlayLayer(props.scenario, {
+    const selectedSource = props.records.find(record => record.id === props.selectedId);
+    const represented = selectedSource && representedHazard(selectedSource, props.scenario.hazards)?.id;
+    const layer = scenarioOverlayLayer({...props.scenario, hazards:props.scenario.hazards
+      .filter(hazard => hazard.id !== represented).map(hazard => ({...hazard,labelMode:hazard.labelMode ?? 'show'}))}, {
       map,
       imagery: base === 'satellite',
       pane: 'scenario',
@@ -330,21 +365,23 @@ export function GeometryMap(props: Props): JSX.Element {
       layer.remove();
     };
     // The wrapper object is rebuilt per render; its arrays are stable snapshot data.
-  }, [ready, base, showScenario, props.scenario?.communities, props.scenario?.responseSites, props.scenario?.hazards, props.scenario?.roads, props.locale, targetKey(scenarioTarget), scenarioMoving, scenarioPending, props.editor.active, props.onPickPoint]);
+  }, [ready, base, showScenario, props.scenario?.communities, props.scenario?.responseSites, props.scenario?.hazards, props.scenario?.roads, props.records, props.selectedId, props.locale, targetKey(scenarioTarget), scenarioMoving, scenarioPending, props.editor.active, props.onPickPoint]);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
     const group = L.layerGroup().addTo(map);
     const clustered: ClusterablePoint[] = [];
-    for (const record of props.records.filter(
+    for (const record of distinctSourceRecords(props.records, props.selectedId).filter(
       (record) =>
         record.visible &&
+        !(showScenario && props.scenario && record.id !== props.selectedId && representedHazard(record, props.scenario.hazards)) &&
         !(props.editor.mode === 'edit' && record.id === props.editor.recordId)
     )) {
       const observation = observationOf(record);
       const owner = fieldAreaOwner(record, props.records);
       const mappedArea = landslideAreaOf(record);
-      const color = mappedArea ? landslideAreaStyle(mappedArea).color : owner
+      const referenceRoad = record.feature.properties.referenceKind === 'road-corridor';
+      const color = referenceRoad ? roadColors.reference : mappedArea ? landslideAreaStyle(mappedArea).color : owner
           ? '#b87919'
           : observation
             ? observationColor(observation.kind)
@@ -374,9 +411,9 @@ export function GeometryMap(props: Props): JSX.Element {
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? pointStyle
-              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state, interactive: !props.editor.active && !props.onPickPoint } : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected, fillOpacity), className: 'landslide-area is-' + mappedArea.state, interactive: !props.editor.active && !props.onPickPoint } : {
                   color,
-                  weight: selected ? 3 : 1.5,
+                  weight: referenceRoad ? selected ? 3 : 2 : selected ? 3 : 1.5,
                   fillOpacity: owner
                     ? selected
                       ? 0.22
@@ -397,12 +434,16 @@ export function GeometryMap(props: Props): JSX.Element {
               : selected
                 ? L.marker(position, { pane: 'points', interactive: !props.editor.active && !props.onPickPoint,
                     keyboard: !props.editor.active && !props.onPickPoint, zIndexOffset: 1000,
-                    icon: L.divIcon({ html: selectedPinSvg(), className: 'geodata-selected-point map-selected-reference',
-                      iconSize: [28, 32], iconAnchor: [14, 28.8], tooltipAnchor: [0, -30] }) })
-                : L.circleMarker(position, pointStyle)
+                    icon: L.divIcon({ html: surveyPointSvg(true), className: 'geodata-selected-point map-selected-reference',
+                      iconSize: [28, 28], iconAnchor: [14, 14], tooltipAnchor: [0, -30] }) })
+                : record.feature.properties.sourceDatasetId
+                  ? L.marker(position,{pane:'points',interactive:!props.editor.active && !props.onPickPoint,
+                      keyboard:!props.editor.active && !props.onPickPoint,
+                      icon:L.divIcon({html:surveyPointSvg(),className:'survey-reference-point map-reference-point',iconSize:[28,28],iconAnchor:[14,14],tooltipAnchor:[0,-28]})})
+                  : L.circleMarker(position, pointStyle)
         });
-        const label = document.createElement('span');
-        label.textContent = record.name;
+        const label = mappedArea ? areaMapLabel(record,props.locale) : document.createElement('span');
+        if (!mappedArea) label.textContent = record.name;
         if (!props.editor.active && !props.onPickPoint)
           layer
             .bindTooltip(label, {
@@ -429,6 +470,10 @@ export function GeometryMap(props: Props): JSX.Element {
         });
         continue;
       }
+      if (referenceRoad) L.geoJSON(record.feature, { pane, interactive: false,
+        style: { color: roadColors.referenceCasing, weight: selected ? 5 : 4, opacity: .9, lineCap: 'round', lineJoin: 'round' } }).addTo(group);
+      if (mappedArea) L.geoJSON(record.feature, { pane, interactive: false,
+        style: { color: landslideBoundaryCasing, weight: landslideAreaStyle(mappedArea, selected).weight + 1.2, opacity: .8, fill: false, lineCap: 'round', lineJoin: 'round' } }).addTo(group);
       render().addTo(group);
       if (mappedArea && selected && mappedArea.networkVersion === props.scenario?.datasetVersion) addAreaRoadSections(group, mappedArea, props.scenario?.roads ?? [], 'reference');
       if (
@@ -586,13 +631,16 @@ export function GeometryMap(props: Props): JSX.Element {
     props.editor.mode,
     props.editor.draft,
     props.previewGeometry,
+    fillOpacity,
     props.intersection,
     showIntersection,
     pointMode,
     pointGroup,
     props.onPickPoint,
     props.scenario?.roads,
+    props.scenario?.hazards,
     props.scenario?.datasetVersion,
+    showScenario,
     props.locale
   ]);
   useEffect(() => {
@@ -683,6 +731,18 @@ export function GeometryMap(props: Props): JSX.Element {
             <option value="none">{t('Không nền', 'None')}</option>
           </select>
         </label>
+        {analysis && analysis.layers.length > 0 && (
+          <label>
+            {t('Ảnh', 'Scene')}
+            <select aria-label={t('Ảnh phân tích', 'Analysis imagery')} value={analysisChoice}
+              onChange={event => { const [layer, sarMode] = event.target.value.split(':'); analysis.setSelection({ ...analysis.selection, layer: layer || null, ...(sarMode ? { sarMode: sarMode as 'vv' } : {}) }); }}>
+              <option value="">{t('Không', 'None')}</option>
+              {analysis.layers.flatMap(layer => layer.kind === 'optical'
+                ? [<option key={layer.id} value={layer.id}>{t(...layer.name)}</option>]
+                : (['vv', 'vh', 'rgb'] as const).map(mode => <option key={layer.id + mode} value={`${layer.id}:${mode}`}>{`SAR ${mode === 'rgb' ? t('tổ hợp', 'composite') : mode.toUpperCase()}`}</option>))}
+            </select>
+          </label>
+        )}
         {props.intersection && (
           <label>
             <input
@@ -718,7 +778,7 @@ export function GeometryMap(props: Props): JSX.Element {
                   (record) =>
                     record.visible &&
                     record.role === role &&
-                    !observationOf(record)
+                    !observationOf(record) && !landslideAreaOf(record) && record.feature.properties.referenceKind !== 'road-corridor'
                 )
               )
               .map((role) => (
@@ -731,6 +791,14 @@ export function GeometryMap(props: Props): JSX.Element {
                   {role === 'aoi' ? t('Vùng quan tâm', 'AOI') : roleLabel(role, props.locale)}
                 </li>
               ))}
+            {props.records.some(record => record.visible && landslideAreaOf(record)) && <li>
+              <span className="geodata-legend-symbol" style={{ color: landslideBoundaryColor }} aria-hidden="true"/>
+              {t('Vùng sạt lở', 'Landslide extents')}
+            </li>}
+            {props.records.some(record => record.visible && record.feature.properties.referenceKind === 'road-corridor') && <li>
+              <svg width="20" height="12" aria-hidden="true"><path d="M0 6h20" stroke={roadColors.referenceCasing} strokeWidth="4"/><path d="M0 6h20" stroke={roadColors.reference} strokeWidth="2"/></svg>
+              {t('Đường tham chiếu', 'Reference road')}
+            </li>}
             {props.records.some(
               (record) =>
                 record.visible &&
@@ -818,8 +886,9 @@ export function GeometryMap(props: Props): JSX.Element {
           onRename={props.scenarioEdits?.canEdit ? props.onRenameScenario : undefined}
           key={targetKey(scenarioTarget)}
           scenario={props.scenario}
-          mappedAreas={props.records.filter(record => landslideAreaOf(record)?.networkVersion === props.scenario?.datasetVersion)}
+          mappedAreas={props.records.filter(record => landslideAreaOf(record))}
           onOpenMappedArea={props.onSelect}
+          onSelectRelated={props.onSelectScenario}
           target={scenarioTarget}
           edits={props.scenarioEdits?.edits ?? []}
           readOnly={!props.scenarioEdits?.canEdit}

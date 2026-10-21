@@ -24,8 +24,8 @@ export function useFloatingPanel(root: RefObject<HTMLElement>, key: string, enab
       node.style.removeProperty('--floating-panel-height');
     } else {
       const bounds = area.getBoundingClientRect(), rect = node.getBoundingClientRect();
-      const controls = area.querySelector('.map-tools')?.getBoundingClientRect();
-      const minimumTop = controls ? controls.bottom - bounds.top + 16 : 64;
+      const controls = [...area.querySelectorAll<HTMLElement>('.map-tools,.map-advanced-tools:not([hidden])')];
+      const minimumTop = controls.length ? Math.max(...controls.map(control => control.getBoundingClientRect().bottom)) - bounds.top + 16 : 64;
       const anchor = anchoredPanel(position.current, bounds.width, bounds.height, rect.width, minimumTop);
       node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`;
       node.style.setProperty('--floating-panel-height', `${anchor.maxHeight}px`);
@@ -46,7 +46,11 @@ export function useFloatingPanel(root: RefObject<HTMLElement>, key: string, enab
     apply();
     const resize = new ResizeObserver(apply);
     resize.observe(root.current);
-    const area = root.current.closest('.map-area'); if (area) resize.observe(area);
+    const area = root.current.closest('.map-area');
+    if (area) {
+      resize.observe(area);
+      area.querySelectorAll('.map-tools,.map-advanced-tools').forEach(control => resize.observe(control));
+    }
     window.addEventListener('resize', apply);
     return () => { resize.disconnect(); window.removeEventListener('resize', apply); drag.current = null; };
   }, [enabled, key]);

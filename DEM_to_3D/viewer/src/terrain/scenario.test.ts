@@ -1,3 +1,6 @@
+import { Color } from 'three';
+import metadataJson from '../../public/terrain/che_tao_v2_tex.terrain.json';
+import { validateMetadata } from './validation';
 import { describe, expect, it } from 'vitest';
 import {
   cheTaoIncident,
@@ -6,7 +9,7 @@ import {
   scenarioHazards,
   initialRoadSegments,
   buildScenarioRoutes
-} from '../data/cheTaoScenario';
+} from '../data/fixtures/networkScenario';
 import { roadColors } from './roadStyle';
 import { buildScenarioOverlays } from './scenarioOverlays';
 import type { TerrainMetadata } from '../types/terrain';
@@ -17,7 +20,7 @@ describe('DEAR Scenario & Overlays', () => {
   it('validates Che Tao incident metadata and timeline', () => {
     expect(cheTaoIncident.id).toBe('INC-2026-0412');
     expect(cheTaoIncident.timeline.length).toBeGreaterThanOrEqual(6);
-    expect(cheTaoIncident.sources.length).toBe(4);
+    expect(cheTaoIncident.sources.length).toBe(5);
   });
 
   it('validates 7 communities and priority ranking', () => {
@@ -56,14 +59,22 @@ describe('DEAR Scenario & Overlays', () => {
     const routes = buildScenarioRoutes(updatedRoads);
     const nk = routes.get('NK');
     expect(nk?.candidate?.status).toBe('blocked');
-    expect(scenarioHazards(true).find(hazard => hazard.id === 'U-1')?.detected).toBe('09:40 29/09/2026');
-    expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('08:58 29/09/2026');
+    expect(scenarioHazards(true).find(hazard => hazard.id === 'U-1')?.detected).toBe('14:11 12/09/2026');
+    expect(scenarioHazards(false).find(hazard => hazard.id === 'U-1')?.detected).toBe('13:29 12/09/2026');
+  });
+
+  it('does not invent road elevations where the DEM has no coverage', () => {
+    const metadata = validateMetadata(metadataJson);
+    const grid = new Float32Array(metadata.grid.shape[0] * metadata.grid.shape[1]).fill(NaN);
+    const overlays = buildScenarioOverlays({metadata, grid, communities: [], hazards: [], roads: initialRoadSegments,
+      selectedRoute: null, selectedCommunityId: null, selectedObjectId: null, layers: {roads: true, status: true}, screenMarkers: true});
+    expect(overlays.getObjectByName('scenario-roads')!.children).toHaveLength(0);
   });
 
   it.each([
-    { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: 0xf59e0b, dashed: true },
-    { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: 0xef4444, dashed: false },
-    { routeType: 'candidate' as const, roadsVisible: false, warningId: 'E13', color: 0xf59e0b, dashed: true }
+    { routeType: 'candidate' as const, roadsVisible: true, warningId: 'E13', color: new Color(roadColors.uncertain).getHex(), dashed: true },
+    { routeType: 'direct' as const, roadsVisible: true, warningId: 'E8', color: new Color(roadColors.blocked).getHex(), dashed: false },
+    { routeType: 'candidate' as const, roadsVisible: false, warningId: 'E13', color: new Color(roadColors.uncertain).getHex(), dashed: true }
   ])('preserves road warnings on $routeType route with network visible=$roadsVisible', ({ routeType, roadsVisible, warningId, color, dashed }) => {
     const dummyMetadata: TerrainMetadata = {
       schema_version: 1,
@@ -85,12 +96,14 @@ describe('DEAR Scenario & Overlays', () => {
         byte_length: 400
       },
       grid_transform: {
-        a: 30,
+        a: 3000,
         b: 0,
         c: 390000,
         d: 0,
-        e: -30,
-        f: 2410000,
+        e: -3000,
+        // Include every road inside the mesh's outer vertices, not only within
+        // the half-cell nearest-neighbour fringe outside the rendered mesh.
+        f: 2420000,
         convention: 'rasterio_affine',
         pixel_reference: 'center'
       },

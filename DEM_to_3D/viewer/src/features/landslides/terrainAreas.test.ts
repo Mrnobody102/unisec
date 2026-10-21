@@ -1,3 +1,4 @@
+import { terrainReferenceRoads } from '../../terrain/terrainReferenceRoads';
 import { describe, expect, it } from 'vitest';
 import proj4 from 'proj4';
 import * as THREE from 'three';
@@ -20,6 +21,19 @@ const render = (record = area(), grid = new Float32Array(441).fill(50), roads: R
 const meshes = (group: THREE.Group) => group.children.filter((c): c is THREE.Mesh<THREE.BufferGeometry> => c.type === 'Mesh');
 
 describe('landslide extent terrain display', () => {
+  it('uses the chosen fill opacity in 3D and keeps complete outlines at zero fill', () => {
+    const record = area();
+    const groups = [undefined, 0, .64].map(opacity => terrainLandslideAreas([record],metadata,new Float32Array(441).fill(50),[],record.id,{width:800,height:600},'network-a',opacity));
+    groups.forEach((group,i) => {
+      const material = meshes(group)[0].material as THREE.MeshBasicMaterial;
+      expect(material.opacity).toBe([.22,0,.64][i]);
+      const lines = group.children.filter(c=>c.type === 'Line2');
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.every(line => (line as THREE.Mesh).material && ((line as THREE.Mesh).material as THREE.Material).opacity > 0)).toBe(true);
+      expect(group.children.length).toBe(groups[0].children.length);
+    });
+    groups.forEach(disposeTerrainAreas);
+  });
   it('leaves a missing DEM empty instead of inventing an elevation', () => {
     const group = render(area(), new Float32Array(441).fill(NaN));
     expect(group.children).toHaveLength(0);
@@ -47,4 +61,17 @@ describe('landslide extent terrain display', () => {
     expect(matched.children.length).toBe(stale.children.length + 1);
     disposeTerrainAreas(matched); disposeTerrainAreas(stale);
   });
+});
+
+
+it('drapes reference roads without filling missing analysis elevations',()=>{
+  const record=area();record.feature={type:'Feature',properties:{referenceKind:'road-corridor'},geometry:{type:'LineString',coordinates:ring([[40,40],[360,40]])}};
+  const grid=new Float32Array(441).fill(NaN),surfaces=[{model:{metadata,grid},group:new THREE.Group()}],resolution={width:800,height:600};
+  const missing=terrainReferenceRoads([record],surfaces,record.id,resolution);
+  expect(missing.children).toHaveLength(0);
+  const context=terrainReferenceRoads([record],surfaces,record.id,resolution,(x,y)=>new THREE.Vector3(x,50,-y));
+  expect(context.children).toHaveLength(2);
+  expect(grid.every(Number.isNaN)).toBe(true);
+  expect(record.feature.geometry.coordinates).toEqual(ring([[40,40],[360,40]]));
+  disposeTerrainAreas(missing);disposeTerrainAreas(context);
 });

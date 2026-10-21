@@ -1,4 +1,5 @@
 """GIS edits, deletion and export must be reviewed and report only persisted success."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, published_records, reviewed_records
 import argparse, json
 from pathlib import Path
@@ -14,8 +15,8 @@ def run(url, chrome, captures=None):
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('download',lambda download:downloads.append(download))
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=30000)
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         read=lambda:reviewed_records(page)
         def confirmation(title):

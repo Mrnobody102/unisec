@@ -14,6 +14,7 @@ export function useMapPreview(
     const root = scope.current;
     if (!root) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let activated = false;
     const emit = (id: string | null, focus = false) => {
       const value = id ? latest.current(id) : null;
       document.dispatchEvent(
@@ -27,6 +28,7 @@ export function useMapPreview(
         ? target.closest<HTMLElement>("[data-map-preview]")
         : null;
     const enter = (event: Event) => {
+      if (activated && event instanceof PointerEvent) return;
       const target = node(event.target);
       if (
         !target ||
@@ -61,6 +63,21 @@ export function useMapPreview(
       clearTimeout(timer);
       emit(null);
     };
+    // Selection owns the camera after activation. A pending hover preview must
+    // not interrupt the framing animation while its marker is still moving.
+    const activate = () => {
+      activated = true;
+      clearTimeout(timer);
+      emit(null);
+    };
+    const move = (event: PointerEvent) => {
+      if (!activated) return;
+      activated = false;
+      enter(event);
+    };
+    root.addEventListener("pointermove", move);
+    root.addEventListener("pointerdown", activate);
+    root.addEventListener("click", activate);
     root.addEventListener("pointerover", enter);
     root.addEventListener("pointerout", leave);
     root.addEventListener("focusin", enter);
@@ -68,6 +85,9 @@ export function useMapPreview(
     return () => {
       clearTimeout(timer);
       emit(null);
+      root.removeEventListener("pointermove", move);
+      root.removeEventListener("pointerdown", activate);
+      root.removeEventListener("click", activate);
       root.removeEventListener("pointerover", enter);
       root.removeEventListener("pointerout", leave);
       root.removeEventListener("focusin", enter);

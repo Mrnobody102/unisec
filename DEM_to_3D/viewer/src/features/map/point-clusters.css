@@ -63,8 +63,8 @@
 
 .geodata-selected-point { border: 0; background: none; }
 .geodata-selected-point svg,
-.map-point-cluster.has-selected-pin svg { display: block; width: 28px; height: 32px; fill: #d93025; filter: drop-shadow(0 1px 1px #0008); }
-.map-point-cluster.has-selected-pin .map-point-cluster-badge { width: 28px; height: 32px; border: 0; background: none; box-shadow: none; }
+.map-point-cluster.has-selected-pin svg { display: block; width: 100%; height: 100%; fill: #f5f0e4; stroke:var(--cluster-core,#746650); stroke-width:1.8; }
+.map-point-cluster.has-selected-pin .map-point-cluster-badge { width: 100%; height: 100%; border: 0; background: none; box-shadow: none; }
 .map-point-cluster.has-selected-pin .map-point-cluster-badge > i { display: none; }
 /* One compact control shared by the GIS toolbar and response layer panel. */
 .point-rendering-control {

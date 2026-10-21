@@ -1,5 +1,6 @@
+import {poiGeometry} from './poiGeometry';
 import * as L from 'leaflet';
-import { selectedPinSvg } from '../../terrain/poiFrame';
+import { selectedPinSvg,poiMetrics,markerSize } from '../../terrain/poiFrame';
 import type { Locale } from '../../types/dear';
 import type { PointRenderingMode } from './pointRendering';
 import {
@@ -70,7 +71,14 @@ export function attachPointClusters(
     badge.style.setProperty('--cluster-core', color);
     badge.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 3; i++) badge.append(document.createElement('i'));
-    if (selected) badge.innerHTML = selectedPinSvg();
+    if (selected) {
+      badge.innerHTML = selectedPinSvg();
+      const count = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      count.setAttribute('x',String(poiMetrics(markerSize(false,true),true).half)); count.setAttribute('y','21'); count.setAttribute('text-anchor','middle');
+      count.setAttribute('fill','currentColor'); count.setAttribute('stroke','none'); count.setAttribute('font-size','10');
+      count.textContent = String(members.length); badge.querySelector('svg')!.append(count);
+      badge.style.color = color;
+    }
     const label = selected
       ? t(
           `${selected.name} (+${members.length - 1} điểm)`,
@@ -95,8 +103,7 @@ export function attachPointClusters(
           (site ? ' is-site' : '') +
           (active ? ' is-selected map-selected-reference' : '') +
           (selected ? ' has-selected-pin' : ''),
-        iconSize: [size, selected ? 32 : size],
-        iconAnchor: [size / 2, selected ? 28.8 : size / 2]
+        ...poiGeometry(!!selected,size)
       })
     });
     const tip = document.createElement('span');
@@ -112,8 +119,8 @@ export function attachPointClusters(
     if (members.length > 4) {
       const more = document.createElement('span');
       more.textContent = t(
-        `… và ${members.length - 4} điểm khác`,
-        `… and ${members.length - 4} more`
+        `Và ${members.length - 4} điểm khác`,
+        `And ${members.length - 4} more`
       );
       tip.append(more);
     }

@@ -1,4 +1,5 @@
 """Verify batch edits, live AOI dragging, minimal reports and optional HEIC decoding."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, apply_boundary, reviewed_records
 import argparse, base64, hashlib, json, uuid
 from pathlib import Path
@@ -19,9 +20,13 @@ def run(url, chrome, heic, captures):
         context=browser.new_context(viewport={'width':1440,'height':960})
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         page=context.new_page(); errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-        page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
-        page.evaluate('(r)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(r))',records);page.reload()
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
+        page.evaluate('''records=>{
+          localStorage.setItem('dear.geodata.v1',JSON.stringify(records));
+          const data=JSON.parse(localStorage.getItem('dear.gis.v2'));
+          if(data){data.records=records;localStorage.setItem('dear.gis.v2',JSON.stringify(data));}
+        }''',records);page.reload()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         expect(page.locator('.app-header')).to_be_visible()
         assert page.locator('.geodata-workspace').bounding_box()['y'] >= page.locator('.app-header').bounding_box()['height']

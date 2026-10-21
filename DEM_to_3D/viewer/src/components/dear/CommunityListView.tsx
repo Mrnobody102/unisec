@@ -54,7 +54,7 @@ export const CommunityListView: React.FC<Props> = ({
           <input
             type="search"
             aria-label={t('Tìm địa bàn', 'Find community')}
-            placeholder={t('Tìm thôn, bản…', 'Find village…')}
+            placeholder={t('Tìm địa bàn', 'Find community')}
             value={query}
             onChange={(e) => onChangeQuery(e.target.value)}
           />

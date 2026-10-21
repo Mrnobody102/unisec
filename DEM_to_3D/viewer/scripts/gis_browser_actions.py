@@ -9,6 +9,9 @@ def gis_task(page, task='data'):
     names = {'data': 'Dữ liệu', 'areas': 'Vùng sạt lở', 'roads': 'Đường'}
     primary = page.locator('.geodata-task-nav').get_by_role('button', name=names.get(task, 'Dữ liệu'), exact=True)
     if primary.get_attribute('aria-pressed') != 'true': primary.click()
+    tools=page.locator('.geodata-data-tools')
+    if task in ('data','aoi') and tools.is_visible() and tools.get_attribute('open') is None:
+        tools.locator('summary').click()
     if task == 'aoi': page.get_by_role('tab', name='Vùng quan tâm', exact=True).click()
 
 
@@ -21,6 +24,8 @@ def apply_boundary(page):
 
 
 def download_geometry(page, format):
+    disclosure=page.locator('.geodata-export > details')
+    if disclosure.get_attribute('open') is None: disclosure.locator('summary').click()
     page.locator('.geodata-export').get_by_role('button',name=format,exact=True).click()
     dialog=page.get_by_role('dialog',name='Xuất dữ liệu GIS',exact=True)
     expect(dialog).to_be_visible()
@@ -64,3 +69,40 @@ def reviewed_records(page):
 def reviewed_records_json(page):
     import json
     return json.dumps(reviewed_records(page), ensure_ascii=False)
+
+
+def scenario_properties(card):
+    panel = card.locator('.scenario-properties')
+    disclosure = panel.locator('xpath=..')
+    if disclosure.get_attribute('open') is None:
+        disclosure.locator('summary').click()
+    return panel
+
+
+def clear_prepared_survey(page):
+    """Isolate drawing/edit fixtures; shipped survey coverage is checked by check_workspace_layers."""
+    page.evaluate("""() => {
+        const data=JSON.parse(localStorage.getItem('dear.gis.v2'));
+        if (!data) return;
+        data.records=data.records.filter(r=>!r.feature.properties.sourceDatasetId);
+        localStorage.setItem('dear.gis.v2',JSON.stringify(data));
+    }""")
+    page.reload()
+    expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+    return page.evaluate("localStorage.getItem('dear.gis.v2')")
+
+
+def map_tool(page, name):
+    """Reveal a secondary map action before using it, as a user would."""
+    button=page.get_by_role('button',name=name,exact=True)
+    if button.is_visible():
+        return button
+    expect(page.locator('.map-tool-toggle')).to_be_visible(timeout=30000)
+    page.locator('.map-tool-toggle').click()
+    expect(button).to_be_visible()
+    return button
+
+
+def open_header_help(page):
+    page.get_by_role('button',name='Cài đặt hiển thị',exact=True).click()
+    page.get_by_role('button',name='Hướng dẫn sử dụng',exact=True).click()

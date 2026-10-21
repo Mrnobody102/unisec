@@ -1,3 +1,4 @@
+import type { ImageryRaster } from '../imagery/analysisImagery';
 import type { MutableRefObject } from 'react';
 import type { AnalysisArea, Community, Hazard, Locale, ResponseSite, RoadSegment, ScenarioRoute } from '../../types/dear';
 import type { TerrainMetadata } from '../../types/terrain';
@@ -39,6 +40,7 @@ export type MapContextRequest = {
 export type BasemapStyle = 'satellite' | 'terrain';
 export type BasemapState = {
   provider?: 'configured' | 'eox';
+  relief?: 'loading' | 'ready' | 'partial' | 'error';
   status: 'off' | 'loading' | 'ready' | 'partial' | 'error' | 'unavailable';
   style: BasemapStyle;
   loaded: number;
@@ -49,17 +51,24 @@ export type ViewControls = {
   zoomIn: () => void;
   zoomOut: () => void;
   resetView: () => void;
+  frameProjected?: (points: Array<{x:number;y:number}>, inset?: {right?:number}) => void;
   retryBasemap: () => void;
+  setOrbit?: (enabled: boolean) => void;
   /** Centre a point in the part of the map not covered by floating panels (`inset` in px). */
   focusProjected: (point: { x: number; y: number }, inset?: { right?: number }) => void;
+  /** Route flyover playback and video export (3D only). */
+  flyover?: import('../../terrain/flyover/flyoverController').FlyoverControls;
 };
 
 export type MapDisplayProps = {
   locale?: Locale;
+  /** Prepared EO rendering drawn above the basemap and below every vector layer. */
+  analysisImagery?: { rasters: ImageryRaster[]; opacity: number; balanceBasemap?: boolean };
   scenarioProps?: MapScene;
   onSelectOverlayHit?: (hit: OverlayHit) => void;
   viewControlRef?: MutableRefObject<ViewControls | null>;
   onViewReady?: () => void;
+  onOrbitChange?: (enabled: boolean) => void;
   onBasemapState?: (state: BasemapState) => void;
   focusPoint?: { x: number; y: number; z: number } | null;
   profileMetadata?: TerrainMetadata;

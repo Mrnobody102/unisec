@@ -12,7 +12,7 @@ async function modelRuntime() {
 export async function loadModelFiles(files: File[], mode: 'single' | 'merge') {
   const tools = await modelRuntime();
   const selected = tools.selectUploadedFiles(files, mode);
-  return { models: await tools.loadUploadedModels(selected), names: selected.map(file => file.name) };
+  return { models: await tools.loadUploadedModels(selected), names: selected.filter(file => !file.webkitRelativePath.includes('_tiles/')).map(file => file.name) };
 }
 
 export async function loadTerrain3D(urls: TerrainAssetUrls, data: TerrainData, signal?: AbortSignal, mesh?: Promise<ArrayBuffer>) {

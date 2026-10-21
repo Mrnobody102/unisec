@@ -92,7 +92,7 @@ export const en: MeasurementMessages = {
   longitude: 'Longitude',
   incomplete: 'Incomplete',
   invalidArea: 'Invalid area',
-  segmentAndTotal: 'Segment {segment} · Total {total}',
+  segmentAndTotal: 'Segment {segment}, total {total}',
   modes: {
     distance: 'Distance',
     area: 'Area',

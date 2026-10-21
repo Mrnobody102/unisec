@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import raw from '../../../public/scenarios/che-tao/v0.2/incident.json';
+import raw from '../../../public/scenarios/che-tao/v0.3/incident.json';
 import { validateIncidentPacket } from '../../data/incidentPacket';
 import { deriveIncidentWorkspace } from './deriveIncidentWorkspace';
 import { responseWork, restoreWork, workEntry, workState } from './responseWork';

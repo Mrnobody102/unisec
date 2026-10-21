@@ -1,4 +1,5 @@
 """Verify local field photos, source integrity and GIS-to-response point mapping."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, download_geometry, published_records, reviewed_records_json
 import argparse, base64, hashlib, json, struct, tempfile
 from pathlib import Path
@@ -15,10 +16,10 @@ def run(url, chrome, captures):
         context=browser.new_context(viewport={'width':1440,'height':960})
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-        page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         original_roads=page.locator('.map-road-target').count()
         original_road_box=page.locator('.map-road-target').first.bounding_box()
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         page.get_by_role('button',name='Thêm điểm tọa độ',exact=True).click()
         entry=page.locator('.field-point-entry');entry.get_by_label('Tên điểm',exact=True).fill('Điểm khảo sát A')
@@ -59,7 +60,7 @@ def run(url, chrome, captures):
         expect(page.locator('.geodata-workspace')).to_have_count(0)
         road_box=page.locator('.map-road-target').first.bounding_box()
         assert all(abs(road_box[k]-original_road_box[k])<1 for k in ['x','y','width','height']),(road_box,original_road_box)
-        page.get_by_role('button',name='Dữ liệu GIS',exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         gis_task(page)
         form=page.locator('.field-observation')
         page.locator('.geodata-inspector').get_by_role('button',name='Xem trên bản đồ ứng phó',exact=True).click()
@@ -70,9 +71,10 @@ def run(url, chrome, captures):
         assert page.locator('.map-road-target').count()==original_roads
         # Explicit visibility is separate from field classification and incident assessments.
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()
-        page.get_by_label('Dữ liệu GIS đã nhập (2D)',exact=True).uncheck()
+        page.locator('.layer-context > summary').click()
+        page.get_by_label('Dữ liệu tham chiếu',exact=True).uncheck()
         expect(page.locator(f'[data-field-id="{oid}"]')).to_have_count(0)
-        page.get_by_label('Dữ liệu GIS đã nhập (2D)',exact=True).check();page.get_by_role('button',name='Đóng lớp bản đồ',exact=True).click()
+        page.get_by_label('Dữ liệu tham chiếu',exact=True).check();page.get_by_role('button',name='Đóng lớp bản đồ',exact=True).click()
         expect(page.locator(f'[data-field-id="{oid}"]')).to_be_visible()
         for width in [1440,1024,390,320]:
             page.set_viewport_size({'width':width,'height':900})
@@ -85,7 +87,7 @@ def run(url, chrome, captures):
                 assert card['y'] >= toolbar['y']+toolbar['height'],(width,theme,card,toolbar)
                 if captures and width in [1440,320]:page.screenshot(path=str(captures/f'field-response-{width}-{theme}.png'))
         page.set_viewport_size({'width':1440,'height':960})
-        page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
+        page.locator('.field-map-card').get_by_role('button',name='Mở trong GIS',exact=True).click()
         form=page.locator('.field-observation');expect(form).to_contain_text(obs['note'])
         form.get_by_role('button',name='Sửa ghi nhận',exact=True).click();form.get_by_text('Thông tin bổ sung',exact=True).click();form.get_by_label('Ghi chú hiện trường',exact=True).fill('This change must not be retained')
         page.evaluate("""()=>{window.__fieldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='dear.gis.v2')throw new Error('QuotaExceeded');return window.__fieldSet.call(this,k,v);};}""")
@@ -105,7 +107,7 @@ def run(url, chrome, captures):
         page.goto(url+'/?map=2d&offline=1&demoRole=manager&gisPoint='+oid)
         expect(page.locator('.field-map-card')).to_contain_text(obs['note'],timeout=25000)
         expect(page.locator('.field-map-card img')).to_have_count(1)
-        page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
+        page.locator('.field-map-card').get_by_role('button',name='Mở trong GIS',exact=True).click()
         with page.expect_download() as download:download_geometry(page, 'GeoJSON')
         exported=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert exported['features'][0]['properties']['dearObservation']==obs

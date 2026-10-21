@@ -44,11 +44,11 @@
 
 /* Area and revision form one context control; actions share one baseline. */
 .incident-context { position: relative; min-width: 0; padding-left: 16px; border-left: 1px solid var(--header-stroke); }
-.incident-context-trigger { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 440px; min-height: 44px; padding: 3px 8px; border: 0; border-radius: var(--radius-control); background: transparent; color: inherit; text-align: left; }
+.incident-context-trigger { display: flex; align-items: center; gap: 12px; min-width: 0; max-width: min(660px, 60vw); min-height: 44px; padding: 3px 8px; border: 0; border-radius: var(--radius-control); background: transparent; color: inherit; text-align: left; }
 .incident-context-trigger:hover, .incident-context-trigger[aria-expanded="true"] { background: var(--header-hover); }
-.incident-context-copy { display: grid; gap: 1px; min-width: 0; }
+.incident-context-copy { display:flex; align-items:center; gap:20px; min-width:0; }
 .incident-context-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.35; }
-.incident-context-revision { display: block; color: var(--header-muted); white-space: nowrap; font-size: 11px; line-height: 1.4; }
+.incident-context-revision { display: block; flex:none; padding-left:20px; border-left:1px solid var(--header-stroke); color: var(--header-muted); white-space: nowrap; font-size: 12px; line-height: 1.4; }
 .incident-context-chevron { flex: none; color: var(--header-muted); transform: rotate(90deg); }
 .header-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; flex: none; }
 .account-anchor { position: relative; }
@@ -123,7 +123,7 @@
 .settings-workspace-actions { display: grid; gap: 6px; padding: 0 16px 12px; }
 .settings-workspace-actions small { display: block; overflow-wrap: anywhere; color: var(--ws-muted); font-size: 11px; }
 .settings-link { display: block; width: 100%; min-height: 28px; padding: 2px 0; border: 0; background: none; color: var(--select-ink); font-size: 12px; text-align: left; }
-.settings-link:hover { text-decoration: underline; }
+.settings-link:hover { color:var(--select-ink); }
 
 @media(max-width:900px) {
   .incident-context { flex: 1; border: 0; padding-left: 0; }
@@ -140,3 +140,10 @@
   .workspace .app-header .brand-symbol, .workspace .app-header .brand-symbol svg { width: 24px; height: 24px; }
 }
 .app-header[inert] :is(.incident-context, .header-actions) { opacity: .5; }
+
+.settings-utilities { display:grid; grid-template-columns:minmax(0,1fr); gap:2px; }
+.settings-utilities .settings-link { display:flex; align-items:center; gap:10px; width:100%; padding:8px 0; }
+.settings-utilities .settings-link svg { flex:none; }
+.settings-identity { color:var(--ws-muted); font-size:12px; padding:8px 0 2px; }
+.workspace-shell .incident-context-trigger { min-height:40px; }
+.workspace-shell .brand { font-size:16px; letter-spacing:.04em; }

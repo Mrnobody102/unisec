@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import manifestJson from '../../public/scenarios/che-tao/v0.2/manifest.json';
+import manifestJson from '../../public/scenarios/che-tao/v0.3/manifest.json';
 import terrainMetadata from '../../public/terrain/che_tao_v2_tex.terrain.json';
 import {
   buildScenarioRoutes, cheTaoIncident, initialCommunities,
@@ -45,14 +45,17 @@ describe('Chế Tạo prepared dataset', () => {
     for (const road of initialRoadSegments) if (road.hz) expect(hazardIds.has(road.hz), road.id).toBe(true);
     const roads = new Set(initialRoadSegments);
     const segment = (id: string) => initialRoadSegments.find(item => item.id === id)!;
-    expect(['E1', 'E8', 'E9'].map(id => segment(id).scenarioRoadCode)).toEqual(['NR-18', 'NR-18', 'NR-18']);
-    expect(['E12', 'E13'].map(id => segment(id).scenarioRoadCode)).toEqual(['PR-7', 'PR-7']);
-    expect(segment('E14').scenarioRoadCode).toBeUndefined();
+    // Sections of the single Mù Cang Chải – Chế Tạo road, named by chainage from the town.
+    expect(initialRoadSegments.map(road => road.id)).toEqual(['E0', 'E1', 'E8', 'E9']);
+    expect(segment('E0').name[0]).toBe('Đường Mù Cang Chải – Chế Tạo, đoạn 1');
+    expect(segment('E0').fromKm).toBe(0);
+    for (let i=1;i<initialRoadSegments.length;i++) expect(initialRoadSegments[i].fromKm).toBe(initialRoadSegments[i-1].toKm);
+    // The three photographed scars, north to south along the road.
+    expect(segment('E8').hazardIds).toEqual(['LS-03', 'LS-02', 'LS-01']);
     const routes = buildScenarioRoutes(initialRoadSegments);
-    expect([...routes.values()].filter(pair => pair.candidate).length).toBe(3);
-    for (const id of ['NL', 'PH', 'TP', 'HC']) {
-      expect(routes.get(id)).toEqual({ candidate: null, direct: null });
-    }
+    // No alternative road exists: only this road reaches Chế Tạo.
+    const ct = routes.get('CT')!;
+    expect([ct.candidate, ct.direct].filter(route => route != null).map(route => route.segs.map(road => road.id))).toEqual([['E0', 'E1', 'E8', 'E9']]);
     for (const community of initialCommunities) {
       const pair = routes.get(community.id);
       expect(pair, community.id).toBeDefined();

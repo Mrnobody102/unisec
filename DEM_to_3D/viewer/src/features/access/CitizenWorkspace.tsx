@@ -1,3 +1,14 @@
+import { LandslideFillControl } from '../landslides/LandslideFillControl';
+import pointOnFeature from '@turf/point-on-feature';
+import { useAnalysisImagery } from '../imagery/useAnalysisImagery';
+import { analysisSourceInfo } from '../imagery/analysisImagery';
+import { supportsBasemapTone } from '../imagery/basemapTone';
+import { CitizenPlaceCard } from "./CitizenPlaceCard";
+import { routeChainage } from "./routeChainage";
+import { roadsForHazard } from "../incident/roadHazards";
+import { usePreparedPhotos } from "../fieldPhotos/preparedPhotos";
+import { visibleMapRecords } from "../map/visibleMapRecords";
+import { landslideAreaOf } from "../landslides/landslideAreas";
 import type { ScenarioEdit } from "./scenarioEdits";
 import { UiIcon } from "../../shared/ui/UiIcon";
 import { observationCode } from "../observations/recordIdentity";
@@ -71,12 +82,25 @@ export function CitizenWorkspace({
       scenarioEdits,
       published.at,
     ),
-    gis = useGeometrySession();
+    gis = useGeometrySession({prepared: runtime.fieldDataset});
   const [openSubmission, setOpenSubmission] = useState<string | null>(null);
   const [tab, setTab] = useState<"roads" | "report" | "mine">("roads"),
     [community, setCommunity] = useState(
       identity.communityId ?? packet.communities[0]?.id ?? "",
     );
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  // A landslide point opened on the map, and a route section shown from the route card.
+  const [selectedHazardId, setSelectedHazardId] = useState<string | null>(null);
+  const [shownRoadId, setShownRoadId] = useState<string | null>(null);
+  const fieldPhotos = usePreparedPhotos(manifest?.fieldPhotos);
+  const [layerOptions, setLayerOptions] = useState({landslide:true,status:true,communities:true,imagery:true});
+  const analysisImagery=useAnalysisImagery(manifest?.analysisImagery);
+  // The Planet scene is brighter and greener than the basemap; tone the basemap to it, as the coordinator map does.
+  const analysisDisplay=useMemo(()=>({rasters:layerOptions.imagery?analysisImagery.rasters:[],opacity:1,
+    balanceBasemap:supportsBasemapTone(analysisImagery.layers)&&analysisImagery.layers.some(layer=>layer.id===analysisImagery.selection.layer&&layer.kind==='optical')}),
+    [analysisImagery.rasters,analysisImagery.layers,analysisImagery.selection.layer,layerOptions.imagery]);
+  // The village access route is the default answer; a free A to B search is the other mode.
+  const [roadMode, setRoadMode] = useState<"village" | "journey">("village");
   const [mapOnMobile, setMapOnMobile] = useState(false),
     [picking, setPicking] = useState(false),
     [help, setHelp] = useState(false),
@@ -117,20 +141,19 @@ export function CitizenWorkspace({
   reportPosition.current = { lat, lon };
   const citizenLayers = useMemo(
     () => ({
-      aoi: true,
+      aoi: false,
+      gis: true,
+      crossings: true,
       roads: true,
-      status: true,
-      communities: true,
       route: true,
-      landslide: true,
       flood: true,
       staging: true,
       hlz: false,
-      imagery: true,
       context: !offline,
       hillshade: true,
+      ...layerOptions,
     }),
-    [offline],
+    [offline, layerOptions],
   );
   const draft: GeometryRecord = useMemo(
     () => ({
@@ -151,6 +174,45 @@ export function CitizenWorkspace({
     }),
     [draftId, lat, lon, identity.name, locale],
   );
+  const mapRecords = useMemo(() => visibleMapRecords(
+    gis.records.filter(record => landslideAreaOf(record) || own.some(item => item.id === record.id)),
+    citizenLayers, packet.datasetVersion
+  ), [gis.records, own, citizenLayers, packet.datasetVersion]);
+  const selectedArea = mapRecords.find(record => record.id === selectedAreaId && landslideAreaOf(record));
+  const chainage = useMemo(() => routeChainage(route), [route]);
+  const routeOrigin = snapshot.responseSites.find(site => site.kind === "staging");
+  const originName = routeOrigin ? t(...routeOrigin.name).replace(/^Điểm tập kết /, "").replace(/ staging point$/i, "") : undefined;
+  // A nearby incident is not evidence that it represents the selected polygon.
+  const placeHazard = snapshot.hazards.find(h => h.id === selectedHazardId);
+  const placeArea = selectedArea ? landslideAreaOf(selectedArea) ?? undefined : undefined;
+  const placeRoad = (() => {
+    const road = placeHazard ? roadsForHazard(snapshot.roads, placeHazard.id)[0]
+      : placeArea?.networkVersion === packet.datasetVersion ? snapshot.roads.find(r => placeArea.roadLinks.some(link => link.roadId === r.id)) : undefined;
+    return road && { road, km: chainage.get(road.id), origin: originName };
+  })();
+  const reportAt = (point: { x: number; y: number }) => {
+    const p = roadGeographic(point);
+    setSelectedHazardId(null); setSelectedAreaId(null);
+    gps.cancel(); setPicking(false); journey.setPicking(null);
+    setTab("report"); setMessage("");
+    position(p.latitude, p.longitude, "map");
+  };
+  const roadView = tab === "roads";
+  const showRoadMode = (mode: "village" | "journey") => {
+    gps.cancel();
+    journey.setPicking(null);
+    journey.setOpen(mode === "journey");
+    setRoadMode(mode);
+  };
+  const gpsError = gps.error ? (
+    <p className="field-error" role="alert">
+      {gps.error === "denied"
+        ? t("Chưa được phép lấy vị trí. Bật quyền vị trí trong trình duyệt hoặc chọn trên bản đồ.", "Location permission is denied. Enable browser permission or choose on the map.")
+        : gps.error === "insecure"
+          ? t("Định vị cần mở ứng dụng qua HTTPS. Bạn vẫn có thể chọn trên bản đồ.", "Location requires HTTPS. You can still choose on the map.")
+          : t("Chưa lấy được vị trí. Thử lại hoặc chọn trên bản đồ.", "Location unavailable. Retry or choose on the map.")}
+    </p>
+  ) : null;
   const position = (
     latitude: number,
     longitude: number,
@@ -212,10 +274,26 @@ export function CitizenWorkspace({
     gps.cancel();
     setPicking(false);
     journey.setPicking(null);
+    setMapOnMobile(false);
+    setSelectedAreaId(null);
+    setSelectedHazardId(null);
     setTab(value);
   };
   const onHit = (hit: OverlayHit) => {
-    if (hit.type === "community") setCommunity(hit.id);
+    if (hit.type === "hazard") {
+      setSelectedAreaId(null);
+      setSelectedHazardId(hit.id);
+      return;
+    }
+    if (hit.type === "community") {
+      setSelectedAreaId(null);
+      setSelectedHazardId(null);
+      journey.close();
+      setCommunity(hit.id);
+      setTab("roads");
+      setRoadMode("village");
+      setMapOnMobile(false);
+    }
   };
   return (
     <div
@@ -228,7 +306,6 @@ export function CitizenWorkspace({
           <strong>DEAR</strong>
           <span>{m.communityInformation}</span>
         </div>
-        <span className="citizen-demo-label">{m.demoScenario}</span>
         <button className="button" onClick={() => setHelp(true)}>
           {m.help}
         </button>
@@ -243,6 +320,7 @@ export function CitizenWorkspace({
               aria-pressed={tab === "roads"}
               onClick={() => switchTab("roads")}
             >
+              <UiIcon name="route" size={18} />
               {m.roadInformation}
             </button>
             <button
@@ -252,12 +330,14 @@ export function CitizenWorkspace({
                 setMessage("");
               }}
             >
+              <UiIcon name="camera" size={18} />
               {m.reportAnObservation}
             </button>
             <button
               aria-pressed={tab === "mine"}
               onClick={() => switchTab("mine")}
             >
+              <UiIcon name="history" size={18} />
               {m.myReports}
             </button>
           </nav>
@@ -267,73 +347,72 @@ export function CitizenWorkspace({
                 {message}
               </p>
             )}
-            {gps.error && (
-              <p className="field-error" role="alert">
-                {gps.error === "denied"
-                  ? t(
-                      "Chưa được phép lấy vị trí. Bật quyền vị trí trong trình duyệt hoặc chọn trên bản đồ.",
-                      "Location permission is denied. Enable browser permission or choose on the map.",
-                    )
-                  : gps.error === "insecure"
-                    ? t(
-                        "Định vị cần mở ứng dụng qua HTTPS. Bạn vẫn có thể chọn trên bản đồ.",
-                        "Location requires HTTPS. You can still choose on the map.",
-                      )
-                    : t(
-                        "Chưa lấy được vị trí. Thử lại hoặc chọn trên bản đồ.",
-                        "Location unavailable. Retry or choose on the map.",
-                      )}
-              </p>
-            )}
             {tab === "roads" && (
-              <section>
-                <h1>{m.accessToAnArea}</h1>
-                <CitizenDirections
-                  journey={journey}
-                  communities={snapshot.communities}
-                  locale={locale}
-                  gps={gps}
-                  onPick={(side) => {
-                    gps.cancel();
-                    setPicking(false);
-                    journey.setPicking(side);
-                    setMapOnMobile(true);
-                  }}
-                  onMap={() => setMapOnMobile(true)}
-                />
-                <details className="citizen-road-catalog">
-                  <summary>
-                    {t("Xem đường vào thôn/bản", "View village access roads")}
-                  </summary>
-                  <label className="geodata-field">
-                    {m.areaToView}
-                    <select
-                      value={community}
-                      onChange={(e) => setCommunity(e.target.value)}
-                    >
-                      {snapshot.communities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {route ? (
-                    <CitizenRouteCard
-                      route={route}
-                      avoided={advice.avoided}
-                      problems={routeProblems(route)}
-                      locale={locale}
-                      onShowMap={() => setMapOnMobile(true)}
-                    />
-                  ) : (
-                    <p>{m.noMappedRouteInTheCurrentDataset}</p>
-                  )}
-                </details>
+              <section className="citizen-roads">
+                <h1 className="visually-hidden">{m.accessToAnArea}</h1>
+                <div className="citizen-segments" role="group" aria-label={t("Cách xem đường", "Road view")}>
+                  <button type="button" aria-pressed={roadMode === "village"} onClick={() => showRoadMode("village")}>
+                    <UiIcon name="home" size={16} />
+                    {t("Đường về thôn, bản", "Village access")}
+                  </button>
+                  <button type="button" aria-pressed={roadMode === "journey"} onClick={() => showRoadMode("journey")}>
+                    <UiIcon name="route" size={16} />
+                    {t("Tìm đường", "Find a route")}
+                  </button>
+                </div>
+                {roadMode === "village" ? (
+                  <section className="citizen-card citizen-village" aria-label={t("Đường về thôn, bản", "Village access")}>
+                    {snapshot.communities.length > 1 && (
+                      <label className="geodata-field">
+                        {m.areaToView}
+                        <select value={community} onChange={(e) => setCommunity(e.target.value)}>
+                          {snapshot.communities.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {route ? (
+                      <CitizenRouteCard
+                        route={route}
+                        avoided={advice.avoided}
+                        problems={routeProblems(route)}
+                        chainage={chainage}
+                        origin={originName}
+                        hazardCount={(road) => snapshot.hazards.filter(h => roadsForHazard(snapshot.roads, h.id).some(r => r.id === road.id)).length}
+                        locale={locale}
+                        onShowMap={() => { setShownRoadId(null); setMapOnMobile(true); }}
+                        onShowSection={(road) => {
+                          setShownRoadId(road.id);
+                          controls.current?.frameProjected?.(road.points);
+                          setMapOnMobile(true);
+                        }}
+                      />
+                    ) : (
+                      <p className="citizen-direction-note">{m.noMappedRouteInTheCurrentDataset}</p>
+                    )}
+                  </section>
+                ) : (
+                  <CitizenDirections
+                    journey={journey}
+                    communities={snapshot.communities}
+                    sites={snapshot.responseSites.filter((site) => site.kind === "staging")}
+                    locale={locale}
+                    gps={gps}
+                    gpsError={gpsError}
+                    onPick={(side) => {
+                      gps.cancel();
+                      setPicking(false);
+                      journey.setPicking(side);
+                      setMapOnMobile(true);
+                    }}
+                    onMap={() => setMapOnMobile(true)}
+                  />
+                )}
               </section>
             )}
             <section hidden={tab !== "report"}>
-              <h1>{m.fieldObservation}</h1>
+              <h1 className="visually-hidden">{m.fieldObservation}</h1>
               <CitizenReportForm
                 key={draftId}
                 locale={locale}
@@ -357,9 +436,9 @@ export function CitizenWorkspace({
                     );
                 }}
                 locationControl={
-                  <fieldset className="citizen-position">
+                  <fieldset className="citizen-card citizen-position">
                     <legend>{m.observationLocation}</legend>
-                    <div className="geodata-actions">
+                    <div className="citizen-capture-actions">
                       <button
                         type="button"
                         className="button"
@@ -372,6 +451,7 @@ export function CitizenWorkspace({
                           }
                         }}
                       >
+                        <UiIcon name="myLocation" size={20} />
                         {gps.busy ? m.locating : m.myLocation}
                       </button>
                       <button
@@ -384,12 +464,16 @@ export function CitizenWorkspace({
                           setMapOnMobile(true);
                         }}
                       >
+                        <UiIcon name="map" size={20} />
                         {m.chooseOnMap}
                       </button>
                     </div>
+                    {gpsError}
                     {lat && lon && (
                       <p className="citizen-position-value">
-                        {source === "community"
+                        <UiIcon name="check" size={16} />
+                        <span>
+                        <strong>{source === "community"
                           ? t(
                               "Vị trí gần đúng theo thôn/bản",
                               "Approximate village location",
@@ -403,13 +487,15 @@ export function CitizenWorkspace({
                                 )
                               : t("Vị trí đã chọn", "Selected location")}
                         {accuracy !== null
-                          ? " · ±" + Math.round(accuracy) + " m"
-                          : ""}
+                          ? t(", sai số ±", ", accuracy ±") + Math.round(accuracy) + " m"
+                          : ""}</strong>
+                        <small>{Number(lat).toFixed(5)}, {Number(lon).toFixed(5)}</small>
+                        </span>
                       </p>
                     )}
                     <label className="geodata-field">
                       {t(
-                        "Hoặc chọn thôn/bản xảy ra sự việc",
+                        "Hoặc chọn thôn, bản nơi xảy ra",
                         "Or choose the village where it happened",
                       )}
                       <select
@@ -609,6 +695,7 @@ export function CitizenWorkspace({
         <section className="map-area citizen-map" aria-label={m.communityMap}>
           <div className="map-canvas">
             <Map2D
+              analysisImagery={analysisDisplay}
               userLocation={gps.location}
               userLocationRequest={locationRequest}
               onBasemapState={setBasemap}
@@ -625,13 +712,14 @@ export function CitizenWorkspace({
               onCloseMeasurement={() => {}}
               measureSession={measure}
               dispatchMeasureSession={dispatch}
-              gisRecords={own}
-              gisSelectedId={ownSelected}
+              gisRecords={mapRecords}
+              gisSelectedId={selectedArea?.id ?? (tab === "mine" ? ownSelected : null)}
               gisRequest={ownView}
               onGisSelect={(id) => {
-                setOwnSelected(id);
-                setTab("mine");
-                setMapOnMobile(false);
+                if (gis.records.some(record => record.id === id && landslideAreaOf(record))) {
+                  setSelectedHazardId(null);
+                  setSelectedAreaId(id);
+                } else {setSelectedHazardId(null);setSelectedAreaId(null);setOwnSelected(id);setTab("mine");setMapOnMobile(false);}
               }}
               pointPickActive={picking || (journey.open && !!journey.picking)}
               onPointPick={(latitude, longitude) => {
@@ -640,22 +728,20 @@ export function CitizenWorkspace({
                   setMapOnMobile(false);
                 } else position(latitude, longitude, "map");
               }}
-              journeyEndpoints={journeyMarkers(journey)}
+              journeyEndpoints={roadView ? journeyMarkers(journey) : []}
               journeyFitRequest={journey.fitSequence}
               onSelectOverlayHit={onHit}
               scenarioProps={{
+                datasetVersion: packet.datasetVersion,
                 aoi: packet.aoi,
                 communities: snapshot.communities,
                 responseSites: snapshot.responseSites,
                 hazards: snapshot.hazards,
                 roads: snapshot.roads,
-                selectedRoute: journey.open ? journey.route : route,
-                selectedCommunityId: journey.open
-                  ? journey.end?.source.startsWith("community:")
-                    ? journey.end.source.slice(10)
-                    : null
-                  : community,
-                selectedObjectId: null,
+                selectedRoute: !roadView ? null : roadMode === "journey" ? journey.route : route,
+                // In a search the A and B pins mark the places; a second selected pin would cover them.
+                selectedCommunityId: roadView && roadMode === "village" ? community : null,
+                selectedObjectId: placeHazard ? `hazard:${placeHazard.id}` : shownRoadId && roadView ? `road:${shownRoadId}` : null,
                 layers: citizenLayers,
                 appearance: defaultLayerAppearance,
               }}
@@ -728,7 +814,27 @@ export function CitizenWorkspace({
               </button>
             </div>
           )}
+          <details className="citizen-map-layers">
+            <summary><UiIcon name="layers" size={18}/>{t('Lớp', 'Layers')}</summary>
+            <fieldset aria-label={t('Lớp bản đồ người dân', 'Resident map layers')}>
+              {([['landslide',t('Vùng và điểm sạt lở','Landslide areas and points')],['status',t('Tình trạng đường','Road status')],['communities',t('Thôn, bản','Communities')],['imagery',t('Ảnh nền','Imagery')]] as const).map(([key,label]) => <label key={key}><input type="checkbox" checked={layerOptions[key]} onChange={() => setLayerOptions(previous => ({...previous,[key]:!previous[key]}))}/>{label}</label>)}
+              <LandslideFillControl locale={locale} disabled={!layerOptions.landslide}/>
+            </fieldset>
+          </details>
+          {(placeHazard || placeArea) && !picking && !journey.picking && <CitizenPlaceCard
+            key={placeHazard?.id ?? selectedAreaId ?? ""}
+            hazard={placeHazard} area={placeHazard ? undefined : placeArea} road={placeRoad}
+            photos={placeHazard ? fieldPhotos.get(placeHazard.id) : undefined} locale={locale}
+            onReport={() => {
+              if (placeHazard) reportAt(placeHazard.projected);
+              else if (selectedArea) {
+                const [longitude, latitude] = pointOnFeature(selectedArea.feature).geometry.coordinates;
+                setSelectedAreaId(null); setTab("report"); setMessage(""); position(latitude, longitude, "map");
+              }
+            }}
+            onClose={() => { setSelectedHazardId(null); setSelectedAreaId(null); }}/>}
           <MapAttribution
+            analysisSource={layerOptions.imagery?analysisSourceInfo(analysisImagery.layers,analysisImagery.selection,locale):undefined}
             locale={locale}
             state={basemap}
             onRetry={() => controls.current?.retryBasemap()}

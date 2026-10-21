@@ -359,7 +359,7 @@ export function ObservationEditor({
               )}
             </details>
           </fieldset>
-          {busy && <p role="status">{t('Đang đọc ảnh…', 'Reading photos…')}</p>}
+          {busy && <p role="status">{t('Đang đọc ảnh', 'Reading photos')}</p>}
           {error && (
             <p className="field-error" role="alert">
               {error}

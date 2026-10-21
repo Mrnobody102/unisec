@@ -1,9 +1,12 @@
 export const defaultImagerySource = {
-  url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg',
-  name: 'Sentinel-2 cloudless 2016',
-  credit: '© EOX / Copernicus',
-  link: 'https://cloudless.eox.at',
-  maxNativeZoom: 14,
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  name: 'Esri World Imagery',
+  credit: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+  link: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
+  // Esri answers past its coverage with a "Map data not yet available" image (HTTP 200,
+  // so no tile error fires). Around Mù Cang Chải real imagery stops at z18 (z19 is the
+  // placeholder), so deeper zooms upscale z18 instead.
+  maxNativeZoom: 18,
   custom: false
 };
 /** Load tiles while panning and keep a wider ring of loaded tiles, so a drag never
@@ -23,12 +26,13 @@ export const imagerySource = {
   credit: enabled
     ? String(env.VITE_DEAR_IMAGERY_ATTRIBUTION)
     : defaultImagerySource.credit,
-  link:
-    enabled && /^https:\/\//.test(String(env.VITE_DEAR_IMAGERY_LINK))
+  link: enabled
+    ? /^https:\/\//.test(String(env.VITE_DEAR_IMAGERY_LINK))
       ? String(env.VITE_DEAR_IMAGERY_LINK)
-      : defaultImagerySource.link,
+      : undefined
+    : defaultImagerySource.link,
   maxNativeZoom: enabled
     ? Math.max(1, Math.min(22, Math.floor(Number(env.VITE_DEAR_IMAGERY_MAX_ZOOM) || 18)))
-    : 14,
+    : defaultImagerySource.maxNativeZoom,
   custom: enabled
 };

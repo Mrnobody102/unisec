@@ -1,3 +1,5 @@
+import { loadReferenceDataset } from '../geodata/referenceDataset';
+import { loadFieldDataset } from '../landslides/fieldDataset';
 import { apiRepository, preparedRepository, workspaceConfiguration } from '../../data/ScenarioRepository';
 import type { IncidentPacket } from '../../data/incidentPacket';
 import { loadScenarioManifest, type ScenarioManifest } from '../../data/scenarioManifest';
@@ -23,10 +25,16 @@ export async function loadWorkspaceDataset(signal: AbortSignal, apiBase = '') {
     : preparedRepository(manifest.workspace);
   const packet = await repository.load(signal);
   validateWorkspaceManifest(manifest, packet);
-  const terrain = await loadTerrainData({ metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url }, signal);
-  if (`${terrain.metadata.crs.authority}:${terrain.metadata.crs.code}` !== manifest.crs) {
+  const [terrain, contextTerrain, fieldDataset, referenceDataset] = await Promise.all([
+    loadTerrainData({ metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url }, signal),
+    Promise.all((manifest.terrainContext ?? []).map(asset => loadTerrainData({metadata:asset.metadata.url,grid:asset.grid.url},signal))),
+    manifest.fieldData ? loadFieldDataset(manifest.fieldData, packet.datasetVersion, signal) : undefined,
+    manifest.referenceData ? loadReferenceDataset(manifest.referenceData,signal) : undefined
+  ]);
+  if ([terrain,...contextTerrain].some(data => `${data.metadata.crs.authority}:${data.metadata.crs.code}` !== manifest.crs)) {
     throw new Error('Terrain CRS does not match its manifest');
   }
   signal.throwIfAborted();
-  return { manifest, packet, terrain, offline: configuration.offline };
+  const prepared = fieldDataset ? {...fieldDataset, additionalSources:referenceDataset ? [referenceDataset] : []} : referenceDataset;
+  return { manifest, packet, terrain, contextTerrain, fieldDataset:prepared, offline: configuration.offline };
 }

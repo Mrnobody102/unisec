@@ -41,8 +41,8 @@ export function CoordinateFields({ latitude, longitude, onChange, locale, onPick
       />
     </label>
     <p id="coordinate-paste-hint" className="geodata-hint coordinate-paste-hint">
-      {t('Vĩ độ, kinh độ · độ thập phân. Cũng nhận POINT(kinh độ vĩ độ).',
-        'Latitude, longitude · decimal degrees. POINT(longitude latitude) also works.')}
+      {t('Vĩ độ, kinh độ theo độ thập phân. Cũng nhận POINT(kinh độ vĩ độ).',
+        'Latitude, longitude in decimal degrees. POINT(longitude latitude) also works.')}
     </p>
     {error && <p className="field-error" role="alert">{t('Dùng hai số WGS84 hợp lệ, ngăn bằng dấu phẩy.', 'Use two valid WGS84 numbers separated by a comma.')}</p>}
     <div className="scenario-coordinate-fields">

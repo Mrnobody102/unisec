@@ -73,12 +73,12 @@ export const en: GuideContent = {
     {
       id: 'map',
       audience: 'manager',
-      title: 'Map and journeys',
+      title: 'Map and directions',
       image: 'guide/map.jpg',
       steps: [
         {
           icon: 'route',
-          title: 'Journey between two points',
+          title: 'Directions between two points',
           text: 'Pick A and B from the list, or press the location icon and click the map. Blocked-road avoidance applies to road matching as well as routing. Dotted lines are unverified straight-line offsets; the displayed length covers mapped roads only. Show A, B and route fits the journey; on a phone, use Expand journey details to reopen the fields.'
         },
         {

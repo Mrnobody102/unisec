@@ -40,7 +40,7 @@ export function DeviceLocationLayer({
     const tip = document.createElement("span");
     tip.textContent =
       (locale === "vi" ? "Vị trí của bạn" : "Your location") +
-      " · ±" +
+      (locale === "vi" ? ", sai số ±" : ", accuracy ±") +
       Math.round(location.accuracy) +
       " m";
     marker.bindTooltip(tip);

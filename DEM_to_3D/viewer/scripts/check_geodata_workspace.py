@@ -1,4 +1,5 @@
 """Exercise local vector import, AOI coverage, drawing, persistence and GIS export."""
+from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, download_geometry, publish_draft, published_records, reviewed_records, reviewed_records_json
 import argparse
 import json
@@ -85,6 +86,7 @@ def check_large_import(browser, url, root):
     assert all(record['role'] == 'reference' and record['source']['name'] == path.name for record in records)
     page.reload()
     expect(page.locator('.geodata-layers li')).to_have_count(1000, timeout=20000)
+    page.locator('.geodata-source-group > summary').filter(has_text='large-survey.kml').click()
     page.locator('.geodata-feature').last.click()
     expect(page.locator('.geodata-map-label')).to_have_count(1)
     expect(page.locator('.geodata-map-label')).to_contain_text('Khảo sát 1000')
@@ -160,9 +162,11 @@ def check_point_and_kml_semantics(browser, url, root, captures):
         expect(paths).to_have_count(4)
         paint = paths.evaluate_all("nodes => nodes.map(n => ({stroke:n.getAttribute('stroke'), fill:n.getAttribute('fill'), alpha:n.getAttribute('fill-opacity')}))")
         assert all(item['stroke'] == '#b7791f' and item['fill'] == '#fafbf8' and item['alpha'] == '1' for item in paint), paint
-        selected = page.locator('.geodata-selected-point svg path')
+        selected = page.locator('.geodata-selected-point svg')
         expect(selected).to_have_count(1)
-        expect(selected).to_have_css('fill', 'rgb(217, 48, 37)')
+        expect(selected.locator('path')).to_have_count(2)
+        expect(selected.locator('path').first).to_have_css('fill', 'rgb(252, 252, 249)')
+        expect(selected.locator('path').last).to_have_attribute('fill', 'none')
         page.get_by_role('button', name='Phóng to GIS', exact=True).click()
         assert [r['feature']['geometry'] for r in published_records(page)] == [record['feature']['geometry'] for record in original]
     expect(page.locator('.geodata-coordinate').first).to_have_text('21.782919°')
@@ -347,11 +351,14 @@ def run(url, chrome, captures):
         page.set_viewport_size({'width':1366,'height':768})
         publish_draft(page)
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
+        # Reference datasets are installed independently when entering response.
+        data_count = sum(not record['feature']['properties'].get('dearLandslideArea') for record in published_records(page))
         for iteration in range(3):
-            page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+            map_tool(page, 'Dữ liệu GIS').click()
             expect(page.locator('.geodata-workspace')).to_have_attribute('role','region')
-            expect(page.locator('.geodata-layers li')).to_have_count(6)
+            # Data lists omit landslide extents, which have their own business task.
+            expect(page.locator('.geodata-layers li')).to_have_count(data_count)
             check_controls(page, page.locator('html').get_attribute('data-theme'))
             assert page.locator('.geodata-title button').count() == 1, 'Duplicate exit controls'
             if iteration == 0:

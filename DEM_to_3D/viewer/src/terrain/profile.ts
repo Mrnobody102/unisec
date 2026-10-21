@@ -2,7 +2,7 @@ import type { ProjectedPoint } from './coordinate';
 import { projectedToPixel } from './coordinate';
 import type { TerrainMetadata } from '../types/terrain';
 import type { TerrainTile } from './analysisTerrain';
-import { tileContainsPoint } from './analysisTerrain';
+import { sampleTiles } from './analysisTerrain';
 
 export type ElevationSampler = (x: number, y: number) => { elevation?: number; pixel?: { row: number; column: number } };
 
@@ -93,24 +93,7 @@ export function splitValidSegments(samples: ProfileSample[]): number[][] {
 }
 
 function samplerFromTiles(tiles: readonly TerrainTile[]): ElevationSampler {
-  if (tiles.length === 1) {
-    const tile = tiles[0];
-    return (x, y) => strictBilinearSample(tile.grid, tile.metadata, { x, y });
-  }
-  return (x, y) => {
-    // First pass: strict domain containment. Second pass: half-pixel slack so
-    // samples in the pixel-center gap between two adjacent tiles still resolve
-    // instead of producing an artificial nodata break at the seam.
-    for (let pass = 0; pass < 2; pass += 1) {
-      const slack = pass === 0 ? 0 : 0.5 + 1e-9;
-      for (let index = 0; index < tiles.length; index += 1) {
-        const tile = tiles[index];
-        if (!tileContainsPoint(tile, x, y, slack)) continue;
-        return strictBilinearSample(tile.grid, tile.metadata, { x, y });
-      }
-    }
-    return {};
-  };
+  return (x,y) => sampleTiles(tiles,x,y);
 }
 
 /**

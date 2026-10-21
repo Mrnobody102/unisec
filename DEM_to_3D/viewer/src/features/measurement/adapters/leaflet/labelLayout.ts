@@ -5,7 +5,7 @@ export function positionMeasurementLabels(map: L.Map, labels: L.Tooltip[]): void
   if (!labels.length) return;
   const container = map.getContainer(), bounds = container.getBoundingClientRect();
   const blocked = Array.from(container.closest('.map-area')?.querySelectorAll<HTMLElement>(
-    '.map-toolbar,.map-tools,.map-reference,.map-panel-toggle,.map-tool-panel,.map-location-panel,.map-attribution,.map-source-popover,.map-pin:not(.is-position-hidden)') ?? [])
+    '.map-toolbar,.map-advanced-tools,.map-tools,.map-reference,.map-panel-toggle,.map-tool-panel,.map-location-panel,.map-attribution,.map-source-popover,.map-pin:not(.is-position-hidden)') ?? [])
     .filter(node => node.offsetWidth && node.offsetHeight && getComputedStyle(node).visibility !== 'hidden')
     .map(node => node.getBoundingClientRect());
   const collides = (a: DOMRect, b: DOMRect) => a.left < b.right + 5 && a.right > b.left - 5 && a.top < b.bottom + 5 && a.bottom > b.top - 5;

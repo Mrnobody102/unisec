@@ -8,7 +8,7 @@ def check_workspace_context(browser, url):
     page = context.new_page()
     try:
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.locator('.incident-priority-row').first.click()
         page.locator('.decision-tabs button').nth(1).click()
         scroll = page.locator('#response-details .sidebar-scroll')

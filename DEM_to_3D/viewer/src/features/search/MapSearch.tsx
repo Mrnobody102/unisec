@@ -59,7 +59,7 @@ export function MapSearch({ locale, results, query, onQuery, onSelect, disabled 
       <UiIcon name="search"/>
       <input role="combobox" aria-label={t('Tìm trên bản đồ', 'Search map')} aria-expanded={expanded}
         aria-controls={expanded ? 'map-search-results' : undefined} aria-autocomplete="list" aria-activedescendant={expanded && results[active] ? `map-result-${active}` : undefined}
-        placeholder={t('Tìm địa bàn, đường, điểm…', 'Search places, roads, sites…')} value={query} disabled={disabled}
+        placeholder={t('Tìm địa bàn, đường, điểm', 'Search places, roads, sites')} value={query} disabled={disabled}
         onFocus={() => setOpen(true)} onBlur={event => { if (!root.current?.contains(event.relatedTarget as Node | null)) { setOpen(false); setCompactOpen(false); } }}
         onChange={event => { onQuery(event.target.value); setOpen(true); setActive(0); }}
         onKeyDown={event => {

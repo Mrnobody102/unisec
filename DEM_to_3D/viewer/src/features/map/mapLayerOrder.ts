@@ -1,6 +1,7 @@
 /** Bottom to top. Road status always takes precedence over route selection. */
 export const mapLayerOrder = {
   imagery: 1,
+  analysis: 1.5,
   boundary: 2,
   roads: 3,
   route: 4,

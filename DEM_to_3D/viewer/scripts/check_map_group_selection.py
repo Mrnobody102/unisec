@@ -1,6 +1,7 @@
 """Every overlapping symbol must select its own member and retain its ground anchor."""
 import argparse
 from pathlib import Path
+from network_browser_fixture import install_network_fixture
 from playwright.sync_api import expect,sync_playwright
 
 def run(url,chrome,captures):
@@ -14,6 +15,7 @@ def run(url,chrome,captures):
   # Fixture uses the same production renderer and CSS; IDs differ even when names repeat.
   page.evaluate("""async()=>{
    const {createScreenMarkers}=await import('/src/terrain/screenMarkers.ts');
+   window.fixturePoiMetrics=(await import('/src/terrain/poiFrame.ts')).poiMetrics;
    const host=document.createElement('div');host.id='selection-fixture';Object.assign(host.style,{position:'fixed',left:'280px',top:'130px',width:'620px',height:'430px',zIndex:5000,background:'#263b3d'});document.body.append(host);
    window.fixtureHits=[];let selected=null;
    const communities=[{id:'village-a',name:'Điểm A',projected:{x:260,y:210},prio:2},{id:'village-b',name:'Điểm A',projected:{x:263,y:214},prio:2}];
@@ -31,38 +33,55 @@ def run(url,chrome,captures):
    # Real mutation outside the renderer forces collision/layout refresh.
    page.evaluate("""()=>{const note=document.createElement('span');note.id='fixture-note';note.textContent='Layout';document.querySelector('#selection-fixture').append(note);}""")
    page.wait_for_timeout(250);expect(chooser).to_be_visible()
-   choices=chooser.locator('button:not(.map-chooser-expand)')
+   choices=chooser.locator('.map-object-choice')
    # Sort is selection first then severity/ID; repeated names are selected by row index.
    ids=page.evaluate("""()=>{const last=fixtureHits.at(-1);const rank=x=>last?.id===x.id?100:x.type==='hazard'?80:x.type==='poi'?10:10;return [{type:'hazard',id:'hazard-c'},{type:'community',id:'village-a'},{type:'community',id:'village-b'},{type:'poi',id:'site-d'}].sort((a,b)=>rank(b)-rank(a)||(a.type+':'+a.id).localeCompare(b.type+':'+b.id)).map(x=>x.id);}""")
    choices.nth(ids.index(expected['id'])).click()
    assert page.evaluate('fixtureHits.at(-1)')==expected
    expect(fixture.locator('.map-object-chooser')).to_have_count(0)
    selected=fixture.locator('.map-pin.is-selected:visible');expect(selected).to_have_count(1)
-   anchor=selected.evaluate("""n=>{const r=n.getBoundingClientRect(),h=n.closest('#selection-fixture').getBoundingClientRect();return {x:r.x-h.x+r.width/2,y:r.y-h.y+r.width*28.8/28,fill:getComputedStyle(n.querySelector('.map-pin-shape svg')).fill,color:getComputedStyle(n).color};}""")
+   anchor=selected.evaluate("""n=>{const r=n.getBoundingClientRect(),h=n.closest('#selection-fixture').getBoundingClientRect();return {x:r.x-h.x+r.width/2,y:r.y-h.y+fixturePoiMetrics(r.width,true).tip,fill:getComputedStyle(n.querySelector('.map-pin-shape svg')).fill,color:getComputedStyle(n).color};}""")
    point={'hazard-c':(258,217),'village-a':(260,210),'village-b':(263,214),'site-d':(262,218)}[expected['id']]
    assert abs(anchor['x']-point[0])<.5 and abs(anchor['y']-point[1])<.5,(expected,anchor)
-   assert anchor['fill']=='rgb(217, 48, 37)',anchor
+   assert anchor['fill']!='rgb(255, 255, 255)' and anchor['color']=='rgb(255, 255, 255)',anchor
+   assert selected.locator('.map-pin-icon svg').is_visible()
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'group-selection-fixture.png'))
   page.evaluate("fixtureRenderer.dispose();document.querySelector('#selection-fixture').remove()")
-  # Actual map group menus in both views: opening must survive another frame.
+  # Use an explicit dense incident fixture to exercise groups in both map renderers.
+  install_network_fixture(page,url,cluster_hazards=True)
   for mode in ['2d','3d']:
    page.goto(url+'/?offline=1&map='+mode+'&demoRole=manager')
    expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
-   for attempt in range(6):
-    if page.locator('.map-pin[aria-haspopup]:visible').count():break
+   for attempt in range(16):
+    if page.locator('.map-pin[data-group-action="zoom"]:visible,.map-pin[data-group-action="choose"]:visible').count():break
     page.get_by_role('button',name='Thu nhỏ',exact=True).click();page.wait_for_timeout(300)
-   groups=page.locator('.map-pin[aria-haspopup]:visible')
-   assert groups.count(),mode
-   groups.first.click()
-   chooser=page.locator('.map-object-chooser');expect(chooser).to_be_visible();page.wait_for_timeout(400);expect(chooser).to_be_visible()
-   picked=chooser.locator('button:not(.map-chooser-expand)').last.inner_text()
-   chooser.locator('button:not(.map-chooser-expand)').last.click()
+   groups=page.locator('.map-pin[data-group-action="zoom"]:visible,.map-pin[data-group-action="choose"]:visible')
+   assert groups.count(),(mode,page.locator('.map-pin').evaluate_all("nodes=>nodes.map(n=>({id:n.dataset.mapObject,hidden:n.hidden,transform:n.style.transform,action:n.dataset.groupAction}))"),errors)
+   action=groups.first.get_attribute('data-group-action');groups.first.click()
+   chooser=page.locator('.map-object-chooser')
+   if action=='zoom':
+    expect(chooser).to_have_count(0);page.wait_for_timeout(700)
+    single=page.locator('.map-pin[data-group-action="select"]:visible').first
+    expect(single).to_be_visible();picked=single.get_attribute('aria-label');single.click()
+   else:
+    expect(chooser).to_be_visible();page.wait_for_timeout(400);expect(chooser).to_be_visible()
+    picked=chooser.locator('.map-object-choice').last.inner_text()
+    chooser.locator('.map-object-choice').last.click()
    if captures:page.screenshot(path=str(captures/('group-result-'+mode+'.png')))
    expect(page.locator('#response-details h1')).to_have_text(picked)
    expect(page.locator('.map-pin.is-selected:visible')).to_have_count(1)
+   page.wait_for_timeout(800)
+   page.get_by_role('button',name='Xem toàn khu vực',exact=True).click()
+   page.wait_for_timeout(700)
    if captures:page.screenshot(path=str(captures/('neutral-map-'+mode+'.png')))
-   label=page.locator('.map-pin:not([aria-haspopup]):not(.is-label-hidden) .map-pin-label:visible').first
+   target=page.locator('.map-pin[data-group-action="select"]:visible').first
+   expect(target).to_be_visible();target.hover()
+   label=target.locator('.map-pin-label')
    expect(label).to_be_visible()
+   # Visible labels change while the camera frames a selected group member.
+   # Retain the feature ID rather than resolving a different first label on click.
+   key=label.evaluate('node=>node.closest(".map-pin").dataset.mapObject')
+   label=page.locator(f'.map-pin[data-map-object="{key}"] .map-pin-label')
    name=label.inner_text()
    label.hover()
    expect(page.locator('.map-hover-target:visible')).to_have_count(0)
@@ -85,6 +104,7 @@ def run(url,chrome,captures):
   }""")
   layer=page.locator('#layer-fixture')
   layer.get_by_role('button',name='Chọn nhiều',exact=True).click()
+  layer.locator('.geodata-source-group > summary').click()
   layer.get_by_label('Chọn Keep A',exact=True).check();layer.get_by_label('Chọn Hidden B',exact=True).check()
   layer.get_by_role('searchbox').fill('Keep')
   expect(layer.get_by_role('button',name='Ẩn (1)',exact=True)).to_be_visible()
@@ -97,7 +117,7 @@ def run(url,chrome,captures):
   assert all(a['kind']!='select' for a in page.evaluate('layerActions'))
   page.evaluate("layerRoot.unmount();document.querySelector('#layer-fixture').remove()")
   assert not errors,errors;browser.close()
- print('Map group passed: every member selected by its own ID, repeated names, chooser stable after relayout, coordinate tip preserved, red selected pin, 2D/3D map-label hover and selection.')
+ print('Map group passed: every member selected by its own ID, repeated names, chooser stable after relayout, coordinate tip preserved, selected feature glyph retained, 2D/3D map-label hover and selection.')
 
 if __name__=='__main__':
  a=argparse.ArgumentParser();a.add_argument('--url',default='http://127.0.0.1:5341');a.add_argument('--chrome');a.add_argument('--captures',type=Path);args=a.parse_args();run(args.url.rstrip('/'),args.chrome,args.captures)

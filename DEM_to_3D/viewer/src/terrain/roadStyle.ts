@@ -1,11 +1,19 @@
 /** Shared by 2D/WebGL road strokes and their HTML legend swatches. */
 export const roadColors = {
-  networkImagery: '#e7e6d9',
+  networkImagery: '#d3d0c4',
   networkTerrain: '#76857e',
-  selected: '#287a66',
-  blocked: '#ef4444',
-  uncertain: '#f59e0b',
-  selectedCasing: '#173c32',
+  // Route blue, as in web maps: red stays reserved for blocked sections.
+  selected: '#2f80ed',
+  blocked: '#d96552',
+  uncertain: '#d7a34c',
+  selectedCasing: '#0d3a73',
+  reference: '#eee5cf',
+  referenceCasing: '#343c36',
   inspectedCasing: '#ffffff',
   neutralCasing: '#283a33'
 } as const;
+
+/** Screen pixels; wider transparent hit targets are defined independently. */
+export const roadStroke = { normal: 1.8, emphasis: 3, casing: 1.2, inspectedCasing: 1.8 } as const;
+/** All representations share the same display offset; selection must not move a road. */
+export const roadSurfaceOffsetM = .8;

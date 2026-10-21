@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { recommendRoute, routeProblems } from './routeAdvice';
-import { buildScenarioRoutes, initialRoadSegments } from '../../data/cheTaoScenario';
+import { buildScenarioRoutes, initialRoadSegments } from '../../data/fixtures/networkScenario';
 
 describe('resident route advice', () => {
   it('recommends the bypass when the main road is blocked and names the avoided road', () => {

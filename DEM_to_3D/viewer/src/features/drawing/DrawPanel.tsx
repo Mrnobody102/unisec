@@ -65,7 +65,6 @@ export function DrawPanel({ mapRef, enabled, locale, session, dispatch, sources,
       <VertexTable mode={mode} points={points} selected={session.selected} units={units} locale={locale} onHover={setHighlight}
         onSelect={index => dispatch({ type: 'select', index })} onRemove={index => dispatch({ type: 'remove', index })}
         onMove={(index, point) => dispatch({ type: 'move', index, point })}/>
-      <p className="draw-note">{m.savedNote}</p>
     </div>
     <div className="map-tool-actions">
       <button className="icon-button" title={m.undoTitle} aria-label={m.undo} disabled={!session.undo.length} onClick={() => dispatch({ type: 'undo' })}><UiIcon name="undo" size={16}/></button>

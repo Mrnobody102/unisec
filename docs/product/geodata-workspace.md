@@ -4,6 +4,18 @@ Phạm vi: công cụ thử nghiệm trong demo, lưu dữ liệu cục bộ t�
 
 Mở **GIS** trên thanh công cụ bản đồ, hoặc `/?workspace=geodata`. Công cụ độc lập với DEM và chạy tại trình duyệt, dùng được trên Vercel. Thêm `&offline=1` để không tải nền ngoài.
 
+Mặc định mở **Dữ liệu**: nhập/thêm điểm ở đầu, tìm theo tên và lọc tệp nguồn,
+sau đó chọn đối tượng để xem hoặc sửa trong một hồ sơ. **Vùng sạt lở** và
+**Đường** là hai nhóm nghiệp vụ riêng. Điểm tập kết/thôn bản nằm trong nhóm
+thu gọn; chọn từ bản đồ tự mở đúng nhóm. **Công cụ dữ liệu** chứa AOI/catalog,
+**Xuất dữ liệu** chỉ mở tùy chọn khi cần. Mốc diễn biến ứng phó ẩn trong lúc
+sửa GIS để danh sách, bản đồ và hồ sơ dùng trọn chiều cao.
+
+Nhãn/ô nhập xếp thành hàng rõ ràng, nút dài xuống hàng theo cụm từ; không ép
+chữ thành cột. Bảng lớp chỉ áp kích thước 15 px cho checkbox/radio, không cho
+thanh trượt hay ô chọn tệp. Nguồn tư liệu và thuộc tính kỹ thuật có thể mở khi
+cần; căn cứ, trạng thái rà soát và bước áp dụng bản nháp vẫn được giữ.
+
 ```mermaid
 flowchart LR
   A[Nhập KML / GeoJSON / WKT / tọa độ] --> B[Kiểm hình học WGS84]
@@ -16,6 +28,8 @@ flowchart LR
 ## Công việc của người ứng phó
 
 GIS mở theo ba công việc: **Vùng sạt lở**, **Đường**, **Dữ liệu**. Vùng sạt lở có hai thao tác khoanh vùng nguy cơ và vết đã sạt, bộ lọc loại vùng/mức rà soát; điểm ghi nhận là tư liệu bổ sung. Đường hiển thị tình trạng từng đoạn, tìm theo tên và mở hồ sơ để cập nhật căn cứ, quan hệ với vùng. Dữ liệu chứa điểm cứu trợ, thôn bản, nhập/xuất file và các tab kỹ thuật Lớp/AOI/Ảnh. Công cụ vẽ AOI chỉ hiện trong AOI/Ảnh; không dùng nút AOI để khoanh sạt lở.
+
+Hồ sơ đối tượng mặc định để xem: tình trạng đường đứng trước các điểm và vùng liên quan. Cập nhật tình trạng và sửa liên kết mở biểu mẫu riêng; liên kết không tự đổi khả năng đi lại. Ký hiệu/nhãn và lịch sử chỉ mở khi cần, không hiện lịch sử rỗng. Bấm đối tượng liên quan chuyển đến đúng hồ sơ và vị trí. Chọn đối tượng giữ nguyên tìm kiếm và bộ lọc của danh sách. Các lần lưu vẫn thuộc bản nháp cho đến khi áp dụng toàn bộ GIS.
 
 Luồng làm việc: khoanh vùng → ghi nguồn/căn cứ → chọn đoạn đường liên quan (có thể chọn khoảng đầu–cuối trên bản đồ) → đánh giá khả năng đi lại trong hồ sơ đường → xem lại và áp dụng toàn bộ bản nháp. Polygon gần đường hoặc đè lên đường không tự kết luận đường bị chặn. Tab Đường hiện chỉnh tình trạng/thuộc tính/liên kết; chưa phải công cụ biên tập hình học và topology mạng đường.
 
@@ -99,7 +113,7 @@ Tham khảo mô hình đối tượng có vị trí, biểu mẫu và ảnh củ
 | Phương pháp | Giao/hợp polygon trong kinh/vĩ độ. Diện tích xấp xỉ mặt cầu R = 6.371.008,8 m, m²/km², `polygon-coverage-v1`. Không phải diện tích ellipsoid phục vụ địa chính hoặc diện tích bề mặt địa hình |
 | Z | Giữ giá trị và KML altitudeMode riêng từng hình học, kể cả mode sea-floor; thiếu mode dùng clampToGround. KML thiếu Z trong hình có Z nhận 0. Z không tham gia độ phủ/vị trí 2D. WKT/GeoJSON chưa rõ tham chiếu Z: ghi chưa xác định, xuất KML bám đất, không suy cao độ tuyệt đối hoặc DEM |
 | Footprint | Chỉ là biên hình học. Chưa xác nhận ảnh đã chụp, yêu cầu đặt chụp thành công, không mây hoặc đủ chất lượng phân tích |
-| Nền ảnh | EOX Sentinel-2 cloudless 2016, giữ attribution/giấy phép. Không dùng làm bằng chứng hiện trạng |
+| Nền ảnh | Esri World Imagery hoặc XYZ cấu hình riêng, giữ attribution/giấy phép. Không dùng làm bằng chứng hiện trạng |
 
 [OGC KML](https://docs.ogc.org/is/12-007r2/12-007r2.html) quy định thứ tự tọa độ KML là kinh độ, vĩ độ, độ cao. Luồng AOI tham khảo [Copernicus Browser](https://documentation.dataspace.copernicus.eu/Applications/Browser.html). Tính hợp/giao dùng [Turf union](https://turfjs.org/docs/api/union), [intersect](https://turfjs.org/docs/7.1.0/api/intersect); diện tích dùng [Turf area](https://turfjs.org/docs/api/area).
 
@@ -107,7 +121,7 @@ Tham khảo mô hình đối tượng có vị trí, biểu mẫu và ảnh củ
 
 | Phần | Giới hạn |
 |---|---|
-| Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 1.500 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
+| Dung lượng | 5 MB/tệp UTF-8, 10 tệp/lần, 20 MB/lần, 1.000 đối tượng và 50.000 tọa độ/phiên; tối đa 10.000 tọa độ/đối tượng. Bản lưu phiên tối đa 4 MB. Giản lược hoặc tách dữ liệu trong QGIS |
 | Lỗi nhập | Một tệp trong lô bị lỗi: không thêm một phần lô, giữ nguyên bộ đang có |
 | Chưa hỗ trợ | KMZ, NetworkLink, lớp ảnh KML, Track/Model, vùng vượt kinh tuyến 180°, vĩ độ ngoài ±85,05112878° |
 | Trình bày KML | Dùng ký hiệu theo vai trò làm việc; không giữ Style/StyleMap, cây Folder, extrude/tessellate hoặc cảnh 3D gốc. Không phải trình xem KML đầy đủ như Google Earth |
@@ -159,3 +173,5 @@ Catalog này có phạm vi/ngày hữu hạn; không có kết quả không có 
 Proposal vẫn là đích nghiệp vụ: SAR ưu tiên sau sự kiện, phân tích tác động đường/cộng đồng rồi tạo sản phẩm cứu hộ. Catalog là đầu vào hỗ trợ luồng đó, không thay pipeline hoặc biến demo thành sản phẩm xử lý tự động.
 
 Hoàn tác sau khi áp dụng tạo một bản nháp mới, không thay ngược dữ liệu đang dùng. Dữ liệu nhận từ tab khác làm mới lịch sử Hoàn tác để không xóa nhầm ghi nhận vừa nhận. So sánh xung đột dựa trên nội dung JSON, không phụ thuộc thứ tự trường. Khi sửa ranh giới vùng sạt lở, mức rà soát trở về chưa rà soát; căn cứ và liên kết đường vẫn được giữ.
+
+Khi đổi bộ nguồn prepared, hồ sơ của nguồn không còn được dùng chỉ bị ẩn khỏi bản đồ. Các sửa đổi và lịch sử xóa được giữ lại; chọn lại nguồn khôi phục trạng thái hiển thị trước đó.

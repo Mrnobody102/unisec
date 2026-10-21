@@ -1,9 +1,10 @@
-import type { Community, IncidentModel, Locale } from '../../types/dear';
-import { communityAccessText } from '../../features/routes/accessAssessment';
-import { StatusText } from '../../shared/ui/StatusText';
+import type { Community, Hazard, IncidentModel, Locale, RoadSegment } from '../../types/dear';
 import { UiIcon } from '../../shared/ui/UiIcon';
 import type { ResponseAssessment } from '../../features/incident/responseAssessment';
 import type { ScenarioRoutePair } from '../../types/dear';
+import { roadHazardIds } from '../../features/incident/roadHazards';
+import { PhotoThumb } from '../../features/fieldPhotos/PhotoThumb';
+import type { PreparedPhotoPoint } from '../../features/fieldPhotos/preparedPhotos';
 import '../../features/incident/incident-panel.css';
 import {
   workState,
@@ -13,205 +14,97 @@ import {
 
 type Props = {
   incident: IncidentModel;
+  hazards: Hazard[];
+  roads: RoadSegment[];
+  fieldPhotos?: Map<string, PreparedPhotoPoint>;
+  onInspectObject: (id: string) => void;
   locale: Locale;
   areaName: [vi: string, en: string];
   tasks: ResponseWork[];
   entries: WorkEntry[];
   reportPending: boolean;
   pendingReport?: [vi: string, en: string];
-  onApplyReport?: () => void;
   historical: boolean;
   onOpenWork: (id?: string) => void;
   onOpenReport: () => void;
   communities: Community[];
   routes: Map<string, ScenarioRoutePair>;
   assessments: Map<string, ResponseAssessment>;
-  blockedRoadCount: number;
-  uncertainRoadCount: number;
   onSelectCommunity: (id: string) => void;
-  onOpenTimeline: () => void;
-  onOpenData: () => void;
   onOpenCommunities: () => void;
   onOpenRoads: (filter: 'blocked' | 'uncertain') => void;
   onOpenArea: () => void;
 };
 
+/** A compact field summary; counts are independent facts, not a causal diagram. */
 export function IncidentView({
-  incident,
-  locale,
-  areaName,
-  tasks,
-  entries,
-  reportPending,
-  pendingReport,
-  onApplyReport,
-  historical,
-  onOpenWork,
-  onOpenReport,
-  communities,
-  routes,
-  assessments,
-  blockedRoadCount,
-  uncertainRoadCount,
-  onSelectCommunity,
-  onOpenTimeline,
-  onOpenData,
-  onOpenCommunities,
-  onOpenRoads,
-  onOpenArea
+  incident, locale, areaName, tasks, entries, communities, onSelectCommunity, onOpenWork, onOpenArea,
+  hazards, roads, fieldPhotos, onInspectObject, reportPending, pendingReport,
+  onOpenReport, historical, onOpenRoads, onOpenCommunities
 }: Props): JSX.Element {
-  const t = (vi: string, en: string) => (locale === 'en' ? en : vi);
-  const priorityCommunities = communities.filter(
-    (community) => community.prio === 1
-  );
-  const open = tasks.filter(
-    (task) => workState(task, entries).status !== 'done'
-  );
-  return (
-    <>
-      <div className="sidebar-top incident-head">
-        <h1>
-          {incident.title ? t(...incident.title) : t('Sự kiện', 'Incident')}
-        </h1>
-        <button
-          className="text-button incident-area-link"
-          title={t(...areaName)}
-          onClick={onOpenArea}
-        >
-          {t('Xem phạm vi trên bản đồ', 'Show response area')}
+  const t = (vi: string, en: string) => locale === 'en' ? en : vi;
+  // English counts agree with their noun; Vietnamese has no plural form.
+  const tn = (count: number, vi: string, one: string, many: string) => locale === 'en' ? (count === 1 ? one : many) : vi;
+  const number = (value: number) => value.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB');
+  // Along-road order, as a responder meets them from the staging point.
+  const order = roads.flatMap(roadHazardIds);
+  const landslides = hazards.filter(hazard => hazard.kind === 'landslide')
+    .sort((a, b) => (order.indexOf(a.id) + 1 || 1e9) - (order.indexOf(b.id) + 1 || 1e9));
+  const blocked = roads.filter(road => road.status === 'blocked'), uncertain = roads.filter(road => road.status === 'uncertain');
+  const priority = communities.filter(community => community.prio === 1);
+  const openTasks = tasks.filter(task => task.kind !== 'report' && workState(task, entries).status !== 'done');
+  const activeTasks = openTasks.filter(task => workState(task, entries).status === 'active');
+  return <>
+    <div className="sidebar-top incident-overview-heading">
+      <div className="detail-title">
+        <h1>{incident.title ? t(...incident.title) : t('Sạt lở và tiếp cận', 'Landslides and access')}</h1>
+        <button className="icon-button" aria-label={t('Xem phạm vi trên bản đồ', 'Show response area')} title={t(...areaName)} onClick={onOpenArea}><UiIcon name="fit" size={18}/></button>
+      </div>
+      {/* What happened, what it cuts, and who is waiting: each figure opens its list. */}
+      <div className="incident-summary" aria-label={t('Thống kê', 'Summary')}>
+        <div className="incident-summary-fact">
+          <span>{t('Sạt lở', 'Landslides')}</span>
+          <strong>{landslides.length}</strong>
+        </div>
+        <button className="incident-summary-fact" data-tone={blocked.length ? 'critical' : uncertain.length ? 'warning' : undefined} disabled={!blocked.length && !uncertain.length} onClick={() => onOpenRoads(blocked.length ? 'blocked' : 'uncertain')}>
+          <span>{blocked.length || !uncertain.length ? t('Đoạn bị chặn', 'Blocked sections') : t('Đoạn cần xác minh', 'Sections to verify')}</span>
+          <strong>{blocked.length || uncertain.length}</strong>
         </button>
-        {historical ? (
-          <p className="incident-context-note">
-            {t('Đang xem bản dữ liệu cũ', 'Viewing an older revision')}
-          </p>
-        ) : (
-          reportPending && (
-            // Says what came in; the action is one click.
-            <div className="incident-pending-report" role="status">
-              <UiIcon name="uncertain" size={16} />
-              <div>
-                <strong>
-                  {t('Báo cáo mới từ hiện trường', 'New field report')}
-                  {pendingReport && `: ${t(...pendingReport)}`}
-                </strong>
-                <span className="incident-pending-actions">
-                  {onApplyReport && (
-                    <button className="button primary" onClick={onApplyReport}>
-                      {t('Cập nhật bản đồ', 'Update map')}
-                    </button>
-                  )}
-                  <button className="text-button" onClick={onOpenReport}>
-                    {t('Xem báo cáo', 'View report')}
-                  </button>
-                </span>
-              </div>
-            </div>
-          )
-        )}
+        <button className="incident-summary-fact" disabled={!priority.length} onClick={() => priority.length === 1 ? onSelectCommunity(priority[0].id) : onOpenCommunities()}>
+          <span>{t('Địa bàn ưu tiên', 'Priority communities')}</span>
+          <strong>{priority.length}</strong>
+          {priority.length > 0 && <small>{t(`${number(priority.reduce((sum, community) => sum + community.pop, 0))} người`, `${number(priority.reduce((sum, community) => sum + community.pop, 0))} people`)}</small>}
+        </button>
       </div>
-      <div className="sidebar-scroll incident-body">
-        <section
-          className="incident-section incident-road-summary"
-          aria-labelledby="incident-road-heading"
-        >
-          <div className="incident-section-heading">
-            <h3 id="incident-road-heading">
-              {t('Tình trạng đường', 'Road conditions')}
-            </h3>
+    </div>
+    <div className="sidebar-scroll incident-overview">
+
+      {!historical && reportPending && <button className="incident-report-review" onClick={onOpenReport}>
+        <UiIcon name="bell" size={18}/><span><strong>{t('Báo cáo mới chờ kiểm tra', 'New report to review')}</strong>
+        {pendingReport && <small>{t(...pendingReport)}</small>}</span><UiIcon name="next" size={16}/>
+      </button>}
+
+      <section className="incident-landslides">
+        <h2 className="incident-section-title">{t('Điểm sạt lở', 'Landslides')}</h2>
+        <div className="incident-landslide-list">
+        {landslides.map(hazard => <button className="incident-landslide-row" data-map-preview={'hazard:' + hazard.id} key={hazard.id} onClick={() => onInspectObject('hazard:' + hazard.id)}>
+          <PhotoThumb photo={fieldPhotos?.get(hazard.id)?.photos[0]}/>
+          <span className="incident-landslide-copy"><strong>{t(...hazard.name)}</strong>{hazard.area != null && <small>{number(hazard.area)} ha</small>}</span>
+          <small className="incident-status" data-tone={hazard.observation === 'reported' ? 'critical' : 'warning'}>{hazard.observation === 'reported' ? t('Có báo cáo', 'Reported') : t('Chưa kiểm chứng', 'Unverified')}</small>
+        </button>)}
+        </div>
+      </section>
+
+      <section className="incident-overview-work incident-work">
+        <h2 className="incident-section-title"><span>{t('Xác minh và cứu trợ', 'Verification and relief')}</span></h2>
+        <button className="incident-overview-item incident-work-row" onClick={() => onOpenWork()}>
+          <div className="incident-work-copy">
+            <strong>{historical ? t('Xem công việc', 'View work records') : `${openTasks.length} ${tn(openTasks.length, 'việc chưa hoàn tất', 'open task', 'open tasks')}`}</strong>
+            {!historical && activeTasks.length > 0 && <small>{activeTasks.length} {t('đang xử lý', 'in progress')}</small>}
           </div>
-          <button
-            className="road-count-row"
-            onClick={() => onOpenRoads('blocked')}
-          >
-            <StatusText tone="critical" icon="blocked">
-              {t('Bị chặn', 'Blocked')}
-            </StatusText>
-            <span>
-              {blockedRoadCount}{' '}
-              {t('đoạn', blockedRoadCount === 1 ? 'section' : 'sections')}
-            </span>
-          </button>
-          <button
-            className="road-count-row"
-            onClick={() => onOpenRoads('uncertain')}
-          >
-            <StatusText tone="warning" icon="uncertain">
-              {t('Cần xác minh', 'To verify')}
-            </StatusText>
-            <span>
-              {uncertainRoadCount}{' '}
-              {t('đoạn', uncertainRoadCount === 1 ? 'section' : 'sections')}
-            </span>
-          </button>
-        </section>
-        <section
-          className="incident-section"
-          aria-labelledby="incident-priority-heading"
-        >
-          <div className="incident-section-heading">
-            <h3 id="incident-priority-heading">
-              {t('Địa bàn ưu tiên', 'Priority communities')}
-            </h3>
-            <button
-              className="text-button incident-all-communities"
-              onClick={onOpenCommunities}
-              aria-label={`${t('Tất cả địa bàn', 'All communities')} (${communities.length})`}
-            >
-              {t('Tất cả', 'All')} ({communities.length})
-            </button>
-          </div>
-          <div className="incident-priority-list">
-            {priorityCommunities.map((community) => {
-              const assessment = assessments.get(community.id);
-              return (
-                <button
-                  data-map-preview={"community:"+community.id}
-                  className="incident-priority-row"
-                  key={community.id}
-                  onClick={() => onSelectCommunity(community.id)}
-                >
-                  <span>
-                    <strong>{community.name}</strong>
-                    <small className="priority-next-action">
-                      {t(
-                        ...(assessment?.reason ??
-                          communityAccessText(routes.get(community.id)))
-                      )}
-                    </small>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-        <section
-          className="incident-section incident-work"
-          aria-labelledby="incident-work-heading"
-        >
-          <div className="incident-section-heading">
-            <h3 id="incident-work-heading">
-              {t('Theo dõi xác minh', 'Verification tracking')}
-            </h3>
-          </div>
-          <button className="road-count-row" onClick={() => onOpenWork()}>
-            <span>{t('Chưa hoàn tất', 'Open')}</span>
-            <span>{open.length}</span>
-          </button>
-        </section>
-        <nav
-          className="incident-detail-actions"
-          aria-label={t('Tham khảo', 'Reference')}
-        >
-          <button className="incident-link" onClick={onOpenTimeline}>
-            <UiIcon name="history" size={18} />
-            <span>{t('Nhật ký sự kiện', 'Incident journal')}</span>
-          </button>
-          <button className="incident-link" onClick={onOpenData}>
-            <UiIcon name="info" size={18} />
-            <span>{t('Nguồn dữ liệu', 'Data sources')}</span>
-          </button>
-        </nav>
-      </div>
-    </>
-  );
+          <UiIcon name="next" size={16}/>
+        </button>
+      </section>
+    </div>
+  </>;
 }

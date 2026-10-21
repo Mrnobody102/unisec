@@ -5,7 +5,7 @@ import './choice-group.css';
 export function ChoiceGroup<T extends string>({ label, options, value, onChange, disabled, columns = 3 }: {
   label: string;
   options: Array<{ value: T; label: string }>;
-  value: T;
+  value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
   columns?: number;

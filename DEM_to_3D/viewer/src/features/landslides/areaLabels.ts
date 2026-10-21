@@ -1,7 +1,7 @@
 import type { Locale } from '../../types/dear';
 import type { AreaSource, LandslideArea } from './landslideAreas';
 const names = {
-  potential: ['Vùng có nguy cơ sạt lở', 'Potential landslide area'], occurred: ['Vết sạt lở đã xảy ra', 'Mapped landslide occurrence'],
+  potential: ['Vùng nguy cơ', 'Potential landslide area'], occurred: ['Vết sạt lở', 'Mapped landslide occurrence'],
   source: ['Vùng phát sinh trên sườn dốc', 'Source area on slope'], runout: ['Vùng lan truyền xuống dốc', 'Runout area'], deposit: ['Vùng vật liệu bồi tích', 'Deposit area'], undifferentiated: ['Chưa tách các phần', 'Undifferentiated extent'],
   unreviewed: ['Chưa rà soát', 'Unreviewed'], reviewed: ['Đã rà soát tư liệu', 'Evidence reviewed'], 'field-checked': ['Đã kiểm tra thực địa', 'Field checked'],
   field: ['Khảo sát thực địa', 'Field survey'], imagery: ['Ảnh vệ tinh / ảnh bay', 'Satellite / aerial imagery'], resident: ['Phản ánh người dân', 'Resident report'], historical: ['Hồ sơ sạt lở cũ', 'Historical inventory'], terrain: ['Địa hình / địa chất', 'Terrain / geology'],
@@ -12,3 +12,12 @@ const names = {
   , network: ['Liên kết thuộc mạng đường khác. Chọn lại đoạn đường của tình huống hiện tại.', 'These links use another road network. Reassess them against the current network.']
 } as const;
 export function areaLabel(key: LandslideArea['state'] | LandslideArea['part'] | LandslideArea['review'] | AreaSource | 'evidence' | 'image' | 'review' | 'road' | 'network', locale: Locale): string { return names[key][locale === 'vi' ? 0 : 1]; }
+
+/** Default titles already name the type. Keep review state visible without repeating that type. */
+export function areaNameIncludesState(name: string, state: LandslideArea['state'], locale: Locale): boolean {
+  const title = name.normalize('NFC').trim().toLocaleLowerCase().replace(/\s*[-–#]?\s*\d+$/, '').trim();
+  const variants = state === 'potential'
+    ? locale === 'vi' ? ['Vùng nguy cơ', 'Vùng có nguy cơ sạt lở'] : ['Potential extent', 'Potential landslide area']
+    : locale === 'vi' ? ['Vết sạt lở', 'Vết sạt lở đã xảy ra', 'Vùng đã ghi nhận sạt lở'] : ['Observed extent', 'Mapped landslide occurrence', 'Observed landslide area'];
+  return variants.some(kind => title === kind.toLocaleLowerCase());
+}

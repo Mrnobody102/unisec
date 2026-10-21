@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Locale } from '../../types/dear';
 import { roadStatusLabels } from '../routes/roadStatus';
 import { scenarioKindLabel, type ScenarioOverlay, type ScenarioTarget } from './scenarioOverlay';
@@ -15,7 +15,6 @@ export function ScenarioFeatureList({ scenario, selected, locale, onSelect, onCr
   const t = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const [reviewOnly, setReviewOnly] = useState(false);
   const [query, setQuery] = useState('');
-  useEffect(() => { setQuery(''); setReviewOnly(false); }, [selected?.type, selected?.id]);
   const groups = [
     { type: 'hazard' as const, label: ['Điểm ghi nhận', 'Point reports'] as const, items: scenario.hazards },
     { type: 'site' as const, label: ['Điểm tập kết, bãi đáp', 'Staging and landing sites'] as const, items: scenario.responseSites },
@@ -42,7 +41,7 @@ export function ScenarioFeatureList({ scenario, selected, locale, onSelect, onCr
     </label>}
     {reviewCount > 0 && <label className="scenario-review-filter">
       <input type="checkbox" checked={reviewOnly} onChange={event => setReviewOnly(event.target.checked)} />
-      {t('Cần xác minh hoặc khảo sát', 'Needs verification or survey')} <span>{reviewCount}</span>
+      {types?.length === 1 && types[0] !== 'site' ? t('Chỉ hiện mục cần xác minh', 'Needs verification only') : t('Cần xác minh hoặc khảo sát', 'Needs verification or survey')} <span>{reviewCount}</span>
     </label>}
     {groups.map(group => {
       const items = group.items.filter(item => (!reviewOnly || isReview(group.type, item)) &&

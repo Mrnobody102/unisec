@@ -1,0 +1,458 @@
+/* Grouped panels.
+   A panel is a recessed sheet: the title block (kind, name, state, figures) sits on it
+   directly, and each group of information is a lifted card with its label inside.
+   A card's edge is the only group boundary; rows inside a card share inset hairlines.
+   Loaded after the base workspace styles; component files keep geometry only. */
+
+.workspace-shell :is(#response-panel, .response-detail-dock) { --sheet-inset: 20px; background: var(--sheet-bg); }
+.workspace-shell .response-detail-dock { --sheet-inset: var(--detail-inset); }
+
+/* Title block */
+.workspace-shell :is(#response-panel, .response-detail-dock) .sidebar-top {
+  padding: 20px var(--sheet-inset) 16px;
+  border-bottom: 0;
+  background: var(--sheet-bg);
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) .sidebar-scroll { padding: 4px var(--sheet-inset) 24px; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-title { display: flex; align-items: flex-start; gap: 12px; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-title > :first-child { flex: 1; min-width: 0; }
+.workspace-shell :is(#response-panel, .response-detail-dock) h1 {
+  margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; overflow-wrap: anywhere;
+}
+.workspace-shell .sheet-kind { margin: 0 0 2px; color: var(--ws-muted); font-size: 13px; line-height: 1.4; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-title :is(.panel-close, .icon-button) {
+  flex: none; width: 32px; height: 32px; min-height: 32px; margin: -4px -8px 0 0;
+  border: 0; border-radius: 6px; background: none; color: var(--ws-muted);
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-title :is(.panel-close, .icon-button):hover { background: var(--hover); color: var(--ws-text); }
+.workspace-shell .response-detail-dock .panel-parent { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; margin: -6px 0 8px -6px; padding: 3px 6px; border-radius: 6px; color: var(--ws-muted); font-size: 13px; }
+.workspace-shell .response-detail-dock .panel-parent:hover { background: var(--hover); color: var(--ws-text); }
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-priority { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 6px 0 0; font-size: 13px; }
+
+/* Figures: small tiles, label over value. */
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.key-facts, .incident-summary) {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 14px 0 0; padding: 0; border: 0;
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.key-facts > div, .incident-summary-fact) {
+  display: grid; align-content: start; gap: 2px; min-width: 0; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); text-align: left;
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.key-facts dt, .incident-summary-fact > span) { margin: 0; color: var(--ws-muted); font-size: 12px; line-height: 1.35; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .key-facts dd { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .key-facts dd small { display: block; color: var(--ws-muted); font-size: 12px; font-weight: 400; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .key-facts > .is-critical dd { color: var(--critical-ink); }
+.workspace-shell :is(#response-panel, .response-detail-dock) .key-facts > .is-warning dd { color: var(--warning-ink); }
+.workspace-shell #response-panel .incident-summary-fact > strong { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.workspace-shell #response-panel .incident-summary-fact[data-tone='critical'] > strong { color: var(--critical-ink); }
+.workspace-shell #response-panel .incident-summary-fact[data-tone='warning'] > strong { color: var(--warning-ink); }
+.workspace-shell #response-panel button.incident-summary-fact { transition: border-color 120ms ease, background 120ms ease; }
+.workspace-shell #response-panel button.incident-summary-fact:not(:disabled):hover { border-color: var(--control-border); }
+.workspace-shell #response-panel .incident-summary-fact:disabled { opacity: 1; cursor: default; }
+
+/* Tabs: a segmented control under the title block. */
+.workspace-shell :is(#response-panel, .response-detail-dock) .decision-tabs {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; margin: 14px 0 0; padding: 3px;
+  border: 0; border-radius: 8px; background: var(--fill);
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) .decision-tabs button { padding: 6px 8px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--ws-muted); box-shadow: none; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .decision-tabs button:hover { color: var(--ws-text); }
+.workspace-shell :is(#response-panel, .response-detail-dock) .decision-tabs button[aria-pressed='true'] {
+  background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: 0 0 0 1px var(--card-line), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) .sidebar-top .search-box { border-color: var(--card-line); border-radius: 8px; background: var(--card); }
+
+/* Groups: a card with its label inside. */
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.workflow-section, .incident-overview > section, .object-observation, .route-sections, .assessment-basis, .route-summary, .access-route-choice) {
+  padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card);
+}
+.workspace-shell #response-panel .incident-overview > * + * { margin-top: 12px; }
+#response-details :is(.sidebar-scroll, .hazard-detail, .site-detail, .community-evidence, .decision-route) { display:flex; flex-direction:column; gap:12px; }
+#response-details :is(.sidebar-scroll, .hazard-detail, .site-detail, .community-evidence, .decision-route) > * { flex:none; min-width:0; margin-block:0; }
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.workflow-section > h3, .object-observation > h3, h2.incident-section-title) {
+  display: flex; align-items: baseline; gap: 6px; margin: 0 0 6px; padding: 0; border: 0; background: none;
+  color: var(--ws-muted); font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.4; text-transform: none;
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) :is(.workflow-section > h3, h2.incident-section-title) small { color: var(--ws-muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* Rows inside a card: inset hairlines, hover reaching the card's inner edge. */
+.workspace-shell .response-detail-dock .object-row { position: relative; width: calc(100% + 12px); margin: 0 -6px; padding: 9px 6px; border: 0; border-radius: 6px; background: none; }
+.workspace-shell .response-detail-dock .object-row::after { content: none; }
+.workspace-shell .response-detail-dock .object-row:hover { background: var(--hover); }
+.workspace-shell .response-detail-dock :is(.object-row + .object-row, .impact-trace > li + li) { box-shadow: 0 -1px 0 var(--card-line); }
+.workspace-shell .response-detail-dock .impact-trace > li + li { box-shadow: none; border-top: 1px solid var(--card-line); }
+.workspace-shell .response-detail-dock .object-row strong { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.workspace-shell .response-detail-dock .object-row small { margin-top: 1px; font-size: 13px; line-height: 1.45; }
+.workspace-shell .response-detail-dock .object-row > svg { flex: none; color: var(--ws-muted); }
+.workspace-shell .response-detail-dock .impact-trace { margin: 0; padding: 0; list-style: none; }
+.workspace-shell .response-detail-dock .impact-trace::before,
+.workspace-shell .response-detail-dock .impact-trace > li::before { content: none; }
+.workspace-shell .response-detail-dock .impact-trace .object-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1px 12px; }
+.workspace-shell .response-detail-dock .impact-trace .object-row > span:first-child { display: contents; }
+.workspace-shell .response-detail-dock .impact-trace .object-row strong { grid-column: 1 / -1; }
+.workspace-shell .response-detail-dock .impact-trace .object-row small { grid-column: 1; grid-row: 2; margin: 0; }
+.workspace-shell .response-detail-dock .impact-trace .object-row > .status-text { grid-column: 2; grid-row: 2; gap: 4px; font-size: 12px; }
+.workspace-shell .response-detail-dock .impact-trace .object-row > .status-text svg { width: 14px; height: 14px; }
+.workspace-shell .response-detail-dock .impact-trace .object-row > svg { grid-column: 2; grid-row: 1 / 3; }
+
+/* An open field check: its own card, the state it would change shown in tone. */
+.workspace-shell .verification-row {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 16px; align-items: center; gap: 10px;
+  width: 100%; margin: 0; padding: 12px 14px;
+  border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); color: var(--ws-text); text-align: left;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.workspace-shell .verification-row::before {
+  content: ''; width: 8px; height: 8px; justify-self: center; border-radius: 50%; background: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-soft);
+}
+.workspace-shell .verification-row:is([data-state='active'])::before { background: var(--select); box-shadow: 0 0 0 3px var(--select-soft); }
+.workspace-shell .verification-row:is([data-state='done'])::before { background: var(--ws-muted); box-shadow: none; }
+.workspace-shell .verification-row:is([data-state='blocked'])::before { background: var(--critical); box-shadow: 0 0 0 3px var(--critical-soft); }
+.workspace-shell .verification-row:hover { border-color: var(--control-border); }
+.workspace-shell .verification-row > span:first-child { display: grid; gap: 1px; min-width: 0; }
+.workspace-shell .verification-row strong { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.workspace-shell .verification-row small { color: var(--ws-muted); font-size: 13px; line-height: 1.4; }
+.workspace-shell .verification-row > .status-text { font-size: 12px; }
+.workspace-shell .verification-row > svg { color: var(--ws-muted); }
+.workspace-shell .response-detail-dock .detail-next { padding: 0; border: 0; background: none; }
+.workspace-shell .response-detail-dock .detail-next > * + * { margin-top: 10px; }
+.workspace-shell .response-detail-dock .object-profile-tools,
+.workspace-shell .response-detail-dock .area-action { padding: 0; border: 0; background: none; }
+
+/* Prose: the observation in body size, its provenance quieter beneath. */
+.workspace-shell .response-detail-dock .object-observation { display: grid; gap: 4px; }
+.workspace-shell .response-detail-dock .object-observation > p:not(.observation-meta),
+.workspace-shell .response-detail-dock :is(.detail-source, .hazard-observation) { margin: 0; font-size: 14px; line-height: 1.55; }
+.workspace-shell .response-detail-dock :is(.observation-meta, .hazard-evidence-source) { margin: 0 0 6px; color: var(--ws-muted); font-size: 13px; line-height: 1.5; }
+.workspace-shell .response-detail-dock .object-observation > .observation-meta { margin: 2px 0 0; }
+.workspace-shell .response-detail-dock .hazard-evidence > .hazard-observation { margin-bottom: 8px; }
+.workspace-shell .response-detail-dock .hazard-evidence > .evidence-limitation { margin: 0 0 6px; padding: 0; border: 0; background: none; color: var(--ws-muted); font-size: 13px; }
+.workspace-shell .response-detail-dock .evidence-open { display: inline-flex; align-items: center; justify-self: start; gap: 6px; margin-top: 6px; font-size: 13px; }
+
+/* Field photos fill their card edge to edge, with a small radius. */
+.workspace-shell .response-detail-dock .field-photo-strip-grid button { border-radius: 6px; }
+
+/* Left-panel lists sit in one card each. */
+.workspace-shell #response-panel .incident-landslide-list { margin-inline: -6px; }
+.workspace-shell #response-panel .incident-landslide-row { grid-template-columns: 44px minmax(0, 1fr) auto; padding: 8px 6px; border-radius: 6px; }
+.workspace-shell #response-panel .incident-landslide-row + .incident-landslide-row { box-shadow: 0 -1px 0 var(--card-line); }
+.workspace-shell #response-panel .incident-landslide-row:hover { box-shadow: none; }
+.workspace-shell #response-panel .incident-landslide-row:hover + .incident-landslide-row { box-shadow: none; }
+.workspace-shell #response-panel .photo-thumb { width: 44px; height: 44px; border-radius: 6px; }
+.workspace-shell #response-panel .incident-overview .incident-work-row { width: calc(100% + 12px); min-height: 44px; margin: 0 -6px; padding: 10px 6px; border-radius: 6px; }
+.workspace-shell #response-panel .incident-overview .incident-report-review { margin: 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); border-radius: 10px; background: var(--warning-soft); }
+
+/* Route tab: origin line on the sheet, the selected route and its sections as cards. */
+.workspace-shell .response-detail-dock .decision-route .route-origin { margin: 0; }
+.workspace-shell .response-detail-dock .route-summary > h2 { margin: 2px 0 0; font-size: 16px; line-height: 1.4; }
+.workspace-shell .response-detail-dock .route-summary .next-action { margin-top: 10px; background: var(--fill); border-radius: 8px; }
+.workspace-shell .response-detail-dock .route-summary .route-metrics { padding: 14px 0 2px; }
+.workspace-shell .response-detail-dock .route-sections { padding-block: 4px 8px; }
+.workspace-shell .response-detail-dock .route-sections-toggle { min-height: 40px; }
+.workspace-shell .response-detail-dock .access-route-choice .route-options { margin-inline: -6px; }
+.workspace-shell .response-detail-dock .access-secondary-tools { margin-top: 12px; }
+.workspace-shell .response-detail-edit { background: var(--sheet-bg); border-top-color: var(--card-line); }
+
+/* Map cards (GIS records, landslide areas) use the same title block and grouped cards. */
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card { border: 1px solid var(--card-line); border-radius: 12px; background: var(--sheet-bg); box-shadow: var(--shadow-overlay); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 12px; margin: 0; padding: 18px 20px 14px; border: 0; background: var(--sheet-bg); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > header > .detail-name { flex: 1; min-width: 0; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > header h2 { margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; overflow-wrap: anywhere; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > header .icon-button { flex: none; width: 32px; height: 32px; min-height: 32px; margin: -4px -8px 0 0; border: 0; border-radius: 6px; background: none; color: var(--ws-muted); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > header .icon-button:hover { background: var(--hover); color: var(--ws-text); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card-head { flex-basis: 100%; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card :is(.key-facts) { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 14px 0 0; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .key-facts > div { display: grid; align-content: start; gap: 2px; padding: 10px 12px; border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .key-facts dt { color: var(--ws-muted); font-size: 12px; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .key-facts dd { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .detail-priority { margin: 6px 0 0; font-size: 13px; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card-body { padding: 0 20px 20px; background: var(--sheet-bg); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .workflow-section { margin: 0; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .workflow-section + .workflow-section { margin-top: 12px; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .workflow-section > h3 { margin: 0 0 6px; color: var(--ws-muted); font-size: 12px; font-weight: 600; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .workflow-section > .field-note { margin: 0 0 8px; font-size: 14px; line-height: 1.55; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .fact-rows { margin: 0; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .fact-rows > div { grid-template-columns: 116px minmax(0, 1fr); padding: 7px 0; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .fact-rows > div + div { border-top: 1px solid var(--card-line); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link { display: grid; gap: 1px; width: calc(100% + 12px); margin: 0 -6px; padding: 9px 6px; border: 0; border-radius: 6px; background: none; color: var(--ws-text); text-align: left; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link + .landslide-road-link { box-shadow: 0 -1px 0 var(--card-line); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card button.landslide-road-link:hover { background: var(--hover); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link strong { font-size: 14px; font-weight: 600; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link small { color: var(--ws-muted); font-size: 13px; }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 20px; border-top: 1px solid var(--card-line); background: var(--sheet-bg); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer .button { flex: 1 1 auto; justify-content: center; min-width: 0; border-radius: 6px; background: var(--card); border-color: var(--card-line); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer .button:hover { border-color: var(--control-border); }
+
+/* Left-panel lists (communities, roads, affected sites): each entry is a card.
+   Hover lifts the edge; the selected entry carries the brand edge, never a pale tint. */
+.workspace-shell #response-panel :is(.community, .sidebar-scroll .object-row) {
+  position: relative; display: block; width: 100%; margin: 0 0 8px; padding: 12px 14px;
+  border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); color: var(--ws-text); text-align: left;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.workspace-shell #response-panel .sidebar-scroll .object-row.impact-row { display: grid; }
+.workspace-shell #response-panel :is(.community, .sidebar-scroll .object-row)::after { content: none; }
+.workspace-shell #response-panel :is(.community, .sidebar-scroll .object-row):hover { border-color: var(--control-border); background: var(--card); }
+.workspace-shell #response-panel :is(.community.active, .sidebar-scroll .object-row[aria-pressed='true']) {
+  border-color: var(--select); background: var(--card); box-shadow: inset 0 0 0 1px var(--select);
+}
+.workspace-shell #response-panel :is(.community.active .community-heading strong, .sidebar-scroll .object-row[aria-pressed='true'] strong) { color: var(--ws-text); }
+.workspace-shell #response-panel .sidebar-scroll .object-row strong { font-size: 14px; font-weight: 600; }
+.workspace-shell #response-panel .sidebar-scroll .object-row small { font-size: 13px; }
+.workspace-shell #response-panel .community p { margin-top: 4px; font-size: 13px; line-height: 1.5; }
+.workspace-shell #response-panel .list-label { padding: 0 0 8px; font-size: 12px; }
+
+/* Filter chips: outlined; the active one is solid ink so it reads at a glance. */
+.workspace-shell #response-panel .filters { gap: 6px; margin-top: 12px; }
+.workspace-shell #response-panel .filter {
+  min-height: 30px; padding: 4px 12px; border: 1px solid var(--card-line); border-radius: 999px;
+  background: transparent; color: var(--ws-text); font-size: 13px; font-weight: 500;
+}
+.workspace-shell #response-panel .filter:hover { border-color: var(--control-border); }
+.workspace-shell #response-panel .filter[aria-pressed='true'] { border-color: var(--ws-text); background: var(--ws-text); color: var(--sheet-bg); font-weight: 600; }
+.workspace-shell #response-panel .filter[aria-pressed='true'] .filter-count { color: inherit; opacity: 0.75; }
+
+/* Four figures read as a 2×2 block rather than a ragged 3 + 1. */
+.workspace-shell :is(#response-panel, .response-detail-dock) .key-facts:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Dialogs share the sheet: same surface, title block without a tinted bar, cards inside. */
+body .modal-overlay .modal-dialog { border: 1px solid var(--card-line); border-radius: 12px; background: var(--sheet-bg); }
+body .modal-overlay .modal-dialog > .modal-head { min-height: 0; padding: 18px 16px 12px 24px; border-bottom: 1px solid var(--card-line); background: var(--sheet-bg); }
+body .modal-overlay .modal-dialog > .modal-head h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+body .modal-overlay .modal-dialog > .modal-head .icon-button { border-radius: 6px; }
+body .modal-overlay .modal-dialog .operations-filters button { min-height: 30px; padding: 4px 12px; border: 1px solid var(--card-line); border-radius: 999px; background: transparent; color: var(--ws-text); font-size: 13px; }
+body .modal-overlay .modal-dialog .operations-filters button[aria-pressed='true'] { border-color: var(--ws-text); background: var(--ws-text); color: var(--sheet-bg); font-weight: 600; }
+body .modal-overlay .response-work-dialog .response-work-body > .operations-filters { border-bottom-color: var(--card-line); }
+body .modal-overlay .response-work-dialog .response-work-body > .response-work-edit { border-left-color: var(--card-line); }
+body .modal-overlay .response-work-dialog .response-work-row { border-radius: 8px; }
+body .modal-overlay .response-work-dialog .response-work-list li + li { border-top-color: var(--card-line); }
+body .modal-overlay .response-work-dialog .work-basis { border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+
+/* Field report: the place is the title, the finding is the content, provenance sits in a card. */
+.report-dialog { width: min(520px, calc(100vw - 32px)); }
+.report-dialog > .modal-head { align-items: flex-start; }
+.report-dialog > .modal-head > .detail-name { flex: 1; min-width: 0; }
+.report-dialog .report-road { margin: 2px 0 0; color: var(--ws-muted); font-size: 13px; }
+.report-dialog > .modal-body { padding: 16px 24px 4px; }
+.report-dialog .report-finding { margin: 0 0 14px; font-size: 16px; line-height: 1.55; }
+.report-dialog .workflow-section { margin: 0; padding: 4px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+.report-dialog .report-facts { margin: 0; }
+.report-dialog .report-facts > div { grid-template-columns: 96px minmax(0, 1fr); padding: 8px 0; }
+.report-dialog .report-facts > div + div { border-top: 1px solid var(--card-line); }
+.report-dialog .report-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 16px 24px 20px; }
+.report-dialog .report-actions { display: flex; gap: 8px; margin-left: auto; }
+.report-dialog .report-actions .button { border-radius: 6px; }
+
+/* An empty inbox is a short message, not a full-size reader. */
+body .modal-overlay .modal-dialog.report-inbox.is-empty { width: min(440px, calc(100vw - 32px)); height: auto; }
+.report-inbox.is-empty .inbox-empty { padding: 28px 24px 32px; }
+body .modal-overlay .response-work-dialog .response-work-row[aria-pressed='true'] { background: var(--card); box-shadow: inset 0 0 0 1.5px var(--select); }
+body .modal-overlay .response-work-dialog .response-work-row[aria-pressed='true'] strong { color: var(--ws-text); }
+body .modal-overlay .response-work-dialog .response-work-list li:has(> [aria-pressed='true']) + li,
+body .modal-overlay .response-work-dialog .response-work-list li:has(> [aria-pressed='true']) { border-top-color: transparent; }
+
+.workspace-shell .community-detail-heading .community-parent { margin:5px 0 0; color:var(--ws-muted); font-size:13px; line-height:1.4; }
+
+/* Mobile view switch: the same segmented control as the panel tabs. */
+@media (max-width: 900px) {
+  .workspace-shell .mobile-view-switch { gap: 2px; padding: 6px 12px; border-top-color: var(--card-line); background: var(--sheet-bg); }
+  .workspace-shell .mobile-view-switch button { height: 40px; border-radius: 8px; color: var(--ws-muted); font-weight: 500; }
+  .workspace-shell .mobile-view-switch button[aria-pressed='true'] { background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: 0 0 0 1px var(--card-line), 0 1px 2px rgba(0, 0, 0, 0.06); }
+}
+
+/* Map toolbar: an active tool is ink with an underline, never a tinted block. */
+.workspace-shell .map-area :is(.map-toolbar, .map-tools, .map-advanced-tools) .icon-button:is([aria-expanded='true'], [aria-pressed='true']) {
+  background: transparent; color: var(--ws-text); box-shadow: inset 0 -2px var(--select);
+}
+.workspace-shell .map-area :is(.map-toolbar, .map-tools, .map-advanced-tools) .icon-button:is([aria-expanded='true'], [aria-pressed='true']):hover { background: var(--hover); }
+
+/* Floating map tools (measure, draw, journey) share the sheet: one surface, cards inside. */
+.workspace-shell .map-area :is(.map-tool-panel, .road-journey-panel) {
+  border: 1px solid var(--card-line); border-radius: 12px; background: var(--sheet-bg); box-shadow: var(--shadow-overlay);
+}
+.workspace-shell .map-area .map-tool-heading,
+.workspace-shell .map-area .road-journey-panel > header { min-height: 0; padding: 12px 10px 10px 16px; border-bottom: 0; background: var(--sheet-bg); }
+.workspace-shell .map-area :is(.map-tool-heading > strong, .road-journey-panel h2) { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.workspace-shell .map-area :is(.map-tool-heading, .road-journey-panel > header) .icon-button { width: 30px; height: 30px; min-height: 30px; border: 0; border-radius: 6px; background: none; color: var(--ws-muted); }
+.workspace-shell .map-area :is(.map-tool-heading, .road-journey-panel > header) .icon-button:hover { background: var(--hover); color: var(--ws-text); }
+.workspace-shell .map-area :is(.map-tool-heading, .map-measure-heading) .icon-button[aria-pressed='true'],
+.workspace-shell .map-area .map-tool-heading .icon-button[aria-controls][aria-expanded='true'] { background: var(--card); color: var(--ws-text); box-shadow: 0 0 0 1px var(--card-line); }
+
+/* Mode choice: quiet tiles, the chosen one carries the brand edge. */
+.workspace-shell .map-area .map-tool-panel .choice-group { gap: 6px; }
+.workspace-shell .map-area .map-tool-panel .choice-group-option span { padding: 7px 4px; border-color: var(--card-line); border-radius: 8px; background: var(--card); font-size: 13px; }
+.workspace-shell .map-area .map-tool-panel .choice-group-option:hover span { border-color: var(--control-border); }
+.workspace-shell .map-area .map-tool-panel .choice-group-option input:checked + span { border-color: var(--select); background: var(--card); color: var(--ws-text); box-shadow: inset 0 0 0 1px var(--select); }
+
+/* Tabs as the same segmented control used in the panels. */
+.workspace-shell .map-area .map-tool-tabs { gap: 2px; margin: 0 12px; padding: 3px; border: 0; border-radius: 8px; background: var(--fill); }
+.workspace-shell .map-area .map-tool-tabs button { flex: 1; padding: 6px 8px; border-radius: 6px; color: var(--ws-muted); font-size: 13px; font-weight: 500; }
+.workspace-shell .map-area .map-tool-tabs button[aria-pressed='true'] { background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: 0 0 0 1px var(--card-line), 0 1px 2px rgba(0, 0, 0, 0.06); }
+.workspace-shell .map-area .map-tool-tabs button[aria-pressed='true']::after { content: none; }
+
+/* Body: the result is a card; the vertex table sits under it without its own rules. */
+.workspace-shell .map-area .map-tool-body { padding: 12px; }
+.workspace-shell .map-area .map-tool-result-header { padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+.workspace-shell .map-area .map-tool-result dd { font-size: 18px; font-weight: 600; }
+.workspace-shell .map-area .map-tool-hint { min-height: 0; margin: 8px 2px 0; font-size: 13px; }
+.workspace-shell .map-area .map-tool-hint:empty { display: none; }
+.workspace-shell .map-area .vertex-table { margin-top: 10px; padding: 4px 10px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 12px; }
+.workspace-shell .map-area .vertex-table th,
+.workspace-shell .map-area .vertex-table td { padding: 6px 2px; border-bottom-color: var(--card-line); }
+.workspace-shell .map-area .vertex-table tbody tr:last-child > * { border-bottom: 0; }
+.workspace-shell .map-area .vertex-table thead th { font-size: 11px; }
+.workspace-shell .map-area .vertex-table tr[data-selected] > * { background: var(--hover); }
+.workspace-shell .map-area .map-tool-actions { padding: 10px 12px; border-top-color: var(--card-line); }
+.workspace-shell .map-area .map-tool-actions .button { min-height: 34px; border-radius: 6px; font-size: 13px; }
+
+/* Journey: stops, then one row of figures with the route state above it. */
+.workspace-shell .map-area .road-journey-content { gap: 12px; padding: 4px 16px 16px; }
+.workspace-shell .map-area .journey-stop select { border-color: var(--card-line); border-radius: 8px; background: var(--card); }
+.workspace-shell .map-area .journey-stop .journey-pick { border-color: var(--card-line); border-radius: 8px; background: var(--card); }
+.workspace-shell .map-area .journey-stop-meta { color: var(--ws-muted); font-size: 12px; }
+.workspace-shell .map-area .journey-stop-meta[data-far] { color: var(--warning-ink); }
+.workspace-shell .map-area .journey-result { gap: 10px; padding: 12px 14px; border: 1px solid var(--card-line); border-top: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+.workspace-shell .map-area .journey-status { justify-self: start; padding: 0; border-radius: 0; background: none; font-size: 13px; font-weight: 500; }
+.workspace-shell .map-area .journey-status::before { width: 8px; height: 8px; }
+.workspace-shell .map-area .journey-status.is-open { background: none; }
+.workspace-shell .map-area .journey-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 12px; margin: 0; }
+.workspace-shell .map-area .journey-figures dt { color: var(--ws-muted); font-size: 12px; }
+.workspace-shell .map-area .journey-figures dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.workspace-shell .map-area .journey-profile { border-radius: 8px; }
+
+/* Location and layer panels: same floating sheet as the other map tools. */
+.workspace-shell .map-area :is(.map-location-panel, .layers-panel) { height: auto; border: 1px solid var(--card-line); border-radius: 12px; background: var(--sheet-bg); box-shadow: var(--shadow-overlay); }
+.workspace-shell .map-area :is(.map-location-heading, .layers-heading) { padding: 12px 10px 10px 16px; border-bottom: 0; background: var(--sheet-bg); }
+.workspace-shell .map-area :is(.map-location-heading, .layers-heading) :is(h2, strong, span:first-child) { font-size: 15px; font-weight: 600; }
+.workspace-shell .map-area :is(.map-location-heading, .layers-heading) .icon-button { width: 30px; height: 30px; min-height: 30px; border: 0; border-radius: 6px; background: none; color: var(--ws-muted); }
+.workspace-shell .map-area :is(.map-location-heading, .layers-heading) .icon-button:hover { background: var(--hover); color: var(--ws-text); }
+.workspace-shell .map-area .map-location-body { padding: 0 12px 12px; }
+.workspace-shell .map-area .map-location-panel select { min-height: 34px; border-color: var(--card-line); border-radius: 8px; background: var(--card); }
+.workspace-shell .map-area .map-location-panel dl { gap: 0; margin: 10px 0; padding: 2px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 13px; }
+.workspace-shell .map-area .map-location-panel dl > div { padding: 8px 0; }
+.workspace-shell .map-area .map-location-panel dl > div + div { border-top: 1px solid var(--card-line); }
+.workspace-shell .map-area .map-location-body .icon-button { border-color: var(--card-line); border-radius: 8px; background: var(--card); }
+
+/* GIS imagery detail: title block, quicklook, figure tiles, one reference card, actions. */
+body .geodata-scene-detail { width: 320px; border-left: 1px solid var(--card-line); background: var(--sheet-bg); }
+body .geodata-scene-detail > header { align-items: flex-start; gap: 12px; padding: 18px 12px 12px 20px; border-bottom: 0; background: var(--sheet-bg); }
+body .geodata-scene-detail > header .detail-name { flex: 1; min-width: 0; }
+body .geodata-scene-detail > header h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+body .geodata-scene-detail .catalog-detail-time { margin: 4px 0 0; color: var(--ws-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+body .geodata-scene-detail > header .icon-button { flex: none; width: 32px; height: 32px; min-height: 32px; margin: -4px 0 0; border: 0; border-radius: 6px; background: none; color: var(--ws-muted); }
+body .geodata-scene-detail > header .icon-button:hover { background: var(--hover); color: var(--ws-text); }
+body .geodata-scene-detail .catalog-detail-body { display: grid; gap: 12px; padding: 0 20px 20px; }
+body .geodata-scene-detail .catalog-thumb.is-large { aspect-ratio: 16 / 10; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+body .geodata-scene-detail .catalog-thumb.is-large img { object-fit: cover; }
+body .geodata-scene-detail .key-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 0; }
+body .geodata-scene-detail .key-facts > div { display: grid; align-content: start; gap: 2px; min-width: 0; padding: 10px 12px; border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); }
+body .geodata-scene-detail .key-facts dt { color: var(--ws-muted); font-size: 12px; }
+body .geodata-scene-detail .key-facts dd { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; font-variant-numeric: tabular-nums; }
+body .geodata-scene-detail .workflow-section { margin: 0; padding: 2px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); }
+body .geodata-scene-detail .fact-rows { margin: 0; }
+body .geodata-scene-detail .fact-rows > div { grid-template-columns: 116px minmax(0, 1fr); padding: 8px 0; }
+body .geodata-scene-detail .fact-rows > div + div { border-top: 1px solid var(--card-line); }
+body .geodata-scene-detail .catalog-scene-id { margin: 0; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; color: var(--ws-muted); }
+body .geodata-scene-detail .geodata-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+body .geodata-scene-detail .geodata-actions .button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; border-color: var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 13px; text-decoration: none; }
+body .geodata-scene-detail .geodata-actions .button:hover { border-color: var(--control-border); }
+
+/* Empty AOI: the way in is a button in the panel, not an icon somewhere else. */
+body .geodata-aoi-start { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+body .geodata-aoi-start .button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; border-radius: 8px; font-size: 13px; }
+
+/* Secondary figure under a tile value, and the plain status lines of a title block. */
+.workspace-shell #response-panel .incident-summary-fact > small { color: var(--ws-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .detail-priority .detail-measure { color: var(--ws-muted); font-variant-numeric: tabular-nums; }
+.workspace-shell .response-detail-dock .detail-population { margin: 4px 0 0; color: var(--ws-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.workspace-shell .response-detail-dock .community-parent { margin: 2px 0 0; color: var(--ws-muted); font-size: 13px; }
+
+/* The sticky title block stays short: name and state only; everything else scrolls. */
+.workspace-shell .response-detail-dock .sidebar-top { padding-bottom: 12px; box-shadow: 0 1px 0 var(--card-line); }
+.workspace-shell .response-detail-dock .sidebar-top:has(.decision-tabs) { padding-bottom: 12px; }
+.workspace-shell :is(#response-panel, .response-detail-dock).response-detail-dock .sidebar-scroll { padding-top: 12px; }
+.workspace-shell .response-detail-dock .sidebar-scroll > .key-facts { margin: 0 0 12px; }
+
+/* Hazard basis: the finding as body text, then measured facts, source and limit as rows. */
+.workspace-shell .response-detail-dock .hazard-basis .detail-lead { margin: 0 0 8px; font-size: 14px; line-height: 1.55; }
+.workspace-shell .response-detail-dock .hazard-basis .fact-rows { margin: 0; }
+.workspace-shell .response-detail-dock .hazard-basis .fact-rows > div { grid-template-columns: 108px minmax(0, 1fr); padding: 8px 0; font-size: 13px; line-height: 1.5; }
+.workspace-shell .response-detail-dock .hazard-basis .fact-rows dd { margin: 0; }
+.workspace-shell .response-detail-dock .hazard-basis .fact-rows > div + div,
+.workspace-shell .response-detail-dock .hazard-basis .detail-lead + .fact-rows { border-top: 1px solid var(--card-line); }
+.workspace-shell .response-detail-dock .hazard-basis .evidence-open { margin-top: 8px; }
+.workspace-shell .response-detail-dock .site-detail .fact-rows { margin: 0; }
+.workspace-shell .response-detail-dock .site-detail .fact-rows > div { grid-template-columns: 96px minmax(0, 1fr); padding: 8px 0; }
+.workspace-shell .response-detail-dock .site-detail .fact-rows > div + div { border-top: 1px solid var(--card-line); }
+
+/* Figure tiles in the overview: value on top so values align whatever the label length. */
+.workspace-shell #response-panel .incident-summary-fact > strong { order: -1; }
+.workspace-shell #response-panel .incident-summary-fact > span { line-height: 1.3; }
+
+/* The road's next-step group holds its own cards; it is not a card itself. */
+.workspace-shell :is(#response-panel, .response-detail-dock) .workflow-section.detail-next { padding: 0; border: 0; border-radius: 0; background: none; }
+
+/* Row separators are straight inset hairlines, not shadows that follow the row's radius. */
+.workspace-shell .response-detail-dock .object-row + .object-row { box-shadow: none; }
+.workspace-shell .response-detail-dock .object-row + .object-row::before { content: ''; position: absolute; top: 0; left: 6px; right: 6px; border-top: 1px solid var(--card-line); }
+.workspace-shell .response-detail-dock .object-row:hover::before,
+.workspace-shell .response-detail-dock .object-row:hover + .object-row::before { opacity: 0; }
+
+/* States in panels are a small dot and a word; glyphs (triangles, crossed circles) are reserved for map symbols. */
+.workspace-shell :is(#response-panel, .response-detail-dock) .status-text > svg { display: none; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .status-text::before {
+  content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ws-muted); opacity: 0.6;
+}
+.workspace-shell :is(#response-panel, .response-detail-dock) .status-text:is(.warning, .critical, .priority, .selected)::before { background: currentColor; opacity: 1; }
+.workspace-shell :is(#response-panel, .response-detail-dock) .status-text { gap: 6px; }
+
+/* Field task row: dot, name over state and owner, chevron. */
+.workspace-shell .verification-row { grid-template-columns: 18px minmax(0, 1fr) 16px; }
+
+/* Basis cards (hazard and road): finding as body text, source and limits as rows. */
+.workspace-shell .response-detail-dock .object-observation { gap: 0; }
+.workspace-shell .response-detail-dock .object-observation > p:not(.observation-meta) { margin: 0 0 8px; }
+.workspace-shell .response-detail-dock .object-observation .fact-rows { margin: 0; }
+.workspace-shell .response-detail-dock .object-observation .fact-rows > div { grid-template-columns: 108px minmax(0, 1fr); padding: 8px 0; font-size: 13px; line-height: 1.5; border-top: 1px solid var(--card-line); }
+.workspace-shell .response-detail-dock .object-observation .evidence-open { margin-top: 8px; }
+
+/* Section actions: one row of quiet buttons above the cards. */
+.workspace-shell .response-detail-dock .detail-actions-group > * + * { margin-top: 12px; }
+.workspace-shell .response-detail-dock .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.workspace-shell .response-detail-dock .detail-actions .button {
+  display: inline-flex; align-items: center; justify-content:center; flex:1 1 140px; min-width:0; gap: 6px; min-height: 34px; margin: 0; padding: 6px 12px;
+  border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 13px; line-height:1.35; text-align:center; white-space:normal;
+}
+.workspace-shell .response-detail-dock .detail-actions .button:not(:disabled):hover { border-color: var(--control-border); }
+.workspace-shell .response-detail-dock .detail-actions .button:is([aria-pressed='true'], [aria-expanded='true']) { border-color: var(--select); box-shadow: inset 0 0 0 1px var(--select); }
+.workspace-shell .response-detail-dock .road-status-editor .road-status-switch { margin: 0 0 12px; }
+.workspace-shell .response-detail-dock .road-status-editor .road-status-change { margin: 0; }
+.workspace-shell .response-detail-dock .road-status-editor textarea { min-height: 64px; padding: 8px 10px; border-color: var(--control-border); border-radius: 8px; background: var(--card); line-height: 1.5; }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option span { min-height: 40px; border-color: var(--card-line); border-radius: 8px; background: var(--card); font-size: 13px; }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option:hover span { border-color: var(--control-border); }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option input:checked + span { border-color: var(--select); background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--select); }
+.workspace-shell .response-detail-dock .road-status-editor .road-status-actions .button { min-height: 34px; border-radius: 8px; font-size: 13px; }
+
+/* The latest manual change: a plain card, not a tinted call-out. */
+.workspace-shell .response-detail-dock .manual-edit-note { display: grid; gap:6px; margin: 0; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 13px; }
+.workspace-shell .response-detail-dock .manual-edit-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.workspace-shell .response-detail-dock .manual-edit-heading h3 { margin:0; color:var(--ws-muted); font-size:12px; font-weight:600; }
+.workspace-shell .response-detail-dock .manual-edit-note > p { display: grid; gap: 4px; margin: 0; }
+.workspace-shell .response-detail-dock .manual-edit-note strong { font-size: 14px; font-weight: 600; }
+.workspace-shell .response-detail-dock .manual-edit-comment { margin:0; }
+.workspace-shell .response-detail-dock .manual-edit-comment summary { cursor:pointer; color:var(--ws-muted); font-size:12px; }
+.workspace-shell .response-detail-dock .manual-edit-comment p { margin:6px 0 0; line-height:1.5; overflow-wrap:anywhere; }
+.workspace-shell .response-detail-dock .manual-edit-note .text-button { margin:0; padding:2px 0; min-height:28px; font-size:12px; }
+.status-optional-note { margin:0; }
+.status-optional-note > summary { min-height:28px; padding:4px 0; cursor:pointer; color:var(--ws-muted); font-size:12px; }
+.status-optional-note textarea { display:block; box-sizing:border-box; width:100%; margin-top:8px; }
+.workspace-shell .response-detail-dock .object-observation .fact-rows time { color: inherit; font-size: inherit; font-variant-numeric: tabular-nums; }
+
+/* Mapped extents: one measure, one evidence block, then related survey photographs. */
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .field-map-card-body > * + * { margin-top:12px; }
+.workspace-shell .field-map-card .area-measure { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:4px 16px; padding:12px 14px; border:1px solid var(--card-line); border-radius:10px; background:var(--card); font-size:13px; color:var(--ws-muted); }
+.workspace-shell .field-map-card .area-measure strong { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ws-text); }
+.workspace-shell .field-map-card .area-source-note { margin:8px 0 0; color:var(--ws-muted); font-size:13px; line-height:1.5; }
+.workspace-shell .field-map-card .fact-rows dd { overflow-wrap:anywhere; font-size:13px; line-height:1.5; }
+.workspace-shell .response-detail-dock .hazard-basis .fact-rows dt { color:var(--ws-muted); }
+.workspace-shell .verification-row::before { box-shadow:none; }

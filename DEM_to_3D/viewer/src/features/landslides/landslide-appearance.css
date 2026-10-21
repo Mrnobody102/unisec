@@ -1,0 +1,7 @@
+.landslide-fill-control { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px 12px; margin:4px 0 12px; font-size:12px; line-height:1.4; }
+.landslide-fill-control output { color:var(--ws-muted); font-variant-numeric:tabular-nums; }
+.landslide-fill-control input[type='range'] { grid-column:1/-1; width:100%; min-width:0; margin:0; accent-color:var(--ws-brand); }
+.map-area .map-layer-group > .landslide-fill-control { display:grid; gap:6px 12px; }
+.citizen-map-layers fieldset > .landslide-fill-control { display:grid; }
+.citizen-map-layers { max-width:calc(100% - 24px); }
+.geodata-task-panel > .landslide-fill-control { margin:14px 20px 8px; }

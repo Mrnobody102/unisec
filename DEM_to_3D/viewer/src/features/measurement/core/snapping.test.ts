@@ -27,7 +27,7 @@ describe('measurement geometry sources', () => {
   it('imports AOI or the active route without substituting a route for an inspected hazard', () => {
     const area = measurementGeometry({ ...base, aoi: { ...preparedPacket.aoi, points: [...preparedPacket.aoi.points, preparedPacket.aoi.points[0]] }, selectedObjectId: `aoi:${preparedPacket.aoi.id}` }, 'en').selected!;
     expect(area.closed).toBe(true); expect(canFinish('area', area.points)).toBe(true);
-    const selectedRoute = buildScenarioRoutes(initialRoadSegments).get('NK')!.candidate;
+    const selectedRoute = buildScenarioRoutes(initialRoadSegments).get('CT')!.candidate;
     expect(measurementGeometry({ ...base, selectedRoute }, 'en').selected?.kind).toBe('route');
     expect(measurementGeometry({ ...base, selectedRoute, selectedObjectId: `hazard:${initialHazards[0].id}` }, 'en').selected).toBeUndefined();
   });

@@ -10,7 +10,7 @@ import type {
 } from '../../types/dear';
 import { StatusText } from '../../shared/ui/StatusText';
 import { normalizeSearch } from '../../features/search/searchIndex';
-import { roadStatusLabels } from '../../features/routes/roadStatus';
+import { formatRoadLength, roadStatusLabels } from '../../features/routes/roadStatus';
 
 type Props = {
   roads: RoadSegment[];
@@ -52,7 +52,7 @@ export const ImpactView: React.FC<Props> = ({
     })
     .filter((r) => {
       const text =
-        `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${roadHazardIds(r).join(' ')}`.toLowerCase();
+        `${r.name[0]} ${r.name[1]} ${r.scenarioRoadCode || ''} ${r.id} ${roadHazardIds(r).join(' ')} ${hazards.filter(h=>roadHazardIds(r).includes(h.id)).flatMap(h=>h.name).join(' ')}`.toLowerCase();
       return normalizeSearch(text).includes(normalizeSearch(query));
     })
     .sort((a, b) => {
@@ -60,10 +60,12 @@ export const ImpactView: React.FC<Props> = ({
       return rank[a.status] - rank[b.status];
     });
 
-  const filteredHazards = hazards.filter((h) => {
+  // Along-road order, as on the incident overview.
+  const order = roads.flatMap(roadHazardIds);
+  const filteredHazards = [...hazards].sort((a, b) => (order.indexOf(a.id) + 1 || 1e9) - (order.indexOf(b.id) + 1 || 1e9)).filter((h) => {
     const text =
-      `${h.name[0]} ${h.name[1]} ${h.id} ${h.src[0]} ${h.src[1]}`.toLowerCase();
-    return normalizeSearch(text).includes(normalizeSearch(query));
+      `${h.name[0]} ${h.name[1]} ${h.id} ${h.src[0]} ${h.src[1]} ${roads.filter(r=>roadHazardIds(r).includes(h.id)).flatMap(r=>r.name).join(' ')}`.toLowerCase();
+    return normalizeSearch(text).includes(normalizeSearch(query)) && (roadFilter==='all' || roads.some(r=>r.status===roadFilter && roadHazardIds(r).includes(h.id)));
   });
 
   return (
@@ -85,10 +87,10 @@ export const ImpactView: React.FC<Props> = ({
           />
         </div>
 
-        <div
+        {<div
           className="filters impact-metrics"
           role="group"
-          aria-label={t('Lọc đoạn đường', 'Filter road sections')}
+          aria-label={t('Lọc theo tình trạng đường', 'Filter by road status')}
         >
           {(
             [
@@ -101,34 +103,34 @@ export const ImpactView: React.FC<Props> = ({
               key={value}
               className="filter"
               data-road-filter={value}
-              aria-pressed={tab === 'roads' && roadFilter === value}
+              data-empty={count === 0 || undefined}
+              aria-pressed={roadFilter === value}
               onClick={() => {
-                onChangeTab('roads');
                 onChangeRoadFilter(
-                  value !== 'all' && tab === 'roads' && roadFilter === value
+                  value !== 'all' && roadFilter === value
                     ? 'all'
                     : value
                 );
               }}
             >
               {label}
-              <span className="filter-count">{count}</span>
+              {value !== 'all' && <span className="filter-count">{count}</span>}
             </button>
           ))}
-        </div>
+        </div>}
 
         <div className="decision-tabs" role="group">
           <button
             aria-pressed={tab === 'roads'}
             onClick={() => onChangeTab('roads')}
           >
-            {t('Đoạn đường', 'Roads')} ({filteredRoads.length})
+            {t('Đoạn đường', 'Roads')}
           </button>
           <button
             aria-pressed={tab === 'hazards'}
             onClick={() => onChangeTab('hazards')}
           >
-            {t('Điểm ảnh hưởng', 'Affected sites')} ({filteredHazards.length})
+            {t('Điểm ảnh hưởng', 'Affected sites')}
           </button>
         </div>
       </div>
@@ -162,7 +164,7 @@ export const ImpactView: React.FC<Props> = ({
                         className={'road-swatch is-' + road.status}
                         aria-hidden="true"
                       />
-                      {road.len} km
+                      {formatRoadLength(road.len,locale)} km
                     </small>
                   </span>
                   {road.status !== 'open' && (
@@ -200,15 +202,10 @@ export const ImpactView: React.FC<Props> = ({
                 >
                   <span>
                     <strong>{t(hz.name[0], hz.name[1])}</strong>
-                    <small className="metadata-line">
-                      {hz.area != null && <span>{hz.area} ha</span>}
-                      <span>{t(hz.src[0], hz.src[1])}</span>
-                    </small>
+                    <small>{[hz.area != null ? `${hz.area.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-GB')} ha` : '', t(hz.src[0], hz.src[1])].filter(Boolean).join(', ')}</small>
                   </span>
-                  <StatusText>
-                    {hz.observation === 'reported'
-                      ? t('Có báo cáo', 'Reported')
-                      : t('Chưa xác minh', 'Unverified')}
+                  <StatusText tone={hz.observation === 'reported' ? 'critical' : 'warning'} icon="uncertain">
+                    {hz.observation === 'reported' ? t('Có báo cáo', 'Reported') : t('Chưa kiểm chứng', 'Unverified')}
                   </StatusText>
                 </button>
               ))

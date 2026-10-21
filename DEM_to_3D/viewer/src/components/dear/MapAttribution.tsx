@@ -12,49 +12,40 @@ export function MapAttribution({
   locale,
   state,
   onRetry,
-  localSource
+  localSource,
+  terrainDisplay,
+  analysisSource,
+  fieldSource, osmReference
 }: {
   locale: Locale;
   state: BasemapState;
   onRetry: () => void;
   localSource?: [string, string];
+  terrainDisplay?: {exaggeration: number};
+  analysisSource?: {name:string; acquired:string; credit:string};
+  fieldSource?: string;
+  osmReference?: boolean;
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
   const imagery =
     state.provider === 'configured' ? imagerySource : defaultImagerySource;
+  const imageryCredit = imagery.link ? (
+    <a href={imagery.link} target="_blank" rel="noreferrer">
+      {imagery.credit}
+    </a>
+  ) : (
+    imagery.credit
+  );
   const anchor = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   useDismissiblePopover(anchor, open, () => setOpen(false));
   const unavailable =
     state.status === 'partial' ||
     state.status === 'error' ||
-    state.status === 'unavailable';
+    state.status === 'unavailable' || (state.status !== 'off' && (state.relief === 'error' || state.relief === 'partial'));
   return (
     <>
       <div className="map-attribution" ref={anchor}>
-        {state.loaded > 0 && (
-          <span className="map-credit">
-            {state.style === 'satellite' ? (
-              <a href={imagery.link} target="_blank" rel="noreferrer">
-                {imagery.credit}
-              </a>
-            ) : (
-              <>
-                <a
-                  href="https://www.openstreetmap.org/copyright"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  © OSM
-                </a>{' '}
-                /{' '}
-                <a href="https://maps.eox.at" target="_blank" rel="noreferrer">
-                  EOX
-                </a>
-              </>
-            )}
-          </span>
-        )}
         <button
           className="map-source-button"
           aria-label={t('Nguồn bản đồ', 'Map sources')}
@@ -91,11 +82,22 @@ export function MapAttribution({
               </button>
             </div>
             <dl>
+              {analysisSource && <div><dt>{t('Ảnh đang hiển thị','Displayed imagery')}</dt><dd>{analysisSource.name}<br/>{analysisSource.acquired}<br/>{analysisSource.credit}</dd></div>}
               {localSource && (
                 <div>
                   <dt>{t('Dữ liệu khu vực', 'Local data')}</dt>
                   <dd>{t(...localSource)}</dd>
                 </div>
+              )}
+              {fieldSource && <div><dt>{t('Khảo sát thực địa', 'Field survey')}</dt><dd>{fieldSource}<br/>{t('Lớp ảnh Google Earth không kèm dữ liệu ảnh.', 'Google Earth image layers contain no raster data.')}</dd></div>}
+              {osmReference && <div><dt>{t('Đường tham chiếu', 'Reference road')}</dt><dd><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors, ODbL</a></dd></div>}
+              {osmReference && <div><dt>{t('Mốc địa danh', 'Place reference')}</dt><dd><a href="https://www.geonames.org/8526472/ban-che-tao.html" target="_blank" rel="noreferrer">GeoNames, CC BY 4.0</a></dd></div>}
+              {state.relief && <div><dt>{t('Địa hình nền', 'Context terrain')}</dt><dd>
+                <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer">Mapzen Terrain Tiles</a>
+                <br/>{state.relief === 'loading' ? t('Đang tải', 'Loading') : state.relief === 'error' ? t('Chưa tải được', 'Unavailable') : t('Chỉ hiển thị, không dùng đo đạc', 'Display only, excluded from measurements')}
+              </dd></div>}
+              {terrainDisplay && (
+                <div><dt>{t('Phóng đại độ cao', 'Vertical exaggeration')}</dt><dd>×{Number(terrainDisplay.exaggeration.toFixed(2))}</dd></div>
               )}
               <div>
                 <dt>{t('Nền khu vực', 'Regional basemap')}</dt>
@@ -103,7 +105,7 @@ export function MapAttribution({
                   {state.status === 'off'
                     ? t('Đã tắt', 'Off')
                     : state.status === 'loading' && !state.loaded
-                      ? t('Đang tải…', 'Loading…')
+                      ? t('Đang tải', 'Loading')
                     : state.loaded > 0
                       ? state.style === 'satellite'
                         ? imagery.name
@@ -111,13 +113,18 @@ export function MapAttribution({
                       : t('Chưa tải được', 'Unavailable')}
                 </dd>
               </div>
-              {state.style === 'satellite' && !imagery.custom && state.status !== 'off' && <div>
-                <dt>{t('Độ phân giải nền', 'Basemap resolution')}</dt><dd>Sentinel-2 · 10 m/pixel</dd>
-              </div>}
+              {state.style === 'satellite' && !imagery.custom && state.status !== 'off' && (
+                <div>
+                  <dt>{t('Độ phân giải nền', 'Basemap resolution')}</dt>
+                  <dd>{t('Thay đổi theo khu vực', 'Varies by location')}</dd>
+                </div>
+              )}
             </dl>
             {unavailable && (
               <div className="map-source-status" role="status">
-                {state.status === 'partial'
+                {state.relief === 'error' || state.relief === 'partial'
+                  ? t('Địa hình nền chưa đầy đủ', 'Context terrain is incomplete')
+                  : state.status === 'partial'
                   ? t(
                       'Một phần nền chưa tải được',
                       'Some basemap tiles are unavailable'
@@ -131,7 +138,7 @@ export function MapAttribution({
                         'Không tải được nền khu vực',
                         'Regional basemap unavailable'
                       )}
-                {(state.status === 'error' || state.status === 'partial') && (
+                {(state.status === 'error' || state.status === 'partial' || state.relief === 'error' || state.relief === 'partial') && (
                   <button onClick={onRetry}>{t('Thử lại', 'Retry')}</button>
                 )}
               </div>
@@ -139,35 +146,7 @@ export function MapAttribution({
             {state.loaded > 0 && (
               <p className="map-source-license">
                 {state.style === 'satellite' ? (
-                  imagery.custom ? (
-                    <a href={imagery.link} target="_blank" rel="noreferrer">
-                      {imagery.credit}
-                    </a>
-                  ) : (
-                    <>
-                      <a
-                        href="https://cloudless.eox.at"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        EOxCloudless
-                      </a>{' '}
-                      by EOX IT Services GmbH
-                      <br />
-                      {t(
-                        'Dữ liệu Copernicus Sentinel 2016 đã xử lý',
-                        'Contains modified Copernicus Sentinel data 2016'
-                      )}{' '}
-                      /{' '}
-                      <a
-                        href="https://creativecommons.org/licenses/by/4.0/"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        CC BY 4.0
-                      </a>
-                    </>
-                  )
+                  imageryCredit
                 ) : (
                   <>
                     <a

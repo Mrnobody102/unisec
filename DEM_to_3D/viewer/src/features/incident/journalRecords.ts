@@ -76,8 +76,8 @@ export function journalRecords(
       at: edit.at,
       kind: 'revision',
       title: c.kind === 'status'
-        ? [`${edit.target.name}: ${roadStatusShortLabels[c.from][0]} → ${roadStatusShortLabels[c.to][0]}`,
-          `${edit.target.name}: ${roadStatusShortLabels[c.from][1]} → ${roadStatusShortLabels[c.to][1]}`]
+        ? [`${edit.target.name}: từ ${roadStatusShortLabels[c.from][0].toLocaleLowerCase('vi-VN')} sang ${roadStatusShortLabels[c.to][0].toLocaleLowerCase('vi-VN')}`,
+          `${edit.target.name}: ${roadStatusShortLabels[c.from][1].toLocaleLowerCase('en-GB')} to ${roadStatusShortLabels[c.to][1].toLocaleLowerCase('en-GB')}`]
         : c.kind === 'properties' && c.to.observation === 'reported' && c.from.observation !== 'reported'
           ? [`${edit.target.name}: xác nhận tại hiện trường`, `${edit.target.name}: confirmed on site`]
           : [`Sửa dữ liệu: ${edit.target.name}`, `Data edit: ${edit.target.name}`],

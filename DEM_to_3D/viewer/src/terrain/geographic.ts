@@ -35,8 +35,8 @@ function assertSameCrs(reference: TerrainMetadata, candidate: TerrainMetadata, m
   }
 }
 
-/** Convert exporter-local GLB coordinates into the first model's local scene. */
-export function createGeographicPlacements(models: readonly Pick<LoadedModel, 'name' | 'metadata'>[], referenceIndex = 0): GeographicPlacement[] {
+/** Place baked GLBs in a shared display frame; their metadata and analysis heights stay unchanged. */
+export function createGeographicPlacements(models: readonly Pick<LoadedModel, 'name' | 'metadata'>[], referenceIndex = 0, displayExaggeration?: number): GeographicPlacement[] {
   if (models.length === 0) return [];
   if (!Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= models.length) {
     throw new TerrainAssetError(`Geographic merge reference index ${referenceIndex} is invalid`);
@@ -45,6 +45,8 @@ export function createGeographicPlacements(models: readonly Pick<LoadedModel, 'n
   const reference = requireMetadata(models[referenceIndex]);
   validateReferenceMetadata(reference, models[referenceIndex].name);
 
+  const exaggeration = displayExaggeration ?? reference.elevation.exaggeration;
+  if (!Number.isFinite(exaggeration) || exaggeration <= 0) throw new TerrainAssetError('Invalid display exaggeration');
   return models.map((model) => {
     const metadata = requireMetadata(model);
     validateReferenceMetadata(metadata, model.name);
@@ -52,10 +54,10 @@ export function createGeographicPlacements(models: readonly Pick<LoadedModel, 'n
     return {
       position: {
         x: metadata.world_origin.x - reference.world_origin.x,
-        y: (metadata.elevation.base_elevation - reference.elevation.base_elevation) * reference.elevation.exaggeration,
+        y: (metadata.elevation.base_elevation - reference.elevation.base_elevation) * exaggeration,
         z: reference.world_origin.y - metadata.world_origin.y,
       },
-      scaleY: reference.elevation.exaggeration / metadata.elevation.exaggeration,
+      scaleY: exaggeration / metadata.elevation.exaggeration,
     };
   });
 }

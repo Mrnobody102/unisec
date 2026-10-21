@@ -2,13 +2,19 @@
 
 :root, [data-theme="dark"] {
   color-scheme: dark;
+  /* Neutral slate: the panels must not share a hue with forest/terrain imagery. */
   --canvas: #161820;
   --glass: rgba(37, 40, 49, 0.98);
   --glass-solid: #252831;
   --glass-stroke: rgba(255, 255, 255, 0.10);
-  --hover: rgba(255, 255, 255, 0.055);
+  --hover: rgba(255, 255, 255, 0.075);
   --fill: rgba(255, 255, 255, 0.07);
   --divider: rgba(255, 255, 255, 0.08);
+  --row-line: rgba(255, 255, 255, 0.065);
+  /* Grouped panels: a recessed sheet with lifted group cards. */
+  --sheet-bg: #1f2229;
+  --card: #292c35;
+  --card-line: rgba(255, 255, 255, 0.07);
   --control-border: #565e6d;
   --ink: #e8ebf0;
   --ink-2: #b1b7c2;
@@ -50,7 +56,7 @@
   --ws-muted: #b1b7c2;
   --ws-line: #373c48;
   --ws-brand: #b4d5bc;
-  --ws-tint: #2c3d31;
+  --ws-tint: #2f3a36;
   --ws-map: #191c24;
   --shadow-map-control: 0 2px 8px rgba(0,0,0,0.24);
 
@@ -72,22 +78,25 @@
   --shadow-float: 0 1px 2px rgba(0,0,0,0.18), 0 6px 20px rgba(0,0,0,0.16);
   --modal-backdrop: rgba(8, 11, 16, 0.70);
   --shadow-overlay: 0 3px 8px rgba(0,0,0,0.20), 0 14px 32px rgba(0,0,0,0.30);
-  --imagery-filter: saturate(0.82) brightness(0.96) contrast(1.04);
   --pin-label-halo: 0 0 1px #0b1a1d, 0 0 1px #0b1a1d, 0 0 2px #0b1a1d, 0 0 3px rgba(11, 26, 29, 0.9), 0 1px 5px rgba(11, 26, 29, 0.6);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --canvas: #edf1e9;
-  --glass: rgba(251, 252, 249, 0.96);
-  --glass-solid: #fbfcf9;
+  --canvas: #eeeee7;
+  --glass: rgba(244, 241, 232, 0.98);
+  --glass-solid: #f4f1e8;
   --glass-stroke: rgba(15, 23, 42, 0.09);
-  --hover: rgba(38, 63, 47, 0.05);
+  --hover: rgba(38, 63, 47, 0.10);
   --fill: rgba(38, 63, 47, 0.06);
   --divider: rgba(15, 23, 42, 0.07);
+  --row-line: rgba(41, 60, 55, 0.10);
+  --sheet-bg: #eeebe3;
+  --card: #fbfaf6;
+  --card-line: rgba(41, 60, 55, 0.11);
   --control-border: #c4cec1;
-  --ink: #25332c;
-  --ink-2: #526157;
+  --ink: #293c37;
+  --ink-2: #535c54;
   --ink-3: #647168;
   --critical: #dc2626;
   --critical-soft: rgba(220, 38, 38, 0.09);
@@ -103,8 +112,8 @@
   --primary: #214e3a;
   --on-primary: #ffffff;
   --select: #2f7153;
-  --select-soft: #edf3e9;
-  --select-ink: #275f45;
+  --select-soft: #e6ebdf;
+  --select-ink: #38584b;
   --prio-3: #64748b;
   --flood: #0891b2;
   --focus: var(--select);
@@ -119,27 +128,27 @@
   --shadow-panel: 0 12px 32px -8px rgba(15,23,42,0.20), 0 2px 6px rgba(15,23,42,0.08);
   --shadow-pop: 0 4px 16px rgba(15,23,42,0.12);
 
-  --ws-bg: #f3f5f0;
-  --ws-surface: #fbfcf9;
-  --ws-raised: #f3f5f0;
-  --ws-text: #25332c;
-  --ws-muted: #647168;
-  --ws-line: #e1e6de;
-  --ws-brand: #275f45;
-  --ws-tint: #edf3e9;
+  --ws-bg: #e9e6da;
+  --ws-surface: #f4f1e8;
+  --ws-raised: #e9e6da;
+  --ws-text: #293c37;
+  --ws-muted: #626f65;
+  --ws-line: #c9cbbd;
+  --ws-brand: #38584b;
+  --ws-tint: #e6ebdf;
   --ws-map: #dce5d7;
   --shadow-map-control: 0 2px 8px rgba(15,23,42,0.10);
 
-  --header-bg: #fbfcf9;
-  --header-line: #e1e6de;
-  --header-ink: #25332c;
+  --header-bg: #f4f1e8;
+  --header-line: #c9cbbd;
+  --header-ink: #293c37;
   --header-muted: var(--ws-muted);
   --header-hover: rgba(25, 64, 45, 0.06);
   --header-stroke: #dce3d8;
   --header-chip: rgba(25, 64, 45, 0.04);
-  --header-brand: #275f45;
-  --map-chrome: #f0f3ed;
-  --map-chrome-line: #dce3d8;
+  --header-brand: #38584b;
+  --map-chrome: #ece9df;
+  --map-chrome-line: #c9cbbd;
   --tool-data-ink: #386e50;
   --tool-measure-ink: #8b6b3b;
   --tool-location-ink: #536f7a;
@@ -148,7 +157,6 @@
   --shadow-float: 0 1px 2px rgba(28,44,31,0.07), 0 6px 20px rgba(28,44,31,0.08);
   --modal-backdrop: rgba(23, 34, 27, 0.38);
   --shadow-overlay: 0 4px 12px rgba(28,44,31,0.06), 0 20px 48px rgba(28,44,31,0.14);
-  --imagery-filter: saturate(0.74) brightness(0.92) contrast(1.05);
   --pin-label-halo: 0 0 1px #10292e, 0 0 1px #10292e, 0 0 2px #10292e, 0 0 3px rgba(16, 41, 46, 0.9), 0 1px 5px rgba(16, 41, 46, 0.6);
 }
 
@@ -162,10 +170,10 @@
   --space-7: 32px;
   --radius-xs: 3px;
   --radius-full: 999px;
-  --radius-control: 4px;
-  --radius-float: 6px;
-  --radius-popover: 6px;
-  --radius-dialog: 8px;
+  --radius-control: 2px;
+  --radius-float: 3px;
+  --radius-popover: 3px;
+  --radius-dialog: 3px;
   --size-header: 56px;
   --size-workspace-toolbar: 48px;
   --meta-label: 120px;
@@ -175,9 +183,11 @@
   --size-panel-compact: 344px;
   --size-row: 56px;
   --size-control: 36px;
+  --font-map: Roboto, Arial, sans-serif;
   --font-sans: 'Source Sans 3', 'IBM Plex Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: 'Source Sans 3', 'IBM Plex Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-display: var(--font-sans);
 }
 
 [data-font="classic"] {

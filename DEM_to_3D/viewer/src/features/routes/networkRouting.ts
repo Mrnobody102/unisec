@@ -1,15 +1,21 @@
-import type { Community, RoadSegment, ScenarioRoute, ScenarioRoutePair } from '../../types/dear';
+import type { Community, RoadSegment, RoutingAssumptions, ScenarioRoute, ScenarioRoutePair } from '../../types/dear';
 import { projectedPathLength } from '../../terrain/pathGeometry';
 
 type Point = { x: number; y: number };
 type Step = { road: RoadSegment; reversed: boolean };
 const key = (point: Point) => `${point.x},${point.y}`;
-export const routingPolicy = { algorithm: 'dijkstra', version: 'network-v1', uncertainCostMultiplier: 3 } as const;
+export const routingPolicy = { algorithm: 'dijkstra', version: 'network-v2', weight: 'travel-time', uncertainCostMultiplier: 3 } as const;
+
+/** Edge weight: hours at the mid scenario speed of the road class, so a short footpath does
+ * not outrank a longer vehicle road. Without speeds the weight is distance. */
+const edgeWeight = (road: RoadSegment, metres: number, speeds?: RoutingAssumptions) =>
+  speeds ? metres / 1000 / ((speeds[road.cls][0] + speeds[road.cls][1]) / 2) : metres;
 
 /** Prepared graph: endpoints are explicitly connected. Do not snap unknown roads
  * or connect line crossings without a surveyed network junction. */
 export function findPreparedNetworkPath(roads: RoadSegment[], start: Point, destination: Point,
-  ignoreStatus: boolean, excluded = new Set<string>(), uncertainCostMultiplier: number = routingPolicy.uncertainCostMultiplier): Step[] | null {
+  ignoreStatus: boolean, excluded = new Set<string>(), uncertainCostMultiplier: number = routingPolicy.uncertainCostMultiplier,
+  speeds?: RoutingAssumptions): Step[] | null {
   const adjacency = new Map<string, Array<Step & { to: string; cost: number }>>();
   for (const road of [...roads].sort((a, b) => a.id.localeCompare(b.id))) {
     if (excluded.has(road.id) || (!ignoreStatus && road.status === 'blocked') || road.points.length < 2) continue;
@@ -17,7 +23,7 @@ export function findPreparedNetworkPath(roads: RoadSegment[], start: Point, dest
     const length = projectedPathLength(road.points);
     if (!Number.isFinite(length) || length <= 0) continue;
     // Versioned demo policy: uncertainty adds cost, not proof of passage.
-    const cost = length * (!ignoreStatus && road.status === 'uncertain' ? uncertainCostMultiplier : 1);
+    const cost = edgeWeight(road, length, speeds) * (!ignoreStatus && road.status === 'uncertain' ? uncertainCostMultiplier : 1);
     const forward = adjacency.get(a) ?? []; forward.push({ road, reversed: false, to: b, cost }); adjacency.set(a, forward);
     const reverse = adjacency.get(b) ?? []; reverse.push({ road, reversed: true, to: a, cost }); adjacency.set(b, reverse);
   }
@@ -65,18 +71,20 @@ function route(steps: Step[], community: Community, type: 'direct' | 'candidate'
 
 /** Shortest mapped baseline and candidate after blockage filtering. When all
  * options are blocked, keep known geometry for inspection, not recommendation. */
-export function buildNetworkRoutes(roads: RoadSegment[], communities: Community[], staging: Point): Map<string, ScenarioRoutePair> {
+export function buildNetworkRoutes(roads: RoadSegment[], communities: Community[], staging: Point, speeds?: RoutingAssumptions): Map<string, ScenarioRoutePair> {
   const routes = new Map<string, ScenarioRoutePair>();
+  const find = (ignoreStatus: boolean, excluded?: Set<string>) => (community: Community) =>
+    findPreparedNetworkPath(roads, staging, community.projected, ignoreStatus, excluded, routingPolicy.uncertainCostMultiplier, speeds);
   for (const community of communities) {
-    const baseline = findPreparedNetworkPath(roads, staging, community.projected, true);
+    const baseline = find(true)(community);
     if (!baseline) { routes.set(community.id, { direct: null, candidate: null }); continue; }
-    const preferred = findPreparedNetworkPath(roads, staging, community.projected, false);
+    const preferred = find(false)(community);
     let alternative: Step[] | null = null, alternativeLength = Infinity;
     // A distinct path can be found by excluding each edge of the baseline.
-    // Retain the shortest known alternative for comparison even if blocked.
+    // Retain the fastest known alternative for comparison even if blocked.
     for (const step of baseline) {
-      const path = findPreparedNetworkPath(roads, staging, community.projected, true, new Set([step.road.id]));
-      const length = path?.reduce((sum, item) => sum + projectedPathLength(item.road.points), 0) ?? Infinity;
+      const path = find(true, new Set([step.road.id]))(community);
+      const length = path?.reduce((sum, item) => sum + edgeWeight(item.road, projectedPathLength(item.road.points), speeds), 0) ?? Infinity;
       if (length < alternativeLength) { alternative = path; alternativeLength = length; }
     }
     const differs = preferred && preferred.map(step => step.road.id).join(',') !== baseline.map(step => step.road.id).join(',');

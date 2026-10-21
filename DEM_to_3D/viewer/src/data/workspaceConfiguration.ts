@@ -1,7 +1,7 @@
 import { readResponse } from '../shared/http/readResponse';
 
 /** Compatibility default for older launchers that only supplied dataSource. */
-export const defaultManifestUrl = '/scenarios/che-tao/v0.2/manifest.json';
+export const defaultManifestUrl = '/scenarios/che-tao/v0.3/manifest.json';
 export type WorkspaceConfiguration = { dataSource: 'prepared' | 'api'; offline: boolean; manifestUrl: string };
 
 export function validateWorkspaceConfiguration(value: unknown): WorkspaceConfiguration {

@@ -3,7 +3,7 @@ import type * as L from 'leaflet';
 import type { Locale } from '../../../types/dear';
 import { UiIcon } from '../../../shared/ui/UiIcon';
 import { ChoiceGroup } from '../../../shared/ui/ChoiceGroup';
-import { canFinish, measurementPreviewPoints, minimumPoints, takesVertices } from '../core/geometry';
+import { canFinish, measurementPreviewPoints, minimumPoints } from '../core/geometry';
 import type { MeasureAction, MeasurementSession } from '../core/session';
 import { defaultMeasureUnits, measureModes, measurementResults, modeName } from '../core/results';
 import type { MeasureGeometry } from '../core/snapping';
@@ -46,7 +46,7 @@ export function MapMeasurement({ mapRef, enabled, locale, session, dispatch, sou
     : mode === 'area' && points.length >= 3 && !canComplete ? m.hintSelfIntersect
     : mode === 'radius' && points.length === 2 && !canComplete ? m.hintCircleOutside
     : session.editing ? m.hintEditing
-    : session.finished ? (takesVertices(mode) ? m.hintSelect : '')
+    : session.finished ? ''
     : mode === 'location' ? m.hintLocation
     : mode === 'angle' ? m.hintAngle
     : mode === 'radius' ? m.hintRadius

@@ -1,5 +1,10 @@
+import { useLandslideAppearance } from '../landslides/useLandslideAppearance';
+import { avoidAreaLabelCollisions } from '../landslides/leafletAreaLabel';
+import {surveyPointSvg} from '../../terrain/poiFrame';
+import { detailInset } from '../map/detailInset';
+import { areaMapLabel } from '../landslides/areaMapLabel';
 import { usePointRendering } from '../map/usePointRendering';
-import { landslideAreaOf, landslideAreaStyle } from '../landslides/landslideAreas';
+import { landslideAreaOf, landslideAreaStyle, landslideBoundaryCasing } from '../landslides/landslideAreas';
 import { addAreaRoadSections } from '../landslides/leafletAreaRoads';
 import type { RoadSegment } from '../../types/dear';
 import { fieldAreaOwner } from './fieldAreas';
@@ -11,6 +16,7 @@ import { observationOf } from './model';
 import { observationColor } from './labels';
 import { observationMarker } from './mapMarker';
 import { mapPane } from '../map/mapLayerOrder';
+import { roadColors } from '../../terrain/roadStyle';
 import { attachPointClusters, type ClusterablePoint } from '../map/pointClusterLayer';
 import './observations.css';
 const emptyRoads: RoadSegment[] = [];
@@ -44,6 +50,7 @@ export function ResponseGisLayer({
   networkVersion?: string;
 }): null {
   const { mode: pointMode } = usePointRendering();
+  const { fillOpacity } = useLandslideAppearance();
   const action = useRef(onSelect);
   action.current = onSelect;
   const openGroup = useRef(onGroup);
@@ -53,13 +60,15 @@ export function ResponseGisLayer({
     const map = mapRef.current;
     if (!map || !enabled) return;
     const group = L.layerGroup().addTo(map);
+    const disposeLabels = avoidAreaLabelCollisions(map);
     const clustered: ClusterablePoint[] = [];
     for (const record of records.filter((r) => r.visible)) {
       const owner = fieldAreaOwner(record, records);
       const mappedArea = landslideAreaOf(record);
       const observation = observationOf(record),
         selected = record.id === selectedId || owner?.id === selectedId;
-      const color = mappedArea ? landslideAreaStyle(mappedArea).color : observation
+      const referenceRoad = record.feature.properties.referenceKind === 'road-corridor';
+      const color = referenceRoad ? roadColors.reference : mappedArea ? landslideAreaStyle(mappedArea).color : observation
         ? observationColor(observation.kind)
         : record.role === 'aoi'
           ? '#219a7d'
@@ -74,13 +83,20 @@ export function ResponseGisLayer({
           style: (feature) =>
             feature?.geometry.type === 'Point'
               ? {}
-              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected), className: 'landslide-area is-' + mappedArea.state } : {
+              : mappedArea ? { ...landslideAreaStyle(mappedArea, selected, fillOpacity), className: 'landslide-area is-' + mappedArea.state } : {
                   color,
-                  weight: selected ? 3 : 1.5,
+                  weight: referenceRoad ? selected ? 3 : 2 : selected ? 3 : 1.5,
                   fillOpacity: owner ? 0.18 : 0.03,
                   dashArray: record.role === 'footprint' ? '7 4' : undefined
                 },
           pointToLayer: (_, position) => {
+            if (!observation && (selected || record.feature.properties.sourceDatasetId)) {
+              return L.marker(position, {pane:mapPane('selection'), interactive, keyboard:interactive,
+                zIndexOffset:selected ? 1000 : 0,
+                icon:L.divIcon({html:surveyPointSvg(selected),
+                  className:'survey-reference-point '+(selected ? 'map-selected-reference' : 'map-reference-point'),
+                  iconSize:[28,28],iconAnchor:[14,14],tooltipAnchor:[0,-28]})});
+            }
             if (!observation)
               return L.circleMarker(position, {
                 pane: mapPane('selection'),
@@ -99,8 +115,8 @@ export function ResponseGisLayer({
             });
           }
         });
-        const label = document.createElement('span');
-        label.textContent = record.name;
+        const label = mappedArea ? areaMapLabel(record,locale) : document.createElement('span');
+        if (!mappedArea) label.textContent = record.name;
         // A drawn note is read on the map, so its text stays visible like a map label.
         const note = record.feature.properties.shape === 'note';
         layer.bindTooltip(label, {
@@ -128,6 +144,10 @@ export function ResponseGisLayer({
         });
         continue;
       }
+      if (referenceRoad) L.geoJSON(record.feature,{pane:mapPane('boundary'),interactive:false,
+        style:{color:roadColors.referenceCasing,weight:selected ? 5 : 4,opacity:.9,lineCap:'round',lineJoin:'round'}}).addTo(group);
+      if (mappedArea) L.geoJSON(record.feature, { pane: mapPane('boundary'), interactive: false,
+        style: { color: landslideBoundaryCasing, weight: landslideAreaStyle(mappedArea, selected).weight + 1.2, opacity: .8, fill: false, lineCap: 'round', lineJoin: 'round' } }).addTo(group);
       render().addTo(group);
       if (mappedArea && selected && mappedArea.networkVersion === networkVersion) addAreaRoadSections(group, mappedArea, roads, mapPane('boundary'));
     }
@@ -141,11 +161,12 @@ export function ResponseGisLayer({
       onOpenGroup: (ids) => (openGroup.current ? openGroup.current(ids) : action.current(ids[0]))
     });
     return () => {
+      disposeLabels();
       disposeClusters();
       group.remove();
     };
     // groupKey stands in for groupIds so a new array with the same members does not redraw.
-  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode, roads, networkVersion]);
+  }, [mapRef, records, selectedId, enabled, interactive, locale, groupKey, pointMode, roads, networkVersion, fillOpacity]);
   useEffect(() => {
     if (pointMode === 'individual' && groupKey) openGroup.current?.([]);
   }, [pointMode, groupKey]);
@@ -156,11 +177,13 @@ export function ResponseGisLayer({
     last.current = request.version;
     // Only an explicit cross-screen request changes the response map view.
     if (!request.id) return;
-    const record = records.find((r) => r.id === request.id);
+    const record = records.find((r) => r.id === request.id && r.visible);
     if (!record) return;
     const bounds = L.geoJSON(record.feature).getBounds();
-    if (bounds.isValid())
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: false });
+    if (bounds.isValid()) {
+      const reserve = detailInset(map.getContainer()).right;
+      map.fitBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [40 + reserve, 40], maxZoom: 16, animate: false });
+    }
   }, [mapRef, request, records, enabled]);
   return null;
 }

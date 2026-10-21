@@ -12,7 +12,7 @@ def run(url, chrome, captures):
         page = context.new_page(); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')
-        expect(page.locator('.incident-priority-row').first).to_be_visible(timeout=25000)
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         # Provenance is in one source dialog; the layer panel only controls display.
         page.get_by_role('button', name='Sự kiện đang xem', exact=True).click()
         page.locator('.header-context-popover').get_by_role('button', name='Nguồn dữ liệu', exact=True).click()

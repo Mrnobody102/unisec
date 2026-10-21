@@ -37,7 +37,9 @@ export function assessCommunity(pair: ScenarioRoutePair | undefined, hazards: Ha
   const reason: ResponseAssessment['reason'] = signal.urgentNeed
     ? ['Có yêu cầu hỗ trợ khẩn cấp', 'Urgent assistance requested']
     : signal.communication === 'lost' && affected.some(road => road.status === 'blocked')
-    ? ['Đường tiếp cận bị chặn. Mất liên lạc.', 'Access road blocked. Contact lost.']
+    ? access === 'blocked'
+      ? ['Các tuyến đã biết đều bị chặn. Mất liên lạc.', 'All mapped routes are blocked. Contact lost.']
+      : ['Có tuyến bị chặn, phương án khác chưa xác minh. Mất liên lạc.', 'One route is blocked; other access is unverified. Contact lost.']
     : reportedImpact
     ? reportedReason
     : signal.communication === 'lost' && affected.length > 0

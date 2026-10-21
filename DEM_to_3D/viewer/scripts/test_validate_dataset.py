@@ -77,6 +77,19 @@ class PreparedDatasetTests(unittest.TestCase):
             self.run_validator(prepare=True)
         self.assertFalse((self.public / 'terrain').exists())
 
+    def test_bad_context_fails_before_any_copy(self):
+        context = {}
+        for key, asset in self.manifest['terrain'].items():
+            name = 'context.' + Path(asset['url']).name
+            contents = (self.canonical / Path(asset['url']).name).read_bytes()
+            (self.canonical / name).write_bytes(contents)
+            context[key] = {**asset, 'url': '/terrain/' + name}
+        self.manifest['terrainContext'] = [context]
+        (self.canonical / Path(context['grid']['url']).name).write_bytes(b'broken')
+        with self.assertRaisesRegex(SystemExit, 'mismatch'):
+            self.run_validator(prepare=True)
+        self.assertFalse((self.public / 'terrain').exists())
+
     def test_invalid_date_and_parent_paths_are_rejected(self):
         self.manifest['snapshotAt'] = '2026-02-30T09:31:00+07:00'
         with self.assertRaisesRegex(SystemExit, 'snapshotAt'):
@@ -117,6 +130,24 @@ class PreparedDatasetTests(unittest.TestCase):
         glb.write_bytes(b'glTF' + b'\0' * 36)
         with self.assertRaisesRegex(SystemExit, 'invalid GLB'):
             validator.embedded_image(glb)
+
+    def add_imagery(self, tamper=False):
+        folder = self.public / 'scenarios' / 'imagery'
+        folder.mkdir(parents=True, exist_ok=True)
+        image = b'webp fixture'
+        (folder / 'scene.utm.webp').write_bytes(image + (b'!' if tamper else b''))
+        (folder / 'scene.web.webp').write_bytes(image)
+        entry = {'url': 'scene.utm.webp', 'byteLength': len(image), 'sha256': hashlib.sha256(image).hexdigest()}
+        catalog = json.dumps({'layers': [{'id': 'optical', 'parts': [{'terrain': entry, 'web': {**entry, 'url': 'scene.web.webp'}}]}]}).encode()
+        (folder / 'imagery.json').write_bytes(catalog)
+        self.manifest['analysisImagery'] = {'url': '/scenarios/imagery/imagery.json', 'byteLength': len(catalog), 'sha256': hashlib.sha256(catalog).hexdigest()}
+
+    def test_analysis_imagery_files_are_checksummed(self):
+        self.add_imagery()
+        self.run_validator(prepare=True)
+        self.add_imagery(tamper=True)
+        with self.assertRaisesRegex(SystemExit, 'size mismatch'):
+            self.run_validator()
 
 
 if __name__ == '__main__':

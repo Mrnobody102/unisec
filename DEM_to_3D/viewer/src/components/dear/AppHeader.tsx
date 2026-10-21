@@ -10,12 +10,13 @@ import type { IncidentPacket } from '../../data/incidentPacket';
 import { NotificationPopover } from './NotificationPopover';
 import { FontSelector } from './FontSelector';
 import { IncidentContext } from './IncidentContext';
-import { HeaderAccount } from './HeaderAccount';
 import { useDismissiblePopover } from '../../shared/hooks/useDismissiblePopover';
 
 type Props = {
   /** While GIS is open its draft owns the session; header actions would replace it unguarded. */
   locked?: boolean;
+  collapsed?: boolean;
+  onCollapse?: () => void;
   identityName: string;
   onSignOut: () => void;
   onOpenReports: () => void;
@@ -23,6 +24,7 @@ type Props = {
   locale: Locale;
   incident: IncidentModel;
   areaName: [vi: string, en: string];
+  snapshotDisplay?: 'full' | 'date';
   report: IncidentPacket['report'];
   reportRoad?: RoadSegment;
   dataAvailable: boolean;
@@ -53,6 +55,7 @@ export const AppHeader: React.FC<Props> = ({
   locale,
   incident,
   areaName,
+  snapshotDisplay,
   report,
   reportRoad,
   dataAvailable,
@@ -73,6 +76,7 @@ export const AppHeader: React.FC<Props> = ({
   onOpenNotifications,
   onReset,
   activeModelName,
+  collapsed = false, onCollapse,
   locked = false
 }) => {
   const headerRef = useRef<HTMLElement>(null);
@@ -90,7 +94,7 @@ export const AppHeader: React.FC<Props> = ({
   const snapshot = updated ? incident.asOfUpdated : incident.asOf;
 
   return (
-    <header className="app-header" ref={headerRef}>
+    <header className="app-header" ref={headerRef} hidden={collapsed}>
       <div className="brand">
         <span className="brand-symbol" aria-hidden="true">
           <svg viewBox="0 0 32 32" fill="none">
@@ -115,6 +119,7 @@ export const AppHeader: React.FC<Props> = ({
         incident={incident}
         areaName={areaName}
         snapshot={snapshot}
+        snapshotDisplay={snapshotDisplay}
         available={dataAvailable}
         onOpenTimeline={onOpenTimeline}
         onOpenData={onOpenData}
@@ -173,24 +178,6 @@ export const AppHeader: React.FC<Props> = ({
           <UiIcon name="image" />
           <span>{t('Ghi nhận', 'Reports')}</span>
           {reportsPending && <span className="unread-indicator" />}
-        </button>
-        <HeaderAccount
-          locale={locale}
-          identityName={identityName}
-          onSwitchRole={onSignOut}
-        />
-
-        <button
-          className="icon-button"
-          title={t('Hướng dẫn sử dụng', 'User guide')}
-          aria-label={t('Hướng dẫn sử dụng', 'User guide')}
-          onClick={() => {
-            setPrefOpen(false);
-            setNotificationsOpen(false);
-            onOpenHelp();
-          }}
-        >
-          <UiIcon name="help" />
         </button>
         <div ref={prefRef} className="settings-anchor">
           <button
@@ -299,6 +286,10 @@ export const AppHeader: React.FC<Props> = ({
                   onChange={onChangeFontChoice}
                 />
               </div>
+              <div className="settings-group settings-utilities">
+                <button className="settings-link" onClick={() => {prefRef.current?.querySelector<HTMLButtonElement>('button')?.focus();setPrefOpen(false);onOpenHelp();}}><UiIcon name="help" size={16}/>{t('Hướng dẫn sử dụng', 'User guide')}</button>
+                {onCollapse && <button className="settings-link" onClick={() => {setPrefOpen(false);setNotificationsOpen(false);onCollapse();}}><UiIcon name="collapse" size={16}/>{t('Thu gọn tiêu đề', 'Hide header')}</button>}
+              </div>
               <details className="settings-workspace">
                 <summary>{t('Phiên làm việc', 'Workspace session')}</summary>
                 <div className="settings-workspace-actions">
@@ -320,6 +311,8 @@ export const AppHeader: React.FC<Props> = ({
                   >
                     {t('Đặt lại phiên làm việc', 'Reset workspace')}
                   </button>
+                  <span className="settings-identity">{identityName}</span>
+                  <button className="settings-link" onClick={() => {setPrefOpen(false);onSignOut();}}>{t('Đổi vai trò', 'Switch role')}</button>
                   {activeModelName && <small>{activeModelName}</small>}
                 </div>
               </details>

@@ -1,8 +1,24 @@
 """Independent slope/scar polygons, evidence, exact road links and atomic GIS publication."""
+from gis_browser_actions import map_tool
 import argparse
 import json
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
+
+
+def click_exposed_area(page, selector):
+    # A road correctly wins at an overlapping pixel; click an exposed part of
+    # the polygon instead of force-clicking the centre of its bounding box.
+    point = page.locator(selector).evaluate("""el => {
+      const box=el.getBoundingClientRect();
+      for(let row=1;row<20;row++)for(let col=1;col<20;col++) {
+        const x=box.left+box.width*col/20,y=box.top+box.height*row/20;
+        if(document.elementFromPoint(x,y)===el)return {x,y};
+      }
+      return null;
+    }""")
+    assert point, 'No exposed part of the landslide polygon is clickable'
+    page.mouse.click(point['x'],point['y'])
 
 
 def run(url, chrome, captures):
@@ -14,10 +30,15 @@ def run(url, chrome, captures):
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(url + '/?offline=1&map=2d&demoRole=manager')
         expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        page.evaluate("const d=JSON.parse(localStorage.getItem('dear.gis.v2'));d.records=[];localStorage.setItem('dear.gis.v2',JSON.stringify(d))")
+        page.reload()
+        expect(page.locator('.map-pin:visible').first).to_be_visible(timeout=30000)
+        baseline = page.evaluate("localStorage.getItem('dear.gis.v2')")
+        map_tool(page, 'Dữ liệu GIS').click()
         workspace = page.locator('.geodata-workspace')
         tasks = workspace.locator('.geodata-task-nav')
-        expect(tasks.get_by_role('button', name='Vùng sạt lở', exact=True)).to_have_attribute('aria-pressed', 'true')
+        expect(tasks.get_by_role('button', name='Dữ liệu', exact=True)).to_have_attribute('aria-pressed', 'true')
+        tasks.get_by_role('button', name='Vùng sạt lở', exact=True).click()
         expect(workspace.get_by_role('button', name='Nhập dữ liệu', exact=True)).not_to_be_visible()
         expect(workspace.get_by_role('button', name='Vẽ vùng quan tâm', exact=True)).to_have_count(0)
         tasks.get_by_role('button', name='Đường', exact=True).click()
@@ -62,7 +83,7 @@ def run(url, chrome, captures):
         review = page.get_by_role('dialog', name='Áp dụng thay đổi GIS?', exact=True)
         review.get_by_role('button', name='Áp dụng', exact=True).click()
         expect(review).to_contain_text('Chọn nguồn và ghi căn cứ')
-        assert page.evaluate("localStorage.getItem('dear.gis.v2')") is None
+        assert page.evaluate("localStorage.getItem('dear.gis.v2')") == baseline
         review.get_by_role('button', name='Hủy', exact=True).click()
         editor.get_by_label('Phản ánh người dân', exact=True).check()
         editor.get_by_label('Căn cứ khoanh vùng', exact=True).fill('TEST: Residents reported new ground cracks and cracking sounds on the slope. Extent is provisional.')
@@ -121,9 +142,12 @@ def run(url, chrome, captures):
         row.get_by_role('button', name='Lưu vùng và mở đoạn đường', exact=True).click()
         card = workspace.locator('.scenario-card')
         expect(card.get_by_role('button', name=potential['name'], exact=True)).to_be_visible()
-        card.get_by_role('radio', name='Bị chặn', exact=True).click()
-        card.get_by_label('Lý do', exact=True).fill('TEST: Field team confirms the linked road section is blocked by deposited debris.')
-        card.get_by_role('button', name='Lưu tình trạng', exact=True).click()
+        card.get_by_role('button', name='Cập nhật tình trạng', exact=True).click()
+        status = page.get_by_role('dialog', name='Cập nhật tình trạng đường', exact=True)
+        status.get_by_role('radio', name='Bị chặn', exact=True).check()
+        status.locator('.status-optional-note summary').click()
+        status.get_by_label('Ghi chú', exact=True).fill('TEST: Field team confirms the linked road section is blocked by deposited debris.')
+        status.get_by_role('button', name='Lưu tình trạng', exact=True).click()
         expect(workspace.locator('.gis-draft-bar')).to_be_visible()
         final = publish()
         assert len([r for r in final['records'] if r['feature']['properties'].get('dearLandslideArea')]) == 2
@@ -132,15 +156,16 @@ def run(url, chrome, captures):
         page.reload()
         expect(page.locator('.landslide-area.is-potential')).to_have_count(1, timeout=30000)
         expect(page.locator('.landslide-area.is-occurred')).to_have_count(1)
-        page.locator('.landslide-area.is-potential').click(force=True)
+        click_exposed_area(page,'.landslide-area.is-potential')
         expect(page.locator('.landslide-area-summary')).to_be_visible()
-        page.locator('.landslide-area-summary').get_by_role('button', name='Xem đoạn đường', exact=True).click()
+        page.locator('.landslide-area-summary .landslide-road-link').first.click()
         scar = next(r for r in final['records'] if r['feature']['properties'].get('dearLandslideArea', {}).get('state') == 'occurred')
         page.locator('#response-details').get_by_role('button').filter(has_text=scar['name']).click()
-        expect(page.locator('.landslide-area-summary')).to_contain_text('Vết sạt lở đã xảy ra')
-        page.locator('.landslide-area-summary').get_by_role('button', name='Xem đoạn đường', exact=True).click()
+        expect(page.locator('.field-map-card > header')).to_contain_text(scar['name'])
+        expect(page.locator('.field-map-card > header')).to_contain_text('Ranh giới chưa xác minh')
+        page.locator('.landslide-area-summary .landslide-road-link').first.click()
         page.locator('#response-details').get_by_role('button').filter(has_text=potential['name']).click()
-        expect(page.locator('.landslide-area-summary')).to_contain_text('Vùng có nguy cơ')
+        expect(page.locator('.field-map-card > header')).to_contain_text(potential['name'])
         expect(page.locator('.landslide-area-summary')).to_contain_text('100–250 m')
         if captures:
             page.screenshot(path=str(captures / 'published-areas-2d.png'))
@@ -150,7 +175,7 @@ def run(url, chrome, captures):
         if captures:
             page.wait_for_timeout(600)
             page.screenshot(path=str(captures / 'published-areas-3d.png'))
-        page.get_by_role('button', name='Dữ liệu GIS', exact=True).click()
+        map_tool(page, 'Dữ liệu GIS').click()
         page.locator('.landslide-area-list').get_by_role('button').filter(has_text=potential['name']).click()
         expect(editor).to_be_visible()
         for width in (390, 320):

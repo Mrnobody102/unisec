@@ -14,6 +14,6 @@ export function StandaloneGeometryWorkspace({locale}: {locale:Locale}): JSX.Elem
     return ()=>controller.abort();
   },[offline]);
   const close=()=>{const url=new URL(location.href);url.searchParams.delete('workspace');location.assign(url.href);};
-  if (offline === null) return <div className="geodata-workspace" role="status">{locale === 'vi' ? 'Đang mở bản đồ…' : 'Opening map…'}</div>;
+  if (offline === null) return <div className="geodata-workspace" role="status">{locale === 'vi' ? 'Đang mở bản đồ' : 'Opening map'}</div>;
   return <GeometryWorkspace locale={locale} standalone offline={offline} onClose={close} onResponse={id=>{const url=new URL(location.href);url.searchParams.delete('workspace');url.searchParams.set('gisPoint',id);location.assign(url.href);}}/>;
 }

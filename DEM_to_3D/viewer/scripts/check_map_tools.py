@@ -1,4 +1,5 @@
 """Interaction checks for measurement, map popovers and theme/locale variants."""
+from gis_browser_actions import map_tool, open_header_help
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -16,7 +17,7 @@ def run(url, chrome, captures):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
-        page.get_by_role('button', name='Đo trên bản đồ 2D', exact=True).click()
+        map_tool(page, 'Đo trên bản đồ 2D').click()
         panel = page.locator('.map-measure-panel')
         expect(panel).to_be_visible()
         box = page.locator('.map-2d-surface').bounding_box()
@@ -24,7 +25,7 @@ def run(url, chrome, captures):
             page.mouse.click(box['x'] + box['width'] * x, box['y'] + box['height'] * y)
         expect(panel.locator('.map-measure-result')).to_contain_text('km')
         result = panel.locator('.map-measure-result').text_content()
-        page.get_by_role('button', name='Hướng dẫn sử dụng', exact=True).click()
+        open_header_help(page)
         expect(page.locator('.user-guide')).to_be_visible()
         page.keyboard.press('Escape')
         expect(page.locator('.user-guide')).to_have_count(0)
@@ -47,7 +48,7 @@ def run(url, chrome, captures):
         if captures:
             page.screenshot(path=str(captures / 'workspace-dark-en.png'))
         # Closing and reopening resumes the current drawing without orphan layers.
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(page.locator('.map-measure-vertex')).to_have_count(2)
         page.get_by_role('button', name='Layers', exact=True).click()
         expect(panel).to_have_count(0)
@@ -65,7 +66,12 @@ def run(url, chrome, captures):
         expect(cluster.locator('.map-pin-icon')).to_be_visible()
         expect(cluster.locator('.map-pin-count')).to_be_visible()
         cluster.click()
-        page.locator('.map-object-chooser button:not(.map-chooser-expand)').first.click()
+        page.wait_for_timeout(600)
+        single = page.locator('.map-pin[data-group-action="select"]:visible').first
+        if page.locator('.map-object-choice').count():
+            page.locator('.map-object-choice').first.click()
+        else:
+            single.click()
         selected = page.locator('.map-pin.is-selected:visible').first
         expect(selected).to_be_visible()
         expect(selected.locator('.map-pin-shape svg')).to_be_visible()
@@ -73,7 +79,7 @@ def run(url, chrome, captures):
         # Opening from the 3D view mounts a fresh working 2D map and tool.
         page.get_by_role('button', name='Switch to 3D', exact=True).click()
         expect(page.locator('.map-2d')).to_have_count(0)
-        page.get_by_role('button', name='Measure on 2D map', exact=True).click()
+        map_tool(page, 'Measure on 2D map').click()
         expect(panel).to_be_visible(timeout=25000)
         expect(page.locator('.leaflet-image-layer')).to_have_count(1, timeout=25000)
         box = page.locator('.map-2d-surface').bounding_box()

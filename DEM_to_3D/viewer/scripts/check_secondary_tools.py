@@ -79,6 +79,7 @@ def run(url, chrome, captures):
         expect(page.locator('.route-action')).to_contain_text('Không sử dụng tuyến này')
         if captures:
             page.screenshot(path=str(captures / 'workspace-layer-options.png'))
+        page.locator('.layer-analysis > summary').click()
         page.get_by_role('button', name='So ảnh trước và sau sự kiện', exact=True).click()
         for i, filename in enumerate(['before.tif', 'after.tif']):
             field = page.locator('.comparison-form fieldset').nth(i)
@@ -143,8 +144,8 @@ def run(url, chrome, captures):
         page.get_by_role('button', name='Cài đặt hiển thị', exact=True).click()
         page.locator('.settings-workspace summary').click()
         page.get_by_role('button', name='Đặt lại phiên làm việc', exact=True).click()
-        expect(page.locator('.incident-priority-row').first).to_be_visible()
-        expect(page.locator('.incident-context-revision')).to_contain_text('09:31')
+        expect(page.locator('.incident-overview-heading')).to_be_visible()
+        expect(page.locator('.assessment-moment[aria-pressed="true"]')).to_contain_text('09:31')
         assert not errors, errors
         browser.close()
         print('Secondary tools passed: revisions, notifications, layer display, GeoTIFF comparison, GeoJSON, print and reset.')
