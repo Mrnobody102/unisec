@@ -82,6 +82,7 @@ def run(url, chrome):
         root=Path(temp); package=root/'package'; package.mkdir(); model_fixture(package); sar_fixture(root/'sar.tif')
         browser=playwright.chromium.launch(headless=True, executable_path=chrome, args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         page=browser.new_page(viewport={'width':1440,'height':960})
+        page.on('crash',lambda:checkpoint('terrain page crashed'))
         errors=[]; page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('console',lambda message: errors.append(message.text) if message.type=='error' and ('THREE.WebGLProgram' in message.text or 'GL_INVALID' in message.text) else None)
         page.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
@@ -126,10 +127,18 @@ def run(url, chrome):
         directory.set_input_files(str(package))
         checkpoint('await local model dialog closure')
         try:
-            expect(dialog).not_to_be_visible(timeout=15000)
+            # Replacing the prepared DEM scene is part of this import. Give its
+            # software renderer the same readiness budget as the initial 3D view.
+            expect(dialog).not_to_be_visible(timeout=30000)
         except Exception:
             # Report only an allowlisted diagnosis of this generated fixture.
             # Arbitrary DOM text, file names and error payloads stay in the job log.
+            if page.is_closed():
+                checkpoint('terrain page closed during model import')
+                raise
+            if not dialog.is_visible():
+                checkpoint('local model import completed after the deadline')
+                raise
             alert=dialog.locator('.upload-error')
             if alert.count():
                 message=alert.inner_text().lower()
@@ -138,7 +147,7 @@ def run(url, chrome):
                     ('could not be read','fixture file read failed'),('failed to fetch','fixture module request failed'),
                     ('json','fixture JSON rejected')]
                 checkpoint(next((label for text,label in categories if text in message),'unexpected fixture import error'))
-            elif directory.is_disabled():
+            elif directory.count() and directory.is_disabled():
                 checkpoint('local model import still busy')
             else:
                 checkpoint('local model import did not start or was cancelled')
