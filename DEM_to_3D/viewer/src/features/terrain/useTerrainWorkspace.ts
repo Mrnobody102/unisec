@@ -18,6 +18,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   const [fieldDataset, setFieldDataset] = useState<FieldDataset>();
   const [packet, setPacket] = useState<IncidentPacket | null>(null);
   const [manifest, setManifest] = useState<ScenarioManifest | null>(null);
+  const [contextTerrain,setContextTerrain]=useState<TerrainData[]>([]);
   const [defaultTerrain, setDefaultTerrain] = useState<TerrainData | null>(null);
   const [snapshotReady, setSnapshotReady] = useState(false);
   const [startupError, setStartupError] = useState(false);
@@ -82,6 +83,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
       if (mapModeRef.current === '3d') startMesh(dataset.manifest.terrain.glb);
       if (controller.signal.aborted) return;
       preparedTerrain.current = dataset.terrain;
+      setContextTerrain(dataset.contextTerrain);
       setFieldDataset(dataset.fieldDataset); setPacket(dataset.packet); setManifest(dataset.manifest); setDefaultTerrain(dataset.terrain);
       setOffline(dataset.offline || new URLSearchParams(location.search).get('offline') === '1'); setSnapshotReady(true);
     }).catch(reason => {
@@ -102,8 +104,8 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     const primary = loadTerrain3D({
       glb: manifest.terrain.glb.url, metadata: manifest.terrain.metadata.url, grid: manifest.terrain.grid.url
     }, defaultTerrain, controller.signal, download);
-    const contexts = (manifest.terrainContext ?? []).map(async asset => {
-      const data = await loadTerrainData({metadata:asset.metadata.url, grid:asset.grid.url}, controller.signal);
+    const contexts = (manifest.terrainContext ?? []).map(async (asset,index) => {
+      const data = contextTerrain[index] ?? await loadTerrainData({metadata:asset.metadata.url, grid:asset.grid.url}, controller.signal);
       return loadTerrain3D({glb:asset.glb.url, metadata:asset.metadata.url, grid:asset.grid.url}, data, controller.signal);
     });
     void Promise.allSettled([primary, ...contexts]).then(results => {
@@ -121,7 +123,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     }).catch(() => { if (!controller.signal.aborted) { finish(); on3DUnavailable(); } })
       .finally(() => { if (!controller.signal.aborted) setLoading3D(false); });
     return () => { controller.abort(); setLoading3D(false); };
-  }, [mapMode, models.length, defaultTerrain, manifest, replaceModels, on3DUnavailable, startMesh]);
+  }, [mapMode, models.length, defaultTerrain, contextTerrain, manifest, replaceModels, on3DUnavailable, startMesh]);
 
   const clear = useCallback(() => {
     importGeneration.current++;
@@ -176,7 +178,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     } catch { return undefined; }
   }, [mode, geographicMerge, models, manifest]);
 
-  return { packet, manifest, fieldDataset, defaultTerrain, snapshotReady, startupError, offline, models,
+  return { packet, manifest, fieldDataset, defaultTerrain, contextTerrain, snapshotReady, startupError, offline, models,
     mode, geographicMerge, fileNames, busy, error, loading3D, progress3D, placements,
     retry, reload, clear, upload, changeMode, changeGeographicMerge };
 }

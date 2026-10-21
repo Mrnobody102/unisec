@@ -130,6 +130,13 @@ export function acquisitionLabel(layer: AnalysisLayer): string {
   return days.map(dateLabel).join(', ') + '/' + days.at(-1)!.slice(0, 4);
 }
 
+/** Retain an explicit off/valid choice, but never carry a missing layer ID
+ * into another dataset and silently make its imagery disappear. */
+export function selectionForCatalog(layers:AnalysisLayer[],selection:AnalysisSelection,chosen:boolean):AnalysisSelection {
+  if(chosen&&(selection.layer===null||layers.some(layer=>layer.id===selection.layer)))return selection;
+  return {...selection,layer:latestOpticalLayer(layers)?.id??null};
+}
+
 /** Latest available optical acquisition, not the more recent SAR acquisition. */
 export function latestOpticalLayer(layers: AnalysisLayer[]): OpticalLayer | undefined {
   return layers.filter((layer): layer is OpticalLayer => layer.kind === 'optical')

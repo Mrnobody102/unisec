@@ -335,6 +335,132 @@
    "displayProcessing": "Valid-pixel overlap feathering, 60 m; no gap fill; source acquisition dates retained."
   },
   {
+   "id": "planet-sep01",
+   "name": [
+    "PlanetScope đối chiếu",
+    "PlanetScope reference"
+   ],
+   "kind": "optical",
+   "parts": [
+    {
+     "id": "planet-sep01-roadpart1",
+     "part": "RoadPart1",
+     "acquired": "2026-09-01T03:38:21.296325Z",
+     "source": "Planet PSScene visual, strip 8992030",
+     "gsdM": 3.9,
+     "pixelM": 3.0,
+     "cloudPercent": 33,
+     "clearPercent": 36,
+     "terrain": {
+      "url": "planet-sep01-roadpart1.utm.webp",
+      "byteLength": 729842,
+      "sha256": "2b15bf1b139212833b06970c6e24171db0e9580bbf60e0ef886d20e5fa8fe56f",
+      "width": 522,
+      "height": 1040,
+      "crs": "EPSG:32648",
+      "bounds": [
+       402066.0,
+       2410038.0,
+       403632.0,
+       2413158.0
+      ]
+     },
+     "web": {
+      "url": "planet-sep01-roadpart1.web.webp",
+      "byteLength": 674432,
+      "sha256": "c8a04c99e04c326190a06000ccfb5cb54821f2877c9d76942fdc11493e6af793",
+      "width": 517,
+      "height": 1044,
+      "latLngBounds": [
+       [
+        21.7914551,
+        104.0526183
+       ],
+       [
+        21.8195834,
+        104.0676212
+       ]
+      ]
+     }
+    },
+    {
+     "id": "planet-sep01-roadpart2",
+     "part": "RoadPart2",
+     "acquired": "2026-09-01T03:38:21.296325Z",
+     "source": "Planet PSScene visual, strip 8992030",
+     "gsdM": 3.9,
+     "pixelM": 3.0,
+     "cloudPercent": 33,
+     "clearPercent": 36,
+     "terrain": {
+      "url": "planet-sep01-roadpart2.utm.webp",
+      "byteLength": 1063936,
+      "sha256": "9e429e53503e9f9a316939d9d522cd7e434a81a05846962b8b3ba459d19660d3",
+      "width": 585,
+      "height": 1406,
+      "crs": "EPSG:32648",
+      "bounds": [
+       400644.0,
+       2406000.0,
+       402399.0,
+       2410218.0
+      ]
+     },
+     "web": {
+      "url": "planet-sep01-roadpart2.web.webp",
+      "byteLength": 984552,
+      "sha256": "fcc5c0b57d41facdab21a4be5a43ed9760eb330bd88e94d69d66f529df3745da",
+      "width": 577,
+      "height": 1411,
+      "latLngBounds": [
+       [
+        21.7549323,
+        104.0390966
+       ],
+       [
+        21.7929569,
+        104.0558406
+       ]
+      ]
+     }
+    }
+   ],
+   "mosaic": {
+    "terrain": {
+     "url": "planet-sep01-mosaic.utm.webp",
+     "byteLength": 1765452,
+     "sha256": "6bccd14c0bc88b12b05f9949c48608c8f4d82f68c3337e107194ca25c2d8e0dd",
+     "width": 996,
+     "height": 2386,
+     "crs": "EPSG:32648",
+     "bounds": [
+      400644.0,
+      2406000.0,
+      403632.0,
+      2413158.0
+     ]
+    },
+    "web": {
+     "url": "planet-sep01-mosaic.web.webp",
+     "byteLength": 1638594,
+     "sha256": "ec44d1c88a157857fa0ac0e6c61d2996cdc0686b9203574c244401e0b599c6bc",
+     "width": 982,
+     "height": 2400,
+     "latLngBounds": [
+      [
+       21.7549125,
+       104.0391225
+      ],
+      [
+       21.8195834,
+       104.0676192
+      ]
+     ]
+    }
+   },
+   "displayProcessing": "Valid-pixel overlap feathering, 60 m; no gap fill; source acquisition dates retained."
+  },
+  {
    "id": "sentinel1",
    "name": [
     "Sentinel-1 SAR",

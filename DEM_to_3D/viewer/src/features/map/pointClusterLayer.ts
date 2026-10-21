@@ -1,5 +1,6 @@
+import {poiGeometry} from './poiGeometry';
 import * as L from 'leaflet';
-import { selectedPinSvg } from '../../terrain/poiFrame';
+import { selectedPinSvg,poiMetrics,markerSize } from '../../terrain/poiFrame';
 import type { Locale } from '../../types/dear';
 import type { PointRenderingMode } from './pointRendering';
 import {
@@ -73,7 +74,7 @@ export function attachPointClusters(
     if (selected) {
       badge.innerHTML = selectedPinSvg();
       const count = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      count.setAttribute('x','14'); count.setAttribute('y','19.5'); count.setAttribute('text-anchor','middle');
+      count.setAttribute('x',String(poiMetrics(markerSize(false,true),true).half)); count.setAttribute('y','21'); count.setAttribute('text-anchor','middle');
       count.setAttribute('fill','currentColor'); count.setAttribute('stroke','none'); count.setAttribute('font-size','10');
       count.textContent = String(members.length); badge.querySelector('svg')!.append(count);
       badge.style.color = color;
@@ -102,8 +103,7 @@ export function attachPointClusters(
           (site ? ' is-site' : '') +
           (active ? ' is-selected map-selected-reference' : '') +
           (selected ? ' has-selected-pin' : ''),
-        iconSize: [size, selected ? 32 : size],
-        iconAnchor: [size / 2, selected ? 28.8 : size / 2]
+        ...poiGeometry(!!selected,size)
       })
     });
     const tip = document.createElement('span');

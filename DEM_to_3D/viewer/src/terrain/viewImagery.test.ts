@@ -118,16 +118,30 @@ it('uses native detail pages over the retained corridor and releases them when t
  vi.useFakeTimers();vi.stubGlobal('document',{documentElement:{lang:'en'},createElement:()=>({setAttribute:vi.fn(),remove:vi.fn()})});
  const base={zoom:12,minX:3200,minY:1700,maxX:3300,maxY:1900,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
  const fine={zoom:16,minX:51701,minY:28698,maxX:51705,maxY:28702,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
- const load=vi.spyOn(loader,'loadImageryAtlas').mockResolvedValueOnce(base).mockResolvedValueOnce(fine),publish=vi.fn(),publishBase=vi.fn();
- const view=createViewImagery(()=>[],4,publish,vi.fn(),publishBase);
+ const load=vi.spyOn(loader,'loadImageryAtlas').mockResolvedValueOnce(base).mockResolvedValueOnce(fine),publish=vi.fn(),publishBase=vi.fn(),prime=vi.fn();
+ const view=createViewImagery(()=>[],4,publish,vi.fn(),publishBase,prime);
  try {
   view.setEnabled(true);
   await view.prepare([{x:3200,y:1700,z:12}],[[{x:51702,y:28700,z:16}]]);
-  expect(publishBase).toHaveBeenLastCalledWith(base);
+  expect(publishBase).toHaveBeenLastCalledWith(base);expect(prime).toHaveBeenLastCalledWith(fine);
   const [lon,lat]=tileLonLat(51703,28700,16),[x,y]=proj4('EPSG:4326',metadata.crs.proj4!,[lon,lat]);
   view.filmAt({x,y},metadata);expect(publish).toHaveBeenLastCalledWith(fine);
   view.filmAt({x:x+100000,y},metadata);expect(publish).toHaveBeenLastCalledWith(base);
   expect(base.dispose).not.toHaveBeenCalled();expect(fine.dispose).not.toHaveBeenCalled();
-  view.release();expect(publishBase).toHaveBeenLastCalledWith(null);expect(fine.dispose).toHaveBeenCalledOnce();
+  view.release();expect(prime).toHaveBeenLastCalledWith(null);expect(publishBase).toHaveBeenLastCalledWith(null);expect(fine.dispose).toHaveBeenCalledOnce();
+ }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
+});
+
+it('waits for a matching camera request already in flight before starting the film',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('document',{documentElement:{lang:'en'},createElement:()=>({setAttribute:vi.fn(),remove:vi.fn()})});
+ const atlas={zoom:16,minX:0,minY:0,maxX:2,maxY:2,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+ let finish!:(value:typeof atlas)=>void;
+ const load=vi.spyOn(loader,'loadImageryAtlas').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+ const tiles=[{x:1,y:1,z:16}],publishBase=vi.fn(),view=createViewImagery(()=>tiles,4,vi.fn(),vi.fn(),publishBase);
+ try{
+  view.setEnabled(true);await vi.advanceTimersByTimeAsync(250);
+  let ready=false;const prepared=view.prepare(tiles).then(()=>{ready=true;});
+  await Promise.resolve();await Promise.resolve();expect(ready).toBe(false);expect(publishBase).not.toHaveBeenCalledWith(atlas);
+  finish(atlas);await prepared;expect(ready).toBe(true);expect(publishBase).toHaveBeenLastCalledWith(atlas);expect(load).toHaveBeenCalledOnce();
  }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
 });

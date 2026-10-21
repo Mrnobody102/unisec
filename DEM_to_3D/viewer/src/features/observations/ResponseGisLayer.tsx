@@ -92,7 +92,7 @@ export function ResponseGisLayer({
                 zIndexOffset:selected ? 1000 : 0,
                 icon:L.divIcon({html:surveyPointSvg(selected),
                   className:'survey-reference-point '+(selected ? 'map-selected-reference' : 'map-reference-point'),
-                  iconSize:[28,selected ? 32 : 28],iconAnchor:[14,selected ? 28.8 : 25.2],tooltipAnchor:[0,-28]})});
+                  iconSize:[28,28],iconAnchor:[14,14],tooltipAnchor:[0,-28]})});
             }
             if (!observation)
               return L.circleMarker(position, {

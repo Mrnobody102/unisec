@@ -21,7 +21,7 @@ def run(url, chrome):
         pause=page.get_by_role('button',name='Tạm dừng',exact=True)
         expect(pause).to_be_visible(timeout=60000);pause.click()
         duration=float(page.get_by_role('slider',name='Vị trí trong hành trình',exact=True).get_attribute('max'))
-        assert 20<=duration<=30,duration
+        assert duration==25,duration
         print(f'Playback uses a paced {duration:.2f}-second plan.',flush=True)
         page.get_by_role('button',name='Thoát hành trình',exact=True).click()
         expect(page.locator('.flyover-bar')).to_have_count(0)
@@ -80,13 +80,13 @@ def run(url, chrome):
           const photoMatches=photos.map(({name,error,time})=>({name,error,time}));
           video.removeAttribute('src');video.load();URL.revokeObjectURL(url);return {duration,frames:[.25,.5,.75].map(f=>frames[Math.floor((frames.length-1)*f)]),photoMatches};
         }""")
-        assert 20<=proof['duration']<=30.1,proof
+        assert 24.99<=proof['duration']<=25.1,proof
         assert all(frame['green']>.04 for frame in proof['frames']),('Map missing from decoded video',proof)
         assert len({frame['hash'] for frame in proof['frames']})>1,('Exported map does not move',proof)
         assert all(photo['error']<16 for photo in proof['photoMatches']),('Matching field photograph missing from video',proof)
         assert not errors,errors
         browser.close()
-        print('Flyover passed: paced 20–30 second MP4 with terrain and every matching field photo.',proof,flush=True)
+        print('Flyover passed: 25-second MP4 with terrain and every matching field photo.',proof,flush=True)
 
 
 if __name__=='__main__':

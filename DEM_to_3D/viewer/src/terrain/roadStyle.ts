@@ -2,10 +2,11 @@
 export const roadColors = {
   networkImagery: '#d3d0c4',
   networkTerrain: '#76857e',
-  selected: '#ef4444',
+  // Route blue, as in web maps: red stays reserved for blocked sections.
+  selected: '#2f80ed',
   blocked: '#d96552',
   uncertain: '#d7a34c',
-  selectedCasing: '#522b2b',
+  selectedCasing: '#0d3a73',
   reference: '#eee5cf',
   referenceCasing: '#343c36',
   inspectedCasing: '#ffffff',

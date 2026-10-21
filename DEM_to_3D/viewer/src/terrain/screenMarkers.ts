@@ -274,7 +274,7 @@ export function createScreenMarkers(host: HTMLElement, options: ScreenMarkerOpti
       if (marker.count.hidden !== (presentation !== 'cluster')) marker.count.hidden = presentation !== 'cluster';
       if (marker.count.textContent !== String(group.members.length)) marker.count.textContent = String(group.members.length);
       if (!marker.labelEligible || options.appearance?.labels === 'none' || (options.appearance?.labels === 'selected' && !marker.selected) || (clustered && presentation !== 'feature-overlap')) { if (!marker.button.classList.contains('is-label-hidden')) marker.button.classList.add('is-label-hidden'); return; }
-      const choices = [{ x: x + 18, y: y - tip + 4 }, { x: x - marker.width - 18, y: y - tip + 4 }, { x: x - marker.width / 2, y: y - tip - 26 }, { x: x - marker.width / 2, y: y + 8 }];
+      const choices = [{ x: x + half + 4, y: y - tip + 4 }, { x: x - marker.width - half - 4, y: y - tip + 4 }, { x: x - marker.width / 2, y: y - tip - 26 }, { x: x - marker.width / 2, y: y + 8 }];
       const place = choices.find(p => p.x >= 6 && p.y >= 6 && p.x + marker.width <= width - 6 && p.y + 22 <= height - 6 && !occupied.some(r => overlaps({ ...p, width: marker.width, height: 22 }, r)));
       marker.button.classList.toggle('is-label-hidden', !place);
       if (place) {

@@ -32,13 +32,12 @@
 .line.network { filter: drop-shadow(0 1px 0 #243f45) drop-shadow(0 -1px 0 #243f45); }
 .line.uncertain { border-top-style: dashed; }
 .map-legend .line.aoi { border-color: #85aa9d; border-top-style: dashed; }
-/* Samples use the same white POI frame, outline and glyph as map markers. */
+/* Samples use the same coloured disc, white rim and white glyph as map markers. */
 .legend-symbol { position:relative; display:inline-block; flex:none; width:24px; height:24px; color:var(--sym-community); }
-.legend-symbol > svg:first-child { position:absolute; inset:0; width:24px; height:24px; fill:#fbfcfa; stroke:currentColor; stroke-width:.9; stroke-linejoin:round; }
-.legend-symbol > svg:last-child { position:absolute; left:5px; top:3.5px; width:14px; height:14px; }
+.legend-symbol > svg:first-child { position:absolute; inset:0; width:24px; height:24px; fill:currentColor; stroke:#fff; stroke-width:1.5; stroke-linejoin:round; filter:drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+.legend-symbol > svg:last-child { position:absolute; left:5px; top:5px; width:14px; height:14px; color:#fff; }
 .legend-symbol.priority { color:var(--sym-priority); }
 .legend-symbol.landslide,.legend-symbol.suspected { color:var(--sym-landslide); }
-.legend-symbol.suspected > svg:last-child { opacity:.78; }
 .legend-symbol.bridge,.legend-symbol.crossing { color:var(--sym-verify); }
 .legend-symbol.hlz { color:var(--sym-hlz); }
 .legend-symbol.staging { color:var(--sym-staging); }

@@ -154,6 +154,23 @@ describe('Regional basemap placement', () => {
       imagery.setDetail(null);expect(detail.visible).toBe(false);expect(dispose).not.toHaveBeenCalled();
     } finally {imagery.dispose();source.geometry.dispose();source.material.dispose();texture.dispose();vi.unstubAllGlobals();}
   });
+  it('reuses prepared stop geometry through page switches and releases it before source canvases are cleared',()=>{
+    vi.stubGlobal('document',{createElement:()=>({width:0,height:0,getContext:()=>null})});
+    const root=new THREE.Group(),source=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial());root.add(source);
+    const imagery=createTerrainImagery(metadata,root,[source],19,4)!;
+    const bounds=planImageryAtlases(metadata,19)[0];
+    const a={...bounds,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+    const b={...bounds,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()};
+    try{
+      imagery.setVisible(true);const texture=imagery.primeDetail(a)!;imagery.primeDetail(b);
+      const dispose=vi.spyOn(texture,'dispose');imagery.setDetail(a);
+      const group=root.getObjectByName('terrain-detail-imagery')!,patch=group.children[0];
+      imagery.setDetail(b);imagery.setDetail(a);
+      expect(group.children[0]).toBe(patch);expect(dispose).not.toHaveBeenCalled();
+      imagery.primeDetail(null);expect(dispose).toHaveBeenCalledOnce();expect(group.children).toHaveLength(0);
+      expect(a.dispose).not.toHaveBeenCalled();expect(b.dispose).not.toHaveBeenCalled();
+    }finally{imagery.dispose();source.geometry.dispose();source.material.dispose();a.texture.dispose();b.texture.dispose();vi.unstubAllGlobals();}
+  });
   it('stops requesting tiles when the service is unavailable', async () => {
     vi.stubGlobal('window', globalThis);
     const fetchMock = vi.fn(async () => { throw new Error('offline'); });

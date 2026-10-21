@@ -34,9 +34,9 @@ export function createTerrainCoverageClip(surfaces: ElevationSurface[], origin: 
       const before=material.onBeforeCompile,key=material.customProgramCacheKey;
       material.onBeforeCompile=(shader,renderer)=>{
         before.call(material,shader,renderer);
-        shader.vertexShader='varying vec2 vContextXY;\n'+shader.vertexShader;
-        shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvContextXY=vec2(position.x,-position.z);');
-        shader.fragmentShader='varying vec2 vContextXY;\n'+masks.map((mask,i)=>{
+        shader.vertexShader='attribute float terrainSeam; varying float vTerrainSeam; varying vec2 vContextXY;\n'+shader.vertexShader;
+        shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvContextXY=vec2(position.x,-position.z); vTerrainSeam=terrainSeam;');
+        shader.fragmentShader='varying float vTerrainSeam; varying vec2 vContextXY;\n'+masks.map((mask,i)=>{
           Object.assign(shader.uniforms,{[`coverageMap${i}`]:{value:mask.texture},[`coverageMatrix${i}`]:{value:mask.matrix},
             [`coverageSize${i}`]:{value:new THREE.Vector2(mask.width,mask.height)}});
           return `uniform sampler2D coverageMap${i}; uniform mat3 coverageMatrix${i}; uniform vec2 coverageSize${i};`;
@@ -44,13 +44,13 @@ export function createTerrainCoverageClip(surfaces: ElevationSurface[], origin: 
         shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>',
           '#include <clipping_planes_fragment>\n'+masks.map((_,i)=>`{
             vec2 cell=(coverageMatrix${i}*vec3(vContextXY,1.0)).xy;
-            if(all(greaterThanEqual(cell,vec2(0.0))) && all(lessThan(cell,coverageSize${i}))) {
+            if(vTerrainSeam<0.5 && all(greaterThanEqual(cell,vec2(0.0))) && all(lessThan(cell,coverageSize${i}))) {
               vec2 uv=(floor(cell)+0.5)/coverageSize${i};
               if(texture2D(coverageMap${i},uv).r>0.5) discard;
             }
           }`).join('\n'));
       };
-      material.customProgramCacheKey=()=>key.call(material)+`:terrain-coverage-v1:${masks.length}`;
+      material.customProgramCacheKey=()=>key.call(material)+`:terrain-coverage-v2:${masks.length}`;
     },
     dispose(){masks.forEach(mask=>mask.texture.dispose());}
   };

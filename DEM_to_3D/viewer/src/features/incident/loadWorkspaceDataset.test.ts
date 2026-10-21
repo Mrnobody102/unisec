@@ -44,7 +44,7 @@ describe('configured dataset loading', () => {
       workspace: { url: '/scenarios/alternate/v1/incident.json', byteLength: bytes.byteLength, sha256: hash } };
     delete (manifest as {fieldData?: unknown}).fieldData;
     delete (manifest as {referenceData?: unknown}).referenceData;
-    delete (manifest as {terrainContext?: unknown}).terrainContext;
+
     const fetch = vi.fn(async (url: string) => {
       if (url === '/workspace-config.json') return Response.json({ dataSource, manifestUrl: '/scenarios/alternate/v1/manifest.json' });
       if (url === '/scenarios/alternate/v1/manifest.json') return Response.json(manifest);
@@ -56,6 +56,8 @@ describe('configured dataset loading', () => {
       grid: new Float32Array(1), gridBuffer: new ArrayBuffer(4) });
     const loaded = await loadWorkspaceDataset(new AbortController().signal);
     expect(loaded.packet.incident.id).toBe('INC-ALTERNATE');
+    expect(loaded.contextTerrain).toHaveLength(manifest.terrainContext.length);
+    for(const asset of manifest.terrainContext)expect(loadTerrainData).toHaveBeenCalledWith({metadata:asset.metadata.url,grid:asset.grid.url},expect.any(AbortSignal));
     const workspace = deriveIncidentWorkspace(loaded.packet, false);
     expect(workspace.communities.map(item => item.name)).toEqual(['Alternate locality']);
     expect(workspace.assessments.get('CT')?.access).toBe('blocked');

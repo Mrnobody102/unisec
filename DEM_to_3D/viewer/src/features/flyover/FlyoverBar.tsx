@@ -59,6 +59,7 @@ export function FlyoverBar({ locale, state, title, fileName, mapMode, onRequest3
   const onMap=(content:JSX.Element)=>mapHost?createPortal(content,mapHost):content;
   const exportRun = useRef<AbortController | null>(null);
   const launchRun = useRef<AbortController | null>(null);
+  const launchedControls=useRef<NonNullable<ViewControls['flyover']>|null>(null);
   const [idleUi, setIdleUi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const active = state.status === 'playing' || state.status === 'paused' || state.status === 'ended';
@@ -87,7 +88,9 @@ export function FlyoverBar({ locale, state, title, fileName, mapMode, onRequest3
   }, [active, state.status, state.time, controlRef]);
 
   useEffect(() => { if (state.error) { setMessage(t('Không phát được hành trình.', 'The flyover could not start.')); setMenuOpen(true); } }, [state.error]);
-  useEffect(() => () => {exportRun.current?.abort();launchRun.current?.abort();}, []);
+  useEffect(() => () => {
+    exportRun.current?.abort();launchRun.current?.abort();launchedControls.current?.exit();
+  }, []);
   // Leaving fullscreen is not leaving the film; leaving the film leaves fullscreen.
   useEffect(() => { if (state.status === 'idle' && document.fullscreenElement?.classList.contains('map-area')) void document.exitFullscreen().catch(() => undefined); }, [state.status]);
 
@@ -99,7 +102,7 @@ export function FlyoverBar({ locale, state, title, fileName, mapMode, onRequest3
     if (mapMode !== '3d') onRequest3D();
     const run=new AbortController();launchRun.current=run;
     try {
-      const started=await withCurrentFlyover(controlRef,run.signal,async controls=>{await controls.play();return true;});
+      const started=await withCurrentFlyover(controlRef,run.signal,async controls=>{launchedControls.current=controls;await controls.play();return true;});
       if(!started) throw new Error('The 3D map is not ready');
     } catch {
       if(!run.signal.aborted) {
@@ -163,6 +166,9 @@ export function FlyoverBar({ locale, state, title, fileName, mapMode, onRequest3
     <input type="range" className="flyover-seek" min={0} max={Math.max(1, state.duration)} step={.1} value={state.time}
       aria-label={t('Vị trí trong hành trình', 'Position in the journey')} onChange={event => controls()?.seek(Number(event.target.value))}/>
     <span className="flyover-clock">{clock(state.time)} / {clock(state.duration)}</span>
+    <select className="flyover-speed" aria-label={t('Tốc độ phát','Playback speed')} value={state.playbackRate??1} onChange={event=>controls()?.setPlaybackRate(Number(event.target.value))}>
+      {[.75,1,1.25,1.5].map(rate=><option key={rate} value={rate}>{rate}×</option>)}
+    </select>
     <button type="button" className="icon-button flyover-icon" onClick={() => void exportVideo()} title={t('Xuất video MP4', 'Export MP4 video')} aria-label={t('Xuất video MP4', 'Export MP4 video')}><UiIcon name="download" size={18}/></button>
     <button type="button" className="icon-button flyover-icon" onClick={fullscreen} title={t('Toàn màn hình', 'Full screen')} aria-label={t('Toàn màn hình', 'Full screen')}><UiIcon name="expand" size={18}/></button>
     <button type="button" className="icon-button flyover-icon" onClick={() => controls()?.exit()} title={t('Thoát hành trình (Esc)', 'Exit journey (Esc)')} aria-label={t('Thoát hành trình', 'Exit journey')}><UiIcon name="close" size={18}/></button>

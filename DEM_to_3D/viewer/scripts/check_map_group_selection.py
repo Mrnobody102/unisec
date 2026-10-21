@@ -15,6 +15,7 @@ def run(url,chrome,captures):
   # Fixture uses the same production renderer and CSS; IDs differ even when names repeat.
   page.evaluate("""async()=>{
    const {createScreenMarkers}=await import('/src/terrain/screenMarkers.ts');
+   window.fixturePoiMetrics=(await import('/src/terrain/poiFrame.ts')).poiMetrics;
    const host=document.createElement('div');host.id='selection-fixture';Object.assign(host.style,{position:'fixed',left:'280px',top:'130px',width:'620px',height:'430px',zIndex:5000,background:'#263b3d'});document.body.append(host);
    window.fixtureHits=[];let selected=null;
    const communities=[{id:'village-a',name:'Điểm A',projected:{x:260,y:210},prio:2},{id:'village-b',name:'Điểm A',projected:{x:263,y:214},prio:2}];
@@ -39,10 +40,10 @@ def run(url,chrome,captures):
    assert page.evaluate('fixtureHits.at(-1)')==expected
    expect(fixture.locator('.map-object-chooser')).to_have_count(0)
    selected=fixture.locator('.map-pin.is-selected:visible');expect(selected).to_have_count(1)
-   anchor=selected.evaluate("""n=>{const r=n.getBoundingClientRect(),h=n.closest('#selection-fixture').getBoundingClientRect();return {x:r.x-h.x+r.width/2,y:r.y-h.y+r.width*28.8/28,fill:getComputedStyle(n.querySelector('.map-pin-shape svg')).fill,color:getComputedStyle(n).color};}""")
+   anchor=selected.evaluate("""n=>{const r=n.getBoundingClientRect(),h=n.closest('#selection-fixture').getBoundingClientRect();return {x:r.x-h.x+r.width/2,y:r.y-h.y+fixturePoiMetrics(r.width,true).tip,fill:getComputedStyle(n.querySelector('.map-pin-shape svg')).fill,color:getComputedStyle(n).color};}""")
    point={'hazard-c':(258,217),'village-a':(260,210),'village-b':(263,214),'site-d':(262,218)}[expected['id']]
    assert abs(anchor['x']-point[0])<.5 and abs(anchor['y']-point[1])<.5,(expected,anchor)
-   assert anchor['fill']=='rgb(252, 252, 249)',anchor
+   assert anchor['fill']!='rgb(255, 255, 255)' and anchor['color']=='rgb(255, 255, 255)',anchor
    assert selected.locator('.map-pin-icon svg').is_visible()
   if captures:captures.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(captures/'group-selection-fixture.png'))
   page.evaluate("fixtureRenderer.dispose();document.querySelector('#selection-fixture').remove()")

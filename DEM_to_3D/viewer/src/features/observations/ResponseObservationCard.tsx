@@ -132,7 +132,7 @@ export function ResponseObservationCard({
       )}
       </div>
       <footer>{areaHead&&onCompare&&<button className="button" onClick={onCompare}>{t('Đối chiếu ảnh','Compare imagery')}</button>}<button className="button" onClick={onEdit}>
-        {t('Mở hồ sơ trong GIS', 'Open GIS record')}
+        {t('Mở trong GIS', 'Open in GIS')}
       </button></footer>
     </section>
   );

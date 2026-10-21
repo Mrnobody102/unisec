@@ -58,7 +58,7 @@ export function sampleTiles(tiles: readonly TerrainTile[], x: number, y: number)
       const tile = tiles[index];
       if (!tileContainsPoint(tile, x, y, slack)) continue;
       const sampled = strictBilinearSample(tile.grid, tile.metadata, { x, y });
-      return { elevation: sampled.elevation, pixel: sampled.pixel, tileIndex: index };
+      if(sampled.elevation !== undefined)return { elevation: sampled.elevation, pixel: sampled.pixel, tileIndex: index };
     }
   }
   return { tileIndex: -1 };

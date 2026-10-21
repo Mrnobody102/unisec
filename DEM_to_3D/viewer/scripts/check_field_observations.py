@@ -87,7 +87,7 @@ def run(url, chrome, captures):
                 assert card['y'] >= toolbar['y']+toolbar['height'],(width,theme,card,toolbar)
                 if captures and width in [1440,320]:page.screenshot(path=str(captures/f'field-response-{width}-{theme}.png'))
         page.set_viewport_size({'width':1440,'height':960})
-        page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
+        page.locator('.field-map-card').get_by_role('button',name='Mở trong GIS',exact=True).click()
         form=page.locator('.field-observation');expect(form).to_contain_text(obs['note'])
         form.get_by_role('button',name='Sửa ghi nhận',exact=True).click();form.get_by_text('Thông tin bổ sung',exact=True).click();form.get_by_label('Ghi chú hiện trường',exact=True).fill('This change must not be retained')
         page.evaluate("""()=>{window.__fieldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='dear.gis.v2')throw new Error('QuotaExceeded');return window.__fieldSet.call(this,k,v);};}""")
@@ -107,7 +107,7 @@ def run(url, chrome, captures):
         page.goto(url+'/?map=2d&offline=1&demoRole=manager&gisPoint='+oid)
         expect(page.locator('.field-map-card')).to_contain_text(obs['note'],timeout=25000)
         expect(page.locator('.field-map-card img')).to_have_count(1)
-        page.locator('.field-map-card').get_by_role('button',name='Mở hồ sơ trong GIS',exact=True).click()
+        page.locator('.field-map-card').get_by_role('button',name='Mở trong GIS',exact=True).click()
         with page.expect_download() as download:download_geometry(page, 'GeoJSON')
         exported=json.loads(Path(download.value.path()).read_text(encoding='utf-8'))
         assert exported['features'][0]['properties']['dearObservation']==obs

@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import type { FlyoverPlan, PathSampler } from './flyoverPlan';
 
 /** Bake a restrained camera bearing once. It follows the valley, rather than each
@@ -21,4 +22,42 @@ export function createFlyoverBearing(path: PathSampler, plan: FlyoverPlan) {
     const a=angles[i]+(angles[i+1]-angles[i])*f;
     return {x:Math.sin(a),z:Math.cos(a)};
   };
+}
+
+/** Fit all route/area vertices inside the closing shot, including the narrow-screen case. */
+export function flyoverOverviewPose(points:readonly THREE.Vector3[],heading:{x:number;z:number},fov:number,aspect:number){
+  const bounds=new THREE.Box3().setFromPoints([...points]);
+  const target=bounds.getCenter(new THREE.Vector3());
+  const direction=new THREE.Vector3(-heading.x,1.5,-heading.z).normalize();
+  const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),direction).normalize();
+  const up=new THREE.Vector3().crossVectors(direction,right).normalize();
+  const tanV=Math.tan(THREE.MathUtils.degToRad(fov/2))*.82,tanH=tanV*aspect;
+  let distance=500;
+  for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+    const delta=new THREE.Vector3(x,y,z).sub(target);
+    distance=Math.max(distance,delta.dot(direction)+Math.max(Math.abs(delta.dot(right))/tanH,Math.abs(delta.dot(up))/tanV));
+  }
+  return {target,position:target.clone().addScaledVector(direction,distance*1.06)};
+}
+
+export type FlyoverCameraPose={position:THREE.Vector3;target:THREE.Vector3};
+/** Sample terrain clearance before playback. Seeking, live playback and export
+ * interpolate the same track without hundreds of terrain queries per frame. */
+export function createFlyoverCameraTrack(duration:number,poseAt:(time:number)=>FlyoverCameraPose,fps=30){
+  const count=Math.max(1,Math.ceil(duration*fps)),step=duration/count;
+  const poses=Array.from({length:count+1},(_,i)=>poseAt(i*step));
+  return (time:number):FlyoverCameraPose=>{
+    const t=THREE.MathUtils.clamp(time,0,duration)/step,i=Math.min(count-1,Math.floor(t)),f=t-i;
+    return {position:poses[i].position.clone().lerp(poses[i+1].position,f),target:poses[i].target.clone().lerp(poses[i+1].target,f)};
+  };
+}
+
+/** Follow the surrounding route corridor instead of locking the camera onto
+ * each bend of the moving marker. The marker itself remains on the real path. */
+export function flyoverRouteAnchor(path:PathSampler,distance:number){
+  const anchor=new THREE.Vector3();let weight=0;
+  for(const [offset,w] of [[-600,1],[-300,2],[0,3],[300,2],[600,1]]){
+    const point=path.pointAt(distance+offset);anchor.addScaledVector(new THREE.Vector3(point.x,point.y,point.z),w);weight+=w;
+  }
+  return anchor.multiplyScalar(1/weight);
 }

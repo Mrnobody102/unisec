@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectAnalysisTerrain } from './analysisTerrain';
+import { sampleTiles,selectAnalysisTerrain } from './analysisTerrain';
 import type { LoadedModel, TerrainMetadata } from '../types/terrain';
 
 const metadata: TerrainMetadata = {
@@ -50,4 +50,10 @@ describe('selectAnalysisTerrain', () => {
     expect(result?.tiles).toHaveLength(1);
     expect(result?.tiles[0].metadata.asset_id).toBe('analysis-test');
   });
+});
+
+it('uses a valid overlapping DEM when the first DEM has NoData at that location',()=>{
+  const tile={...metadata,grid:{...metadata.grid,shape:[2,2] as [number,number],byte_length:16}};
+  const tiles=[{metadata:tile,grid:new Float32Array(4).fill(NaN)},{metadata:tile,grid:new Float32Array([10,20,30,40])}];
+  expect(sampleTiles(tiles,1,0)).toMatchObject({elevation:25,tileIndex:1});
 });

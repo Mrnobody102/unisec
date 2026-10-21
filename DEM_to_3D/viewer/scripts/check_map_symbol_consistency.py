@@ -36,6 +36,7 @@ def run(url: str, captures: Path | None, chrome: str | None):
             assert name and marker.get_attribute("title") is None
             assert marker.locator(".map-pin-shape svg").count() == 1
             assert marker.locator(".map-pin-icon svg path").count() == 1
+            assert 'Roboto' in marker.locator('.map-pin-label').evaluate('(el)=>getComputedStyle(el).fontFamily')
             marker.hover()
             expect(page.locator(".map-hover-target:visible")).to_have_count(0)
             expect(marker.locator(".map-pin-label")).to_be_visible()

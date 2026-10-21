@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ScenarioAsset } from '../../data/scenarioManifest';
-import { defaultAnalysisSelection, latestOpticalLayer, loadImageryCatalog, selectedRasters, type AnalysisLayer, type AnalysisSelection } from './analysisImagery';
+import { defaultAnalysisSelection, latestOpticalLayer, selectionForCatalog, loadImageryCatalog, selectedRasters, type AnalysisLayer, type AnalysisSelection } from './analysisImagery';
 
 /** Prepared EO catalog plus the viewer's current choice; shared by the response map and GIS editing. */
 export function useAnalysisImagery(asset: ScenarioAsset | undefined) {
@@ -10,7 +10,7 @@ export function useAnalysisImagery(asset: ScenarioAsset | undefined) {
   const [layers, setLayers] = useState<AnalysisLayer[]>([]);
   const [selection, updateSelection] = useState<AnalysisSelection>(defaultAnalysisSelection);
   const chosen = useRef(false);
-  const setSelection = (value: AnalysisSelection) => {chosen.current = true; updateSelection(value);};
+  const setSelection = useCallback((value: AnalysisSelection) => {chosen.current = true; updateSelection(value);},[]);
   useEffect(() => {
     setLayers([]);
     if (!asset) {setCatalogState('off');return;}
@@ -20,7 +20,7 @@ export function useAnalysisImagery(asset: ScenarioAsset | undefined) {
       if (run.signal.aborted) return;
       setLayers(catalog);
       setCatalogState('ready');
-      if (!chosen.current) updateSelection(value => ({...value, layer: latestOpticalLayer(catalog)?.id ?? null}));
+      updateSelection(value=>selectionForCatalog(catalog,value,chosen.current));
     }, () => { if (!run.signal.aborted) {setLayers([]);setCatalogState('error');} });
     return () => run.abort();
   }, [asset?.url, asset?.sha256,attempt]);

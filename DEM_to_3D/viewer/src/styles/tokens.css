@@ -183,6 +183,7 @@
   --size-panel-compact: 344px;
   --size-row: 56px;
   --size-control: 36px;
+  --font-map: Roboto, Arial, sans-serif;
   --font-sans: 'Source Sans 3', 'IBM Plex Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: 'Source Sans 3', 'IBM Plex Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;

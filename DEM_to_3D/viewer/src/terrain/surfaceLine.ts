@@ -23,9 +23,19 @@ export function stabiliseSurfaceLine(material:LineMaterial):LineMaterial {
   material.alphaToCoverage=true;
   material.polygonOffset=true;material.polygonOffsetFactor=-1;material.polygonOffsetUnits=-1;
   material.onBeforeCompile=shader=>{
+    // Clip both endpoints to the actual near plane before dividing by clip.w.
+    // An off-screen segment crossing the eye plane must never extrude a giant quad.
+    shader.vertexShader=shader.vertexShader.replace('// clip space', `
+      if (perspective) {
+        float nearZ=projectionMatrix[3][2]/(projectionMatrix[2][2]-1.0);
+        if(start.z>nearZ && end.z>nearZ){gl_Position=vec4(2.0,2.0,2.0,1.0);return;}
+        if(start.z>nearZ) start.xyz=mix(start.xyz,end.xyz,(nearZ-start.z)/(end.z-start.z));
+        if(end.z>nearZ) end.xyz=mix(end.xyz,start.xyz,(nearZ-end.z)/(start.z-end.z));
+      }
+      // clip space`);
     shader.vertexShader=shader.vertexShader.replace('dir = normalize( dir );',
       'float directionLength=length(dir); dir=directionLength>1e-7 ? dir/directionLength : vec2(1.0,0.0);');
   };
-  material.customProgramCacheKey=()=> 'surface-line-v1';
+  material.customProgramCacheKey=()=> 'surface-line-v2';
   return material;
 }

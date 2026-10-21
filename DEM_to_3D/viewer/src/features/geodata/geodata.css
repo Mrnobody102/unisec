@@ -34,7 +34,7 @@
 .geodata-workspace button { font: inherit; cursor: pointer; }
 .geodata-workspace button:disabled { opacity: 0.5; cursor: default; }
 .geodata-workspace .button { min-height: 34px; font-size: 12px; }
-.geodata-workspace .icon-button { flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; padding: 5px; background: transparent; border-color: transparent; }
+.geodata-workspace .icon-button { flex-shrink: 0; width: 32px; height: 28px; min-height: 28px; padding: 5px; background: transparent; border-color: transparent; }
 .geodata-workspace .icon-button:hover:not(:disabled) { background: var(--hover); }
 .geodata-workspace .icon-button[aria-expanded="true"] { background: var(--ws-tint); color: var(--select-ink); }
 .geodata-field { display: grid; gap: 6px; color: var(--ws-muted); font-size: 12px; margin-bottom: 12px; }
@@ -82,13 +82,13 @@
 .geodata-coverage th:last-child,
 .geodata-coverage td:last-child { text-align: right; white-space: nowrap; }
 .geodata-coverage td { padding: 5px 0; border-bottom: 1px solid var(--ws-line); }
-.geodata-coverage-link { display: inline-flex; min-height: 32px; font: inherit; cursor: pointer; padding: 2px 0; background: transparent; border: 0; color: var(--ws-brand); text-align: left; justify-content: start; overflow-wrap: anywhere; }
+.geodata-coverage-link { display: inline-flex; min-height: 28px; font: inherit; cursor: pointer; padding: 2px 0; background: transparent; border: 0; color: var(--ws-brand); text-align: left; justify-content: start; overflow-wrap: anywhere; }
 .geodata-detail .disclosure-trigger { flex: 1; font-size: 12px; }
 .geodata-method { background: var(--ws-bg); padding: 10px; margin-top: 12px; font-size: 12px; color: var(--ws-muted); }
 .geodata-method p { margin: 0 0 8px; }
 .geodata-method code { font-size: 10px; }
 .geodata-export { flex: none; padding: 8px 16px; border-top: 1px solid var(--ws-line); background: var(--map-chrome); }
-.geodata-export > details > summary { display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 12px; cursor: pointer; }
+.geodata-export > details > summary { display: flex; align-items: center; gap: 8px; min-height: 28px; font-size: 12px; cursor: pointer; }
 .geodata-export-options { padding-block: 8px; }
 .geodata-export .geodata-field { margin-bottom: 8px; }
 .geodata-export .geodata-actions button { flex: 1; }
@@ -96,7 +96,7 @@
 [data-theme="dark"] .geodata-map { background: var(--ws-map); }
 .geodata-map-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 46px; padding: 6px 12px; background: var(--map-chrome); border-bottom: 1px solid var(--ws-line); }
 .geodata-map-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.geodata-map-toolbar select:not([multiple]) { width: auto; min-height: 32px; font-size: 13px; }
+.geodata-map-toolbar select:not([multiple]) { width: auto; min-height: 28px; font-size: 13px; }
 .geodata-map-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0; padding: 0; list-style: none; font-size: 11px; color: var(--ws-muted); }
 .geodata-map-legend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .geodata-legend-symbol { width: 10px; height: 10px; border: 1.5px solid currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
@@ -174,7 +174,7 @@
 .geodata-title h1 { margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; }
 /* Read-only incident scenario layer under GIS data. */
 .scenario-drag-pin { border: 0; background: none; cursor: grab; }
-.scenario-drag-pin svg { display: block; width: 28px; height: 32px; fill: #d93025; filter: drop-shadow(0 1px 1px #0008); }
+.scenario-drag-pin svg { display: block; width: 34px; height: 46px; fill: #d93025; stroke: #fff; stroke-width: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
 .scenario-drag-pin:active { cursor: grabbing; }
 .scenario-overlay-label.leaflet-tooltip { display: grid; gap: 1px; padding: 4px 8px; border: 1px solid var(--ws-line); border-radius: var(--radius-control); background: var(--ws-raised); color: var(--ws-text); box-shadow: var(--shadow-float); font: 12px/1.35 var(--font-sans); }
 .scenario-overlay-label small { color: var(--ws-muted); font-size: 10px; }
@@ -186,10 +186,10 @@
 @media (min-width: 761px) {
   .geodata-workbench-toolbar { gap: 0; padding: 0 12px 0 8px; }
   .geodata-workbench-toolbar > .geodata-title,
-  .geodata-workbench-toolbar > .geodata-tool-group { height: 32px; padding: 0 12px; border-right: 0; }
+  .geodata-workbench-toolbar > .geodata-tool-group { height: 28px; padding: 0 12px; border-right: 0; }
   .geodata-workbench-toolbar > .geodata-title { padding-left: 0; }
   .geodata-workbench-toolbar > .geodata-tool-group { gap: 4px; border-left: 1px solid var(--ws-line); }
-  .geodata-workbench-toolbar .icon-button { width: 32px; height: 32px; min-height: 32px; padding: 0; }
+  .geodata-workbench-toolbar .icon-button { width: 32px; height: 28px; min-height: 28px; padding: 0; }
   .geodata-workbench-toolbar .geodata-snap { margin: 0; gap: 8px; color: var(--ws-text); font-size: 12px; }
   .geodata-workbench-toolbar .geodata-snap input { margin: 0; }
   .geodata-workbench-toolbar .geodata-drawing-bar { padding-left: 12px; border-left: 1px solid var(--ws-line); }

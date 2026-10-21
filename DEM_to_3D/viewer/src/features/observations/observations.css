@@ -111,15 +111,15 @@
   color: var(--critical-ink);
   font-size: 12px;
 }
-/* Small evidence POIs, tip on source coordinates. */
+/* Evidence symbols use the same disc/pin anchor as the response map. */
 .field-map-marker {--pin:var(--sym-report,#987b4e);border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--pin);}
 .field-map-marker.is-survey {--pin:var(--sym-survey,#627f94);}
-.field-map-marker>span {position:relative;display:block;width:28px;height:28px;}
-.field-map-marker svg {width:28px;height:28px;fill:#f5f0e4;stroke:var(--pin);stroke-width:1.1;}
-.field-map-marker b {position:absolute;top:4px;left:6px;width:16px;height:16px;display:grid;place-items:center;color:var(--pin);font:600 13px/16px var(--font-sans);}
-.field-map-marker.is-selected>span,.field-map-marker.is-selected svg{height:32px;}
+.field-map-marker>span {position:relative;display:block;width:100%;height:100%;}
+.field-map-marker svg {width:100%;height:100%;fill:#f5f0e4;stroke:var(--pin);stroke-width:1.1;}
+.field-map-marker b {position:absolute;top:6px;left:6px;width:16px;height:16px;display:grid;place-items:center;color:var(--pin);font:600 13px/16px var(--font-sans);}
+
 .field-map-marker.is-selected svg {fill:#f5f0e4;stroke:var(--pin);stroke-width:2;}
-.field-map-marker.is-selected b{top:7.6px;}
+.field-map-marker.is-selected b{top:8px;left:8px;width:18px;height:18px;}
 .field-map-marker:hover:not(.is-selected) b {filter:drop-shadow(0 0 2px white);}
 .field-map-card {
   position: absolute;

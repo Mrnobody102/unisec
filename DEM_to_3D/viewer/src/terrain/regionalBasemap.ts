@@ -1,3 +1,6 @@
+import { setBasemapTone } from './basemapTone';
+import type { BasemapTone } from '../features/imagery/basemapTone';
+import { closeTerrainSeams, terrainBoundaryEdges, type TerrainEdge } from './terrainSeams';
 import { createTerrainCoverageClip } from './terrainCoverage';
 import { imageryDrape } from './imageryDrape';
 import type { ImageryDetailAtlas } from './imageryAtlas';
@@ -65,7 +68,7 @@ export function tileScenePoint(metadata: TerrainMetadata, tile: MapTile, u: numb
   return new THREE.Vector3(point.x, point.y, point.z);
 }
 
-export function tileGeometry(metadata: TerrainMetadata, tile: MapTile, elevation?: (x: number, y: number) => number | undefined): THREE.BufferGeometry {
+export function tileGeometry(metadata: TerrainMetadata, tile: MapTile, elevation?: (x: number, y: number) => number | undefined, edges:readonly TerrainEdge[]=[]): THREE.BufferGeometry {
   const positions: number[] = [], uv: number[] = [], indices: number[] = [];
   const steps = elevation ? Math.max(4, Math.min(128, 2 ** (19 - tile.z))) : 4;
   const valid: boolean[] = [];
@@ -84,11 +87,14 @@ export function tileGeometry(metadata: TerrainMetadata, tile: MapTile, elevation
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingSphere();
+  geometry.setIndex(indices);
+  if(edges.length)closeTerrainSeams(geometry,metadata,tile,steps,edges);
+  geometry.computeVertexNormals(); geometry.computeBoundingSphere();
   return geometry;
 }
 
 export function createRegionalBasemap(metadata: TerrainMetadata, transform: THREE.Matrix4, onState: (state: BasemapState) => void, anisotropy = 1, onImageryTile?: (tile: MapTile, bitmap: ImageBitmap) => void, elevationSurfaces?: ElevationSurface[]) {
+  const edges=terrainBoundaryEdges(elevationSurfaces??[]);
   const coverage=createTerrainCoverageClip(elevationSurfaces ?? [],metadata.world_origin);
   const group = new THREE.Group();
   group.name = 'regional-basemap'; group.matrix.copy(transform); group.matrixAutoUpdate = false;
@@ -97,6 +103,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
     catch { return []; } // Unlocated/custom models remain usable without a basemap.
   };
   let tiles = tilesFor('satellite');
+  let tone:BasemapTone|null=null;
   let style: BasemapStyle = 'satellite', enabled = false, disposed = false, generation = 0;
   let controller: AbortController | null = null;
   let imageryStatus: BasemapState['status'] = 'off';
@@ -106,7 +113,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
     planRegionalTiles(metadata, { padding: 1.2, maxZoom: 11, budget: 48 }), () => {
       if (disposed) return;
       cached.forEach(item => {
-        const geometry = tileGeometry(metadata, item.tile, relief!.sample);
+        const geometry = tileGeometry(metadata, item.tile, relief!.sample,edges);
         item.mesh.geometry.dispose(); item.mesh.geometry = geometry;
       });
       publish(imageryStatus);
@@ -141,11 +148,12 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
           bitmap = await createImageBitmap(await response.blob(), { imageOrientation: 'flipY' });
           if (disposed || run !== generation) { bitmap.close(); continue; }
           const texture = new THREE.Texture(bitmap); texture.flipY = false; texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = anisotropy; texture.needsUpdate = true;
-          const mesh = new THREE.Mesh(tileGeometry(metadata, tile, relief?.sample), new THREE.MeshLambertMaterial({ map: texture, depthWrite: false }));
+          const mesh = new THREE.Mesh(tileGeometry(metadata, tile, relief?.sample,edges), new THREE.MeshLambertMaterial({ map: texture, depthWrite: false, side:THREE.DoubleSide }));
           // The DEM writes depth first. Tiles test against it, but do not occlude
           // finer tiles in the same flat context plane.
           mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
           const setDetail=imageryDrape(mesh.material,tile);coverage.apply(mesh.material);setDetail(runStyle==='satellite'?viewAtlas:null);setDetail.setBase(runStyle==='satellite'?baseAtlas:null);
+          setBasemapTone(mesh.material,runStyle==='satellite'?tone:null);
           group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle, tile, setDetail });
           if (runStyle === 'satellite') {
             try {onImageryTile?.(tile, bitmap);} catch { /* The prepared DEM texture remains the fallback. */ }
@@ -169,6 +177,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   };
   return {
     group,
+    setTone(next:BasemapTone|null){tone=next;cached.forEach(item=>setBasemapTone(item.mesh.material,item.style==='satellite'?tone:null));},
     surfacePoint(x:number,y:number):THREE.Vector3|undefined {
       const height=relief?.sample(x,y);if(height===undefined)return undefined;
       const p=projectedToScene(metadata,{x,y},height+3);

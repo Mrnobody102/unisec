@@ -338,6 +338,7 @@ export function ResponseWorkspace({
     packet,
     manifest: scenarioManifest,
     defaultTerrain: defaultTerrainData,
+    contextTerrain,
     snapshotReady,
     startupError,
     offline: offlineMode,
@@ -402,8 +403,8 @@ export function ResponseWorkspace({
   const analysisDisplay = useMemo(() => ({ rasters: analysisImagery.rasters, opacity: analysisImagery.selection.opacity, balanceBasemap:analysisImagery.balanceBasemap && supportsBasemapTone(analysisImagery.layers) && analysisImagery.layers.some(layer=>layer.id===analysisImagery.selection.layer && layer.kind==='optical') }),
     [analysisImagery.rasters, analysisImagery.selection.opacity,analysisImagery.balanceBasemap,analysisImagery.layers,analysisImagery.selection.layer]);
   const [flyoverState, setFlyoverState] = useState<FlyoverState>({ status: 'idle', time: 0, duration: 0 });
-  const flyoverInput = useMemo(() => buildFlyoverInput({ communities, routes, hazards, responseSites, fieldPhotos, mappedAreas:displayedGis, imageryLayers: analysisImagery.layers, imagerySelection: analysisImagery.selection }),
-    [communities, routes, hazards, responseSites, fieldPhotos, displayedGis, analysisImagery.layers, analysisImagery.selection]);
+  const flyoverInput = useMemo(() => buildFlyoverInput({ communities, routes, hazards, responseSites, overviewPoints:packet.aoi.points, fieldPhotos, mappedAreas:displayedGis, imageryLayers: analysisImagery.layers, imagerySelection: analysisImagery.selection }),
+    [communities, routes, hazards, responseSites, packet.aoi.points, fieldPhotos, displayedGis, analysisImagery.layers, analysisImagery.selection]);
 
   const resetTerrainTools = useCallback(() => {
     resetTools();
@@ -466,8 +467,8 @@ export function ResponseWorkspace({
   );
   const analysisModels = useMemo(
     () =>
-      models.length ? models : defaultTerrainData ? [defaultTerrainData] : [],
-    [models, defaultTerrainData]
+      models.length ? models : defaultTerrainData ? [defaultTerrainData,...contextTerrain] : [],
+    [models, defaultTerrainData,contextTerrain]
   );
   const journey = useRoadJourney(roads);
   // One map tool at a time: opening the journey already resets the others, so the
@@ -840,6 +841,7 @@ export function ResponseWorkspace({
     (Boolean(gisCard) || gisGroup.length < 2) &&
     activeDialog !== 'layers';
   useEffect(() => {
+    if(showProfile)return; // The profile owns framing while it is open.
     const selection = view === 'priority' ? selectedCommunityId && `community:${selectedCommunityId}` : selectedObjectId;
     if (!selection || gisCard || gisGroup.length > 1) return;
     if (window.matchMedia('(max-width:900px)').matches && mobileView !== 'map') return;
@@ -847,7 +849,7 @@ export function ResponseWorkspace({
       secondFrame = 0;
     const focusSelection = () => {
       const frame = mapSelectionFrame({ roads, hazards, communities, responseSites, aoi: packet.aoi }, selection,
-        selection.startsWith('community:') && cameraIntent.kind === 'route' ? activeRoute?.points : undefined);
+        selection.startsWith('community:') && cameraIntent.kind === 'route' ? (activeRoute?.segs.find(road=>road.id===navigation.routeSectionId)?.points ?? activeRoute?.points) : undefined);
       if (!frame.length) return;
       // The dock floats over the map: centre the selection in the uncovered part.
       const reserve = responseDetailVisible && detailLayout.mode === 'dock' ?
@@ -878,6 +880,8 @@ export function ResponseWorkspace({
     selectedObjectId,
     mapMode,
     viewReadyVersion,
+    navigation.routeSectionId,
+    showProfile,
     cameraIntent,
     activeRoute,
     mobileView,

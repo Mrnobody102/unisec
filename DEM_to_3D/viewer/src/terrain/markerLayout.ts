@@ -25,7 +25,10 @@ const markerRect = (point: ScreenMarker, size: number): ScreenRect => {
 
 const byPriority = (a: ScreenMarker, b: ScreenMarker) => b.priority - a.priority || a.id.localeCompare(b.id);
 const covers = (a: ScreenMarker, b: ScreenMarker): boolean => {
-  const r = markerRect(a, 32), other = markerRect(b, 32), x = other.x + other.width / 2, y = other.y + other.height / 2;
+  // The chosen pin is anchored at its tip, not at its visual centre. Compare
+  // the other feature's actual coordinate so selecting it cannot split a group
+  // of coincident features or hide a neighbour under the enlarged pin.
+  const r=markerRect(a,32),x=b.x,y=b.y;
   return x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height;
 };
 

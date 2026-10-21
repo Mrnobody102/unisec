@@ -18,6 +18,7 @@ from PIL import Image
 from rasterio.enums import Resampling
 from rasterio.merge import merge
 from imagery_mosaic import optical_mosaic
+from planet_sources import PLANET_DATES, select_scene
 from rasterio.warp import calculate_default_transform, reproject, transform_bounds
 
 parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -30,14 +31,11 @@ OUT.mkdir(parents=True, exist_ok=True)
 TERRAIN, WEB = 'EPSG:32648', 'EPSG:3857'
 
 NAMES = {'planet-post': ['PlanetScope sau mưa', 'PlanetScope post-monsoon'], 'planet-pre': ['PlanetScope trước mưa', 'PlanetScope pre-monsoon'],
+         'planet-sep01': ['PlanetScope đối chiếu', 'PlanetScope reference'],
          'sentinel1': ['Sentinel-1 SAR', 'Sentinel-1 SAR']}
 # Clearest post-monsoon scene per road strip (pixel cloud test and clear pixels over the field
 # KML scars); 12/09 has haze over RoadPart1, so 01/09 is used there. Pre-monsoon: clearest
 # April scene, including the additional RoadPart1 clip from 12/04.
-PLANET = {
-    'planet-post': {'RoadPart1': '2026-09-01', 'RoadPart2': '2026-09-12', 'RoadPart3': '2026-09-12'},
-    'planet-pre': {'RoadPart1': '2026-04-12', 'RoadPart2': '2026-04-12', 'RoadPart3': '2026-04-12'},
-}
 # Fixed σ⁰ display ranges (dB). Fixed ranges keep two renderings comparable; a per-image
 # percentile stretch would not. They span this scene's 2–98 % values with margin.
 SAR_RANGES = {'vv': (-20.0, 5.0), 'vh': (-27.0, -2.0), 'ratio': (0.0, 15.0)}
@@ -85,20 +83,11 @@ def output(rgba: np.ndarray, transform, crs: str, name: str, resolution: float, 
 
 
 manifest = {'layers': []}
-for layer, dates in PLANET.items():
+for layer, dates in PLANET_DATES.items():
     parts, inputs = [], []
     for part, date in dates.items():
-        # Folder names must be exact: an added clip must not change glob order
-        # and accidentally replace a post-event scene with an April acquisition.
-        folder = SOURCE / 'planet' / f'CheTao_{part}_strip_psscene_visual'
-        if part == 'RoadPart1' and date == '2026-04-12':
-            folder = SOURCE / 'planet' / 'CheTao_RoadPart1_strip_add_psscene_visual' / 'PSScene'
-            tif = next(folder.glob('*_3B_Visual_clip.tif'))
-        else:
-            tif = next(folder.glob(f'{date}_strip_*_composite.tif'))
-        metadata_path=tif.with_name(tif.stem.replace('_3B_Visual_clip','') + '_metadata.json')
-        meta = json.loads(metadata_path.read_text(encoding='utf-8'))['properties']
-        assert meta['acquired'].startswith(date), (tif, date)
+        scene=select_scene(SOURCE,part,date)
+        tif,meta=scene.path,scene.properties
         with rasterio.open(tif) as src:
             assert src.crs.to_string() == TERRAIN, src.crs
             rgba = src.read()

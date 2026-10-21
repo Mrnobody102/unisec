@@ -1,3 +1,4 @@
+import {poiGeometry} from '../map/poiGeometry';
 import * as L from "leaflet";
 import type { GeometryRecord } from "../../geo/vector/types";
 import { poiFrameSvg } from "../../terrain/poiFrame";
@@ -28,8 +29,7 @@ export function observationMarker(
         "field-map-marker" +
         (observation.kind === "survey" ? " is-survey" : "") +
         (options.selected ? " is-selected map-selected-reference" : ""),
-      iconSize: [28, options.selected?32:28],
-      iconAnchor: [14, options.selected?28.8:25.2],
+      ...poiGeometry(options.selected),
       tooltipAnchor: [0, -30],
     }),
   });

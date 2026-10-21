@@ -236,7 +236,12 @@ export function TerrainViewer({
     let lastReferenceRelief: string|undefined;
     // Online relief beyond the DEMs arrives later; a flyover waits for it (bounded).
     let settleRelief = () => {};
-    const reliefSettled = new Promise<void>(resolve => { settleRelief = resolve; setTimeout(resolve, 12000); });
+    // The context loader can run for 20 seconds. Do not start a camera track
+    // at 12 seconds and let a late relief rebuild change the mountains mid-shot.
+    const reliefSettled = new Promise<void>(resolve => {
+      const timeout=setTimeout(resolve,25000);
+      settleRelief=()=>{clearTimeout(timeout);resolve();};
+    });
     const basemap = frame && primary
       ? createRegionalBasemap(frame, primary.group.matrixWorld, state => { if(state.relief!==lastReferenceRelief){lastReferenceRelief=state.relief;if(state.relief==='ready'||state.relief==='partial')refreshReferenceRelief();}if(state.relief!=='loading'&&state.status!=='loading')settleRelief(); onBasemapStateRef.current?.(state); balanceBasemapMaterials(); invalidate(); if(state.status!=='loading')scheduleViewImagery(); }, Math.min(16, renderer.capabilities.getMaxAnisotropy()), (tile, bitmap) => { terrainImageries.forEach(imagery => imagery?.tile(tile, bitmap)); invalidate(); }, (geographicPlacements ? located : [primary]).flatMap(entry => entry.model.metadata && entry.model.grid ? [{metadata:entry.model.metadata,grid:entry.model.grid}] : []))
       : null;
@@ -247,7 +252,12 @@ export function TerrainViewer({
       return viewImageryTiles(frame,points,imagerySource.maxNativeZoom,window.matchMedia('(pointer: coarse)').matches?64:256,Math.min(window.matchMedia('(pointer: coarse)').matches?8:32,Math.floor(renderer.capabilities.maxTextureSize/256)));
     }, Math.min(16,renderer.capabilities.getMaxAnisotropy()), atlas => {
       terrainImageries.forEach(imagery=>imagery?.setDetail(atlas));basemap?.setDetail(atlas);
-    },()=>invalidate(),atlas=>{terrainImageries.forEach(imagery=>imagery?.setBase(atlas));basemap?.setBase(atlas);}) : null;
+    },()=>invalidate(),atlas=>{terrainImageries.forEach(imagery=>imagery?.setBase(atlas));basemap?.setBase(atlas);},atlas=>{
+      // Decode/upload every stop image and build its clipped mesh while loading,
+      // instead of blocking a moving camera at a detail-page boundary.
+      if(atlas)renderer.initTexture(atlas.texture);
+      terrainImageries.forEach(imagery=>{const texture=imagery?.primeDetail(atlas);if(texture)renderer.initTexture(texture);});
+    }) : null;
     if(viewImagery)host.append(viewImagery.status);
     // A flyover keeps the imagery it started with: a moving camera would only abort tile requests.
     scheduleViewImagery=()=>{if(flyoverActive)return;viewImagery?.schedule();scheduleLocalImagery();};
@@ -269,17 +279,16 @@ export function TerrainViewer({
     }));
     balanceBasemapMaterials=()=>{
       const active=analysisPropsRef.current?.balanceBasemap && surfaceLayersRef.current?.imagery!==false;
-      scene.traverse(object=>{
-        const mesh=object as THREE.Mesh;
-        if(!mesh.isMesh)return;
+      const online=active&&!imagerySource.custom?basemapTones.online:null;
+      terrainImageries.forEach(imagery=>imagery?.setTone(online));
+      basemap?.setTone(online);
+      // Uploaded imagery is independent. Only the calibrated prepared asset
+      // receives this profile; factory-owned online materials handle their own lifecycle.
+      for(const entry of entries)for(const mesh of entry.meshes){
         for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
-          if(!(material as THREE.MeshLambertMaterial).isMeshLambertMaterial)continue;
           if(material.userData.preparedBasemap)setBasemapTone(material,active?basemapTones.prepared:null);
-          else if(object.parent?.name==='regional-basemap' || object.parent?.name?.startsWith('terrain-') && object.parent.name.endsWith('imagery')){
-            setBasemapTone(material,active && !imagerySource.custom?basemapTones.online:null);
-          }
         }
-      });
+      }
     };
     balanceBasemapMaterials();
     type SurfaceMaterial = THREE.MeshLambertMaterial;
@@ -619,6 +628,7 @@ export function TerrainViewer({
           await Promise.all([reliefSettled,viewImagery?.prepare(viewImageryTiles(frame,points,imagerySource.maxNativeZoom,384,axis),windows)]);
         } else await reliefSettled;
       },
+      cancelPreparation:()=>viewImagery?.release(),
       onFrame: target=>{
         if(primary?.model.metadata) {
           const point=sceneToProjected(primary.model.metadata,primary.group.worldToLocal(target.clone())).projected;
@@ -708,13 +718,28 @@ export function TerrainViewer({
       }
     };
 
+    let lastProfilePoint:typeof focusPoint | undefined;
     const updateFocusMarker = (): void => {
       const point = focusPointRef.current;
       focusMarker.hidden = !point;
-      if (!point) return;
-      focusPosition.set(point.x, point.y + 12, point.z).project(camera);
+      if (!point) {lastProfilePoint=point;return;}
+      const changed=lastProfilePoint!==point;lastProfilePoint=point;
+      const metadata=profileMetadataRef.current;
+      if(!metadata){focusMarker.hidden=true;return;}
+      const world=projectedWorld(sceneToProjected(metadata,point).projected);
+      if(!world){focusMarker.hidden=true;return;}
+      focusPosition.copy(world);focusPosition.y+=12;focusPosition.project(camera);
       const x = (focusPosition.x + 1) * host.clientWidth / 2;
       const y = (1 - focusPosition.y) * host.clientHeight / 2;
+      const dock=host.closest('.workspace')?.querySelector<HTMLElement>('#response-details');
+      const box=host.getBoundingClientRect(),panel=dock?.getBoundingClientRect();
+      const reserve=panel && getComputedStyle(dock!).visibility!=='hidden' && panel.left>=box.left ? Math.max(0,box.right-panel.left) : 0;
+      if(changed && !flyoverActive && (focusPosition.z< -1 || focusPosition.z>1 || x<50 || x>host.clientWidth-reserve-50 || y<50 || y>host.clientHeight-50)){
+        const position=camera.position.clone().add(world.clone().sub(controls.target));
+        const pose=cameraPoseBesideDock(camera,position,world,reserve,host.clientWidth);
+        moveCamera(pose.position,pose.target,300);
+      }
+
       focusMarker.hidden = focusPosition.z < -1 || focusPosition.z > 1 || x < 0 || y < 0 || x > host.clientWidth || y > host.clientHeight;
       focusMarker.style.transform = `translate(${x - 5}px,${y - 5}px)`;
       focusMarker.setAttribute('aria-label', localeRef.current === 'vi' ? 'Vị trí đang đọc trên mặt cắt' : 'Current profile position');
@@ -908,7 +933,7 @@ export function TerrainViewer({
       mapReference.dispose();
       viewImagery?.dispose();
       terrainImageries.forEach(imagery => imagery?.dispose());
-      basemap?.dispose();
+      settleRelief();basemap?.dispose();
       if (scenarioOverlayGroup) {
         scene.remove(scenarioOverlayGroup);
         scenarioOverlayGroup.traverse(object => { const mesh = object as THREE.Mesh; mesh.geometry?.dispose(); const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]; materials.forEach(material => material?.dispose()); });

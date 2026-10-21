@@ -78,7 +78,7 @@ export function viewImageryTiles(metadata: TerrainMetadata, points: Array<{x:num
 
 
 /** One request/atlas shared by native DEMs and context; only completed windows are published. */
-export function createViewImagery(plan: () => MapTile[], anisotropy: number, publish: (atlas: ImageryDetailAtlas | null) => void, invalidate: () => void, publishBase: (atlas:ImageryDetailAtlas|null)=>void = ()=>{}) {
+export function createViewImagery(plan: () => MapTile[], anisotropy: number, publish: (atlas: ImageryDetailAtlas | null) => void, invalidate: () => void, publishBase: (atlas:ImageryDetailAtlas|null)=>void = ()=>{}, primeDetail:(atlas:ImageryDetailAtlas|null)=>void=()=>{}) {
   const status = document.createElement('span'); status.className='terrain-detail-status';
   status.setAttribute('role','status'); status.hidden=true;
   let enabled=false, disposed=false, timer:ReturnType<typeof setTimeout>|undefined;
@@ -86,17 +86,19 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
   const cache=new Map<string,Blob>();
   const keyOf=(tiles:MapTile[])=>tiles.map(t=>`${t.z}/${t.x}/${t.y}`).join(',');
   let scheduledAt:number|null=null;
+  let pendingRequest:Promise<void>|null=null;
   const cancel = () => {clearTimeout(timer);scheduledAt=null;controller?.abort();controller=null;loadingKey='';status.hidden=true;};
   let held=false;
   let filmController:AbortController|null=null, filmKey='';
   let pages:Array<{tiles:MapTile[];atlas:ImageryDetailAtlas}>=[];
-  const clearFilm=()=>{filmController?.abort();filmController=null;publishBase(null);pages.forEach(page=>page.atlas.dispose());pages=[];filmKey='';};
+  const clearFilm=()=>{filmController?.abort();filmController=null;publishBase(null);primeDetail(null);pages.forEach(page=>page.atlas.dispose());pages=[];filmKey='';};
   const request = async (preparedTiles?:MapTile[]) => {
     if (!enabled || disposed) return;
     const tiles=preparedTiles ?? plan();
     if (!tiles.length) return;
     const key=keyOf(tiles);
-    if (key===loadedKey || key===loadingKey) return;
+    if(key===loadedKey)return;
+    if(key===loadingKey)return pendingRequest;
     controller?.abort(); const run=new AbortController();controller=run;loadingKey=key;
     const timeout=setTimeout(()=>run.abort(),45000);
     status.textContent=document.documentElement.lang==='en'?'Loading imagery':'Đang tải ảnh';status.hidden=false;
@@ -105,19 +107,22 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
       if(disposed || run.signal.aborted || controller!==run){next.dispose();return;}
       publish(next);atlas?.dispose();atlas=next;loadedKey=nextKey;invalidate();
     };
-    try {
-      // A full-view intermediate image arrives first; refinement never leaves
-      // a sharp island surrounded by the prepared low-resolution image.
-      if(tiles.length>80 && tiles[0].z>0){
-        const parents=new Map<string,MapTile>();
-        tiles.forEach(t=>{const p={z:t.z-1,x:Math.floor(t.x/2),y:Math.floor(t.y/2)};parents.set(`${p.x}/${p.y}`,p);});
-        const coarse=[...parents.values()],coarseKey=keyOf(coarse);
-        if(coarseKey!==loadedKey)apply(await loadImageryAtlas(coarse,run.signal,anisotropy,cache),coarseKey);
-      }
-      run.signal.throwIfAborted();
-      apply(await loadImageryAtlas(tiles,run.signal,anisotropy,cache),key);
-    } catch {run.abort();} // Retain the last complete image while a moved view loads or fails.
-    finally {clearTimeout(timeout);if(controller===run){controller=null;loadingKey='';status.hidden=true;}}
+    const task=(async()=>{
+      try {
+        // A full-view intermediate image arrives first; refinement never leaves
+        // a sharp island surrounded by the prepared low-resolution image.
+        if(tiles.length>80 && tiles[0].z>0){
+          const parents=new Map<string,MapTile>();
+          tiles.forEach(t=>{const p={z:t.z-1,x:Math.floor(t.x/2),y:Math.floor(t.y/2)};parents.set(`${p.x}/${p.y}`,p);});
+          const coarse=[...parents.values()],coarseKey=keyOf(coarse);
+          if(coarseKey!==loadedKey)apply(await loadImageryAtlas(coarse,run.signal,anisotropy,cache),coarseKey);
+        }
+        run.signal.throwIfAborted();
+        apply(await loadImageryAtlas(tiles,run.signal,anisotropy,cache),key);
+      } catch {run.abort();} // Retain the last complete image while a moved view loads or fails.
+      finally {clearTimeout(timeout);if(controller===run){controller=null;loadingKey='';pendingRequest=null;status.hidden=true;}}
+    })();
+    pendingRequest=task;return task;
   };
   const schedule=()=>{
     if(!enabled||disposed||held)return;
@@ -145,7 +150,7 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
           const next=await loadImageryAtlas(window,run.signal,anisotropy,cache);
           if(next) {
             if(disposed||run.signal.aborted){next.dispose();break;}
-            pages.push({tiles:window,atlas:next});
+            primeDetail(next);pages.push({tiles:window,atlas:next});
           }
         }
       } catch { /* The complete corridor image remains usable. */ }

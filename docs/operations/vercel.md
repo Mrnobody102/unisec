@@ -36,11 +36,13 @@ Workflow [DEAR web](../../.github/workflows/dear-web.yml) kiểm tra dữ liệu
 |---|---|
 | Mở web và reload | Màn vào hai vai trò; vào điều phối để xem sự kiện và bản đồ 2D |
 | `/workspace-config.json` | JSON có `dataSource: "prepared"` |
-| `/scenarios/che-tao/v0.2/manifest.json` | JSON, không trả HTML |
+| `/scenarios/che-tao/v0.3/manifest.json` | JSON, không trả HTML |
 | Chuyển 3D rồi về 2D | Tải được địa hình, 2D tiếp tục hoạt động |
 | Chọn Nậm Khắt → kiểm tra tuyến → áp dụng tin mới | Tuyến và nhận định đổi theo tin mới |
 | Lưu đánh giá | PNG/JSON/GeoJSON tải được; PDF mở hộp in |
 | Đổi ngôn ngữ, font, độ rộng panel | Bố cục và nội dung giữ đúng |
+
+Khi kiểm tra bản triển khai, đọc `manifestUrl` trong `/workspace-config.json` và đối chiếu với commit cần phát hành; URL production không tự chứng minh đã dùng source mới nhất. Nếu tài nguyên `.bin` nhận trang HTML báo chặn của cổng mạng doanh nghiệp, đó không phải JSON hoặc lỗi nội suy DEM. Giữ nguyên kiểm tra HTTP/checksum và xác minh trên mạng được phép tải tài nguyên; không đổi đuôi tệp để lách chính sách mạng.
 
 ## Xử lý lỗi build
 

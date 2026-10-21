@@ -178,8 +178,8 @@
 .workspace-shell :is(.map-area, .response-detail-dock) .field-map-card button.landslide-road-link:hover { background: var(--hover); }
 .workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link strong { font-size: 14px; font-weight: 600; }
 .workspace-shell :is(.map-area, .response-detail-dock) .field-map-card .landslide-road-link small { color: var(--ws-muted); font-size: 13px; }
-.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer { padding: 10px 20px; border-top: 1px solid var(--card-line); background: var(--sheet-bg); }
-.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer .button { border-radius: 6px; background: var(--card); border-color: var(--card-line); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 20px; border-top: 1px solid var(--card-line); background: var(--sheet-bg); }
+.workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer .button { flex: 1 1 auto; justify-content: center; min-width: 0; border-radius: 6px; background: var(--card); border-color: var(--card-line); }
 .workspace-shell :is(.map-area, .response-detail-dock) .field-map-card > footer .button:hover { border-color: var(--control-border); }
 
 /* Left-panel lists (communities, roads, affected sites): each entry is a card.
@@ -423,10 +423,14 @@ body .geodata-aoi-start .button { display: inline-flex; align-items: center; gap
   border: 1px solid var(--card-line); border-radius: 8px; background: var(--card); color: var(--ws-text); font-size: 13px; white-space: nowrap;
 }
 .workspace-shell .response-detail-dock .detail-actions .button:not(:disabled):hover { border-color: var(--control-border); }
-.workspace-shell .response-detail-dock .detail-actions .button[aria-pressed='true'] { border-color: var(--select); box-shadow: inset 0 0 0 1px var(--select); }
+.workspace-shell .response-detail-dock .detail-actions .button:is([aria-pressed='true'], [aria-expanded='true']) { border-color: var(--select); box-shadow: inset 0 0 0 1px var(--select); }
 .workspace-shell .response-detail-dock .road-status-editor .road-status-switch { margin: 0 0 12px; }
 .workspace-shell .response-detail-dock .road-status-editor .road-status-change { margin: 0; }
-.workspace-shell .response-detail-dock .road-status-editor textarea { border-color: var(--card-line); border-radius: 8px; background: var(--sheet-bg); }
+.workspace-shell .response-detail-dock .road-status-editor textarea { min-height: 64px; padding: 8px 10px; border-color: var(--control-border); border-radius: 8px; background: var(--card); line-height: 1.5; }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option span { min-height: 40px; border-color: var(--card-line); border-radius: 8px; background: var(--card); font-size: 13px; }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option:hover span { border-color: var(--control-border); }
+.workspace-shell .response-detail-dock .road-status-editor .choice-group-option input:checked + span { border-color: var(--select); background: var(--card); color: var(--ws-text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--select); }
+.workspace-shell .response-detail-dock .road-status-editor .road-status-actions .button { min-height: 34px; border-radius: 8px; font-size: 13px; }
 
 /* The latest manual change: a plain card, not a tinted call-out. */
 .workspace-shell .response-detail-dock .manual-edit-note { display: block; margin: 0; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 10px; background: var(--card); font-size: 13px; }

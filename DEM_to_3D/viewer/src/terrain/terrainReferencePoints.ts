@@ -82,7 +82,7 @@ export function terrainReferencePoints(
           y + bounds.y > rect.top - 12 && y + bounds.y < rect.bottom + 12);
         marker.button.hidden = projected.z < -1 || projected.z > 1 || covered ||
           x < 0 || y < 0 || x > host.clientWidth || y > host.clientHeight;
-        marker.button.style.transform = `translate(${x - 14}px,${y - (marker.selected ? 28.8 : 25.2)}px)`;
+        marker.button.style.transform = `translate(${x - 14}px,${y - 14}px)`;
         // Use the side with room; long survey names remain inspectable in the card.
         const left = x - 40, right = host.clientWidth - x - 40;
         marker.button.classList.toggle('label-left', left > right);

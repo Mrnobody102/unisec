@@ -424,11 +424,11 @@ export function GeometryMap(props: Props): JSX.Element {
                 ? L.marker(position, { pane: 'points', interactive: !props.editor.active && !props.onPickPoint,
                     keyboard: !props.editor.active && !props.onPickPoint, zIndexOffset: 1000,
                     icon: L.divIcon({ html: surveyPointSvg(true), className: 'geodata-selected-point map-selected-reference',
-                      iconSize: [28, 32], iconAnchor: [14, 28.8], tooltipAnchor: [0, -30] }) })
+                      iconSize: [28, 28], iconAnchor: [14, 14], tooltipAnchor: [0, -30] }) })
                 : record.feature.properties.sourceDatasetId
                   ? L.marker(position,{pane:'points',interactive:!props.editor.active && !props.onPickPoint,
                       keyboard:!props.editor.active && !props.onPickPoint,
-                      icon:L.divIcon({html:surveyPointSvg(),className:'survey-reference-point map-reference-point',iconSize:[28,28],iconAnchor:[14,25.2],tooltipAnchor:[0,-28]})})
+                      icon:L.divIcon({html:surveyPointSvg(),className:'survey-reference-point map-reference-point',iconSize:[28,28],iconAnchor:[14,14],tooltipAnchor:[0,-28]})})
                   : L.circleMarker(position, pointStyle)
         });
         const label = mappedArea ? areaMapLabel(record,props.locale) : document.createElement('span');

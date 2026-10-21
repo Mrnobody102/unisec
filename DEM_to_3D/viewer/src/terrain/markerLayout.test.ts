@@ -1,6 +1,8 @@
+import {poiMetrics,markerSize} from './poiFrame';
 import {placeMapLabel} from './markerLayout';
 import { describe, expect, it } from 'vitest';
 import { layoutMarkerGroups, markerPriority, overlaps } from './markerLayout';
+import { SELECTED_PIN } from './poiFrame';
 
 describe('map symbol layout', () => {
   it('keeps named featured hazards separate unless their symbols actually cover each other', () => {
@@ -55,7 +57,7 @@ describe('map symbol layout', () => {
     expect(groups.flatMap(g => g.members.map(p => p.id)).sort()).toEqual(['community', 'hazard', 'other']);
     expect(overlaps(groups[0].rect, groups[1].rect)).toBe(false);
   });
-  it('reserves the selected POI above its true coordinate so it cannot cover a bridge or label', () => {
+  it('keeps a selected teardrop pin tip on its true coordinate while grouping an overlapping bridge', () => {
     const points = [
       { id: 'selected', x: 100, y: 120, priority: 100, selected: true },
       { id: 'bridge', x: 100, y: 106, priority: 10 }
@@ -63,7 +65,17 @@ describe('map symbol layout', () => {
     const groups = layoutMarkerGroups(points, 400, 300, []);
     expect(groups).toHaveLength(1);
     expect(groups[0].members.map(point => point.id)).toEqual(['selected', 'bridge']);
-    expect(groups[0].rect).toEqual({ x: 85, y: 90.2, width: 30, height: 34 });
+    expect(groups[0].rect.x+groups[0].rect.width/2).toBe(points[0].x);
+    // The rect carries 1 px of selection padding around the pin box.
+    expect(groups[0].rect.y+1+SELECTED_PIN.tipY).toBe(points[0].y);
+  });
+  it('retains every coincident feature when any member becomes a selected teardrop',()=>{
+    const points=[{id:'a',x:260,y:210,category:'community'},{id:'b',x:263,y:214,category:'community'},{id:'c',x:258,y:217,category:'landslide'},{id:'d',x:262,y:218,category:'hlz'}];
+    for(const selected of points){
+      const groups=layoutMarkerGroups(points.map(point=>({...point,selected:point.id===selected.id,priority:point.id===selected.id?100:10})),620,430,[]);
+      expect(groups).toHaveLength(1);expect(groups[0].anchor.id).toBe(selected.id);
+      expect(groups[0].members.map(point=>point.id).sort()).toEqual(['a','b','c','d']);
+    }
   });
   it('does not cover a map control, including a neighbour behind that control', () => {
     const control = { x: 0, y: 0, width: 80, height: 150 };

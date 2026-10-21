@@ -1,3 +1,5 @@
+import { setBasemapTone } from './basemapTone';
+import type { BasemapTone } from '../features/imagery/basemapTone';
 import type { ImageryDetailAtlas } from './imageryAtlas';
 import * as THREE from 'three';
 import proj4 from 'proj4';
@@ -127,22 +129,43 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
       target.add(mesh);
     }
   };
+  type Detail={texture:THREE.Texture;group:THREE.Group};
+  const preparedDetails=new Map<ImageryDetailAtlas,Detail>();
+  let activeDetail:Detail|null=null;
+  const createDetail=(atlas:ImageryDetailAtlas):Detail=>{
+    const width=atlas.maxX-atlas.minX,height=atlas.maxY-atlas.minY,ratio=2**(atlas.zoom-reference.zoom);
+    const texture=atlas.texture.clone(),patch=new THREE.Group();
+    texture.repeat.set(columns*ratio/width,rows*ratio/height);
+    texture.offset.set((reference.minX*ratio-atlas.minX)/width,(atlas.maxY-reference.maxY*ratio)/height);
+    buildPatch(texture,patch,focusMaterial,mapLayerOrder.imagery*2+.5);
+    return {texture,group:patch};
+  };
+  const releaseDetail=(detail:Detail)=>{detail.group.removeFromParent();clearPatch(detail.group);detail.texture.dispose();};
   const setDetail = (atlas: ImageryDetailAtlas | null) => {
-    if (disposed) return;
-    clearPatch(focusGroup);
-    focusTexture?.dispose(); focusTexture = null; focusMaterial.map = null; focusGroup.visible = false;
-    if (!atlas) return;
-    const width = atlas.maxX - atlas.minX, height = atlas.maxY - atlas.minY;
-    const ratio = 2 ** (atlas.zoom - reference.zoom);
-    focusTexture = atlas.texture.clone();
-    focusTexture.repeat.set(columns * ratio / width, rows * ratio / height);
-    focusTexture.offset.set((reference.minX * ratio - atlas.minX) / width, (atlas.maxY - reference.maxY * ratio) / height);
-    focusMaterial.map = focusTexture; focusMaterial.needsUpdate = true;
-    buildPatch(focusTexture,focusGroup,focusMaterial,mapLayerOrder.imagery*2+.5);
-    focusGroup.visible = enabled;
+    if(disposed)return;
+    const cached=atlas?preparedDetails.get(atlas):null;
+    if(cached&&activeDetail===cached)return;
+    if(activeDetail){
+      activeDetail.group.removeFromParent();
+      if(![...preparedDetails.values()].includes(activeDetail))releaseDetail(activeDetail);
+    }
+    activeDetail=atlas?(cached??createDetail(atlas)):null;
+    focusTexture=activeDetail?.texture??null;focusMaterial.map=focusTexture;
+    focusMaterial.needsUpdate=true;focusGroup.visible=enabled&&!!activeDetail;
+    if(activeDetail)focusGroup.add(activeDetail.group);
+  };
+  const primeDetail=(atlas:ImageryDetailAtlas|null)=>{
+    if(disposed)return null;
+    if(!atlas){
+      if(activeDetail&&[...preparedDetails.values()].includes(activeDetail))setDetail(null);
+      preparedDetails.forEach(releaseDetail);preparedDetails.clear();return null;
+    }
+    if(!preparedDetails.has(atlas))preparedDetails.set(atlas,createDetail(atlas));
+    return preparedDetails.get(atlas)!.texture;
   };
   return {
-    group, setDetail,
+    group, setDetail, primeDetail,
+    setTone(tone:BasemapTone|null){[material,baseMaterial,focusMaterial].forEach(item=>setBasemapTone(item,tone));},
     setBase(atlas:ImageryDetailAtlas|null) {
       clearPatch(baseGroup);baseTexture?.dispose();baseTexture=null;baseGroup.visible=false;
       if(atlas) {
@@ -177,8 +200,10 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     },
     dispose: () => {
       disposed = true;
-      clearPatch(focusGroup);
-      focusTexture?.dispose();baseTexture?.dispose();clearPatch(baseGroup);baseMaterial.dispose();baseGroup.removeFromParent();
+      const temporary=activeDetail&&![...preparedDetails.values()].includes(activeDetail)?activeDetail:null;
+      if(temporary)releaseDetail(temporary);
+      preparedDetails.forEach(releaseDetail);preparedDetails.clear();
+      baseTexture?.dispose();clearPatch(baseGroup);baseMaterial.dispose();baseGroup.removeFromParent();
       focusMaterial.dispose();
       focusGroup.removeFromParent();
       group.removeFromParent();

@@ -21,6 +21,12 @@ def run(url, chrome, captures=None):
         page.goto(url + "/?map=2d&offline=1&demoRole=manager&gisPoint=" + quote(area_id))
         detail = page.locator("#response-details")
         expect(detail.locator("h2")).to_have_text("Vùng tích tụ vật liệu 3", timeout=30000)
+        footer=detail.locator('footer');expect(footer).to_be_visible()
+        buttons=footer.get_by_role('button').all()
+        if len(buttons)>1:
+            first,second=buttons[0].bounding_box(),buttons[1].bounding_box()
+            assert first['x']+first['width']+6<=second['x'] or first['y']+first['height']+6<=second['y'],(first,second)
+
         expect(detail.locator(".field-photo-strip-grid button")).to_have_count(4)
         expect(detail.locator(".field-photo-strip")).to_contain_text("Scar 3 [0926]")
         expect(detail.locator(".field-photo-strip")).to_contain_text("08/10/2026")

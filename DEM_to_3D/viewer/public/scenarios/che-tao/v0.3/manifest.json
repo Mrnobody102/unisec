@@ -64,8 +64,8 @@
   ],
   "analysisImagery": {
     "url": "/scenarios/che-tao/imagery/imagery.json",
-    "byteLength": 10544,
-    "sha256": "9ad9dc448a80c8869bd407bf25ed42b6b8671d4eb88876f6ba7cfa0a5321e08e"
+    "byteLength": 13499,
+    "sha256": "79160766ca0e9d3e8738249eeea97f1cb736542d89a5bb56af3397f7c5c0c101"
   },
   "fieldPhotos": {
     "url": "/scenarios/che-tao/field-photos/photos.json",

@@ -195,3 +195,21 @@ Cân màu trình bày chỉ tác động **nền** theo màu Planet, dùng đư�
 Đối chiếu trước/sau dùng hai ảnh Planet gốc đồng tọa độ trên **một** bản đồ với thanh quét, ranh KML giữ nguyên hình học. NoData của mỗi phía để trống, không lấy ảnh bên kia lấp vào. Hiển thị ngày chụp của mỗi dải; ranh chưa có ngày tư liệu không được gắn ngầm vào ngày ảnh đang mở.
 
 `resources/kml/MuCangChai_CheTao_roadPath.kml` là đường tham chiếu 397 đỉnh, không chứa ngày ảnh. `activity_24686163702.kml` là track GPS ngày 09/10/2026, ở phía nam tuyến demo; không phải ranh sạt lở hay thời điểm chụp vệ tinh. Không dùng hai tệp này để xác nhận ngày khoanh ranh trong `CheTao-Landslide-Scars.kml`. Kịch bản ứng phó có vị trí từ nguồn thật nhưng trạng thái đường/báo cáo vẫn là mô phỏng; không coi đó là kiểm chứng hiện trạng.
+
+Mặt cắt 2D/3D dùng cả lưới Chế Tạo và Lao Chải ngay khi mở bộ dữ liệu; không cần tải GLB để có cao độ. Ở vùng chồng lấn, ưu tiên mẫu hợp lệ, bỏ qua NoData của tile trước. Khoảng ngoài tất cả DEM vẫn để trống, không nội suy kéo dài cao độ. Khi mở mặt cắt, việc đọc vị trí giữ con trỏ trong phần bản đồ không bị bảng chi tiết che.
+
+Hành trình mặc định khoảng 25 giây, dừng ngắn để xem ảnh từng điểm khảo sát. Cuối phim kéo ra trong 3 giây rồi giữ góc nhìn toàn tuyến và vùng quan tâm. Tốc độ phát 0,75×–1,5× chỉ đổi lúc xem; MP4 giữ nhịp phim chuẩn.
+
+
+Mép DEM và địa hình nền được nối bằng các dải tam giác theo đúng cạnh ô DEM hợp lệ và mặt tam giác nền. Dải nối chỉ phục vụ hiển thị, không mở rộng vùng đo, không thay đổi cao độ DEM và không bắc qua NoData của địa hình nền. Không cắt bỏ dải nối bằng mặt nạ XY của DEM vì sẽ làm lộ nền cảnh ở góc nhìn xiên.
+
+Đường quay và khoảng hở địa hình được tính trước ở 30 mẫu/giây; phát, tua và xuất dùng cùng một đường quay. Ảnh chi tiết tại các điểm dừng được chuẩn bị hình học và nạp vào GPU trước khi phát. Khi kết thúc, giải phóng các ảnh chuẩn bị trước khi thu hồi canvas nguồn.
+
+Ảnh đối chiếu ngày 1/9/2026 giữ riêng hai dải thực có trong bộ nguồn; không lấy ảnh ngày khác để lấp dải phía nam còn thiếu hoặc vùng mây. Cảnh này rõ hơn tại khu vực Vết sạt 03; tại Vết sạt 01–02, cảnh 12/9/2026 phù hợp hơn. Lớp mặc định vẫn là bộ ảnh mới nhất đã chọn theo dải. Ranh KML chưa có ngày giải đoán đã xác nhận: chênh lệch phạm vi đất trống giữa các ngày không phải căn cứ để co giãn hoặc dịch ranh. Pixel hiển thị 3 m không thay thế độ phân giải gốc khoảng 3,8–3,9 m hay xác nhận độ chính xác vị trí.
+
+
+Cấu hình cân màu thuộc về từng renderer ảnh nền, không suy ra từ tên nhóm scene. Các lớp ảnh chi tiết và ảnh chuẩn bị cho hành trình phải nhận cùng cấu hình kể cả khi được tạo sau lần tải ban đầu. Không áp đường cong này lên pixel Planet. Label bản đồ dùng Roboto được đóng gói cùng app, độc lập với font giao diện; nguồn và giấy phép tại `viewer/public/fonts/LICENSE-Roboto.txt` ([Google Fonts](https://github.com/google/fonts/tree/main/ofl/roboto)). Kích thước và điểm neo của ký hiệu được dùng chung cho WebGL, Leaflet và bố trí tránh chồng lấn.
+
+Máy quay theo vùng đệm của tuyến thay vì bám từng khúc cua của marker. Khung hành trình rộng hơn để đọc được đường đã đi và các vết sạt bên cạnh; lúc hiện ảnh chỉ siết khung nhẹ, cuối phim vẫn bao quát toàn vùng quan tâm. Khi hủy lúc đang chuẩn bị, kết quả tải muộn không được tự khởi động lại phim. Tài nguyên hình học, ảnh bitmap và canvas riêng của phim được giải phóng khi thay hoặc đóng viewer.
+
+Dùng `tools/audit_planet_sources.py` để kiểm kê đủ bốn thư mục Planet theo thời gian UTC, CRS, lưới pixel, vùng alpha hợp lệ và cảnh đã chọn. Cảnh cùng ngày nhưng khác strip phải được chọn rõ, không lấy tệp đầu tiên theo glob. Thư mục bổ sung RoadPart1 ngày 12/4 có cùng khung RoadPart1, không làm vùng Planet rộng hơn. Ảnh Visual là RGB, không phải chuỗi DEM; chênh lệch dấu sạt hoặc màu giữa ngày ảnh không tự thay đổi mô hình cao độ. Mở rộng góc xem ngoài ảnh Planet dùng nền ngữ cảnh có nguồn riêng, không kéo giãn ảnh Planet hay lấp NoData bằng một ngày khác mà không ghi nhận.

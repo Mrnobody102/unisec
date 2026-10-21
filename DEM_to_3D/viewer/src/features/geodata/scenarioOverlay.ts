@@ -1,5 +1,6 @@
+import {poiGeometry} from '../map/poiGeometry';
 import { createScreenMarkers } from '../../terrain/screenMarkers';
-import { selectedPinSvg } from '../../terrain/poiFrame';
+import { SELECTED_PIN, selectedPinSvg } from '../../terrain/poiFrame';
 import * as L from 'leaflet';
 import type {
   Community,
@@ -144,8 +145,8 @@ export function scenarioOverlayLayer(
           className:
             'scenario-drag-pin ' + className + (draggable ? ' is-moving' : ''),
           html: selectedPinSvg(),
-          iconSize: [28, 32],
-          iconAnchor: [14, 28.8]
+          iconSize: [SELECTED_PIN.width, SELECTED_PIN.height],
+          iconAnchor: [SELECTED_PIN.width / 2, SELECTED_PIN.tipY]
         })
       }
     ).addTo(group);

@@ -48,3 +48,5 @@
   .map-advanced-tools .flyover-launch > .icon-button { width:100%; }
   .flyover-menu { position:fixed; top:auto; left:12px; right:12px; width:auto; max-width:calc(100vw - 24px); }
 }
+
+.flyover-speed {width:66px;min-height:36px;padding:4px;border:1px solid #ffffff40;border-radius:4px;background:#1d2420;color:#fff;font-size:13px;}

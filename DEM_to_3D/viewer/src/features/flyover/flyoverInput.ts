@@ -11,6 +11,7 @@ export type FlyoverInput = {
   /** Changes whenever the route, its stops or their status change. */
   key: string;
   route: Array<{ x: number; y: number }>;
+  overviewPoints?: Array<{x:number;y:number}>;
   start: Localized; end: Localized;
   stops: Array<{ id: string; name: Localized; projected: { x: number; y: number }; areaHa?: number; status: 'reported' | 'suspected'; photo?: PreparedPhoto; photoCaption?: Localized }>;
   /** Actual mapped extents used to frame neighbouring scars, never generated evidence. */
@@ -32,6 +33,7 @@ export function referencePhoto(point: PreparedPhotoPoint): PreparedPhoto | undef
  * hazards on it, from the staging point, with every hazard on that route as a stop. */
 export function buildFlyoverInput(options: {
   communities: Community[]; routes: Map<string, ScenarioRoutePair>; hazards: Hazard[]; responseSites: ResponseSite[];
+  overviewPoints?: Array<{x:number;y:number}>;
   mappedAreas?: GeometryRecord[];
   fieldPhotos?: Map<string, PreparedPhotoPoint>; imageryLayers: AnalysisLayer[]; imagerySelection?: AnalysisSelection;
 }): FlyoverInput | null {
@@ -65,8 +67,8 @@ export function buildFlyoverInput(options: {
     return [{id:record.id, center:{x:(left+right)/2,y:(bottom+top)/2},radius:Math.hypot(right-left,top-bottom)/2}];
   });
   return {
-    key: JSON.stringify([chosen.route.id, chosen.route.points, stops.map(stop => [stop.id,stop.name,stop.projected,stop.status,stop.photo?.image.sha256,stop.photo?.capturedAt]), imagery.map(raster => raster.terrain.sha256),selected?.opacity??1,areas]),
-    route: chosen.route.points,
+    key: JSON.stringify([chosen.route.id, chosen.route.points, stops.map(stop => [stop.id,stop.name,stop.projected,stop.status,stop.photo?.image.sha256,stop.photo?.capturedAt]), imagery.map(raster => raster.terrain.sha256),selected?.opacity??1,areas,options.overviewPoints]),
+    route: chosen.route.points, overviewPoints:options.overviewPoints,
     start: [staging.name[0].replace(/^Điểm tập kết /, ''), staging.name[1].replace(/ staging point$/, '')],
     end: [chosen.community.name, chosen.community.name],
     stops,
