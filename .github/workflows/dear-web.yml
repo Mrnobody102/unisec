@@ -79,6 +79,7 @@ jobs:
         env:
           RUN_EXTENDED: ${{ inputs.extended || false }}
         run: |
+          trap 'echo "::error title=Browser regression failed::$BASH_COMMAND"' ERR
           python -m http.server 5213 --bind 127.0.0.1 --directory dist > dist-release/static-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
@@ -127,6 +128,7 @@ jobs:
           fi
       - name: Verify map selection and storage synchronization fixtures
         run: |
+          trap 'echo "::error title=Browser regression failed::$BASH_COMMAND"' ERR
           node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5214 --strictPort > dist-release/fixture-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
