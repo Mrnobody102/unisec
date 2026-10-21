@@ -36,7 +36,7 @@ def run(url, captures, chrome=None):
 
         def symbol(selector, selected=True):
             marker=page.locator(selector)
-            expect(marker).to_have_count(1)
+            expect(marker).to_have_count(1,timeout=60000)
             expect(marker).to_be_visible(timeout=60000)
             expected={'width':34 if selected else 28,'height':46 if selected else 28}
             actual=marker.locator('.field-map-symbol > svg').evaluate('e=>{const r=e.getBoundingClientRect();return {width:r.width,height:r.height}}')

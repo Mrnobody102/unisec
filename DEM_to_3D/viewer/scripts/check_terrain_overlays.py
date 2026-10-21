@@ -127,9 +127,10 @@ def run(url, chrome):
         directory.set_input_files(str(package))
         checkpoint('await local model dialog closure')
         try:
-            # Replacing the prepared DEM scene is part of this import. Give its
-            # software renderer the same readiness budget as the initial 3D view.
-            expect(dialog).not_to_be_visible(timeout=30000)
+            # Software rendering replaces the prepared terrain and its GPU resources
+            # here. CI has completed this transition just beyond 30 s; keep a bounded
+            # 60 s budget and still fail on a stuck import or a rejected package.
+            expect(dialog).not_to_be_visible(timeout=60000)
         except Exception:
             # Report only an allowlisted diagnosis of this generated fixture.
             # Arbitrary DOM text, file names and error payloads stay in the job log.
@@ -153,7 +154,11 @@ def run(url, chrome):
                 checkpoint('local model import did not start or was cancelled')
             raise
         checkpoint('await imported model renderer')
-        expect(page.locator('.terrain-canvas')).to_be_visible(timeout=15000)
+        page.wait_for_function('''()=>{
+            const canvas=document.querySelector('.terrain-canvas');
+            return canvas && canvas!==window.originalTerrainCanvas && canvas.width>0 && canvas.height>0;
+        }''',timeout=60000)
+        expect(page.locator('.terrain-canvas')).to_be_visible()
         page.wait_for_timeout(1000)
         page.get_by_role('button',name='Lớp bản đồ',exact=True).click()
         layers=page.locator('.layers-panel')
