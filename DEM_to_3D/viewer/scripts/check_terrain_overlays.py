@@ -121,9 +121,28 @@ def run(url, chrome):
         page.get_by_role('button',name='Mô hình địa hình',exact=True).click()
         dialog=page.get_by_role('dialog',name='Mô hình địa hình',exact=True)
         checkpoint('import local tile model')
-        dialog.locator('input[webkitdirectory]').set_input_files(str(package))
+        directory=dialog.locator('input[webkitdirectory]')
+        expect(directory).to_be_enabled()
+        directory.set_input_files(str(package))
         checkpoint('await local model dialog closure')
-        expect(dialog).not_to_be_visible(timeout=15000)
+        try:
+            expect(dialog).not_to_be_visible(timeout=15000)
+        except Exception:
+            # Report only an allowlisted diagnosis of this generated fixture.
+            # Arbitrary DOM text, file names and error payloads stay in the job log.
+            alert=dialog.locator('.upload-error')
+            if alert.count():
+                message=alert.inner_text().lower()
+                categories=[('tile package is incomplete','incomplete fixture tiles'),('unsafe tile path','unsafe fixture tile path'),
+                    ('does not match','fixture metadata mismatch'),('duplicate','duplicate fixture assets'),
+                    ('could not be read','fixture file read failed'),('failed to fetch','fixture module request failed'),
+                    ('json','fixture JSON rejected')]
+                checkpoint(next((label for text,label in categories if text in message),'unexpected fixture import error'))
+            elif directory.is_disabled():
+                checkpoint('local model import still busy')
+            else:
+                checkpoint('local model import did not start or was cancelled')
+            raise
         checkpoint('await imported model renderer')
         expect(page.locator('.terrain-canvas')).to_be_visible(timeout=15000)
         page.wait_for_timeout(1000)
