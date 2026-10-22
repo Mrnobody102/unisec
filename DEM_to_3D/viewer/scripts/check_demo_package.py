@@ -68,21 +68,6 @@ def check_english_startup(base, chrome, captures=None):
 
 
 def check_local_map(base, chrome, captures=None):
-    import io
-    import math
-    from PIL import Image
-    with urllib.request.urlopen(base + '/offline-map/map.json') as response:
-        catalog = json.load(response)
-    assert catalog['provenance']['completeImageryCoverage'], 'Regional satellite context must be complete'
-    # These sites are outside the old commune-cut RGB footprint. A 200 response
-    # alone used to accept neutral hillshade as a working satellite basemap.
-    for longitude, latitude in [(103.85,21.55),(104.42,21.95)]:
-        zoom = 12
-        x = math.floor((longitude+180)/360*2**zoom)
-        y = math.floor((1-math.asinh(math.tan(math.radians(latitude)))/math.pi)/2*2**zoom)
-        with urllib.request.urlopen(f'{base}/offline-map/imagery/{zoom}/{x}/{y}.webp') as response:
-            pixels = list(Image.open(io.BytesIO(response.read())).convert('RGB').getdata())
-        assert sum(max(rgb)-min(rgb)>15 for rgb in pixels)/len(pixels) > .8, 'Missing real satellite context'
     from browser_preferences import use_vietnamese
     from gis_browser_actions import map_tool
     with sync_playwright() as playwright:
@@ -95,6 +80,26 @@ def check_local_map(base, chrome, captures=None):
         page.goto(base + '/?map=2d&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         page.wait_for_function("""()=>[...document.querySelectorAll('img.leaflet-tile')].some(image=>image.src.includes('/offline-map/imagery/')&&image.complete&&image.naturalWidth===256)""")
+        # Check real pixels outside the former commune-cut RGB footprints;
+        # an HTTP 200 alone also accepts the old neutral hillshade fallback.
+        complete = page.evaluate("""async () => {
+            const catalog = await (await fetch('/offline-map/map.json')).json();
+            if (!catalog.provenance.completeImageryCoverage) return false;
+            const canvas = document.createElement('canvas'); canvas.width=canvas.height=256;
+            const context = canvas.getContext('2d',{willReadFrequently:true});
+            for (const [longitude,latitude] of [[103.85,21.55],[104.42,21.95]]) {
+                const zoom=12,x=Math.floor((longitude+180)/360*2**zoom);
+                const y=Math.floor((1-Math.asinh(Math.tan(latitude*Math.PI/180))/Math.PI)/2*2**zoom);
+                const bitmap=await createImageBitmap(await (await fetch(`/offline-map/imagery/${zoom}/${x}/${y}.webp`)).blob());
+                context.drawImage(bitmap,0,0); bitmap.close();
+                const pixels=context.getImageData(0,0,256,256).data;
+                let colour=0;
+                for(let i=0;i<pixels.length;i+=4) if(Math.max(...pixels.slice(i,i+3))-Math.min(...pixels.slice(i,i+3))>15) colour++;
+                if(colour/65536<=.8) return false;
+            }
+            return true;
+        }""")
+        assert complete, 'Missing real satellite context outside the commune imagery'
         if captures:
             captures.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(captures / 'offline-overview-2d.png'))
@@ -114,6 +119,9 @@ def check_local_map(base, chrome, captures=None):
         assert any('/offline-map/imagery/' in request for request in requests), requests
         assert any('/offline-map/terrain/' in request for request in requests), requests
         assert any('/offline-map/elevation/' in request for request in requests), requests
+        expect(page.locator('.analysis-load-status')).to_have_count(0, timeout=30000)
+        if captures:
+            page.screenshot(path=str(captures / 'offline-overview-3d.png'))
         assert not failures, failures
         assert not errors, errors
         browser.close()
