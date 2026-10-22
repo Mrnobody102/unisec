@@ -20,15 +20,19 @@ Trước ngày thi, thử đúng laptop và màn chiếu với Wi-Fi tắt, đó
 | Tình huống, tuyến, GIS, mặt cắt | Dữ liệu đóng gói; mặt cắt chỉ dùng DEM phân tích có sẵn |
 | Ảnh Planet và hiện trường | Tệp gốc đã chuẩn bị kèm ngày/nguồn; có so ảnh, xem ảnh lớn |
 | Nền 2D, 3D và GIS | XYZ cục bộ từ composite Sentinel-2 ESA WorldCover 2021 khoảng 10 m, hình chữ nhật liên tục, mức zoom 7–14; không tải Esri/Google để đóng gói |
-| Chi tiết khi có Internet | Tự bổ sung ảnh nền ở mức zoom gần hơn độ phân giải offline; nền cục bộ luôn giữ bên dưới. Mạng lỗi thì giữ ảnh offline và chờ trước khi thử lại. Không có bộ chọn nguồn. Video dùng dữ liệu đóng gói để không phụ thuộc mạng |
+| Chi tiết khi có Internet | Tự bổ sung cùng nguồn Esri World Imagery của web ở cả góc tổng quan và zoom gần; nền cục bộ luôn giữ bên dưới. Mạng lỗi thì giữ ảnh offline và chờ trước khi thử lại. Không có bộ chọn nguồn. Video dùng dữ liệu đóng gói để không phụ thuộc mạng |
 | Địa hình xung quanh | Mapzen Terrain Tiles (SRTM/GMTED2010), lưu cục bộ; chỉ để hiển thị, không đưa vào lưới phân tích |
 | Phủ ảnh trong vùng demo | Bắt buộc đủ pixel ảnh nền trong phạm vi đóng gói; không dùng hillshade xám thay ảnh bị thiếu |
-| Ngoài phạm vi bản đồ đóng gói | Nền trung tính; không tự gọi Internet. Giới hạn và checksum ở `dist/offline-map/map.json` |
+| Ngoài phạm vi bản đồ đóng gói | Khi không có Internet: nền trung tính. Giới hạn và checksum ở `dist/offline-map/map.json` |
 | Video | Hành trình 25 giây, ba vùng sạt chính, ảnh hiện trường và góc tổng quan cuối; xuất MP4 qua trình duyệt |
 | Ghi nhận/GIS | Lưu trên trình duyệt của máy này, không tự đồng bộ sang máy khác; xuất dữ liệu trước khi đặt lại phiên |
 | PDF | Dùng In / lưu PDF của trình duyệt |
 
 Composite trung vị năm 2021 từ [ESA WorldCover](https://registry.opendata.aws/esa-worldcover-vito-composites/) (CC BY 4.0) làm nền bối cảnh, không phải ảnh Planet mới nhất. Dữ liệu gốc khoảng 10 m, nền khu vực chuẩn bị ở độ phân giải gốc khoảng 10 m; phép tăng zoom không tạo thêm chi tiết ảnh. Hồ sơ cân màu hiển thị chỉ áp cho đúng SHA-256 của ảnh nền đã hiệu chỉnh; ảnh Internet dùng hồ sơ riêng, ảnh Planet gốc giữ nguyên. Không suy luận ngày quan sát từ nền ghép hoặc dùng địa hình bối cảnh thay DEM khi đo đạc. Hồ sơ trình duyệt nằm trong `user-data/browser`; sao lưu phần này nếu cần giữ phiên làm việc.
+
+## Khi bản web báo không tải được dữ liệu
+
+Thông báo lỗi chỉ rõ tài nguyên và mã HTTP. Nếu tệp `*.grid.bin` nhận HTTP 403 / `VG-Blockdownload` nhưng JSON và ảnh vẫn tải được, đường tải dữ liệu nhị phân đang bị từ chối; không thể kết luận chỉ từ thông báo đó là lỗi Vercel hay chính sách mạng. Kiểm tra truy cập trên mạng khác hoặc dùng gói offline qua `127.0.0.1`. Sau khi quyền truy cập được khôi phục, **Retry** tải lại đúng bộ dữ liệu, không thay thế bằng dữ liệu khác. Cấu hình offline luôn dùng bộ dữ liệu cục bộ, kể cả khi bản build có cấu hình API bên ngoài.
 
 ## Tạo gói
 

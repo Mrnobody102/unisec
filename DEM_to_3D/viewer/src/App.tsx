@@ -42,6 +42,7 @@ function ResponseEntry({
       <WorkspaceStartup
         locale={preferences.locale}
         failed={runtime.startupError}
+        failure={runtime.startupFailure}
         onRetry={runtime.retry}
       />
     );

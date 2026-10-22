@@ -1,4 +1,6 @@
 import {expect,it,vi} from 'vitest';
+import {setLocalMapSource, type LocalMapSource} from '../features/map/localMapSource';
+import {reconnectInternetDetail} from '../features/map/imageryDetail';
 import * as loader from './imageryAtlas';
 import proj4 from 'proj4';
 import * as THREE from 'three';
@@ -144,4 +146,24 @@ it('waits for a matching camera request already in flight before starting the fi
   await Promise.resolve();await Promise.resolve();expect(ready).toBe(false);expect(publishBase).not.toHaveBeenCalledWith(atlas);
   finish(atlas);await prepared;expect(ready).toBe(true);expect(publishBase).toHaveBeenLastCalledWith(atlas);expect(load).toHaveBeenCalledOnce();
  }finally{view.dispose();load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
+});
+
+
+it('publishes local imagery first, refines the same overview tiles online, and films locally',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('document',{documentElement:{lang:'en'},createElement:()=>({setAttribute:vi.fn(),remove:vi.fn()})});
+ vi.stubGlobal('navigator',{onLine:true});reconnectInternetDetail();
+ const local={imagery:{url:'/offline-map/imagery/{z}/{x}/{y}.webp',maxZoom:14}} as LocalMapSource;setLocalMapSource(local);
+ const make=(source:'local'|'online')=>({zoom:12,minX:0,minY:0,maxX:2,maxY:2,source,texture:new THREE.CanvasTexture(document.createElement('canvas')),dispose:vi.fn()});
+ const fallback=make('local'),online=make('online'),film=make('local'),stop=make('local');let finish!:(value:typeof online)=>void;
+ const load=vi.spyOn(loader,'loadImageryAtlas').mockResolvedValueOnce(fallback).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce(film).mockResolvedValueOnce(stop);
+ const tiles=[{x:1,y:1,z:12}],publish=vi.fn(),view=createViewImagery(()=>tiles,4,publish,vi.fn());
+ try{
+  view.setEnabled(true);await vi.advanceTimersByTimeAsync(250);
+  expect(publish).toHaveBeenLastCalledWith(fallback);expect(fallback.dispose).not.toHaveBeenCalled();
+  expect(load.mock.calls[0][4]).toBe(local.imagery.url);expect(load.mock.calls[1][4]).toMatch(/^https:/);
+  finish(online);await vi.advanceTimersByTimeAsync(0);expect(publish).toHaveBeenLastCalledWith(online);
+  await view.prepare(tiles,[tiles]);
+  expect(load.mock.calls[2][4]).toBe(local.imagery.url);expect(load.mock.calls[3][4]).toBe(local.imagery.url);
+  expect(publish).toHaveBeenLastCalledWith(film);
+ }finally{view.dispose();setLocalMapSource(null);load.mockRestore();vi.unstubAllGlobals();vi.useRealTimers();}
 });

@@ -1,4 +1,4 @@
-import {parentImageryTiles} from '../features/map/imageryDetail';
+import {detailTileTemplate, parentImageryTiles, reconnectInternetDetail} from '../features/map/imageryDetail';
 import {localMapSource} from '../features/map/localMapSource';
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
@@ -86,7 +86,7 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
   let enabled=false, disposed=false, timer:ReturnType<typeof setTimeout>|undefined;
   let controller:AbortController|null=null, atlas:ImageryDetailAtlas|null=null, loadedKey='', loadingKey='';
   const cache=new Map<string,Blob>();
-  const keyOf=(tiles:MapTile[])=>tiles.map(t=>`${t.z}/${t.x}/${t.y}`).join(',');
+  const keyOf=(tiles:MapTile[],template=detailTileTemplate(tiles[0]?.z))=>`${template}:`+tiles.map(t=>`${t.z}/${t.x}/${t.y}`).join(',');
   let scheduledAt:number|null=null;
   let pendingRequest:Promise<void>|null=null;
   const cancel = () => {clearTimeout(timer);scheduledAt=null;controller?.abort();controller=null;loadingKey='';status.hidden=true;};
@@ -94,11 +94,13 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
   let filmController:AbortController|null=null, filmKey='';
   let pages:Array<{tiles:MapTile[];atlas:ImageryDetailAtlas}>=[];
   const clearFilm=()=>{filmController?.abort();filmController=null;publishBase(null);primeDetail(null);pages.forEach(page=>page.atlas.dispose());pages=[];filmKey='';};
-  const request = async (preparedTiles?:MapTile[]) => {
+  const request = async (preparedTiles?:MapTile[], localOnly=false) => {
     if (!enabled || disposed) return;
     const tiles=preparedTiles ?? plan();
     if (!tiles.length) return;
-    const key=keyOf(tiles);
+    const template=localOnly?localMapSource()?.imagery.url:detailTileTemplate(tiles[0].z);
+    if(template===null)return;
+    const key=keyOf(tiles,template);
     if(key===loadedKey)return;
     if(key===loadingKey)return pendingRequest;
     controller?.abort(); const run=new AbortController();controller=run;loadingKey=key;
@@ -112,20 +114,25 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
     const task=(async()=>{
       try {
         const local=localMapSource();
-        if(local && tiles[0].z>local.imagery.maxZoom){
-          const fallback=parentImageryTiles(tiles,local.imagery.maxZoom),fallbackKey=keyOf(fallback);
-          if(fallbackKey!==loadedKey)apply(await loadImageryAtlas(fallback,run.signal,anisotropy,cache),fallbackKey);
+        if(local && template!==local.imagery.url && atlas?.source!=='online'){
+          let zoom=Math.min(tiles[0].z,local.imagery.maxZoom);
+          let fallback=parentImageryTiles(tiles,zoom);
+          // The regional local tiles remain underneath. A small complete preview
+          // must not delay online refinement by loading another full-size atlas.
+          while(fallback.length>36 && zoom>0)fallback=parentImageryTiles(tiles,--zoom);
+          const fallbackKey=keyOf(fallback,local.imagery.url);
+          if(fallbackKey!==loadedKey)apply(await loadImageryAtlas(fallback,run.signal,anisotropy,cache,local.imagery.url),fallbackKey);
         }
         // A full-view intermediate image arrives first; refinement never leaves
         // a sharp island surrounded by the prepared low-resolution image.
         if(tiles.length>80 && tiles[0].z>0){
           const parents=new Map<string,MapTile>();
           tiles.forEach(t=>{const p={z:t.z-1,x:Math.floor(t.x/2),y:Math.floor(t.y/2)};parents.set(`${p.x}/${p.y}`,p);});
-          const coarse=[...parents.values()],coarseKey=keyOf(coarse);
-          if(coarseKey!==loadedKey)apply(await loadImageryAtlas(coarse,run.signal,anisotropy,cache),coarseKey);
+          const coarse=[...parents.values()],coarseKey=keyOf(coarse,template);
+          if(coarseKey!==loadedKey)apply(await loadImageryAtlas(coarse,run.signal,anisotropy,cache,template ?? undefined),coarseKey);
         }
         run.signal.throwIfAborted();
-        apply(await loadImageryAtlas(tiles,run.signal,anisotropy,cache),key);
+        apply(await loadImageryAtlas(tiles,run.signal,anisotropy,cache,template ?? undefined),key);
       } catch {run.abort();} // Retain the last complete image while a moved view loads or fails.
       finally {clearTimeout(timeout);if(controller===run){controller=null;loadingKey='';pendingRequest=null;status.hidden=true;}}
     })();
@@ -138,13 +145,15 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
     const delay=Math.min(250,Math.max(0,1000-(now-scheduledAt)));
     timer=setTimeout(()=>{scheduledAt=null;void request();},delay);
   };
+  const online=()=>{reconnectInternetDetail();schedule();};
+  if(typeof window!=='undefined'){window.addEventListener('online',online);window.addEventListener('offline',schedule);}
   return {status,schedule,
     /** Hold a completed image of the entire film corridor, not the launch view.
      * Releasing it resumes normal camera-based refinement. Failure keeps the last
      * complete image; no partially loaded atlas is ever published. */
     async prepare(tiles:MapTile[], detailWindows:MapTile[][]=[]) {
       clearFilm();held=true;clearTimeout(timer);scheduledAt=null;
-      await request(tiles);
+      await request(tiles,!!localMapSource());
       if(!enabled||disposed||!held)return;
       publishBase(atlas);
       const run=new AbortController();filmController=run;
@@ -154,7 +163,7 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
         // corridor remains underneath; switching pages never exposes a blank patch.
         for(const window of detailWindows) {
           run.signal.throwIfAborted();
-          const next=await loadImageryAtlas(window,run.signal,anisotropy,cache);
+          const next=await loadImageryAtlas(window,run.signal,anisotropy,cache,localMapSource()?.imagery.url);
           if(next) {
             if(disposed||run.signal.aborted){next.dispose();break;}
             primeDetail(next);pages.push({tiles:window,atlas:next});
@@ -176,5 +185,5 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
     },
     release(){publish(atlas);clearFilm();held=false;schedule();},
     setEnabled(value:boolean){if(enabled===value)return;enabled=value;if(!enabled){cancel();publish(atlas);clearFilm();held=false;}else schedule();},
-    retry:schedule,dispose(){disposed=true;cancel();publish(null);clearFilm();atlas?.dispose();cache.clear();status.remove();}};
+    retry:schedule,dispose(){disposed=true;if(typeof window!=='undefined'){window.removeEventListener('online',online);window.removeEventListener('offline',schedule);}cancel();publish(null);clearFilm();atlas?.dispose();cache.clear();status.remove();}};
 }

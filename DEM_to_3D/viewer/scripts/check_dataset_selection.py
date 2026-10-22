@@ -99,6 +99,23 @@ def run(url, chrome=None):
         expect(page.locator('.incident-context')).to_have_count(0)
         expect(page.locator('.incident-context-revision time')).to_have_count(0)
         expect(page.locator('.map-pin')).to_have_count(0)
+        context.close()
+        # A corporate download filter must identify the blocked file; Retry recovers
+        # the same dataset after access is restored, rather than substituting data.
+        context=browser.new_context()
+        blocked=[True]
+        def filter_grid(route):
+            if blocked[0]:route.fulfill(status=403,body='VG-Blockdownload')
+            else:route.continue_()
+        context.route('**/terrain/*.grid.bin',filter_grid)
+        page=context.new_page();page.goto(url+'/?map=2d&demoRole=manager&lang=en')
+        alert=page.get_by_role('alert')
+        expect(alert).to_contain_text('HTTP 403',timeout=25000)
+        expect(alert).to_contain_text('.grid.bin')
+        expect(page.locator('.map-pin')).to_have_count(0)
+        blocked[0]=False
+        alert.get_by_role('button',name='Retry',exact=True).click()
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         context.close(); browser.close()
     print('Dataset selection passed: configured manifest, distinct AOI/road state, matching JSON export, no default fallback and contextual navigation.')
 

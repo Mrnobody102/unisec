@@ -2,7 +2,7 @@ import * as L from 'leaflet';
 import {localMapSource} from './localMapSource';
 import {basemapTileOptions, internetImagerySource, noteInternetDetail} from './imagerySource';
 import {internetDetailAvailable, deferInternetDetail, reconnectInternetDetail} from './imageryDetail';
-/** The local base is never removed. Optional detail appears only beyond its native zoom. */
+/** The local base is never removed. The web imagery refines every scale in the background. */
 export function addInternetDetail(map: L.Map) {
   const local=localMapSource();
   if (!local) return {dispose:()=>{},setOpacity:(_value:number)=>{}};
@@ -14,7 +14,7 @@ export function addInternetDetail(map: L.Map) {
     if (!internetDetailAvailable()) {remove();return;}
     if (layer) return;
     layer=L.tileLayer(internetImagerySource.url,{
-      minZoom:local.imagery.maxZoom+1,maxNativeZoom:internetImagerySource.maxNativeZoom,maxZoom:19,
+      minZoom:0,maxNativeZoom:internetImagerySource.maxNativeZoom,maxZoom:19,
       pane:'internet-detail',noWrap:true,crossOrigin:'anonymous',opacity,...basemapTileOptions
     });
     layer.on('tileload',noteInternetDetail);

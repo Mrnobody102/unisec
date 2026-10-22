@@ -3,9 +3,10 @@ import {setLocalMapSource, type LocalMapSource} from './localMapSource';
 import {deferInternetDetail, detailMaxZoom, detailTileTemplate, internetDetailAvailable, parentImageryTiles, reconnectInternetDetail} from './imageryDetail';
 const local:LocalMapSource={schemaVersion:1,imagery:{url:'/offline-map/imagery/{z}/{x}/{y}.webp',maxZoom:14,name:'Local Sentinel-2',credit:'Copernicus'},terrain:{url:'/offline-map/terrain/{z}/{x}/{y}.webp',maxZoom:14},elevation:{url:'/offline-map/elevation/{z}/{x}/{y}.png',tiles:[{z:11,x:1616,y:897}]},bounds:[103.7,21.4,104.6,22.1]};
 afterEach(()=>{setLocalMapSource(null);reconnectInternetDetail();vi.unstubAllGlobals();vi.useRealTimers();});
-it('keeps native-scale imagery local and refines only beyond the offline resolution',()=>{
+it('uses the web source at overview and close scales while the renderer retains its local base',()=>{
  setLocalMapSource(local);vi.stubGlobal('navigator',{onLine:true});
- expect(detailTileTemplate(14)).toBe(local.imagery.url);
+ expect(detailTileTemplate(12)).toMatch(/^https:/);
+ expect(detailTileTemplate(14)).toMatch(/^https:/);
  expect(detailTileTemplate(16)).toMatch(/^https:/);
  expect(detailMaxZoom()).toBe(18);
 });

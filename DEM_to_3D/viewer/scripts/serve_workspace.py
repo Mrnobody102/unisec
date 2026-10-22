@@ -40,7 +40,7 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
         def handle(self):
             try:
                 super().handle()
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 # Navigation and 2D/3D switches can cancel an asset download.
                 # The disconnected client needs no response; other errors still surface.
                 pass
@@ -77,6 +77,8 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
     class WorkspaceServer(ThreadingHTTPServer):
         # Windows SO_REUSEADDR can let two servers bind the same address.
         allow_reuse_address = False
+        # Chromium can open many local image/elevation requests in a burst.
+        request_queue_size = 128
 
         def server_bind(self):
             if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):

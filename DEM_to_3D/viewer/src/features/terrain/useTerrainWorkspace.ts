@@ -8,7 +8,7 @@ import { createGeographicPlacements } from '../../terrain/geographic';
 import { loadModelFiles, loadTerrain3D, releaseModels } from '../../terrain/modelRuntime';
 import type { LoadedModel, TerrainData } from '../../types/terrain';
 import { loadWorkspaceDataset } from '../incident/loadWorkspaceDataset';
-import { readBinary } from '../../shared/http/readResponse';
+import { DataRequestError, readBinary } from '../../shared/http/readResponse';
 
 type Props = { mapMode: '2d' | '3d'; on3DUnavailable: () => void };
 const preparedDisplayExaggeration = 1.15;
@@ -21,7 +21,8 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   const [contextTerrain,setContextTerrain]=useState<TerrainData[]>([]);
   const [defaultTerrain, setDefaultTerrain] = useState<TerrainData | null>(null);
   const [snapshotReady, setSnapshotReady] = useState(false);
-  const [startupError, setStartupError] = useState(false);
+  const [startupFailure,setStartupFailure]=useState<{message:string;status?:number}|null>(null);
+  const startupError=startupFailure!==null;
   const [attempt, setAttempt] = useState(0);
   const [offline, setOffline] = useState(false);
   const [localMap,setLocalMap]=useState(false);
@@ -78,7 +79,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   useEffect(() => {
     const controller = new AbortController();
     importGeneration.current++;
-    setBusy(true); setStartupError(false); setSnapshotReady(false);
+    setBusy(true); setStartupFailure(null); setSnapshotReady(false);
     void loadWorkspaceDataset(controller.signal, import.meta.env.VITE_DEAR_API_BASE).then(dataset => {
       // The packet and grid make the workspace usable; the mesh follows without competing.
       if (mapModeRef.current === '3d') startMesh(dataset.manifest.terrain.glb);
@@ -90,7 +91,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     }).catch(reason => {
       if (!controller.signal.aborted) {
         console.warn('Workspace dataset unavailable', reason);
-        setStartupError(true);
+        setStartupFailure({message:reason instanceof Error?reason.message:String(reason),status:reason instanceof DataRequestError?reason.status:undefined});
       }
     }).finally(() => { if (!controller.signal.aborted) setBusy(false); });
     return () => controller.abort();
@@ -179,7 +180,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     } catch { return undefined; }
   }, [mode, geographicMerge, models, manifest]);
 
-  return { packet, manifest, fieldDataset, defaultTerrain, contextTerrain, snapshotReady, startupError, offline, localMap, models,
+  return { packet, manifest, fieldDataset, defaultTerrain, contextTerrain, snapshotReady, startupError, startupFailure, offline, localMap, models,
     mode, geographicMerge, fileNames, busy, error, loading3D, progress3D, placements,
     retry, reload, clear, upload, changeMode, changeGeographicMerge };
 }

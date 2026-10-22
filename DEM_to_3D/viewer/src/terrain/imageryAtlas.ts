@@ -4,9 +4,9 @@ import * as THREE from 'three';
 import type { MapTile } from './regionalBasemap';
 
 /** Publish only a complete patch. A failure never replaces the retained base imagery. */
-export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, anisotropy: number, cache?: Map<string, Blob>):Promise<ImageryDetailAtlas|null> {
+export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, anisotropy: number, cache?: Map<string, Blob>, sourceTemplate?: string):Promise<ImageryDetailAtlas|null> {
   if (!tiles.length) return null;
-  const zoom = tiles[0].z, template=detailTileTemplate(zoom);
+  const zoom = tiles[0].z, template=sourceTemplate ?? detailTileTemplate(zoom);
   if(!template)return null;
   const minX = Math.min(...tiles.map(tile => tile.x)), minY = Math.min(...tiles.map(tile => tile.y));
   const maxX = Math.max(...tiles.map(tile => tile.x)) + 1, maxY = Math.max(...tiles.map(tile => tile.y)) + 1;

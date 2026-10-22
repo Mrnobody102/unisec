@@ -7,7 +7,10 @@ export const deferInternetDetail = () => {retryAfter = Date.now() + 30000;};
 export const detailMaxZoom = () => internetDetailAvailable() ? internetImagerySource.maxNativeZoom : imagerySource.maxNativeZoom;
 export const detailTileTemplate = (zoom: number): string | null => {
   const local=localMapSource();
-  if(local && zoom>local.imagery.maxZoom)return internetDetailAvailable()?internetImagerySource.url:null;
+  if(local){
+    if(internetDetailAvailable())return internetImagerySource.url;
+    return zoom<=local.imagery.maxZoom?local.imagery.url:null;
+  }
   return imagerySource.url;
 };
 export const reconnectInternetDetail = () => {retryAfter = 0;};

@@ -22,7 +22,7 @@ export async function loadWorkspaceDataset(signal: AbortSignal, apiBase = '') {
   const configuration = await workspaceConfiguration(signal);
   const manifest = await loadScenarioManifest(configuration.manifestUrl, signal);
   if (!manifest.workspace) throw new Error('Incident packet is missing from the manifest');
-  const repository = apiBase || configuration.dataSource === 'api'
+  const repository = !configuration.offline && (apiBase || configuration.dataSource === 'api')
     ? apiRepository(apiBase, manifest.incidentId)
     : preparedRepository(manifest.workspace);
   const packet = await repository.load(signal);

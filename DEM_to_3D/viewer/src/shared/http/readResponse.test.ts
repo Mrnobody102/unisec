@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { readBinary, readResponse } from './readResponse';
+import { DataRequestError, readBinary, readResponse } from './readResponse';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
@@ -16,6 +16,14 @@ describe('bounded data loading', () => {
   it('rejects HTTP failures instead of passing an error page to the decoder', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('missing', { status: 404 })));
     await expect(readResponse('/terrain/missing.glb')).rejects.toThrow('404');
+  });
+
+  it('identifies a blocked file without discarding its HTTP status or resource',async()=>{
+    vi.stubGlobal('fetch',vi.fn(async()=>new Response('VG-Blockdownload',{status:403})));
+    const error=await readResponse('/terrain/elevation.grid.bin').catch(error=>error);
+    expect(error).toBeInstanceOf(DataRequestError);
+    expect(error.status).toBe(403);expect(error.url).toBe('/terrain/elevation.grid.bin');
+    expect(error.message).toContain('403');
   });
 
   it.each(['connection', 'body'])('times out a stalled %s', async phase => {

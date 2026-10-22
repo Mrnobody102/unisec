@@ -28,7 +28,7 @@ describe('workspace dataset consistency', () => {
 });
 
 describe('configured dataset loading', () => {
-  it.each(['prepared', 'api'] as const)('loads a distinct AOI and road snapshot through %s mode', async dataSource => {
+  it.each([{dataSource:'prepared',offline:false},{dataSource:'api',offline:false},{dataSource:'api',offline:true}] as const)('loads a distinct AOI and road snapshot with $dataSource / offline=$offline', async ({dataSource,offline}) => {
     const raw = structuredClone(packetJson);
     raw.datasetVersion = 'alternate-v1'; raw.incident.id = 'INC-ALTERNATE';
     raw.incident.title = ['Alternate incident', 'Alternate incident'];
@@ -46,7 +46,7 @@ describe('configured dataset loading', () => {
     delete (manifest as {referenceData?: unknown}).referenceData;
 
     const fetch = vi.fn(async (url: string) => {
-      if (url === '/workspace-config.json') return Response.json({ dataSource, manifestUrl: '/scenarios/alternate/v1/manifest.json' });
+      if (url === '/workspace-config.json') return Response.json({ dataSource, offline, manifestUrl: '/scenarios/alternate/v1/manifest.json' });
       if (url === '/scenarios/alternate/v1/manifest.json') return Response.json(manifest);
       if (url === manifest.workspace.url || url === '/api/v1/incidents/INC-ALTERNATE/workspace') return new Response(bytes);
       return new Response('', { status: 404 });
@@ -54,7 +54,11 @@ describe('configured dataset loading', () => {
     vi.stubGlobal('fetch', fetch);
     vi.mocked(loadTerrainData).mockResolvedValue({ metadata: { crs: { authority: 'EPSG', code: 32648 } } as TerrainMetadata,
       grid: new Float32Array(1), gridBuffer: new ArrayBuffer(4) });
-    const loaded = await loadWorkspaceDataset(new AbortController().signal);
+    const loaded = await loadWorkspaceDataset(new AbortController().signal,offline?'https://unreachable.example':'');
+    if(offline){
+      expect(fetch.mock.calls.map(([url])=>url)).toContain(manifest.workspace.url);
+      expect(fetch.mock.calls.map(([url])=>url).some(url=>url.startsWith('https:'))).toBe(false);
+    }
     expect(loaded.packet.incident.id).toBe('INC-ALTERNATE');
     expect(loaded.contextTerrain).toHaveLength(manifest.terrainContext.length);
     for(const asset of manifest.terrainContext)expect(loadTerrainData).toHaveBeenCalledWith({metadata:asset.metadata.url,grid:asset.grid.url},expect.any(AbortSignal));

@@ -25,6 +25,9 @@ def run(base, chrome):
             page.on('console',lambda message:errors.append(message.text) if message.type=='error' and ('Shader Error' in message.text or 'VALIDATE_STATUS' in message.text) else None)
             page.goto(base+'/?map='+mode+'&demoRole=manager&lang=en')
             expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+            # The initial overview also uses the web source, without a zoom gesture.
+            page.wait_for_function("""()=>performance.getEntriesByType('resource').some(e=>e.name.includes('/World_Imagery/'))""",timeout=30000)
+            assert remote,'No automatic Internet imagery at overview'
             page.locator('.incident-landslide-row').first.click()
             detail=page.locator('#response-details')
             expect(detail.locator('.field-photo-strip-grid img')).to_have_count(4,timeout=30000)

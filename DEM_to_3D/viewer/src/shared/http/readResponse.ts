@@ -1,3 +1,11 @@
+/** Preserve the resource and HTTP status for actionable startup diagnostics. */
+export class DataRequestError extends Error {
+  constructor(public readonly url: string, public readonly status?: number, cause?: unknown) {
+    super(status ? `Data request failed (${status}): ${url}` : `Data request failed: ${url}${cause instanceof Error ? ` (${cause.message})` : ''}`, {cause});
+    this.name = 'DataRequestError';
+  }
+}
+
 /** Bound both the connection and body read, and cancel work when its owner closes. */
 export async function readResponse(url: string, signal?: AbortSignal, timeoutMs = 10000): Promise<Response> {
   const controller = new AbortController();
@@ -8,10 +16,13 @@ export async function readResponse(url: string, signal?: AbortSignal, timeoutMs 
   try {
     controller.signal.throwIfAborted();
     const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`Data request failed (${response.status}): ${url}`);
+    if (!response.ok) throw new DataRequestError(url, response.status);
     const bytes = await response.arrayBuffer();
     controller.signal.throwIfAborted();
     return new Response(bytes, { status: response.status, headers: response.headers });
+  } catch (error) {
+    if (signal?.aborted || error instanceof DataRequestError) throw error;
+    throw new DataRequestError(url, undefined, error);
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', abort);
@@ -45,7 +56,7 @@ export async function readBinary(
     controller.signal.throwIfAborted();
     arm();
     const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`Data request failed (${response.status}): ${url}`);
+    if (!response.ok) throw new DataRequestError(url, response.status);
     // The manifest size is the decoded size; Content-Length may describe a compressed body.
     const total = expectedBytes || Number(response.headers.get('Content-Length')) || 0;
     if (!response.body) {
