@@ -1,15 +1,11 @@
 type Environment = {
   search: string;
-  connection?: { saveData?: boolean; effectiveType?: string };
-  matches: (query: string) => boolean;
   webgl: () => boolean;
 };
 
 function browserEnvironment(): Environment {
   return {
     search: location.search,
-    connection: (navigator as Navigator & { connection?: Environment['connection'] }).connection,
-    matches: (query) => matchMedia(query).matches,
     webgl: () => {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
@@ -20,11 +16,12 @@ function browserEnvironment(): Environment {
 }
 
 /**
- * Start with the plan view for reading extents and access roads. Terrain inspection
- * remains an explicit 3D choice; `?map=2d|3d` overrides the default.
+ * Open terrain inspection by default, including offline. Explicit links can choose
+ * either mode; devices without WebGL retain the independent 2D map.
  */
 export function defaultMapMode(environment: Environment = browserEnvironment()): '2d' | '3d' {
   const requested = new URLSearchParams(environment.search).get('map');
   if (requested === '2d' || requested === '3d') return requested;
-  return '2d';
+  try { return environment.webgl() ? '3d' : '2d'; }
+  catch { return '2d'; }
 }

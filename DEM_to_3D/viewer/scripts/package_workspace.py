@@ -112,7 +112,7 @@ exit $LASTEXITCODE
 
 1. Extract the entire ZIP into a writable folder on the laptop.
 2. Double-click Start-DEAR.cmd. The app opens in its own window without a server console.
-3. The app defaults to English and remembers your language choice. Choose Response coordinator, then Enter app.
+3. The app starts in 3D, defaults to English and remembers your language choice. Choose Response coordinator, then Enter app.
    Choose Resident instead to demonstrate submitting a field report.
 
 If the browser does not open, visit http://127.0.0.1:5212/.
@@ -125,7 +125,7 @@ The launcher verifies every file before opening the app. If a file is missing or
 changed, extract a fresh copy of the ZIP.
 
 Incident data, Planet imagery, field photos, terrain and fonts are included.
-""" + ('Regional Sentinel-2 imagery and context terrain are local. Coverage, sources and resolution: dist/offline-map/map.json. Areas without imagery use neutral terrain shading.\n' if local_map else 'Online basemaps are disabled offline; prepared local imagery remains available.\n') + """
+""" + ('Rectangular regional Sentinel-2 context and terrain are local. Coverage, dates, sources, attribution and display resolution: dist/offline-map/map.json. Context is historical background; Planet remains the separate evidence layer. Outside packaged bounds, a neutral background is shown.\n' if local_map else 'Online basemaps are disabled offline; prepared local imagery remains available.\n') + """
 Context imagery and relief are separate from the Planet evidence and analysis DEM.
 Switch between English and Vietnamese in Settings > Language.
 Place names keep their original spelling. Original survey notes and imported

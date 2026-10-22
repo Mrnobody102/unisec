@@ -26,7 +26,7 @@ def mercator_bounds(z,x,y):
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
-def prepare(sources,output,cache):
+def prepare(sources,output,cache,bounds=None,imagery_metadata=None,require_coverage=False):
     if (output/'map.json').exists():
         raise ValueError('Use an empty output directory to avoid mixing map versions')
     output.mkdir(parents=True,exist_ok=True);cache.mkdir(parents=True,exist_ok=True)
@@ -36,7 +36,12 @@ def prepare(sources,output,cache):
             if src.count<3 or src.dtypes[0]!='uint8':raise ValueError('Expected original 8-bit RGB imagery')
             rasters.append((src.read([1,2,3]),src.transform,src.crs))
             provenance.append(dict(file=path.name,sha256=digest(path),boundsWgs84=list(transform_bounds(src.crs,'EPSG:4326',*src.bounds)),pixelSize=list(src.res)))
-    b=np.array([p['boundsWgs84'] for p in provenance]);bounds=[float(b[:,0].min()-.16),float(b[:,1].min()-.16),float(b[:,2].max()+.16),float(b[:,3].max()+.16)]
+    b=np.array([p['boundsWgs84'] for p in provenance]);bounds=bounds or [float(b[:,0].min()-.16),float(b[:,1].min()-.16),float(b[:,2].max()+.16),float(b[:,3].max()+.16)]
+    if len(bounds)!=4 or not all(math.isfinite(v) for v in bounds) or not (-180<=bounds[0]<bounds[2]<=180 and -85<bounds[1]<bounds[3]<85):
+        raise ValueError('Invalid map bounds')
+    imagery_record=json.loads(imagery_metadata.read_text(encoding='utf8')) if imagery_metadata else None
+    if imagery_record and (len(sources)!=1 or imagery_record.get('sha256')!=digest(sources[0])):
+        raise ValueError('Context imagery provenance does not match input')
     z=11;x0,y0,x1,y1=tile_range(bounds,z)
     terrain_tiles=[dict(z=z,x=x,y=y) for y in range(y0,y1+1) for x in range(x0,x1+1)]
     if len(terrain_tiles)>128:raise ValueError('Bounded terrain budget exceeded')
@@ -81,6 +86,13 @@ def prepare(sources,output,cache):
                     patch=np.zeros_like(rgb)
                     for band in range(3):reproject(source[band],patch[band],src_transform=source_transform,src_crs=crs,dst_transform=affine,dst_crs='EPSG:3857',resampling=Resampling.bilinear)
                     valid=np.any(patch>0,axis=0)&~occupied;rgb[:,valid]=patch[:,valid];occupied|=valid
+                if require_coverage:
+                    # Test pixel centres inside the declared package, not the
+                    # padded edges of the XYZ tiles intersecting its boundary.
+                    lon=(affine.c+(np.arange(256)+.5)*affine.a)/R*180
+                    lat=np.degrees(np.arctan(np.sinh((affine.f+(np.arange(256)+.5)*affine.e)/R*math.pi)))
+                    inside=(lat[:,None]>=bounds[1])&(lat[:,None]<=bounds[3])&(lon[None,:]>=bounds[0])&(lon[None,:]<=bounds[2])
+                    if np.any(inside&~occupied):raise ValueError(f'Missing imagery at {zoom}/{x}/{y}; refusing an incomplete satellite basemap')
                 for kind,data in [('imagery',rgb),('terrain',terrain)]:
                     path=output/f'{kind}/{zoom}/{x}/{y}.webp';path.parent.mkdir(parents=True,exist_ok=True)
                     Image.fromarray(data.transpose(1,2,0)).save(path,quality=90,method=4)
@@ -89,9 +101,10 @@ def prepare(sources,output,cache):
     for path in sorted(output.rglob('*')):
         if path.is_file() and path.name!='map.json':files[path.relative_to(output).as_posix()]=dict(sha256=digest(path),byteLength=path.stat().st_size)
     catalog=dict(schemaVersion=1,bounds=bounds,
-        imagery=dict(url='/offline-map/imagery/{z}/{x}/{y}.webp',maxZoom=14,name='Sentinel-2 (cục bộ)',credit='Copernicus Sentinel-2; địa hình © Mapzen / USGS'),
+        imagery=dict(url='/offline-map/imagery/{z}/{x}/{y}.webp',maxZoom=14,name=imagery_record['name'] if imagery_record else 'Sentinel-2 (cục bộ)',credit=(imagery_record['credit'] if imagery_record else 'Copernicus Sentinel-2')+'; Terrain © Mapzen / USGS'),
         terrain=dict(url='/offline-map/terrain/{z}/{x}/{y}.webp',maxZoom=14),elevation=dict(url='/offline-map/elevation/{z}/{x}/{y}.png',tiles=terrain_tiles),
         provenance=dict(createdAt=datetime.now(timezone.utc).isoformat(),imagery=provenance,terrain=records,
+            context=imagery_record,completeImageryCoverage=require_coverage,
             terrainAttribution='Mapzen Terrain Tiles; global GMTED2010 and SRTM courtesy of USGS',
             terrainLicense='https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
             interpretation='RGB is prepared Sentinel-2 context, not Planet. Where RGB is absent, neutral hillshade shows real terrain. Context relief is display only; never an analysis grid or a confirmed current observation.'),files=files)
@@ -100,5 +113,5 @@ def prepare(sources,output,cache):
     return catalog
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--rgb',type=Path,nargs='+',required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--cache',type=Path,required=True)
-    a=p.parse_args();prepare(a.rgb,a.output,a.cache)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--rgb',type=Path,nargs='+',required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--cache',type=Path,required=True);p.add_argument('--bounds',type=float,nargs=4);p.add_argument('--imagery-metadata',type=Path);p.add_argument('--require-coverage',action='store_true')
+    a=p.parse_args();prepare(a.rgb,a.output,a.cache,a.bounds,a.imagery_metadata,a.require_coverage)

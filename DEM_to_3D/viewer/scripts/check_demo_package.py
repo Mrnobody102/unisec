@@ -33,6 +33,7 @@ def check_english_startup(base, chrome, captures=None):
         page.get_by_role('radio', name='Response coordinator', exact=False).check()
         page.get_by_role('button', name='Enter app', exact=True).click()
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        expect(page.locator('canvas.terrain-canvas')).to_be_visible(timeout=30000)
         page.locator('.incident-landslide-row').first.click()
         expect(page.locator('#response-details .field-photo-strip-grid img')).to_have_count(4, timeout=30000)
         if captures:
@@ -67,6 +68,21 @@ def check_english_startup(base, chrome, captures=None):
 
 
 def check_local_map(base, chrome, captures=None):
+    import io
+    import math
+    from PIL import Image
+    with urllib.request.urlopen(base + '/offline-map/map.json') as response:
+        catalog = json.load(response)
+    assert catalog['provenance']['completeImageryCoverage'], 'Regional satellite context must be complete'
+    # These sites are outside the old commune-cut RGB footprint. A 200 response
+    # alone used to accept neutral hillshade as a working satellite basemap.
+    for longitude, latitude in [(103.85,21.55),(104.42,21.95)]:
+        zoom = 12
+        x = math.floor((longitude+180)/360*2**zoom)
+        y = math.floor((1-math.asinh(math.tan(math.radians(latitude)))/math.pi)/2*2**zoom)
+        with urllib.request.urlopen(f'{base}/offline-map/imagery/{zoom}/{x}/{y}.webp') as response:
+            pixels = list(Image.open(io.BytesIO(response.read())).convert('RGB').getdata())
+        assert sum(max(rgb)-min(rgb)>15 for rgb in pixels)/len(pixels) > .8, 'Missing real satellite context'
     from browser_preferences import use_vietnamese
     from gis_browser_actions import map_tool
     with sync_playwright() as playwright:
@@ -182,7 +198,7 @@ def run(archive, chrome=None, captures=None, video=None):
                              ('GIS edit/publish', lambda: gis(base, chrome, captures)),
                              ('resident photo/audio/report', lambda: resident(base, chrome, captures)),
                              ('Planet/field photos and failure recovery', lambda: evidence(base, chrome, captures)),
-                             ('MP4 encoding and decoded frames', lambda: film(base, chrome, video))]
+                             ('MP4 encoding and decoded frames', lambda: film(base, chrome, video, lang='en'))]
                     for name, check in steps:
                         print('Offline: ' + name, flush=True)
                         check()

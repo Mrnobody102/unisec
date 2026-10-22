@@ -34,6 +34,7 @@ jobs:
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_imagery_mosaic.py'
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_basemap_tone.py'
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_planet_sources.py'
+      - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_context_imagery.py'
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_tile_texture.py'
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_commune_tools.py'
       - run: python -m unittest discover -s DEM_to_3D/tests -p 'test_terrain_contract.py'

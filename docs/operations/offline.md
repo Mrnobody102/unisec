@@ -5,7 +5,7 @@ Gói Windows x64 dùng trên laptop cá nhân, không cần Node.js, Python cài
 ## Mở tại buổi thi
 
 1. Giải nén **toàn bộ** `DEAR-Offline-Windows-x64.zip` vào thư mục có quyền ghi trên ổ máy, không chạy bên trong ZIP.
-2. Mở `Start-DEAR.cmd`. Launcher kiểm tra SHA-256 toàn bộ tệp rồi mở cửa sổ Chrome/Edge với hồ sơ riêng của gói, mặc định **English** ở lần mở đầu; sau đó nhớ lựa chọn **English/Tiếng Việt** trong **Settings → Language**. Chọn **Response coordinator → Enter app** để trình diễn điều phối, hoặc **Resident** để gửi ghi nhận.
+2. Mở `Start-DEAR.cmd`. Launcher kiểm tra SHA-256 toàn bộ tệp rồi mở cửa sổ Chrome/Edge với hồ sơ riêng của gói, mở **3D** mặc định và dùng **English** ở lần mở đầu; sau đó nhớ lựa chọn **English/Tiếng Việt** trong **Settings → Language**. Chọn **Response coordinator → Enter app** để trình diễn điều phối, hoặc **Resident** để gửi ghi nhận.
 3. Nếu trình duyệt không tự mở, vào `http://127.0.0.1:5212/`. Launcher mở cửa sổ app riêng và chạy dịch vụ cục bộ ở nền. Nếu cần xem lỗi khởi động, mở `Start-Diagnostics.cmd`; nhật ký ở `user-data/launcher.log`.
 4. Nếu cổng đang được chương trình khác dùng, chạy `powershell -ExecutionPolicy Bypass -File .\Start.ps1 -Port 5213`. Launcher không tắt tiến trình khác.
 
@@ -19,19 +19,19 @@ Trước ngày thi, thử đúng laptop và màn chiếu với Wi-Fi tắt, đó
 |---|---|
 | Tình huống, tuyến, GIS, mặt cắt | Dữ liệu đóng gói; mặt cắt chỉ dùng DEM phân tích có sẵn |
 | Ảnh Planet và hiện trường | Tệp gốc đã chuẩn bị kèm ngày/nguồn; có so ảnh, xem ảnh lớn |
-| Nền 2D, 3D và GIS | XYZ cục bộ từ ba raster RGB Sentinel-2 có sẵn, mức zoom 7–14; không tải Esri/Google để đóng gói |
+| Nền 2D, 3D và GIS | XYZ cục bộ từ composite Sentinel-2 ESA WorldCover 2021 hình chữ nhật liên tục, mức zoom 7–14; không tải Esri/Google để đóng gói |
 | Địa hình xung quanh | Mapzen Terrain Tiles (SRTM/GMTED2010), lưu cục bộ; chỉ để hiển thị, không đưa vào lưới phân tích |
-| Ngoài vùng RGB | Hillshade trung tính từ địa hình thật; không giả ảnh vệ tinh |
+| Phủ ảnh trong vùng demo | Bắt buộc đủ pixel ảnh nền trong phạm vi đóng gói; không dùng hillshade xám thay ảnh bị thiếu |
 | Ngoài phạm vi bản đồ đóng gói | Nền trung tính; không tự gọi Internet. Giới hạn và checksum ở `dist/offline-map/map.json` |
 | Video | Hành trình 25 giây, ba vùng sạt chính, ảnh hiện trường và góc tổng quan cuối; xuất MP4 qua trình duyệt |
 | Ghi nhận/GIS | Lưu trên trình duyệt của máy này, không tự đồng bộ sang máy khác; xuất dữ liệu trước khi đặt lại phiên |
 | PDF | Dùng In / lưu PDF của trình duyệt |
 
-RGB Sentinel-2 làm nền bối cảnh, không phải ảnh Planet mới nhất. Không suy luận ngày quan sát từ nền ghép hoặc dùng địa hình bối cảnh thay DEM khi đo đạc. Hồ sơ trình duyệt nằm trong `user-data/browser`; sao lưu phần này nếu cần giữ phiên làm việc.
+Composite trung vị năm 2021 từ [ESA WorldCover](https://registry.opendata.aws/esa-worldcover-vito-composites/) (CC BY 4.0) làm nền bối cảnh, không phải ảnh Planet mới nhất. Dữ liệu gốc khoảng 10 m, nền khu vực chuẩn bị ở khoảng 40 m; phép tăng zoom không tạo thêm chi tiết ảnh. Không suy luận ngày quan sát từ nền ghép hoặc dùng địa hình bối cảnh thay DEM khi đo đạc. Hồ sơ trình duyệt nằm trong `user-data/browser`; sao lưu phần này nếu cần giữ phiên làm việc.
 
 ## Tạo gói
 
-Chạy trong `DEM_to_3D/viewer`, chọn manifest ở `public/workspace-config.json`. Máy chuẩn bị cần Node theo `.nvmrc`, Python 3.11+, rasterio/numpy/Pillow cho nền cục bộ. Chỉ máy chuẩn bị cần Internet để tải runtime chính thức và địa hình công khai. Thư mục đầu ra của `prepare_offline_map.py` phải mới/trống để tránh trộn hai phiên bản nền.
+Chạy trong `DEM_to_3D/viewer`, chọn manifest ở `public/workspace-config.json`. Máy chuẩn bị cần Node theo `.nvmrc`, Python 3.11+, rasterio 1.4+/numpy/Pillow cho nền cục bộ. Chỉ máy chuẩn bị cần Internet để tải runtime chính thức và địa hình công khai. Thư mục đầu ra của `prepare_offline_map.py` phải mới/trống để tránh trộn hai phiên bản nền.
 
 ```powershell
 npm ci
@@ -39,7 +39,8 @@ npm test
 python -m unittest discover -s scripts -p 'test_*.py'
 npm run build
 python scripts/prepare_demo_runtime.py --output "$env:TEMP/dear-runtime/python-3.13.17-embed-amd64.zip"
-python ../tools/prepare_offline_map.py --rgb ../che_tao_v2_tex.tif ../lao_chai_v2_tex.texture.tif ../pung_luong_v2_tex.texture.tif --output dist-release/offline-map --cache "$env:TEMP/dear-offline-elevation"
+python ../tools/prepare_context_imagery.py --bounds 103.7 21.4 104.6 22.1 --output dist-release/sentinel-context-2021.tif --cache "$env:TEMP/dear-worldcover-cogs"
+python ../tools/prepare_offline_map.py --rgb dist-release/sentinel-context-2021.tif --imagery-metadata dist-release/sentinel-context-2021.source.json --bounds 103.74660177812206 21.47574395496185 104.50632710969855 22.04322981573678 --require-coverage --output dist-release/offline-map --cache "$env:TEMP/dear-offline-elevation"
 python scripts/package_workspace.py --output dist-release/DEAR-Offline-Windows-x64.zip --local-map dist-release/offline-map --runtime "$env:TEMP/dear-runtime/python-3.13.17-embed-amd64.zip"
 ```
 
