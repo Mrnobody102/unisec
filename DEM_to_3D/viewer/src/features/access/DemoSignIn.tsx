@@ -1,3 +1,4 @@
+import {LanguageSwitch} from '../../shared/ui/LanguageSwitch';
 import { accessMessages } from './locales';
 import { useState } from 'react';
 import type { Community, Locale } from '../../types/dear';
@@ -6,10 +7,12 @@ import { UiIcon } from '../../shared/ui/UiIcon';
 import './access.css';
 export function DemoSignIn({
   locale,
+  onChangeLocale,
   communities,
   onSignIn
 }: {
   locale: Locale;
+  onChangeLocale: (locale: Locale) => void;
   communities: Array<Pick<Community, 'id' | 'name'>>;
   onSignIn: (role: DemoRole, name: string, communityId: string | null) => void;
 }): JSX.Element {
@@ -21,7 +24,7 @@ export function DemoSignIn({
     <main className="demo-entry">
       <section className="demo-signin" aria-labelledby="demo-entry-title">
         <header>
-          <span className="demo-brand">DEAR</span>
+          <div className="demo-entry-brand"><span className="demo-brand">DEAR</span><LanguageSwitch locale={locale} onChange={onChangeLocale}/></div>
           <h1 id="demo-entry-title">{m.roadInformationAndDisasterResponse}</h1>
           <p>{m.simulatedSignInForTwoRolesSubmissions}</p>
         </header>

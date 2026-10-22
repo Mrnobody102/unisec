@@ -53,6 +53,7 @@ import {
   submissionKey,
   type Submission,
 } from "./submissions";
+import {LanguageSwitch} from "../../shared/ui/LanguageSwitch";
 import { MapAttribution } from "../../components/dear/MapAttribution";
 import { UserGuide } from "../help/UserGuide";
 import "./citizen.css";
@@ -61,6 +62,7 @@ type Props = {
   published: ScenarioRevision;
   scenarioEdits?: ScenarioEdit[];
   locale: import("../../types/dear").Locale;
+  onChangeLocale: (locale: import("../../types/dear").Locale) => void;
   identity: DemoIdentity;
   onSignOut: () => void;
   runtime: ReturnType<typeof useTerrainWorkspace> & { packet: IncidentPacket };
@@ -69,6 +71,7 @@ export function CitizenWorkspace({
   published,
   scenarioEdits,
   locale,
+  onChangeLocale,
   identity,
   onSignOut,
   runtime,
@@ -306,6 +309,7 @@ export function CitizenWorkspace({
           <strong>DEAR</strong>
           <span>{m.communityInformation}</span>
         </div>
+        <LanguageSwitch locale={locale} onChange={onChangeLocale} compact/>
         <button className="button" onClick={() => setHelp(true)}>
           {m.help}
         </button>

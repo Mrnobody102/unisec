@@ -49,6 +49,7 @@ function ResponseEntry({
     return (
       <DemoSignIn
         locale={preferences.locale}
+        onChangeLocale={preferences.setLocale}
         communities={runtime.packet.communities}
         onSignIn={session.signIn}
       />
@@ -56,6 +57,7 @@ function ResponseEntry({
   if (session.identity.role === 'resident')
     return (
       <CitizenWorkspace
+        onChangeLocale={preferences.setLocale}
         published={published.revision}
         locale={preferences.locale}
         identity={session.identity}
