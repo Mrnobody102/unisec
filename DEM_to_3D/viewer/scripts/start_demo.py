@@ -1,5 +1,6 @@
 """Launch a verified, self-contained demo on loopback; no install or network."""
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -83,14 +84,32 @@ def start(root=ROOT, port=5212, browser=True):
             pass
 
 
+def launch(root=ROOT, port=5212, browser=True, desktop=False):
+    try:
+        if desktop:
+            directory = root / 'user-data'
+            directory.mkdir(parents=True, exist_ok=True)
+            with (directory / 'launcher.log').open('a', encoding='utf8', buffering=1) as log:
+                with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+                    start(root, port, browser)
+        else:
+            start(root, port, browser)
+        return 0
+    except Exception as error:
+        message = 'DEAR could not start: ' + str(error)
+        if desktop and os.name == 'nt':
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, message, 'DEAR', 0x10)
+        else:
+            print(message, flush=True)
+        return 1
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=5212)
     parser.add_argument('--offline', action='store_true', help='Compatibility flag; this launcher always uses offline mode')
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--desktop', action='store_true', help='Open the app without a server console; log startup diagnostics locally')
     args = parser.parse_args()
-    try:
-        start(port=args.port, browser=not args.no_browser)
-    except Exception as error:
-        print('DEAR could not start: ' + str(error), flush=True)
-        raise SystemExit(1)
+    raise SystemExit(launch(port=args.port, browser=not args.no_browser, desktop=args.desktop))

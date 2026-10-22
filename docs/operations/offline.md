@@ -6,7 +6,7 @@ Gói Windows x64 dùng trên laptop cá nhân, không cần Node.js, Python cài
 
 1. Giải nén **toàn bộ** `DEAR-Offline-Windows-x64.zip` vào thư mục có quyền ghi trên ổ máy, không chạy bên trong ZIP.
 2. Mở `Start-DEAR.cmd`. Launcher kiểm tra SHA-256 toàn bộ tệp rồi mở cửa sổ Chrome/Edge với hồ sơ riêng của gói, mặc định **English** ở lần mở đầu; sau đó nhớ lựa chọn **English/Tiếng Việt** trong **Settings → Language**. Chọn **Response coordinator → Enter app** để trình diễn điều phối, hoặc **Resident** để gửi ghi nhận.
-3. Nếu trình duyệt không tự mở, vào `http://127.0.0.1:5212/`. Giữ cửa sổ server đang chạy; Ctrl+C để dừng.
+3. Nếu trình duyệt không tự mở, vào `http://127.0.0.1:5212/`. Launcher mở cửa sổ app riêng và chạy dịch vụ cục bộ ở nền. Nếu cần xem lỗi khởi động, mở `Start-Diagnostics.cmd`; nhật ký ở `user-data/launcher.log`.
 4. Nếu cổng đang được chương trình khác dùng, chạy `powershell -ExecutionPolicy Bypass -File .\Start.ps1 -Port 5213`. Launcher không tắt tiến trình khác.
 
 Không mở `dist/index.html` bằng double click. Có thể mở lại launcher để quay về app đang chạy; nó chỉ nhận server cùng mã gói. Nếu checksum sai/thiếu tệp, giải nén lại từ ZIP gốc.

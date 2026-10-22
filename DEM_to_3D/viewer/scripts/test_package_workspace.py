@@ -108,3 +108,17 @@ class PackageTests(unittest.TestCase):
     def test_launcher_uses_the_normal_app_entry_to_preserve_language_choice(self):
         from start_demo import presentation_url
         self.assertEqual(presentation_url('http://127.0.0.1:5212'), 'http://127.0.0.1:5212/')
+
+    def test_desktop_entry_uses_windowless_runtime_and_keeps_diagnostics(self):
+        archive = self.root / 'release.zip'
+        package_workspace(self.dist, archive)
+        with zipfile.ZipFile(archive) as package:
+            self.assertIn(b'pythonw.exe', package.read('Start-DEAR.cmd'))
+            self.assertIn(b'--desktop', package.read('Start-DEAR.cmd'))
+            self.assertIn('Start-Diagnostics.cmd', package.namelist())
+        from start_demo import launch
+        from unittest.mock import patch
+        with patch('start_demo.start', side_effect=lambda *args: print('ready')) as start:
+            self.assertEqual(launch(self.root, 5321, browser=False, desktop=True), 0)
+            start.assert_called_once_with(self.root, 5321, False)
+        self.assertIn('ready', (self.root / 'user-data/launcher.log').read_text(encoding='utf8'))

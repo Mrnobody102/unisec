@@ -91,7 +91,8 @@ def package_workspace(dist, destination, local_map=None, runtime=None):
                 files['runtime/' + name] = data
         files['runtime/source.json'] = json.dumps(record, indent=2).encode()
     files['scripts/start_demo.py'] = (ROOT / 'scripts/start_demo.py').read_bytes()
-    files['Start-DEAR.cmd']=b'@echo off\r\nsetlocal\r\nif exist "%~dp0runtime\\python.exe" (\r\n  "%~dp0runtime\\python.exe" "%~dp0scripts\\start_demo.py" --offline\r\n) else (\r\n  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start.ps1"\r\n)\r\nif errorlevel 1 pause\r\n'
+    files['Start-DEAR.cmd'] = b'@echo off\r\nsetlocal\r\nif exist "%~dp0runtime\\pythonw.exe" (\r\n  start "" "%~dp0runtime\\pythonw.exe" "%~dp0scripts\\start_demo.py" --desktop\r\n) else (\r\n  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start.ps1"\r\n  if errorlevel 1 pause\r\n)\r\n'
+    files['Start-Diagnostics.cmd'] = b'@echo off\r\npowershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start.ps1"\r\nif errorlevel 1 pause\r\n'
     files['scripts/serve_workspace.py'] = (ROOT / 'scripts/serve_workspace.py').read_bytes()
     files['scripts/workspace_configuration.py'] = (ROOT / 'scripts/workspace_configuration.py').read_bytes()
     files['Start.ps1'] = b'''param([int]$Port = 5212)
@@ -110,12 +111,12 @@ exit $LASTEXITCODE
     files['README.md'] = ("""# DEAR — offline competition demo
 
 1. Extract the entire ZIP into a writable folder on the laptop.
-2. Double-click Start-DEAR.cmd. Keep the server window open during the demo.
+2. Double-click Start-DEAR.cmd. The app opens in its own window without a server console.
 3. The app defaults to English and remembers your language choice. Choose Response coordinator, then Enter app.
    Choose Resident instead to demonstrate submitting a field report.
 
 If the browser does not open, visit http://127.0.0.1:5212/.
-Do not open dist/index.html directly. Stop the server with Ctrl+C.
+Do not open dist/index.html directly. For startup diagnostics, open Start-Diagnostics.cmd; logs are in user-data/launcher.log.
 If the port is occupied, run: powershell -ExecutionPolicy Bypass -File .\\Start.ps1 -Port 5213
 
 """ + ('Windows x64 Python runtime is included. No Python or Node.js installation is needed.\n' if runtime else 'This package requires Python 3.11 or newer.\n') + """
