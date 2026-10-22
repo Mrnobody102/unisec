@@ -152,7 +152,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
           // finer tiles in the same flat context plane.
           mesh.renderOrder = mapLayerOrder.imagery * 2 + tile.z / 32;
           const setDetail=imageryDrape(mesh.material,tile);coverage.apply(mesh.material);setDetail(runStyle==='satellite'?viewAtlas:null);setDetail.setBase(runStyle==='satellite'?baseAtlas:null);
-          setBasemapTone(mesh.material,runStyle==='satellite'?tone:null);
+          setBasemapTone(mesh.material,runStyle==='satellite'?tone:null);setDetail.setTone(runStyle==='satellite'?tone:null);
           group.add(mesh); cached.set(key(tile, runStyle), { mesh, bitmap, style: runStyle, tile, setDetail });
           if (runStyle === 'satellite') {
             try {onImageryTile?.(tile, bitmap);} catch { /* The prepared DEM texture remains the fallback. */ }
@@ -176,7 +176,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   };
   return {
     group,
-    setTone(next:BasemapTone|null){tone=next;cached.forEach(item=>setBasemapTone(item.mesh.material,item.style==='satellite'?tone:null));},
+    setTone(next:BasemapTone|null){tone=next;cached.forEach(item=>{setBasemapTone(item.mesh.material,item.style==='satellite'?tone:null);item.setDetail.setTone(item.style==='satellite'?tone:null);});},
     surfacePoint(x:number,y:number):THREE.Vector3|undefined {
       const height=relief?.sample(x,y);if(height===undefined)return undefined;
       const p=projectedToScene(metadata,{x,y},height+3);

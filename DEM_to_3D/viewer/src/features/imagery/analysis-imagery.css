@@ -15,6 +15,7 @@
 .analysis-load-status button { border:0; padding:4px 6px; color:var(--select-ink); background:var(--hover); font:inherit; cursor:pointer; }
 
 .has-balanced-basemap .leaflet-tile-pane { filter:var(--basemap-tone-online); }
+.has-balanced-basemap .internet-detail-pane { filter:var(--basemap-tone-internet); }
 .has-balanced-basemap img.leaflet-image-layer[alt="Ảnh nền khu vực Chế Tạo"],
 .has-balanced-basemap img.leaflet-image-layer[alt="Chế Tạo area imagery"] { filter:var(--basemap-tone-prepared); }
 .analysis-tone-choice { display:flex; align-items:center; gap:8px; margin:12px 0 8px; font-size:13px; }

@@ -1,0 +1,20 @@
+import {expect,it} from 'vitest';
+import * as THREE from 'three';
+import {imageryDrape} from './imageryDrape';
+import {basemapTones} from '../features/imagery/basemapTone';
+import type {ImageryDetailAtlas} from './imageryAtlas';
+it('keeps online detail on its own colour curve when draped over a locally calibrated base',()=>{
+ const material=new THREE.MeshLambertMaterial();
+ const drape=imageryDrape(material,{z:14,x:1,y:1});
+ const shader={uniforms:{},vertexShader:'',fragmentShader:'#include <map_fragment>'} as unknown as THREE.WebGLProgramParametersWithUniforms;
+ material.onBeforeCompile(shader,{} as THREE.WebGLRenderer);
+ const atlas:ImageryDetailAtlas={zoom:14,minX:1,minY:1,maxX:2,maxY:2,texture:new THREE.CanvasTexture({} as HTMLCanvasElement),source:'online',dispose(){}};
+ const local=[1.7,1.6,1.8];drape.setTone(local);drape(atlas);
+ const gamma=(shader.uniforms.viewGamma.value as THREE.Vector3).toArray();
+ gamma.forEach((value,i)=>expect(Math.pow(Math.pow(.4,value),local[i])).toBeCloseTo(Math.pow(.4,basemapTones.online[i]),6));
+ drape({...atlas,source:'local'});
+ expect((shader.uniforms.viewGamma.value as THREE.Vector3).toArray()).toEqual([1,1,1]);
+ drape(atlas);drape.setTone(null);
+ expect((shader.uniforms.viewGamma.value as THREE.Vector3).toArray()).toEqual([1,1,1]);
+ atlas.texture.dispose();material.dispose();
+});

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import type { MapTile } from './regionalBasemap';
 
 /** Publish only a complete patch. A failure never replaces the retained base imagery. */
-export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, anisotropy: number, cache?: Map<string, Blob>) {
+export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, anisotropy: number, cache?: Map<string, Blob>):Promise<ImageryDetailAtlas|null> {
   if (!tiles.length) return null;
   const zoom = tiles[0].z, template=detailTileTemplate(zoom);
   if(!template)return null;
@@ -48,10 +48,13 @@ export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, an
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = anisotropy;
-  return {zoom, minX, minY, maxX, maxY, texture, dispose: () => {
+  return {zoom, minX, minY, maxX, maxY, texture, source:template.startsWith('https:')?'online':'local', dispose: () => {
     texture.dispose();
     canvas.width = canvas.height = 1;
   }};
 }
 
-export type ImageryDetailAtlas = NonNullable<Awaited<ReturnType<typeof loadImageryAtlas>>>;
+export type ImageryDetailAtlas = {
+  zoom:number;minX:number;minY:number;maxX:number;maxY:number;texture:THREE.CanvasTexture;
+  source?:'local'|'online';dispose:()=>void;
+};

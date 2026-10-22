@@ -6,6 +6,8 @@ import {internetDetailAvailable, deferInternetDetail, reconnectInternetDetail} f
 export function addInternetDetail(map: L.Map) {
   const local=localMapSource();
   if (!local) return {dispose:()=>{},setOpacity:(_value:number)=>{}};
+  const pane=map.getPane('internet-detail')??map.createPane('internet-detail');
+  pane.style.zIndex='201';pane.classList.add('internet-detail-pane');
   let layer: L.TileLayer | null = null, opacity=1;
   const remove=()=>{layer?.remove();layer=null;};
   const sync=()=>{
@@ -13,7 +15,7 @@ export function addInternetDetail(map: L.Map) {
     if (layer) return;
     layer=L.tileLayer(internetImagerySource.url,{
       minZoom:local.imagery.maxZoom+1,maxNativeZoom:internetImagerySource.maxNativeZoom,maxZoom:19,
-      noWrap:true,crossOrigin:'anonymous',opacity,...basemapTileOptions
+      pane:'internet-detail',noWrap:true,crossOrigin:'anonymous',opacity,...basemapTileOptions
     });
     layer.on('tileload',noteInternetDetail);
     const current=layer;

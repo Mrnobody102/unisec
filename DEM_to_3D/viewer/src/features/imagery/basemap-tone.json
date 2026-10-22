@@ -129,5 +129,16 @@
     "medianCanopyDifferenceBefore": 47.333333333333336,
     "medianCanopyDifferenceAfter": 1.2639218327602701
   },
-  "preparedAssetId": "che_tao_v2_tex"
+  "preparedAssetId": "che_tao_v2_tex",
+  "context": {
+    "gamma": [
+      1.736913,
+      1.705228,
+      1.689222
+    ],
+    "samples": 59743,
+    "medianCanopyDifferenceBefore": 43.333333333333336,
+    "medianCanopyDifferenceAfter": 1.1842378929335002e-15,
+    "sourceSha256": "64c39ca005bcb938341a41cc241382d8eeb465b47df3bb2a71e399788333fd6b"
+  }
 }

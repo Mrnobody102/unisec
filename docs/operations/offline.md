@@ -28,7 +28,7 @@ Trước ngày thi, thử đúng laptop và màn chiếu với Wi-Fi tắt, đó
 | Ghi nhận/GIS | Lưu trên trình duyệt của máy này, không tự đồng bộ sang máy khác; xuất dữ liệu trước khi đặt lại phiên |
 | PDF | Dùng In / lưu PDF của trình duyệt |
 
-Composite trung vị năm 2021 từ [ESA WorldCover](https://registry.opendata.aws/esa-worldcover-vito-composites/) (CC BY 4.0) làm nền bối cảnh, không phải ảnh Planet mới nhất. Dữ liệu gốc khoảng 10 m, nền khu vực chuẩn bị ở độ phân giải gốc khoảng 10 m; phép tăng zoom không tạo thêm chi tiết ảnh. Không suy luận ngày quan sát từ nền ghép hoặc dùng địa hình bối cảnh thay DEM khi đo đạc. Hồ sơ trình duyệt nằm trong `user-data/browser`; sao lưu phần này nếu cần giữ phiên làm việc.
+Composite trung vị năm 2021 từ [ESA WorldCover](https://registry.opendata.aws/esa-worldcover-vito-composites/) (CC BY 4.0) làm nền bối cảnh, không phải ảnh Planet mới nhất. Dữ liệu gốc khoảng 10 m, nền khu vực chuẩn bị ở độ phân giải gốc khoảng 10 m; phép tăng zoom không tạo thêm chi tiết ảnh. Hồ sơ cân màu hiển thị chỉ áp cho đúng SHA-256 của ảnh nền đã hiệu chỉnh; ảnh Internet dùng hồ sơ riêng, ảnh Planet gốc giữ nguyên. Không suy luận ngày quan sát từ nền ghép hoặc dùng địa hình bối cảnh thay DEM khi đo đạc. Hồ sơ trình duyệt nằm trong `user-data/browser`; sao lưu phần này nếu cần giữ phiên làm việc.
 
 ## Tạo gói
 

@@ -1,4 +1,5 @@
 import { setBasemapTone } from './basemapTone';
+import {basemapTones} from '../features/imagery/basemapTone';
 import type { BasemapTone } from '../features/imagery/basemapTone';
 import type { ImageryDetailAtlas } from './imageryAtlas';
 import * as THREE from 'three';
@@ -141,8 +142,11 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
     return {texture,group:patch};
   };
   const releaseDetail=(detail:Detail)=>{detail.group.removeFromParent();clearPatch(detail.group);detail.texture.dispose();};
+  let currentTone:BasemapTone|null=null, detailSource:ImageryDetailAtlas|null=null, baseSource:ImageryDetailAtlas|null=null;
+  const toneFor=(atlas:ImageryDetailAtlas|null)=>currentTone&&atlas?.source==='online'?basemapTones.online:currentTone;
   const setDetail = (atlas: ImageryDetailAtlas | null) => {
     if(disposed)return;
+    detailSource=atlas;setBasemapTone(focusMaterial,toneFor(atlas));
     const cached=atlas?preparedDetails.get(atlas):null;
     if(cached&&activeDetail===cached)return;
     if(activeDetail){
@@ -165,8 +169,9 @@ export function createTerrainImagery(metadata: TerrainMetadata, terrain: THREE.G
   };
   return {
     group, setDetail, primeDetail,
-    setTone(tone:BasemapTone|null){[material,baseMaterial,focusMaterial].forEach(item=>setBasemapTone(item,tone));},
+    setTone(tone:BasemapTone|null){currentTone=tone;setBasemapTone(material,tone);setBasemapTone(baseMaterial,toneFor(baseSource));setBasemapTone(focusMaterial,toneFor(detailSource));},
     setBase(atlas:ImageryDetailAtlas|null) {
+      baseSource=atlas;setBasemapTone(baseMaterial,toneFor(atlas));
       clearPatch(baseGroup);baseTexture?.dispose();baseTexture=null;baseGroup.visible=false;
       if(atlas) {
         const width=atlas.maxX-atlas.minX,height=atlas.maxY-atlas.minY,ratio=2**(atlas.zoom-reference.zoom);

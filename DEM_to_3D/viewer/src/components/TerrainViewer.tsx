@@ -1,8 +1,7 @@
 import {detailMaxZoom} from '../features/map/imageryDetail';
-import {localMapSource} from '../features/map/localMapSource';
 import { useLandslideAppearance } from '../features/landslides/useLandslideAppearance';
 import { setBasemapTone } from '../terrain/basemapTone';
-import { basemapTones,preparedToneAssetId } from '../features/imagery/basemapTone';
+import { basemapTones,contextBasemapTone,preparedToneAssetId } from '../features/imagery/basemapTone';
 import { ImageryStatus, type ImageryLoadState } from '../features/imagery/ImageryStatus';
 import '../features/terrain/terrain-overlays.css';
 import { createLocalTileImagery } from '../terrain/localTileImagery';
@@ -285,7 +284,7 @@ export function TerrainViewer({
     }));
     balanceBasemapMaterials=()=>{
       const active=analysisPropsRef.current?.balanceBasemap && surfaceLayersRef.current?.imagery!==false;
-      const online=active&&!imagerySource.custom?(localMapSource()?basemapTones.prepared:basemapTones.online):null;
+      const online=active&&!imagerySource.custom?contextBasemapTone():null;
       terrainImageries.forEach(imagery=>imagery?.setTone(online));
       basemap?.setTone(online);
       // Uploaded imagery is independent. Only the calibrated prepared asset

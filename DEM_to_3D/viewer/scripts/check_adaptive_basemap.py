@@ -22,6 +22,7 @@ def run(base, chrome):
                 else: request.abort()
             context.route('**/*',route)
             page=context.new_page();page.on('pageerror',lambda error:errors.append(str(error)))
+            page.on('console',lambda message:errors.append(message.text) if message.type=='error' and ('Shader Error' in message.text or 'VALIDATE_STATUS' in message.text) else None)
             page.goto(base+'/?map='+mode+'&demoRole=manager&lang=en')
             expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
             page.locator('.incident-landslide-row').first.click()

@@ -47,6 +47,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('viewer',type=Path);parser.add_argument('kml',type=Path);parser.add_argument('--cache',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--local-context',type=Path)
     args=parser.parse_args();args.cache.mkdir(parents=True,exist_ok=True)
     folder=args.viewer/'public/scenarios/che-tao/imagery';catalog=json.loads((folder/'imagery.json').read_text(encoding='utf-8'))
     post=next(x for x in catalog['layers'] if x['id']=='planet-post');asset=post['mosaic']['web']
@@ -101,6 +102,19 @@ def main():
         'planetSha256':asset['sha256'],'bounds':asset['latLngBounds'],'reference':{'url':template,'retrievedAt':datetime.now(timezone.utc).isoformat(),'tiles':hashes},
         'exclusions':'Both images: dark, bright, non-green pixels; original KML extents buffered by ~60 m. RGB heuristics, not a certified cloud mask.',
         'esri':esri,'prepared':local_fit,'preparedAssetId':meta['asset_id']}
+    if args.local_context:
+        import rasterio
+        from rasterio.warp import reproject,Resampling
+        context=np.zeros((3,height,width),dtype=np.uint8)
+        with rasterio.open(args.local_context) as source:
+            for band in range(3):
+                reproject(rasterio.band(source,band+1),context[band],src_transform=source.transform,src_crs=source.crs,
+                    dst_transform=from_bounds(west,south,east,north,width,height),dst_crs='EPSG:4326',resampling=Resampling.bilinear)
+        result['context']={**fit_tone(context.transpose(1,2,0),rgba[...,:3],valid),
+            'sourceSha256':hashlib.sha256(args.local_context.read_bytes()).hexdigest()}
+    if args.output.is_file():
+        previous=json.loads(args.output.read_text(encoding='utf8')).get('reference',{})
+        if previous.get('tiles')==hashes:result['reference']['retrievedAt']=previous['retrievedAt']
     args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({'esri':esri,'prepared':local_fit},indent=2))
 

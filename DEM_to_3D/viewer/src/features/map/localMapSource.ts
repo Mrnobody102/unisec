@@ -2,6 +2,7 @@ import type {MapTile} from '../../terrain/regionalBasemap';
 
 export type LocalMapSource = {
   schemaVersion: 1;
+  provenance?: {context?: {sha256?: string}};
   imagery: {url: string; maxZoom: number; credit: string; name: string};
   terrain: {url: string; maxZoom: number};
   elevation: {url: string; tiles: MapTile[]};
