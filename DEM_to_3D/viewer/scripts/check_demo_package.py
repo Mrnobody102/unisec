@@ -19,7 +19,7 @@ def check_english_startup(base, chrome, captures=None):
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, executable_path=chrome)
         context = browser.new_context(viewport={'width': 1440, 'height': 960})
-        context.add_init_script('Object.defineProperty(navigator, "onLine", {get: () => false})')
+        context.add_init_script('Object.defineProperty(navigator, "onLine", {configurable:true,get: () => false})')
         external, errors = [], []
         context.on('request', lambda request: external.append(request.url) if request.url.startswith(('http:', 'https:')) and not request.url.startswith(base + '/') else None)
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base + '/') else route.abort())
@@ -182,7 +182,7 @@ def run(archive, chrome=None, captures=None, video=None):
                     if context in seen:
                         return
                     seen.add(context)
-                    context.add_init_script('Object.defineProperty(navigator, "onLine", {get: () => false})')
+                    context.add_init_script('Object.defineProperty(navigator, "onLine", {configurable:true,get: () => false})')
                     context.on('request', lambda request: external.append(request.url) if request.url.startswith(('http:', 'https:')) and not request.url.startswith(base + '/') else None)
                     context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base + '/') or route.request.url.startswith(('blob:', 'data:')) else route.abort())
 
