@@ -1,4 +1,5 @@
 """Check transactional geometry editing and the offline prepared imagery catalog."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import gis_task, apply_boundary, download_geometry, publish_draft, reviewed_records, reviewed_records_json
 import argparse
 import json
@@ -12,9 +13,9 @@ AOI='Chế Tạo: POLYGON((103.94 21.62,104.15 21.62,104.15 21.95,103.94 21.95,1
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True, **({'executable_path':chrome} if chrome else {}))
-        context=browser.new_context(viewport={'width':1440,'height':900})
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':900}))
         context.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
-        page=context.new_page()
+        page=use_vietnamese(context.new_page())
         errors=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.goto(url+'/?map=2d&workspace=geodata&offline=1')

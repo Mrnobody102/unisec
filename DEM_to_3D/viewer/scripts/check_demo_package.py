@@ -14,11 +14,49 @@ from playwright.sync_api import Browser, BrowserContext, sync_playwright, expect
 from start_demo import verify_package
 
 
+def check_english_startup(base, chrome, captures=None):
+    from start_demo import presentation_url
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, executable_path=chrome)
+        context = browser.new_context(viewport={'width': 1440, 'height': 960})
+        external, errors = [], []
+        context.on('request', lambda request: external.append(request.url) if request.url.startswith(('http:', 'https:')) and not request.url.startswith(base + '/') else None)
+        context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base + '/') else route.abort())
+        page = context.new_page()
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(presentation_url(base))
+        expect(page.locator('html')).to_have_attribute('lang', 'en')
+        page.get_by_role('radio', name='Response coordinator', exact=False).check()
+        page.get_by_role('button', name='Enter app', exact=True).click()
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        page.locator('.incident-landslide-row').first.click()
+        expect(page.locator('#response-details .field-photo-strip-grid img')).to_have_count(4, timeout=30000)
+        if captures:
+            captures.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(captures / 'offline-english.png'))
+        page.get_by_role('button', name='Settings', exact=True).click()
+        page.get_by_role('button', name='Tiếng Việt', exact=True).click()
+        expect(page.locator('html')).to_have_attribute('lang', 'vi')
+        page.reload()
+        expect(page.locator('html')).to_have_attribute('lang', 'vi')
+        expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
+        page.get_by_role('button', name='Cài đặt', exact=True).click()
+        page.get_by_role('button', name='English', exact=True).click()
+        page.reload()
+        expect(page.locator('html')).to_have_attribute('lang', 'en')
+        expect(page.locator('.workspace-nav').get_by_role('button', name='Roads', exact=True)).to_be_visible(timeout=30000)
+        assert not external, external
+        assert not errors, errors
+        browser.close()
+    print('Language preferences passed: English by default, Vietnamese/English switching and remembered selection after reload, without internet.', flush=True)
+
+
 def check_local_map(base, chrome, captures=None):
+    from browser_preferences import use_vietnamese
     from gis_browser_actions import map_tool
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={'width': 1440, 'height': 960})
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 960}))
         requests, failures, errors = [], [], []
         page.on('request', lambda request: requests.append(request.url))
         page.on('response', lambda response: failures.append((response.status, response.url)) if response.status >= 400 else None)
@@ -123,7 +161,8 @@ def run(archive, chrome=None, captures=None, video=None):
 
                 Browser.new_context, Browser.new_page, BrowserContext.new_page = new_context, new_page, context_page
                 try:
-                    steps = [('local map in all workspaces', lambda: check_local_map(base, chrome, captures)),
+                    steps = [('English competition startup', lambda: check_english_startup(base, chrome, captures)),
+                             ('local map in all workspaces', lambda: check_local_map(base, chrome, captures)),
                              ('profile and film camera', lambda: profile(base, chrome, captures)),
                              ('GIS edit/publish', lambda: gis(base, chrome, captures)),
                              ('resident photo/audio/report', lambda: resident(base, chrome, captures)),

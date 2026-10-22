@@ -1,4 +1,5 @@
 """Real WebGL proof: north-up analysis pixels above online imagery, below vectors, on unchanged terrain."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 import re
@@ -9,7 +10,7 @@ from playwright.sync_api import expect, sync_playwright
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={'width': 1440, 'height': 960})
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 960}))
         errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))
         def route(request):

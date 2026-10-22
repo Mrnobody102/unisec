@@ -1,4 +1,5 @@
 """Verify the default typeface, incident context, account access and illustrated guide."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -6,9 +7,9 @@ from playwright.sync_api import sync_playwright, expect
 def run(url,chrome,captures):
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=chrome,headless=True)
-  context=browser.new_context(viewport={'width':1440,'height':900})
+  context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':900}))
   context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-  page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  page=use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url+'/?map=2d&offline=1&demoRole=manager')
   expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
   expect(page.locator('html')).to_have_attribute('data-font','source')
@@ -59,9 +60,9 @@ def run(url,chrome,captures):
   expect(page.locator('html')).to_have_attribute('data-font','plex')
   assert not errors,errors
   context.close()
-  context=browser.new_context();context.add_init_script("{const get=Storage.prototype.getItem;Storage.prototype.getItem=function(k){if(k==='dear.font-choice')throw new DOMException('Blocked','SecurityError');return get.call(this,k)}}")
+  context=use_vietnamese(browser.new_context());context.add_init_script("{const get=Storage.prototype.getItem;Storage.prototype.getItem=function(k){if(k==='dear.font-choice')throw new DOMException('Blocked','SecurityError');return get.call(this,k)}}")
   context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-  page=context.new_page();page.goto(url+'/?map=2d&offline=1&demoRole=manager')
+  page=use_vietnamese(context.new_page());page.goto(url+'/?map=2d&offline=1&demoRole=manager')
   expect(page.locator('html')).to_have_attribute('data-font','source')
   browser.close()
  print('Header and guide passed: Source Sans default/fallback, saved choice, responsive controls/popovers, source access/focus and illustrated task navigation.')

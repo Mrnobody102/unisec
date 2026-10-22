@@ -1,4 +1,5 @@
 """Local browser regression: mapped fill and real resident submission symbols."""
+from browser_preferences import use_vietnamese
 import argparse
 import tempfile
 from pathlib import Path
@@ -13,9 +14,9 @@ def run(url, captures, chrome=None):
         browser = p.chromium.launch(headless=True, executable_path=chrome,
             args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         photo = create_field_photo(browser, temp)
-        context = browser.new_context(viewport={'width':1440,'height':960}, reduced_motion='reduce')
+        context = use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}, reduced_motion='reduce'))
         context.route('**/*', lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda e:errors.append(str(e)))
         page.set_default_timeout(20000)

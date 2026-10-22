@@ -1,4 +1,5 @@
 """A storage event must not let Undo delete another tab's newly published report."""
+from browser_preferences import use_vietnamese
 import argparse
 from playwright.sync_api import sync_playwright, expect
 
@@ -6,8 +7,8 @@ from playwright.sync_api import sync_playwright, expect
 def run(url, chrome):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context()
-        page = context.new_page()
+        context = use_vietnamese(browser.new_context())
+        page = use_vietnamese(context.new_page())
         page.goto(url + '/?offline=1&workspace=geodata')
         expect(page.locator('.geodata-workspace')).to_be_visible()
         # Mount the real persistence hook independently of the GIS draft wrapper.
@@ -28,7 +29,7 @@ def run(url, chrome):
         fixture = page.locator('#storage-fixture')
         fixture.get_by_role('button', name='Import fixture').click()
         expect(fixture.get_by_role('button', name='Undo fixture')).to_be_enabled()
-        second = context.new_page(); second.goto(url + '/?offline=1&workspace=geodata')
+        second = use_vietnamese(context.new_page()); second.goto(url + '/?offline=1&workspace=geodata')
         expect(second.locator('.geodata-workspace')).to_be_visible()
         # An unrelated scenario edit must not destroy a valid geometry Undo history.
         second.evaluate("""() => {

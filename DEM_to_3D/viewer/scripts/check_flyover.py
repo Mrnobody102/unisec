@@ -1,47 +1,49 @@
 """Play the short flyover, then decode its actual MP4 and check the map survived export."""
+from browser_preferences import use_vietnamese
 import argparse
 import tempfile
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 
-def run(url, chrome, output=None):
+def run(url, chrome, output=None, lang="vi"):
+    t = lambda vi, en: en if lang == "en" else vi
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         browser=p.chromium.launch(headless=True,executable_path=chrome)
-        page=browser.new_page(viewport={'width':1280,'height':800})
+        page=use_vietnamese(browser.new_page(viewport={'width':1280,'height':800}))
         page.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('console',lambda message:print('Browser:',message.text[:500],flush=True) if message.type in ['error','warning'] and 'ERR_FAILED' not in message.text and 'Flyover' in message.text else None)
-        page.goto(url+'/?offline=1&map=3d&demoRole=manager')
+        page.goto(url+'/?offline=1&map=3d&demoRole=manager&lang='+lang)
         expect(page.locator('.map-area > .flyover-launch')).to_have_count(0)
-        page.get_by_role('button',name='Công cụ bổ sung',exact=True).click()
-        page.get_by_role('button',name='Xem tuyến 3D',exact=True).click()
-        play=page.get_by_role('button',name='Bắt đầu xem',exact=True)
+        page.get_by_role('button',name=t('Công cụ bổ sung','Additional map tools'),exact=True).click()
+        page.get_by_role('button',name=t('Xem tuyến 3D','3D route view'),exact=True).click()
+        play=page.get_by_role('button',name=t('Bắt đầu xem','Start viewing'),exact=True)
         expect(play).to_be_enabled(timeout=30000);play.click()
-        pause=page.get_by_role('button',name='Tạm dừng',exact=True)
+        pause=page.get_by_role('button',name=t('Tạm dừng','Pause'),exact=True)
         expect(pause).to_be_visible(timeout=60000);pause.click()
-        duration=float(page.get_by_role('slider',name='Tiến trình xem tuyến',exact=True).get_attribute('max'))
+        duration=float(page.get_by_role('slider',name=t('Tiến trình xem tuyến','Route playback position'),exact=True).get_attribute('max'))
         assert duration==25,duration
         print(f'Playback uses a paced {duration:.2f}-second plan.',flush=True)
-        page.get_by_role('button',name='Thoát chế độ xem 3D',exact=True).click()
+        page.get_by_role('button',name=t('Thoát chế độ xem 3D','Exit 3D route view'),exact=True).click()
         expect(page.locator('.flyover-bar')).to_have_count(0)
         expect(page.locator('.map-advanced-tools .flyover-launch')).to_be_visible()
-        page.get_by_role('button',name='Chuyển sang 2D',exact=True).click()
+        page.get_by_role('button',name=t('Chuyển sang 2D','Switch to 2D'),exact=True).click()
         expect(page.locator('canvas.terrain-canvas')).to_have_count(0)
-        page.get_by_role('button',name='Xem tuyến 3D',exact=True).click()
+        page.get_by_role('button',name=t('Xem tuyến 3D','3D route view'),exact=True).click()
         downloads=[];page.on('download',lambda download:downloads.append(download))
-        page.get_by_role('button',name='Xuất video MP4',exact=True).click()
+        page.get_by_role('button',name=t('Xuất video MP4','Export MP4 video'),exact=True).click()
         previous=None
         for _ in range(240):
             if downloads:break
             message=page.locator('.flyover-message')
-            assert not message.count() or 'Không' not in message.inner_text(),message.inner_text()
+            assert not message.count() or t('Không','could not') not in message.inner_text(),message.inner_text()
             progress=page.locator('.flyover-export-percent')
             current=progress.inner_text() if progress.count() else 'Preparing 3D'
             if current!=previous:print('Export:',current,flush=True);previous=current
             page.wait_for_timeout(1000)
-        expect(page.get_by_role('dialog',name='Xem tuyến 3D',exact=True)).to_be_visible()
-        expect(page.get_by_role('status').filter(has_text='Đã xuất video.')).to_be_visible()
+        expect(page.get_by_role('dialog',name=t('Xem tuyến 3D','3D route view'),exact=True)).to_be_visible()
+        expect(page.get_by_role('status').filter(has_text=t('Đã xuất video.','Video exported.'))).to_be_visible()
         assert downloads,('No MP4 download',page.locator('body').inner_text()[-1200:],errors)
         file=Path(temp)/'flyover.mp4';downloads[0].save_as(file)
         assert file.stat().st_size>10000, 'MP4 is empty'
@@ -98,5 +100,5 @@ def run(url, chrome, output=None):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5381');parser.add_argument('--chrome');parser.add_argument('--output',type=Path);args=parser.parse_args()
-    run(args.url.rstrip('/'),args.chrome,args.output)
+    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5381');parser.add_argument('--chrome');parser.add_argument('--output',type=Path);parser.add_argument('--lang',choices=['vi','en'],default='vi');args=parser.parse_args()
+    run(args.url.rstrip('/'),args.chrome,args.output,args.lang)

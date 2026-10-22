@@ -1,4 +1,5 @@
 """Check map workspace controls, movable tool windows and label visibility."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 from pathlib import Path
@@ -8,11 +9,11 @@ from workspace_layout_checks import check_workspace_layout
 
 def check_default_map_mode(browser, url):
     """Coordinators open in 3D when WebGL exists; the sign-in screen never fetches the mesh."""
-    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
     context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
     meshes = []
     context.on('request', lambda request: meshes.append(request.url) if request.url.endswith('.glb') else None)
-    page = context.new_page()
+    page = use_vietnamese(context.new_page())
     page.goto(url + '/')
     expect(page.get_by_role('heading', level=1)).to_be_visible(timeout=25000)
     page.wait_for_timeout(500)
@@ -30,9 +31,9 @@ def check_default_map_mode(browser, url):
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
-        context = browser.new_context(viewport={'width': 1366, 'height': 768}, permissions=['clipboard-read', 'clipboard-write'])
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}, permissions=['clipboard-read', 'clipboard-write']))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')

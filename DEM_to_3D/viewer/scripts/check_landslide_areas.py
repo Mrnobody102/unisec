@@ -1,4 +1,5 @@
 """Independent slope/scar polygons, evidence, exact road links and atomic GIS publication."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 import json
@@ -24,7 +25,7 @@ def click_exposed_area(page, selector):
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={'width': 1440, 'height': 960})
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 960}))
         page.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))

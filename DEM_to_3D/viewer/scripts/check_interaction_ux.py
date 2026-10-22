@@ -1,4 +1,5 @@
 """Check stable map hover, modal entry and GIS/response edit continuity."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse, json
@@ -9,9 +10,9 @@ from playwright.sync_api import sync_playwright, expect
 def run(url, chrome, captures=None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context(viewport={'width': 1440, 'height': 960})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 960}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page(); errors = []
+        page = use_vietnamese(context.new_page()); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)

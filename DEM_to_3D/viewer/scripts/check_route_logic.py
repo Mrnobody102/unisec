@@ -1,4 +1,5 @@
 """A/B route acceptance: screenshot coordinates, eligible matching, clipping and failure state."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse,json
 from pathlib import Path
@@ -9,10 +10,10 @@ def run(url,chrome,captures=None):
     records=[{'id':id,'name':name,'role':'reference','visible':True,'source':{'name':'Kiểm thử tuyến','format':'coordinate','importedAt':'2026-10-13T00:00:00Z'},'feature':{'type':'Feature','properties':{},'geometry':{'type':'Point','coordinates':[lon,lat]}}} for id,name,lat,lon in points]
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True,executable_path=chrome)
-        context=browser.new_context(viewport={'width':1440,'height':960},reduced_motion='reduce')
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960},reduced_motion='reduce'))
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         context.add_init_script("if(!localStorage.getItem('dear.geodata.v1'))localStorage.setItem('dear.geodata.v1',"+json.dumps(json.dumps(records,ensure_ascii=False))+');')
-        page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page=use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         map_tool(page, 'Tìm đường giữa hai điểm').click()

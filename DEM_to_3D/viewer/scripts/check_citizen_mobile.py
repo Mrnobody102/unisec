@@ -1,4 +1,5 @@
 """Resident mobile flow, real browser audio, explicit origins and group picking."""
+from browser_preferences import use_vietnamese
 import argparse,json,tempfile,base64
 from pathlib import Path
 from playwright.sync_api import expect,sync_playwright
@@ -8,9 +9,9 @@ def run(url,chrome,captures):
  with sync_playwright() as p,tempfile.TemporaryDirectory() as temp:
   browser=p.chromium.launch(headless=True,executable_path=chrome,args=['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream'])
   photo=create_field_photo(browser,temp)
-  ctx=browser.new_context(viewport={'width':390,'height':844},permissions=['geolocation','microphone'],geolocation={'latitude':21.783333,'longitude':104.05,'accuracy':45},timezone_id='Asia/Bangkok')
+  ctx=use_vietnamese(browser.new_context(viewport={'width':390,'height':844},permissions=['geolocation','microphone'],geolocation={'latitude':21.783333,'longitude':104.05,'accuracy':45},timezone_id='Asia/Bangkok'))
   ctx.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-  page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  page=use_vietnamese(ctx.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url+'/?map=2d&offline=1')
   page.get_by_label('Tên của bạn',exact=True).fill('Mobile A');page.get_by_role('button',name='Vào ứng dụng',exact=True).click()
   page.get_by_role('button',name='Tìm đường',exact=True).click()

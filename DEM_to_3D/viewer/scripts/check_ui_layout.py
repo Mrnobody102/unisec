@@ -1,4 +1,5 @@
 """Exercise GIS discovery, inspectors and legible form controls at supported widths."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 import tempfile
@@ -28,7 +29,7 @@ def audit_text(page):
 def run(url, chrome):
     with sync_playwright() as playwright:
         browser=playwright.chromium.launch(headless=True, executable_path=chrome)
-        page=browser.new_page(viewport={'width':1440,'height':960})
+        page=use_vietnamese(browser.new_page(viewport={'width':1440,'height':960}))
         page.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
         errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')

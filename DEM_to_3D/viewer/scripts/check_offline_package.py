@@ -1,4 +1,5 @@
 """Extract, verify and exercise the distributed build with remote requests blocked."""
+from browser_preferences import use_vietnamese
 import argparse
 import hashlib
 import json
@@ -24,13 +25,16 @@ def run(archive, chrome):
         server = create_server(root / 'dist', port=0, offline=True)
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         try:
+            from check_demo_package import check_english_startup
+            base = f'http://127.0.0.1:{server.server_port}'
+            check_english_startup(base, chrome)
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True, executable_path=chrome)
-                context = browser.new_context(viewport={'width': 1366, 'height': 768})
+                context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
                 base = f'http://127.0.0.1:{server.server_port}'
                 requests, errors = [], []
                 context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base) else route.abort())
-                page = context.new_page()
+                page = use_vietnamese(context.new_page())
                 page.on('request', lambda request: requests.append(request.url))
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 page.goto(base + "/?map=2d&demoRole=manager")

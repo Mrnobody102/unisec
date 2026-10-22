@@ -1,4 +1,5 @@
 """Exercise local vector import, AOI coverage, drawing, persistence and GIS export."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, download_geometry, publish_draft, published_records, reviewed_records, reviewed_records_json
 import argparse
@@ -66,9 +67,9 @@ def paste(page, text, role='reference'):
 
 
 def check_large_import(browser, url, root):
-    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
     context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-    page = context.new_page()
+    page = use_vietnamese(context.new_page())
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(url + '/?map=2d&workspace=geodata&offline=1')
@@ -128,9 +129,9 @@ def check_large_import(browser, url, root):
 
 def check_point_and_kml_semantics(browser, url, root, captures):
     """Inspect actual Leaflet paint, then round trip mixed KML altitude references and attributes."""
-    context = browser.new_context(viewport={'width': 1366, 'height': 768})
+    context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
     context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-    page = context.new_page()
+    page = use_vietnamese(context.new_page())
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(url + '/?map=2d&workspace=geodata&offline=1')
@@ -216,10 +217,10 @@ def run(url, chrome, captures):
     with tempfile.TemporaryDirectory() as temporary, sync_playwright() as p:
         root = Path(temporary)
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
-        context = browser.new_context(viewport={'width':1366,'height':768}, permissions=['clipboard-read','clipboard-write'])
+        context = use_vietnamese(browser.new_context(viewport={'width':1366,'height':768}, permissions=['clipboard-read','clipboard-write']))
         requests, errors = [], []
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
         page.goto(url + '/?map=2d&workspace=geodata&offline=1')
@@ -371,9 +372,9 @@ def run(url, chrome, captures):
             expect(page.get_by_role('button', name='Dữ liệu GIS', exact=True)).to_be_focused()
         assert not errors, errors
         # Complete drawings by double click or by clicking their first vertex.
-        drawing_context = browser.new_context(viewport={'width':1366,'height':768})
+        drawing_context = use_vietnamese(browser.new_context(viewport={'width':1366,'height':768}))
         drawing_context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        drawing_page = drawing_context.new_page()
+        drawing_page = use_vietnamese(drawing_context.new_page())
         drawing_page.goto(url + '/?map=2d&workspace=geodata&offline=1')
         draw_surface = drawing_page.locator('.geodata-map-surface')
         for mode in ['double','first']:

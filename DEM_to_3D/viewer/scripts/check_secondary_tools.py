@@ -1,4 +1,5 @@
 """Browser checks for map revisions, image comparison, layer display and export."""
+from browser_preferences import use_vietnamese
 import argparse
 import json
 import struct
@@ -40,12 +41,12 @@ def run(url, chrome, captures):
         fixture_tiff(fixture_dir / 'after.tif', [180, 130, 80])
         fixture_tiff(fixture_dir / 'invalid-crs.tif', [180, 130, 80], epsg=9999)
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context(viewport={'width': 1366, 'height': 768})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         # Exercise the local GeoTIFF fallback when prepared imagery is unavailable.
         # The real prepared pair is checked by check_cartographic_evidence.py.
         context.route('**/scenarios/che-tao/imagery/imagery.json', lambda route: route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors, requests = [], []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))

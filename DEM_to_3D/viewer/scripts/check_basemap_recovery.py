@@ -1,4 +1,5 @@
 """A tile failing twice must recover without leaving an error or a coarse overlay."""
+from browser_preferences import use_vietnamese
 import argparse, base64
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright, expect
@@ -8,7 +9,7 @@ PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4
 def run(url, chrome):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={'width':1440,'height':960})
+        page = use_vietnamese(browser.new_page(viewport={'width':1440,'height':960}))
         first = None
         failures = 0
         errors = []

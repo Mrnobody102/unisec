@@ -1,4 +1,5 @@
 """Check layer provenance, revision timestamps, keyboard controls and narrow layouts."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -7,9 +8,9 @@ from playwright.sync_api import expect, sync_playwright
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
-        context = browser.new_context(viewport={'width': 1366, 'height': 768})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
-        page = context.new_page(); errors = []
+        page = use_vietnamese(context.new_page()); errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)

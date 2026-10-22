@@ -1,4 +1,5 @@
 """Verify response work, journal semantics, route verification and GIS paint containment."""
+from browser_preferences import use_vietnamese
 import argparse
 import json
 from pathlib import Path
@@ -9,9 +10,9 @@ from check_geodata_workspace import paste
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True, **({'executable_path':chrome} if chrome else {}))
-        context=browser.new_context(viewport={'width':1440,'height':900})
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':900}))
         context.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
-        page=context.new_page();errors=[]
+        page=use_vietnamese(context.new_page());errors=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         def open_work():
             section = page.locator('.incident-overview-work')
@@ -113,11 +114,11 @@ def run(url, chrome, captures):
         assert not errors,errors
         context.close()
         # Tile paint must stay inside the GIS map during pan/zoom/resize, including CSS zoom.
-        context=browser.new_context(viewport={'width':1440,'height':900})
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':900}))
         context.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
         context.route('**/workspace-config.json',lambda route:route.fulfill(json={'dataSource':'prepared','offline':False}))
         context.route('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/**',lambda route:route.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#28704b"/><path d="M0 0H256V256H0Z" fill="none" stroke="white"/></svg>'))
-        page=context.new_page();page.goto(url+'/?map=2d&workspace=geodata')
+        page=use_vietnamese(context.new_page());page.goto(url+'/?map=2d&workspace=geodata')
         expect(page.locator('.leaflet-tile-loaded').first).to_be_visible(timeout=25000)
         paste(page,'POLYGON((103.9 21.6,104.1 21.6,104.1 21.9,103.9 21.9,103.9 21.6))','aoi')
         for zoom in [1,1.25,.8]:

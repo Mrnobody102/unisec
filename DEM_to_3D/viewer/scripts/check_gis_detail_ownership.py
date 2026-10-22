@@ -1,4 +1,5 @@
 """Verify one GIS detail surface, replacement/close transitions and stable map points."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, clear_prepared_survey
 import argparse
@@ -13,9 +14,9 @@ POINT_NAMES = ['081026.kml 1', '081026.kml 2', '081026.kml 3']
 def run(url, chrome, captures=None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context(viewport={'width': 1440, 'height': 960})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 960}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')

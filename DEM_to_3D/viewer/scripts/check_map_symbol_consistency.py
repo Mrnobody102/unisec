@@ -1,4 +1,5 @@
 """Map symbols stay singular across hover, selection and 2D/3D views."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -7,7 +8,7 @@ from playwright.sync_api import expect, sync_playwright
 def run(url: str, captures: Path | None, chrome: str | None):
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={"width": 1440, "height": 960})
+        page = use_vietnamese(browser.new_page(viewport={"width": 1440, "height": 960}))
         page.route("**/*", lambda route: route.continue_() if route.request.url.startswith(url + "/") else route.abort())
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))

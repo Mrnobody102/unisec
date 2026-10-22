@@ -1,4 +1,5 @@
 """Regression for clustered-point cards, inspector exclusivity and photo modal stacking."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task
 import argparse,base64,hashlib,tempfile,uuid
@@ -14,8 +15,8 @@ def run(url,chrome,captures):
    photo={'id':str(uuid.uuid4()),'name':f'field-{i}.jpg','mime':'image/jpeg','bytes':len(raw),'width':640,'height':420,'preview':preview,'sha256':hashlib.sha256(raw).hexdigest(),'addedAt':'2026-10-12T00:00:00Z','exif':{}}
    obs={'schema':'field-observation/v1','kind':'other','note':'Ghi nhận thử nghiệm','observedAt':'','observer':'','accuracyM':None,'status':'unreviewed','updatedAt':'2026-10-12T00:00:00Z','photos':[photo]}
    records.append({'id':str(uuid.uuid4()),'name':f'Điểm cùng vị trí {i+1}','role':'reference','visible':True,'source':{'name':'field.geojson','format':'GeoJSON','importedAt':'2026-10-12T00:00:00Z'},'feature':{'type':'Feature','properties':{'dearObservation':obs},'geometry':{'type':'Point','coordinates':[104.05,21.78]}}})
-  context=browser.new_context(viewport={'width':1440,'height':960});context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-  page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
+  context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}));context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
+  page=use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
   page.evaluate('(records)=>{const data=JSON.parse(localStorage.getItem("dear.gis.v2"));data.records.push(...records);localStorage.setItem("dear.gis.v2",JSON.stringify(data));}',records);page.reload();map_tool(page, 'Dữ liệu GIS').click()
   gis_task(page)
   symbol=page.locator('.geodata-map .map-point-cluster')

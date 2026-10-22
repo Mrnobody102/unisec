@@ -1,4 +1,5 @@
 """Regression: detail closing, point zoom, selection across 2D/3D and inbox layout."""
+from browser_preferences import use_vietnamese
 import argparse
 import base64
 import json
@@ -13,9 +14,9 @@ def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome,
             args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        context = browser.new_context(viewport={'width':1440,'height':960}, timezone_id='Asia/Bangkok')
+        context = use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}, timezone_id='Asia/Bangkok'))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         console_errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))

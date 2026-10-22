@@ -1,4 +1,5 @@
 """Workspace layout and semantic layer visibility in coordinator/resident maps."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 import copy
@@ -25,9 +26,9 @@ def fixture_records():
 def run(url, chrome):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path':chrome} if chrome else {}))
-        context = browser.new_context(viewport={'width':1280,'height':720})
+        context = use_vietnamese(browser.new_context(viewport={'width':1280,'height':720}))
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-        page = context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page = use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=30000)
         # Verify the shipped survey before isolating the semantic visibility fixture.

@@ -1,11 +1,9 @@
+import {initialLocale} from './initialLocale';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import type { FontChoice, Locale } from '../types/dear';
 
 export function useWorkspacePreferences() {
-  const [locale, setLocale] = useState<Locale>(() => {
-    try { return window.localStorage.getItem('dear.locale') === 'en' ? 'en' : 'vi'; }
-    catch { return 'vi'; }
-  });
+  const [locale, setLocale] = useState<Locale>(() => initialLocale(window.location.search, () => window.localStorage.getItem('dear.locale')));
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return window.localStorage.getItem('dear.theme') === 'dark' ? 'dark' : 'light'; }
     catch { return 'light'; }

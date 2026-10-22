@@ -1,4 +1,5 @@
 """Simulated resident/coordinator workflow; no external delivery or real authentication."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import publish_draft, reviewed_records_json
 import argparse,json,re,tempfile
@@ -17,9 +18,9 @@ def run(url,chrome,captures):
  with tempfile.TemporaryDirectory() as temp,sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=chrome)
   photo=create_field_photo(browser,temp)
-  context=browser.new_context(viewport={'width':1440,'height':960},timezone_id='Asia/Bangkok')
+  context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960},timezone_id='Asia/Bangkok'))
   context.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
-  page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  page=use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url+'/?map=2d&offline=1')
   expect(page.locator('.demo-signin')).to_be_visible(timeout=25000)
   for width in [1440,390,320]:

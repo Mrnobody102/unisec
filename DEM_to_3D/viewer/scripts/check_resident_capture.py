@@ -1,4 +1,5 @@
 """Fake camera lifecycle and reporting from the selected landslide boundary."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -10,7 +11,7 @@ def run(url, chrome, captures):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True, executable_path=chrome,
             args=['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream'])
-        ctx=browser.new_context(viewport={'width':1440,'height':960},permissions=['camera'],reduced_motion='reduce')
+        ctx=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960},permissions=['camera'],reduced_motion='reduce'))
         ctx.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
         ctx.add_init_script('''
             window.cameraTracks=[];
@@ -19,7 +20,7 @@ def run(url, chrome, captures):
                 const stream=await original(options);window.cameraTracks.push(...stream.getTracks());return stream;
             };
         ''')
-        page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page=use_vietnamese(ctx.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?map=2d&offline=1')
         page.get_by_label('Tên của bạn',exact=True).fill('Kiểm tra camera')
         page.get_by_role('button',name='Vào ứng dụng',exact=True).click()

@@ -104,3 +104,7 @@ class PackageTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Port 5212 is in use'):
                 start(extracted, browser=True)
             browser.assert_not_called()
+
+    def test_launcher_uses_the_normal_app_entry_to_preserve_language_choice(self):
+        from start_demo import presentation_url
+        self.assertEqual(presentation_url('http://127.0.0.1:5212'), 'http://127.0.0.1:5212/')

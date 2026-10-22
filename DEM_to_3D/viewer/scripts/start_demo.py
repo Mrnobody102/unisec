@@ -26,7 +26,12 @@ def verify_package(root):
     return release
 
 
+def presentation_url(url):
+    return url + '/'
+
+
 def open_demo(url, root):
+    url = presentation_url(url)
     if os.name == 'nt':
         candidates = [
             Path(os.environ.get('PROGRAMFILES', '')) / 'Google/Chrome/Application/chrome.exe',
@@ -65,13 +70,13 @@ def start(root=ROOT, port=5212, browser=True):
             ) from error
         if browser:
             open_demo(url, root)
-        print('This DEAR package is already running: ' + url, flush=True)
+        print('This DEAR package is already running: ' + presentation_url(url), flush=True)
         return
     with server:
         url = f'http://127.0.0.1:{server.server_port}'
         if browser:
             open_demo(url, root)
-        print('DEAR offline ready: ' + url + ' | Stop: Ctrl+C', flush=True)
+        print('DEAR offline ready: ' + presentation_url(url) + ' | Stop: Ctrl+C', flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -1,4 +1,5 @@
 """GIS edits, deletion and export must be reviewed and report only persisted success."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, published_records, reviewed_records
 import argparse, json
@@ -9,9 +10,9 @@ from playwright.sync_api import sync_playwright, expect
 def run(url, chrome, captures=None):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True, executable_path=chrome)
-        context=browser.new_context(viewport={'width':1440,'height':960})
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}))
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-        page=context.new_page();errors=[];downloads=[]
+        page=use_vietnamese(context.new_page());errors=[];downloads=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('download',lambda download:downloads.append(download))
         page.goto(url+'/?offline=1&map=2d&demoRole=manager')

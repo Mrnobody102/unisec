@@ -1,4 +1,5 @@
 """Verify local field photos, source integrity and GIS-to-response point mapping."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task, download_geometry, published_records, reviewed_records_json
 import argparse, base64, hashlib, json, struct, tempfile
@@ -13,9 +14,9 @@ def run(url, chrome, captures):
         from field_photo_fixture import create_field_photo
         jpg=create_field_photo(browser,temp)
         bad=Path(temp)/'invalid.jpg';bad.write_text('not an image',encoding='utf-8')
-        context=browser.new_context(viewport={'width':1440,'height':960})
+        context=use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}))
         context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
-        page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page=use_vietnamese(context.new_page());errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(url+'/?map=2d&offline=1&demoRole=manager');expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         original_roads=page.locator('.map-road-target').count()
         original_road_box=page.locator('.map-road-target').first.bounding_box()

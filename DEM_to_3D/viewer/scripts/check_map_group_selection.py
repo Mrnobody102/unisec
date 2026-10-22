@@ -1,4 +1,5 @@
 """Every overlapping symbol must select its own member and retain its ground anchor."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from network_browser_fixture import install_network_fixture
@@ -7,7 +8,7 @@ from playwright.sync_api import expect,sync_playwright
 def run(url,chrome,captures):
  with sync_playwright() as p:
   browser=p.chromium.launch(headless=True,executable_path=chrome)
-  page=browser.new_page(viewport={'width':1440,'height':960})
+  page=use_vietnamese(browser.new_page(viewport={'width':1440,'height':960}))
   page.route('**/*',lambda r:r.continue_() if r.request.url.startswith(url+'/') else r.abort())
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url+'/?offline=1&map=2d&demoRole=manager')

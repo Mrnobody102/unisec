@@ -1,4 +1,5 @@
 """Vertex editing in the measurement panel and shapes saved by the drawing tool."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse, json
 from pathlib import Path
@@ -8,7 +9,7 @@ from playwright.sync_api import sync_playwright, expect
 def run(url, chrome, captures=None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
-        page = browser.new_page(viewport={'width': 1440, 'height': 900})
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 900}))
         page.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))

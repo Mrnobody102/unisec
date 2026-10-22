@@ -1,4 +1,5 @@
 """GIS edits stay local until one publication, and map names focus their actual point."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task
 import argparse
@@ -10,7 +11,7 @@ from playwright.sync_api import expect, sync_playwright
 def run(url: str, chrome: str | None, captures: Path | None = None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={"width": 1440, "height": 960})
+        page = use_vietnamese(browser.new_page(viewport={"width": 1440, "height": 960}))
         page.route("**/*", lambda route: route.continue_() if route.request.url.startswith(url + "/") else route.abort())
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))

@@ -1,4 +1,5 @@
 """Browser regression for original KML coverage, symbol ownership and Vietnamese layout."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -10,9 +11,9 @@ def run(url, captures):
         browser = p.chromium.launch(headless=True,
             executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',
             args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        context = browser.new_context(viewport={'width':1440, 'height':960})
+        context = use_vietnamese(browser.new_context(viewport={'width':1440, 'height':960}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&demoRole=manager', wait_until='domcontentloaded')

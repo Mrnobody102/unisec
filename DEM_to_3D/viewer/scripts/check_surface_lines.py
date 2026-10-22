@@ -1,4 +1,5 @@
 """GPU regression: terrain strokes remain narrow at grazing angles and after resize."""
+from browser_preferences import use_vietnamese
 import argparse
 from playwright.sync_api import sync_playwright
 
@@ -6,7 +7,7 @@ from playwright.sync_api import sync_playwright
 def run(url,chrome):
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True,**({'executable_path':chrome} if chrome else {}))
-        page=browser.new_page();errors=[]
+        page=use_vietnamese(browser.new_page());errors=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('console',lambda message:errors.append(message.text) if message.type=='error' else None)
         page.route(url+'/surface-fixture',lambda route:route.fulfill(content_type='text/html',body='<html><body></body></html>'))

@@ -1,4 +1,5 @@
 """Exercise a fixed production build for a recorded duration and write timing/memory results."""
+from browser_preferences import use_vietnamese
 import argparse
 import hashlib
 import json
@@ -17,9 +18,9 @@ def run(url, chrome, duration, output, interval=30, heap_snapshot=None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
         report['browser'] = browser.version
-        context = browser.new_context(viewport={'width': 1366, 'height': 768})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         page.on('pageerror', lambda error: report['errors'].append(str(error)))
         page.on('crash', lambda: report['errors'].append('Page crashed'))
         try:

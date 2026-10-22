@@ -107,27 +107,36 @@ if (Test-Path -LiteralPath $bundled) {
 } else { throw 'Python 3.11+ is required for this non-portable package.' }
 exit $LASTEXITCODE
 '''
-    files['README.md'] = ("""# DEAR — bản demo offline
+    files['README.md'] = ("""# DEAR — offline competition demo
 
-Giải nén toàn bộ vào thư mục có quyền ghi, rồi mở Start-DEAR.cmd.
-Giữ cửa sổ server đang chạy; Ctrl+C để dừng. Không mở dist/index.html trực tiếp.
-Mở http://127.0.0.1:5212 nếu trình duyệt không tự mở.
+1. Extract the entire ZIP into a writable folder on the laptop.
+2. Double-click Start-DEAR.cmd. Keep the server window open during the demo.
+3. The app defaults to English and remembers your language choice. Choose Response coordinator, then Enter app.
+   Choose Resident instead to demonstrate submitting a field report.
 
-""" + ('Gói Windows x64 đã kèm Python; không cần cài Python hoặc Node.js.\n' if runtime else 'Gói này cần Python 3.11 trở lên.\n') + """
-Cần Chrome hoặc Edge trên máy, bật tăng tốc đồ họa để xem 3D và xuất MP4.
-Lần mở đầu kiểm tra SHA-256 của toàn bộ gói; nếu báo thiếu tệp, giải nén lại.
-Nếu cổng bận, đóng server DEAR cũ hoặc chạy Start.ps1 -Port 5213.
+If the browser does not open, visit http://127.0.0.1:5212/.
+Do not open dist/index.html directly. Stop the server with Ctrl+C.
+If the port is occupied, run: powershell -ExecutionPolicy Bypass -File .\\Start.ps1 -Port 5213
 
-Dữ liệu, Planet, ảnh hiện trường, DEM và font đều có sẵn.
-""" + ('Nền Sentinel-2 và địa hình bao quanh được lưu cục bộ; phạm vi, nguồn và độ phân giải ở dist/offline-map/map.json. Ngoài phạm vi đóng gói là nền trung tính.\n' if local_map else 'Nền trực tuyến bị tắt khi offline; chỉ có nền khu vực cục bộ.\n') + """
-Nền bối cảnh không thay thế ảnh Planet dùng đối chiếu hoặc DEM dùng đo đạc.
-Ghi nhận/GIS lưu trên trình duyệt của máy này; không tự gửi tới máy khác.
-Trước khi xóa phiên, xuất dữ liệu cần giữ. PDF dùng In / lưu PDF của trình duyệt.
-Mang bản sao gói trên USB; thử trước trên đúng laptop, màn chiếu và chế độ ngắt mạng.
+""" + ('Windows x64 Python runtime is included. No Python or Node.js installation is needed.\n' if runtime else 'This package requires Python 3.11 or newer.\n') + """
+Use Chrome or Edge with graphics acceleration for 3D and MP4 export.
+The launcher verifies every file before opening the app. If a file is missing or
+changed, extract a fresh copy of the ZIP.
 
-Dữ liệu nghiệp vụ demo có phần mô phỏng/chưa duyệt; xem nguồn trong ứng dụng.
-Phiên bản, trạng thái nguồn và checksum từng tệp: release.json.
-Giấy phép: licenses/ và runtime/LICENSE.txt.
+Incident data, Planet imagery, field photos, terrain and fonts are included.
+""" + ('Regional Sentinel-2 imagery and context terrain are local. Coverage, sources and resolution: dist/offline-map/map.json. Areas without imagery use neutral terrain shading.\n' if local_map else 'Online basemaps are disabled offline; prepared local imagery remains available.\n') + """
+Context imagery and relief are separate from the Planet evidence and analysis DEM.
+Switch between English and Vietnamese in Settings > Language.
+Place names keep their original spelling. Original survey notes and imported
+source attributes may retain their source language.
+Reports and GIS edits are stored in this browser, without cross-device sync.
+Export anything you need before resetting the session. PDF uses browser Print.
+
+Take a copy of the ZIP and the English backup MP4 on a USB drive. Rehearse on
+the actual laptop and projector with Wi-Fi disabled.
+The scenario includes simulated/unreviewed operational data; sources are shown
+in the app. Version and SHA-256 checksums: release.json.
+Licenses: licenses/ and runtime/LICENSE.txt.
 """).encode('utf8')
     files['licenses/lucide.txt'] = (ROOT / 'vendor/lucide/LICENSE').read_bytes()
     lock = json.loads((ROOT / 'package-lock.json').read_text(encoding='utf-8'))

@@ -1,3 +1,4 @@
+from browser_preferences import use_vietnamese
 from network_browser_fixture import install_network_fixture
 """Browser regression for the prepared incident workspace.
 
@@ -39,20 +40,20 @@ def run(url, chrome, captures, prepared=False):
         def launch_browser():
             return playwright.chromium.launch(headless=True, args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'], **({'executable_path': chrome} if chrome else {}))
         browser = launch_browser()
-        context = browser.new_context(viewport={'width': 1440, 'height': 900})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 900}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         context.add_init_script("""const original = HTMLCanvasElement.prototype.getContext;
           HTMLCanvasElement.prototype.getContext = function(type, ...rest) {
             return type === 'webgl' || type === 'webgl2' ? null : original.call(this, type, ...rest);
           };""")
         if prepared:
-            actual=context.new_page();actual.goto(url+'/?map=2d&demoRole=manager')
+            actual=use_vietnamese(context.new_page());actual.goto(url+'/?map=2d&demoRole=manager')
             expect(actual.locator('[data-map-object="community:CT"]')).to_be_visible(timeout=30000)
             expect(actual.locator('img[alt="Ảnh phân tích"]')).to_be_visible(timeout=30000)
             expect(actual.locator('.landslide-area')).to_have_count(47)
             actual.close()
         install_network_fixture(context,url)
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors, requests = [], []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
@@ -237,10 +238,10 @@ def run(url, chrome, captures, prepared=False):
         context.close()
 
         # Verify the complete report flow, AOI inspection and recalculated route.
-        context = browser.new_context(viewport={'width': 1440, 'height': 900})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 900}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         install_network_fixture(context,url)
-        page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
+        page = use_vietnamese(context.new_page()); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.get_by_role('button', name='Xem phạm vi trên bản đồ', exact=True).click()
         expect(page.locator('#response-details')).to_contain_text('86,2 km²')
@@ -291,21 +292,21 @@ def run(url, chrome, captures, prepared=False):
         context.close()
 
         # Explicit API errors must not display the bundled mock snapshot.
-        context = browser.new_context(viewport={'width': 1440, 'height': 900})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 900}))
         context.route('**/workspace-config.json', lambda route: route.fulfill(content_type='application/json', body='{"dataSource":"api"}'))
         context.route('**/api/v1/incidents/*/workspace', lambda route: route.fulfill(status=503, body='unavailable'))
         install_network_fixture(context,url)
-        page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
+        page = use_vietnamese(context.new_page()); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.get_by_role('alert').get_by_role('heading', level=1)).to_have_text('Chưa tải được dữ liệu', timeout=25000)
         expect(page.locator('.sidebar')).not_to_contain_text('Nậm Khắt')
         expect(page.locator('.incident-context-revision time')).to_have_count(0)
         context.close()
 
         # A damaged/missing GLB must not remove the independent 2D workspace.
-        context = browser.new_context(viewport={'width': 1440, 'height': 900})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 900}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) and not '.glb' in route.request.url else route.abort())
         install_network_fixture(context,url)
-        page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
+        page = use_vietnamese(context.new_page()); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
         page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
         page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()
@@ -320,10 +321,10 @@ def run(url, chrome, captures, prepared=False):
         browser.close()
         browser = launch_browser()
         # Losing an active GPU context also falls back without losing selection.
-        context = browser.new_context(viewport={'width': 1440, 'height': 900})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 900}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
         install_network_fixture(context,url)
-        page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
+        page = use_vietnamese(context.new_page()); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.locator('[data-map-object="community:NK"]')).to_be_visible(timeout=25000)
         page.locator('.workspace-nav').get_by_role('button',name='Địa bàn',exact=True).click()
         page.locator('#response-panel .community').filter(has=page.get_by_text('Nậm Khắt',exact=True)).click()

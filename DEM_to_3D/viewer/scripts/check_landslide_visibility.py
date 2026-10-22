@@ -1,4 +1,5 @@
 """Published extents survive road revisions; response defaults and layer controls stay usable."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 import argparse
 from pathlib import Path
@@ -8,7 +9,7 @@ from playwright.sync_api import expect, sync_playwright
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={'width': 1440, 'height': 960}, reduced_motion='reduce')
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 960}, reduced_motion='reduce'))
         page.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))

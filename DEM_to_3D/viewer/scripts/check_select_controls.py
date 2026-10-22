@@ -1,4 +1,5 @@
 """Check rendered select alignment, keyboard selection and native fallbacks."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import gis_task
 import argparse
 from pathlib import Path
@@ -68,9 +69,9 @@ def run(url, chrome, captures):
         errors = []
 
         def new_page(**kwargs):
-            context = browser.new_context(viewport={'width': 1440, 'height': 960}, **kwargs)
+            context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 960}, **kwargs))
             context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
-            page = context.new_page()
+            page = use_vietnamese(context.new_page())
             page.on('pageerror', lambda e: errors.append(str(e)))
             return page
 

@@ -1,4 +1,5 @@
 """Check retained lists, selected details, keyboard focus and responsive map tools."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -10,7 +11,7 @@ def run(url, chrome, captures=None):
     with sync_playwright() as playwright:
         options = {'executable_path': chrome} if chrome else {}
         browser = playwright.chromium.launch(headless=True, **options)
-        page = browser.new_page(viewport={'width': 1440, 'height': 960})
+        page = use_vietnamese(browser.new_page(viewport={'width': 1440, 'height': 960}))
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.route('**/*', lambda route: route.continue_()

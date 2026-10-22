@@ -1,4 +1,5 @@
 """Check grouped/original-point display, direct photo montage and cross-map preference."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool
 from gis_browser_actions import gis_task
 import argparse
@@ -34,9 +35,9 @@ def run(url, chrome, captures):
                             'source': {'name': 'field.geojson', 'format': 'GeoJSON', 'importedAt': '2026-10-12T00:00:00Z'},
                             'feature': {'type': 'Feature', 'properties': {'dearObservation': observation},
                                         'geometry': {'type': 'Point', 'coordinates': [104.05, 21.78 + offset]}}})
-        context = browser.new_context(viewport={'width': 1440, 'height': 960})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1440, 'height': 960}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')

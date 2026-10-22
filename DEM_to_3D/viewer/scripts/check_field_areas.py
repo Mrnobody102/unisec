@@ -1,4 +1,5 @@
 """Exercise the selected-point inspector and linked manual extents in the real Demo UI."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool, open_header_help
 from gis_browser_actions import gis_task, apply_boundary, download_geometry
 import argparse, json, tempfile, uuid
@@ -15,9 +16,9 @@ def run(url, chrome, captures):
         "feature": {"type": "Feature", "properties": {"name": "AOI phân tích"}, "geometry": {"type": "Polygon", "coordinates": [[[104.045,21.775],[104.055,21.775],[104.055,21.785],[104.045,21.785],[104.045,21.775]]]}}}
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context(viewport={"width":1440,"height":960}, timezone_id="Asia/Bangkok")
+        context = use_vietnamese(browser.new_context(viewport={"width":1440,"height":960}, timezone_id="Asia/Bangkok"))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url + '/') else route.abort())
-        page = context.new_page(); errors=[]; page.on('pageerror', lambda e: errors.append(str(e)))
+        page = use_vietnamese(context.new_page()); errors=[]; page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         page.evaluate('(records)=>localStorage.setItem("dear.geodata.v1",JSON.stringify(records))',[point,aoi]);page.reload()

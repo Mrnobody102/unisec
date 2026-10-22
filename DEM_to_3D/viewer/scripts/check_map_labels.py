@@ -1,4 +1,5 @@
 """Browser acceptance: real label bounds, cross-layer obstacles and stable group popups."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
@@ -7,7 +8,7 @@ from playwright.sync_api import sync_playwright, expect
 def run(url, chrome, captures=None):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        page = browser.new_page(viewport={"width": 1440, "height": 960})
+        page = use_vietnamese(browser.new_page(viewport={"width": 1440, "height": 960}))
         errors = []
         page.on("pageerror", lambda e: errors.append(e.stack))
         page.route("**/*", lambda r: r.continue_() if r.request.url.startswith(url + "/") else r.abort())

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi" data-theme="light" data-font="source">
+<html lang="en" data-theme="light" data-font="source">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,10 +12,10 @@
         }
         const font = localStorage.getItem('dear.font-choice');
         if (['classic', 'plex', 'modern', 'source'].includes(font)) document.documentElement.dataset.font = font;
-        if (localStorage.getItem('dear.locale') === 'en') document.documentElement.lang = 'en';
+        if (localStorage.getItem('dear.locale') === 'vi') document.documentElement.lang = 'vi';
       } catch { /* Defaults remain usable when browser storage is unavailable. */ }
     </script>
-    <title>DEAR | Bản đồ ứng phó</title>
+    <title>DEAR | Response map</title>
   </head>
   <body>
     <div id="root"></div>

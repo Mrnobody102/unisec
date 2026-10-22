@@ -1,4 +1,5 @@
 """Check real survey/extent evidence, shared label placement and imagery selection recovery."""
+from browser_preferences import use_vietnamese
 import argparse
 from urllib.parse import quote
 from pathlib import Path
@@ -10,7 +11,7 @@ def run(url, chrome, captures=None):
         captures.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, **({"executable_path":chrome} if chrome else {}))
-        page = browser.new_page(viewport={"width": 1440, "height": 960})
+        page = use_vietnamese(browser.new_page(viewport={"width": 1440, "height": 960}))
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.route("**/*", lambda route: route.continue_() if route.request.url.startswith(url + "/") else route.abort())
@@ -120,7 +121,7 @@ def run(url, chrome, captures=None):
         expect(panel.locator('.analysis-imagery input[type="radio"]:checked')).not_to_have_count(0)
         expect(page.locator('img[alt="Ảnh phân tích"]')).to_be_visible(timeout=30000)
         # A new browser context has no in-memory imagery cache: exercise real failed requests.
-        recovery = browser.new_page(viewport={"width":1440,"height":960})
+        recovery = use_vietnamese(browser.new_page(viewport={"width":1440,"height":960}))
         recovery.on("pageerror",lambda error:errors.append(str(error)))
         failures={"catalog":True,"raster":True}
         def network(route):

@@ -927,7 +927,7 @@ export function ResponseWorkspace({
         fontChoice={fontChoice}
         onOpenReports={() => setActiveDialog('fieldReports')}
         reportsPending={gis.records.some(record => { const submission = submissionOf(record); return submission?.role === 'resident' && submission.review.status === 'pending'; })}
-        identityName={identity.name}
+        identityName={locale === 'en' ? 'Response coordinator' : identity.name}
         onSignOut={onSignOut}
         onOpenHelp={() => setActiveDialog('help')}
         updated={updated}

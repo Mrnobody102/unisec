@@ -1,4 +1,5 @@
 """Check default theme, compact preferences and contextual session actions."""
+from browser_preferences import use_vietnamese
 import argparse
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
@@ -8,11 +9,11 @@ def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
         for saved, system, expected in [(None, 'dark', 'light'), ('dark', 'light', 'dark'), ('light', 'dark', 'light'), ('auto', 'dark', 'light')]:
-            context = browser.new_context(viewport={'width': 1366, 'height': 850}, color_scheme=system)
+            context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 850}, color_scheme=system))
             if saved is not None:
                 context.add_init_script(f"localStorage.setItem('dear.theme', '{saved}')")
             context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
-            page = context.new_page()
+            page = use_vietnamese(context.new_page())
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(url + '/?map=2d&offline=1&demoRole=manager')
@@ -81,7 +82,7 @@ def run(url, chrome, captures):
             assert not errors, errors
             context.close()
         # A restricted browser must retain a usable light interface.
-        context = browser.new_context(color_scheme='dark')
+        context = use_vietnamese(browser.new_context(color_scheme='dark'))
         context.add_init_script("""{
           const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
           const protectedKeys = ['dear.theme', 'dear.locale', 'dear.font-choice'];
@@ -89,7 +90,7 @@ def run(url, chrome, captures):
           Storage.prototype.setItem = function(key, value) { if (protectedKeys.includes(key)) throw new DOMException('denied', 'SecurityError'); return set.call(this, key, value); };
         }""")
         context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.locator('.incident-overview-heading')).to_be_visible(timeout=25000)
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')

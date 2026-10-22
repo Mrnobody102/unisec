@@ -1,4 +1,5 @@
 """Map regression: imported points, moved hazards, detail ownership and responsive framing."""
+from browser_preferences import use_vietnamese
 import argparse
 import json
 from pathlib import Path
@@ -12,13 +13,13 @@ def run(url, captures, only=None, chrome=None):
         browser = p.chromium.launch(headless=True, executable_path=chrome,
             args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         def context():
-            ctx = browser.new_context(viewport={'width':1440,'height':960}, reduced_motion='reduce')
+            ctx = use_vietnamese(browser.new_context(viewport={'width':1440,'height':960}, reduced_motion='reduce'))
             ctx.route('**/*',lambda route:route.continue_() if route.request.url.startswith(url+'/') else route.abort())
             return ctx
         def case(name, action):
             if only and name != only: return
             ctx = context()
-            page = ctx.new_page()
+            page = use_vietnamese(ctx.new_page())
             page.set_default_timeout(12000)
             errors = []
             page.on('pageerror',lambda error:errors.append(str(error)))

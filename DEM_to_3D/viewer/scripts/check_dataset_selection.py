@@ -2,6 +2,7 @@
 
 Reuses the local terrain only. It is a software regression, not a second validated site.
 """
+from browser_preferences import use_vietnamese
 import argparse
 import hashlib
 import json
@@ -35,8 +36,8 @@ def run(url, chrome=None):
     manifest['workspace'] = {'url': '/scenarios/alternate/v1/incident.json', 'byteLength': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, **({'executable_path': chrome} if chrome else {}))
-        context = browser.new_context(viewport={'width': 1366, 'height': 768}, accept_downloads=True)
-        page = context.new_page(); errors = []; requests = []
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}, accept_downloads=True))
+        page = use_vietnamese(context.new_page()); errors = []; requests = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
         def respond(route):
@@ -90,10 +91,10 @@ def run(url, chrome=None):
         assert not errors, errors
         context.close()
         # A missing selected dataset must not display the prepared default.
-        context = browser.new_context()
+        context = use_vietnamese(browser.new_context())
         context.route('**/workspace-config.json', lambda r: r.fulfill(json={'dataSource': 'prepared', 'manifestUrl': '/scenarios/missing/v1/manifest.json'}))
         context.route('**/scenarios/missing/v1/manifest.json', lambda r: r.fulfill(status=404, body='missing'))
-        page = context.new_page(); page.goto(url+'/?map=2d&demoRole=manager')
+        page = use_vietnamese(context.new_page()); page.goto(url+'/?map=2d&demoRole=manager')
         expect(page.get_by_role('alert').get_by_role('heading', level=1)).to_have_text('Chưa tải được dữ liệu', timeout=25000)
         expect(page.locator('.incident-context')).to_have_count(0)
         expect(page.locator('.incident-context-revision time')).to_have_count(0)

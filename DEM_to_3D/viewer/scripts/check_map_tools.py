@@ -1,4 +1,5 @@
 """Interaction checks for measurement, map popovers and theme/locale variants."""
+from browser_preferences import use_vietnamese
 from gis_browser_actions import map_tool, open_header_help
 import argparse
 from pathlib import Path
@@ -10,9 +11,9 @@ from playwright.sync_api import expect, sync_playwright
 def run(url, chrome, captures):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, executable_path=chrome)
-        context = browser.new_context(viewport={'width': 1366, 'height': 768})
+        context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
         context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(url) else route.abort())
-        page = context.new_page()
+        page = use_vietnamese(context.new_page())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(url+'/?map=2d&demoRole=manager')

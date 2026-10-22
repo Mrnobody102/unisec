@@ -1,4 +1,5 @@
 """Browser checks for contours, SAR import and local tile models (no network data)."""
+from browser_preferences import use_vietnamese
 import argparse
 import base64
 import json
@@ -81,7 +82,7 @@ def run(url, chrome):
     with tempfile.TemporaryDirectory(prefix='dear-terrain-') as temp, sync_playwright() as playwright:
         root=Path(temp); package=root/'package'; package.mkdir(); model_fixture(package); sar_fixture(root/'sar.tif')
         browser=playwright.chromium.launch(headless=True, executable_path=chrome, args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
-        page=browser.new_page(viewport={'width':1440,'height':960})
+        page=use_vietnamese(browser.new_page(viewport={'width':1440,'height':960}))
         page.on('crash',lambda:checkpoint('terrain page crashed'))
         errors=[]; page.on('pageerror',lambda error:errors.append(str(error)))
         page.on('console',lambda message: errors.append(message.text) if message.type=='error' and ('THREE.WebGLProgram' in message.text or 'GL_INVALID' in message.text) else None)
