@@ -94,13 +94,13 @@ class CogReader(io.RawIOBase):
         return result
 
 
-def prepare(bounds, output, cache, step=4/12000):
+def prepare(bounds, output, cache, step=1/12000):
     west, south, east, north = bounds
     if not (100 <= west < east <= 110 and 15 <= south < north <= 25) or (east-west)*(north-south) > 2:
         raise ValueError('Expected a bounded northern Vietnam context, at most two square degrees')
     if output.exists(): raise ValueError('Use a new output path')
     output.parent.mkdir(parents=True, exist_ok=True)
-    width, height = math.ceil((east-west)/step), math.ceil((north-south)/step)
+    width, height = math.ceil((east-west)/step-1e-8), math.ceil((north-south)/step-1e-8)
     transform = from_bounds(*bounds, width, height)
     mosaic = np.zeros((3, height, width), dtype=np.uint16)
     records = []
@@ -117,7 +117,7 @@ def prepare(bounds, output, cache, step=4/12000):
                 with rasterio.open(name, opener=opener) as source:
                     subset = (max(west, longitude), max(south, latitude), min(east, longitude+1), min(north, latitude+1))
                     window = window_from_bounds(*subset, source.transform)
-                    rows, cols = math.ceil((subset[3]-subset[1])/step), math.ceil((subset[2]-subset[0])/step)
+                    rows, cols = math.ceil((subset[3]-subset[1])/step-1e-8), math.ceil((subset[2]-subset[0])/step-1e-8)
                     # Source order is B02, B03, B04, B08; output is true-colour RGB.
                     rgb = source.read([3, 2, 1], window=window, out_shape=(3, rows, cols), resampling=Resampling.bilinear)
                     source_transform = from_bounds(*subset, cols, rows)
@@ -127,7 +127,9 @@ def prepare(bounds, output, cache, step=4/12000):
                                   init_dest_nodata=False, resampling=Resampling.bilinear)
             records.append(record)
             print('Prepared context', name, flush=True)
-    if np.any(np.any(mosaic == 0, axis=0)):
+    # Combined RGB coverage uses the union of valid bands, like GDAL's
+    # dataset mask. A zero blue channel in a dark pixel is not an empty image.
+    if np.any(np.all(mosaic == 0, axis=0)):
         raise ValueError('Incomplete satellite coverage; refusing a context with missing pixels')
     # A fixed reflectance stretch for the whole region. No per-tile contrast or
     # invented detail, and never applied to the independent Planet evidence.

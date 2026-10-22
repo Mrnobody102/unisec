@@ -19,7 +19,7 @@ const enabled =
   /^https:\/\//.test(customUrl) &&
   ['{z}', '{x}', '{y}'].every((token) => customUrl.includes(token)) &&
   !!env.VITE_DEAR_IMAGERY_ATTRIBUTION;
-const configuredImagerySource = {
+export const internetImagerySource = {
   url: enabled ? customUrl : defaultImagerySource.url,
   name: enabled
     ? String(env.VITE_DEAR_IMAGERY_NAME || 'Ảnh nền')
@@ -38,14 +38,16 @@ const configuredImagerySource = {
   custom: enabled
 };
 
-/** Local packages select their own source explicitly; no network fallback in offline mode. */
+let usedInternetDetail = false;
+export const noteInternetDetail = () => {usedInternetDetail = true;};
+/** The included base always stays local; finer Internet imagery is a separate refinement. */
 export const imagerySource={
-  get url(){return localMapSource()?.imagery.url??configuredImagerySource.url;},
-  set url(value:string){configuredImagerySource.url=value;},
-  get maxNativeZoom(){return localMapSource()?.imagery.maxZoom??configuredImagerySource.maxNativeZoom;},
-  get name(){return localMapSource()?.imagery.name??configuredImagerySource.name;},
-  get credit(){return localMapSource()?.imagery.credit??configuredImagerySource.credit;},
-  get link(){return localMapSource()?undefined:configuredImagerySource.link;},
-  get custom(){return localMapSource()?false:configuredImagerySource.custom;}
+  get url(){return localMapSource()?.imagery.url??internetImagerySource.url;},
+  set url(value:string){internetImagerySource.url=value;},
+  get maxNativeZoom(){return localMapSource()?.imagery.maxZoom??internetImagerySource.maxNativeZoom;},
+  get name(){return localMapSource()?.imagery.name??internetImagerySource.name;},
+  get credit(){const local=localMapSource();return local?local.imagery.credit+(usedInternetDetail?'; '+internetImagerySource.credit:''):internetImagerySource.credit;},
+  get link(){return localMapSource()?undefined:internetImagerySource.link;},
+  get custom(){return localMapSource()?false:internetImagerySource.custom;}
 };
 export const terrainTileSource=()=>localMapSource()?.terrain??{url:'https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg',maxZoom:14};

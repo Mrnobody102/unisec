@@ -1,3 +1,4 @@
+import {addInternetDetail} from './internetDetail';
 import { BasemapToneFilters } from '../imagery/BasemapToneFilters';
 import { preparedToneAssetId } from '../imagery/basemapTone';
 import { ImageryStatus, type ImageryLoadState } from '../imagery/ImageryStatus';
@@ -94,6 +95,7 @@ export function Map2D(props: Props): JSX.Element {
     north.innerHTML = '<span>N</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 5 17-5-4-5 4Z" fill="currentColor"/></svg>'; host.appendChild(north);
     let markers: ReturnType<typeof createScreenMarkers> | null = null;
     let overlay: L.LayerGroup | null = null, tileLayer: L.TileLayer | null = null, raster: L.ImageOverlay | null = null;
+    let internetDetail: ReturnType<typeof addInternetDetail> | null = null;
     let onlineImageryReady = false;
     // Under opaque satellite tiles the local raster stays visible beneath them, filling
     // any tile not loaded yet; a faded basemap would show both, so it is hidden then.
@@ -127,7 +129,7 @@ export function Map2D(props: Props): JSX.Element {
       const key = `${imagery}:${enabled}`;
       if (tileKey === key) return;
       const generation = ++basemapGeneration;
-      tileKey = key; tileLayer?.remove(); tileLayer = null; onlineImageryReady = false; raster?.setOpacity(localOpacity());
+      tileKey = key; internetDetail?.dispose(); tileLayer?.remove(); tileLayer = null; onlineImageryReady = false; raster?.setOpacity(localOpacity());
       const style = imagery ? 'satellite' : 'terrain';
       // Satellite tiles draw over the local raster; the terrain basemap stays beneath it.
       imageryPane.style.zIndex = imagery && enabled ? '150' : String(200 + mapLayerOrder.imagery * 30);
@@ -150,6 +152,7 @@ export function Map2D(props: Props): JSX.Element {
       tiles.on('tileerror', event => { progress.settle(event.tile,false); report(); });
       tiles.on('load', () => { report(); schedule(); });
       tiles.addTo(map);
+      if(imagery) internetDetail = addInternetDetail(map);
     };
     const refresh = () => {
       const { terrain, scenarioProps: scenario, locale = 'vi', onSelectOverlayHit } = propsRef.current;
@@ -158,6 +161,7 @@ export function Map2D(props: Props): JSX.Element {
       north.title = locale === 'vi' ? 'Bắc địa lý' : 'True north'; north.setAttribute('aria-label', north.title);
       setTiles(layers.imagery !== false, layers.context !== false);
       tileLayer?.setOpacity(layers.imagery !== false ? appearance.imageryOpacity : 1);
+      internetDetail?.setOpacity(appearance.imageryOpacity);
       // A hidden map (the phone layout opens on the panel) has no size yet; it is fitted once shown.
       if (terrain && !hasFit && scenario && host.clientWidth > 0) { fit(); hasFit = true; }
       if (!terrain && localData) {
@@ -291,6 +295,7 @@ export function Map2D(props: Props): JSX.Element {
     };
     host.addEventListener('contextmenu', contextMenu);
     return () => {
+      internetDetail?.dispose();
       disposed = true; rasterAbort?.abort(); cancelAnimationFrame(frame); resize.disconnect(); ui.disconnect(); markers?.dispose();
       area?.removeEventListener('dear:map-layout', schedule);
       host.removeEventListener('contextmenu', contextMenu);

@@ -78,6 +78,17 @@ class ContextTests(unittest.TestCase):
             self.assertEqual(record['observationPeriod'], ['2021-01-01','2021-12-31'])
             self.assertEqual(record['license'], 'CC-BY-4.0')
 
+    def test_a_zero_channel_in_a_valid_dark_rgb_pixel_is_not_a_coverage_hole(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            reader = self.source(folder)
+            with rasterio.open(folder/'source.tif','r+') as source:
+                source.write(np.zeros((100,100),dtype=np.uint16),1)
+            output = folder/'context.tif'
+            with patch('prepare_context_imagery.CogReader',reader):
+                prepare([104.2,21.2,104.8,21.8],output,folder/'cache',step=.01)
+            self.assertTrue(output.exists())
+
     def test_missing_pixels_cannot_be_published_as_a_complete_basemap(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)

@@ -1,11 +1,13 @@
+import {detailTileTemplate, deferInternetDetail} from '../features/map/imageryDetail';
+import {noteInternetDetail} from '../features/map/imagerySource';
 import * as THREE from 'three';
-import { imagerySource } from '../features/map/imagerySource';
 import type { MapTile } from './regionalBasemap';
 
 /** Publish only a complete patch. A failure never replaces the retained base imagery. */
 export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, anisotropy: number, cache?: Map<string, Blob>) {
   if (!tiles.length) return null;
-  const zoom = tiles[0].z;
+  const zoom = tiles[0].z, template=detailTileTemplate(zoom);
+  if(!template)return null;
   const minX = Math.min(...tiles.map(tile => tile.x)), minY = Math.min(...tiles.map(tile => tile.y));
   const maxX = Math.max(...tiles.map(tile => tile.x)) + 1, maxY = Math.max(...tiles.map(tile => tile.y)) + 1;
   const canvas = document.createElement('canvas');
@@ -18,7 +20,7 @@ export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, an
     while (cursor < tiles.length) {
       signal.throwIfAborted();
       const tile = tiles[cursor++];
-      const url = imagerySource.url.replaceAll('{z}', String(tile.z)).replaceAll('{x}', String(tile.x)).replaceAll('{y}', String(tile.y));
+      const url = template.replaceAll('{z}', String(tile.z)).replaceAll('{x}', String(tile.x)).replaceAll('{y}', String(tile.y));
       let blob = cache?.get(url);
       if (!blob) {
         const response = await fetch(url, {signal});
@@ -39,7 +41,9 @@ export async function loadImageryAtlas(tiles: MapTile[], signal: AbortSignal, an
       }
     }
   };
-  await Promise.all(Array.from({length: 6}, worker));
+  try {await Promise.all(Array.from({length: 6}, worker));}
+  catch(error){if(!signal.aborted && template.startsWith('https:')) deferInternetDetail();throw error;}
+  if(template.startsWith('https:'))noteInternetDetail();
   signal.throwIfAborted();
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;

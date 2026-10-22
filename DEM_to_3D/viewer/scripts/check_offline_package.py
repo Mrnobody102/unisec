@@ -31,6 +31,7 @@ def run(archive, chrome):
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True, executable_path=chrome)
                 context = use_vietnamese(browser.new_context(viewport={'width': 1366, 'height': 768}))
+                context.add_init_script('Object.defineProperty(navigator, "onLine", {get: () => false})')
                 base = f'http://127.0.0.1:{server.server_port}'
                 requests, errors = [], []
                 context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(base) else route.abort())

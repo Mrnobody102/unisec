@@ -1,3 +1,5 @@
+import {parentImageryTiles} from '../features/map/imageryDetail';
+import {localMapSource} from '../features/map/localMapSource';
 import * as THREE from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import proj4 from 'proj4';
@@ -109,6 +111,11 @@ export function createViewImagery(plan: () => MapTile[], anisotropy: number, pub
     };
     const task=(async()=>{
       try {
+        const local=localMapSource();
+        if(local && tiles[0].z>local.imagery.maxZoom){
+          const fallback=parentImageryTiles(tiles,local.imagery.maxZoom),fallbackKey=keyOf(fallback);
+          if(fallbackKey!==loadedKey)apply(await loadImageryAtlas(fallback,run.signal,anisotropy,cache),fallbackKey);
+        }
         // A full-view intermediate image arrives first; refinement never leaves
         // a sharp island surrounded by the prepared low-resolution image.
         if(tiles.length>80 && tiles[0].z>0){

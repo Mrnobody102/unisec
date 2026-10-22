@@ -126,6 +126,7 @@ changed, extract a fresh copy of the ZIP.
 
 Incident data, Planet imagery, field photos, terrain and fonts are included.
 """ + ('Rectangular regional Sentinel-2 context and terrain are local. Coverage, dates, sources, attribution and display resolution: dist/offline-map/map.json. Context is historical background; Planet remains the separate evidence layer. Outside packaged bounds, a neutral background is shown.\n' if local_map else 'Online basemaps are disabled offline; prepared local imagery remains available.\n') + """
+The local map appears first. When connected, closer views can refine automatically from Internet imagery; a network failure retains the included base. No source selection is needed. Video uses packaged imagery.
 Context imagery and relief are separate from the Planet evidence and analysis DEM.
 Switch between English and Vietnamese in Settings > Language.
 Place names keep their original spelling. Original survey notes and imported

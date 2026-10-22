@@ -1,3 +1,4 @@
+import {detailMaxZoom} from '../features/map/imageryDetail';
 import {localMapSource} from '../features/map/localMapSource';
 import { useLandslideAppearance } from '../features/landslides/useLandslideAppearance';
 import { setBasemapTone } from '../terrain/basemapTone';
@@ -254,7 +255,7 @@ export function TerrainViewer({
     const viewImagery = frame && primary ? createViewImagery(() => {
       const context = (basemap?.group.children ?? []).filter((child): child is THREE.Mesh => (child as THREE.Mesh).isMesh);
       const points = visibleImageryPoints(frame,primary.group.matrixWorld,camera,[...located.flatMap(entry=>entry.meshes),...context], Math.max(5000,camera.position.distanceTo(controls.target)*2.5));
-      return viewImageryTiles(frame,points,imagerySource.maxNativeZoom,window.matchMedia('(pointer: coarse)').matches?64:256,Math.min(window.matchMedia('(pointer: coarse)').matches?8:32,Math.floor(renderer.capabilities.maxTextureSize/256)));
+      return viewImageryTiles(frame,points,detailMaxZoom(),window.matchMedia('(pointer: coarse)').matches?64:256,Math.min(window.matchMedia('(pointer: coarse)').matches?8:32,Math.floor(renderer.capabilities.maxTextureSize/256)));
     }, Math.min(16,renderer.capabilities.getMaxAnisotropy()), atlas => {
       terrainImageries.forEach(imagery=>imagery?.setDetail(atlas));basemap?.setDetail(atlas);
     },()=>invalidate(),atlas=>{terrainImageries.forEach(imagery=>imagery?.setBase(atlas));basemap?.setBase(atlas);},atlas=>{

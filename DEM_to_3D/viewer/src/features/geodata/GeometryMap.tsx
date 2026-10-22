@@ -1,3 +1,4 @@
+import {addInternetDetail} from '../map/internetDetail';
 import {BasemapToneFilters} from '../imagery/BasemapToneFilters';
 import {supportsBasemapTone} from '../imagery/basemapTone';
 import {localMapSource} from '../map/localMapSource';
@@ -294,9 +295,10 @@ export function GeometryMap(props: Props): JSX.Element {
     layer.on('tileload', event => { progress.settle(event.tile,true); publish(); });
     layer.on('tileerror', event => { progress.settle(event.tile,false); publish(); });
     layer.on('load', publish).addTo(map);
+    const detail=base === 'satellite' ? addInternetDetail(map) : null;
     return () => {
       disposed = true;
-      layer.remove();
+      detail?.dispose(); layer.remove();
     };
   }, [ready, base, retry]);
   // A scenario focus (e.g. "Edit in GIS") wins over the view request pending at that moment:
