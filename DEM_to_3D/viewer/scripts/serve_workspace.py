@@ -5,6 +5,7 @@ Local integration service. No ingestion, image processing or persistence.
 import argparse
 import hashlib
 import json
+import socket
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -27,6 +28,8 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
         raise ValueError('Incident packet checksum mismatch')
     if json.loads(packet)['incident']['id'] != manifest['incidentId']:
         raise ValueError('Incident ID mismatch')
+    release=directory.parent/'release.json'
+    package_id=hashlib.sha256(release.read_bytes()).hexdigest() if release.is_file() else None
     schema = (directory / 'scenarios/incident-v1.schema.json').read_bytes()
     endpoint = f"/api/v1/incidents/{manifest['incidentId']}/workspace"
 
@@ -48,7 +51,7 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
             if path == '/workspace-config.json':
                 payload = json.dumps({**configuration, 'dataSource': 'prepared' if offline else 'api', 'offline': offline}).encode()
             if path == '/api/health':
-                payload = json.dumps({'status': 'ready', 'datasetVersion': manifest['datasetVersion']}).encode()
+                payload = json.dumps({'status': 'ready', 'datasetVersion': manifest['datasetVersion'], 'packageId':package_id}).encode()
             if payload is not None:
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -57,6 +60,12 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
                 if path == endpoint:
                     self.send_header('ETag', f'"{digest}"')
                 self.end_headers(); self.wfile.write(payload)
+            elif offline and path.startswith(('/offline-map/imagery/','/offline-map/terrain/')) and path.endswith('.webp') and not (directory/path.lstrip('/')).is_file():
+                # The finite AOI package has no tiles beyond its documented bounds.
+                # An explicit neutral background is preferable to remote fallback.
+                blank=directory/'offline-map/blank.webp'
+                if not blank.is_file():self.send_error(404);return
+                data=blank.read_bytes();self.send_response(200);self.send_header('Content-Type','image/webp');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
             elif path.startswith('/api/'):
                 self.send_error(404, 'API resource not found')
             else:
@@ -65,14 +74,23 @@ def create_server(directory=DEFAULT_DIST, host='127.0.0.1', port=5212, offline=F
         def log_message(self, *args):
             pass
 
-    return ThreadingHTTPServer((host, port), Handler)
+    class WorkspaceServer(ThreadingHTTPServer):
+        # Windows SO_REUSEADDR can let two servers bind the same address.
+        allow_reuse_address = False
+
+        def server_bind(self):
+            if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            super().server_bind()
+
+    return WorkspaceServer((host, port), Handler)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, default=DEFAULT_DIST)
     parser.add_argument('--port', type=int, default=5212)
-    parser.add_argument('--offline', action='store_true', help='Use the prepared packet and disable remote basemap at startup')
+    parser.add_argument('--offline', action='store_true', help='Use the prepared packet and local map sources only')
     args = parser.parse_args()
     with create_server(args.directory, port=args.port, offline=args.offline) as server:
         print(f'Workspace and snapshot API: http://127.0.0.1:{args.port}', flush=True)

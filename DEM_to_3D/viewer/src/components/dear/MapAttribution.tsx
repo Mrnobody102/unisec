@@ -1,3 +1,4 @@
+import {localMapSource} from '../../features/map/localMapSource';
 import {
   imagerySource,
   defaultImagerySource
@@ -27,8 +28,9 @@ export function MapAttribution({
   osmReference?: boolean;
 }): JSX.Element | null {
   const t = (vi: string, en: string) => (locale === 'vi' ? vi : en);
-  const imagery =
-    state.provider === 'configured' ? imagerySource : defaultImagerySource;
+  const local = localMapSource();
+  const imagery = local || state.provider === 'configured' ? imagerySource : defaultImagerySource;
+  const terrainName = local ? t('Địa hình cục bộ', 'Local terrain') : 'Terrain Light';
   const imageryCredit = imagery.link ? (
     <a href={imagery.link} target="_blank" rel="noreferrer">
       {imagery.credit}
@@ -109,7 +111,7 @@ export function MapAttribution({
                     : state.loaded > 0
                       ? state.style === 'satellite'
                         ? imagery.name
-                        : 'Terrain Light'
+                        : terrainName
                       : t('Chưa tải được', 'Unavailable')}
                 </dd>
               </div>
@@ -147,6 +149,8 @@ export function MapAttribution({
               <p className="map-source-license">
                 {state.style === 'satellite' ? (
                   imageryCredit
+                ) : local ? (
+                  <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noreferrer">Mapzen Terrain Tiles / USGS</a>
                 ) : (
                   <>
                     <a

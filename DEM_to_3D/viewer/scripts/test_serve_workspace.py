@@ -41,6 +41,11 @@ class SnapshotApiTests(unittest.TestCase):
         finally:
             server.shutdown(); server.server_close(); thread.join()
 
+    def test_second_server_cannot_silently_take_an_existing_port(self):
+        with create_server(self.root, port=0) as first:
+            with self.assertRaises(OSError):
+                create_server(self.root, port=first.server_port)
+
     def test_refuses_corrupt_snapshot_before_opening_server(self):
         (self.root / 'scenarios/che-tao/v0.3/incident.json').write_bytes(b'changed data')
         with self.assertRaisesRegex(ValueError, 'checksum'):

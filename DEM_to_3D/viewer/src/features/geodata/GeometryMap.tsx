@@ -1,3 +1,6 @@
+import {BasemapToneFilters} from '../imagery/BasemapToneFilters';
+import {supportsBasemapTone} from '../imagery/basemapTone';
+import {localMapSource} from '../map/localMapSource';
 import { useLandslideAppearance } from '../landslides/useLandslideAppearance';
 import type { AnalysisImageryState } from '../imagery/useAnalysisImagery';
 import { createAnalysisOverlay2d } from '../imagery/analysisOverlay2d';
@@ -20,7 +23,7 @@ import type { ScenarioEdits } from '../access/scenarioEdits';
 import { roadGeographic, roadProjected } from '../routes/selectedRoadJourney';
 import { createTileProgress } from '../map/tileProgress';
 import { retryTileErrors } from '../map/tileRetry';
-import { basemapTileOptions, imagerySource } from '../map/imagerySource';
+import { basemapTileOptions, terrainTileSource, imagerySource } from '../map/imagerySource';
 import { fieldAreaOwner } from '../observations/fieldAreas';
 import { GEOMETRY_LIMITS } from '../../geo/vector/limits';
 import { useEffect, useRef, useState } from 'react';
@@ -85,6 +88,7 @@ type Props = {
 const emptyPointGroup: readonly string[] = [];
 
 export function GeometryMap(props: Props): JSX.Element {
+  const basemapUnavailable = props.offline && !localMapSource();
   const { fillOpacity } = useLandslideAppearance();
   const t = (vi: string, en: string) => (props.locale === 'vi' ? vi : en);
   const host = useRef<HTMLDivElement>(null),
@@ -98,7 +102,7 @@ export function GeometryMap(props: Props): JSX.Element {
   live.current = props;
   const [ready, setReady] = useState(false),
     [base, setBase] = useState<'none' | 'satellite' | 'terrain'>(
-      props.offline ? 'none' : 'satellite'
+      basemapUnavailable ? 'none' : 'satellite'
     );
   const { mode: pointMode } = usePointRendering();
   const analysis = props.analysisImagery;
@@ -276,9 +280,9 @@ export function GeometryMap(props: Props): JSX.Element {
     const layer = retryTileErrors(L.tileLayer(
       base === 'satellite'
         ? imagerySource.url
-        : 'https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg',
+        : terrainTileSource().url,
       {
-        maxNativeZoom: base === 'satellite' ? imagerySource.maxNativeZoom : 14,
+        maxNativeZoom: base === 'satellite' ? imagerySource.maxNativeZoom : terrainTileSource().maxZoom,
         maxZoom: 19,
         noWrap: true,
         ...basemapTileOptions
@@ -714,6 +718,9 @@ export function GeometryMap(props: Props): JSX.Element {
       className="geodata-map"
       aria-label={t('Bản đồ dữ liệu GIS', 'GIS data map')}
     >
+      <BasemapToneFilters host={host} prepared={false}
+        active={base === 'satellite' && !imagerySource.custom && !!analysis?.balanceBasemap &&
+          supportsBasemapTone(analysis.layers) && analysisLayer?.kind === 'optical'}/>
       <div className="geodata-map-toolbar">
         <label>
           {t('Nền', 'Base')}
@@ -722,10 +729,10 @@ export function GeometryMap(props: Props): JSX.Element {
             value={base}
             onChange={(event) => setBase(event.target.value as typeof base)}
           >
-            <option value="satellite" disabled={props.offline}>
+            <option value="satellite" disabled={basemapUnavailable}>
               {t('Ảnh nền', 'Imagery')}
             </option>
-            <option value="terrain" disabled={props.offline}>
+            <option value="terrain" disabled={basemapUnavailable}>
               {t('Địa hình', 'Terrain')}
             </option>
             <option value="none">{t('Không nền', 'None')}</option>

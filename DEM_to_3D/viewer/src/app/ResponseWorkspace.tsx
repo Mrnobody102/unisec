@@ -275,7 +275,7 @@ export function ResponseWorkspace({
   const terrainOverlays = useTerrainOverlays();
   const [layers, setLayers] = useState<Record<string, boolean>>(() => ({
     ...defaultLayers,
-    context: !runtime.offline
+    context: !runtime.offline || runtime.localMap
   }));
 
   const displayedGis = useMemo(() => historical ? [] : visibleMapRecords(gis.records, layers, runtime.packet.datasetVersion, incidentSnapshot.hazards, gisCardId), [gis.records, layers, historical, runtime.packet.datasetVersion, incidentSnapshot.hazards, gisCardId]);
@@ -400,8 +400,8 @@ export function ResponseWorkspace({
     .map(hazard => ({...hazard, labelMode: hazard.labelMode ?? 'show' as const})), [hazards, selectedSourceHazard]);
   useMapPreview(workspaceRef,key=>{const [kind,...rest]=key.split(':'),id=rest.join(':');const f=kind==='community'?communities.find(f=>f.id===id):kind==='hazard'?hazards.find(f=>f.id===id):kind==='poi'?responseSites.find(f=>f.id===id):roads.find(f=>f.id===id);if(f)return {point:'projected' in f?f.projected:f.points[Math.floor(f.points.length/2)],name:typeof f.name==='string'?f.name:f.name[locale==='vi'?0:1]};const r=gis.records.find(r=>r.id===id);if(r?.feature.geometry.type==='Point'){const [lon,lat]=r.feature.geometry.coordinates;return {point:roadProjected(lat,lon),name:r.name};}return null;});
   useEffect(() => {
-    if (offlineMode) setLayers((previous) => ({ ...previous, context: false }));
-  }, [offlineMode]);
+    if (offlineMode) setLayers((previous) => ({ ...previous, context: runtime.localMap }));
+  }, [offlineMode,runtime.localMap]);
   const analysisImagery = useAnalysisImagery(scenarioManifest?.analysisImagery);
   const fieldPhotos = usePreparedPhotos(scenarioManifest?.fieldPhotos);
   const analysisDisplay = useMemo(() => ({ rasters: analysisImagery.rasters, opacity: analysisImagery.selection.opacity, balanceBasemap:analysisImagery.balanceBasemap && supportsBasemapTone(analysisImagery.layers) && analysisImagery.layers.some(layer=>layer.id===analysisImagery.selection.layer && layer.kind==='optical') }),
@@ -970,7 +970,7 @@ export function ResponseWorkspace({
           setMobileView('map');
           viewControlRef.current?.resetView();
           setLayerAppearance(defaultLayerAppearance);
-          setLayers({ ...defaultLayers, context: !offlineMode });
+          setLayers({ ...defaultLayers, context: !offlineMode || runtime.localMap });
           analysisImagery.resetSelection();
           setComparisonPair(null);
           map2DViewport.current = null;
@@ -1459,7 +1459,7 @@ export function ResponseWorkspace({
               areaCount={historical ? 0 : gis.records.filter(record => record.visible && landslideAreaOf(record)).length}
               onShowAreas={showMappedAreas}
               onReset={() => {
-                setLayers({...defaultLayers, context:!offlineMode});
+                setLayers({...defaultLayers, context:!offlineMode || runtime.localMap});
                 analysisImagery.resetSelection();
                 setLayerAppearance(defaultLayerAppearance);
               }}

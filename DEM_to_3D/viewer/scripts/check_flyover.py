@@ -5,7 +5,7 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 
-def run(url, chrome):
+def run(url, chrome, output=None):
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         browser=p.chromium.launch(headless=True,executable_path=chrome)
         page=browser.new_page(viewport={'width':1280,'height':800})
@@ -45,6 +45,8 @@ def run(url, chrome):
         assert downloads,('No MP4 download',page.locator('body').inner_text()[-1200:],errors)
         file=Path(temp)/'flyover.mp4';downloads[0].save_as(file)
         assert file.stat().st_size>10000, 'MP4 is empty'
+        if output:
+            output=Path(output);output.parent.mkdir(parents=True,exist_ok=True);downloads[0].save_as(output)
         page.route(url+'/export-proof.mp4',lambda r:r.fulfill(path=str(file),content_type='video/mp4'))
         proof=page.evaluate("""async () => {
           const video=document.createElement('video');video.muted=true;
@@ -52,11 +54,14 @@ def run(url, chrome):
           await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=reject;video.src=url;});
           const duration=video.duration, canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;
           const ctx=canvas.getContext('2d',{willReadFrequently:true});const frames=[];
+          const decoded=document.createElement('canvas');decoded.width=video.videoWidth;decoded.height=video.videoHeight;
+          const dc=decoded.getContext('2d');
           const catalog=await (await fetch('/scenarios/che-tao/field-photos/photos.json')).json();
           const sample=document.createElement('canvas');sample.width=32;sample.height=32;
           const sc=sample.getContext('2d',{willReadFrequently:true});
-          // Area-filter both source and decoded video; sparse bilinear samples
-          // alias differently after the film's intermediate photo resizing.
+          // Canvas area filtering is reliable for still images. Chromium's direct
+          // video draw may use sparse bilinear samples even at high quality;
+          // first freeze the decoded frame at its native size.
           sc.imageSmoothingQuality='high';
           const photos=await Promise.all(['IMG_0926','IMG_0850','IMG_0830'].map(async name=>{
             const photo=catalog.points.flatMap(p=>p.photos).find(p=>p.name===name);
@@ -66,16 +71,16 @@ def run(url, chrome):
             bitmap.close();return {name,expected,w,h,error:Infinity,time:0};
           }));
           // Find each photo in the actual film rather than pinning the test to fixed stop times.
-          for(let time=.5;time<duration;time+=1) {
+          for(let time=.25;time<duration;time+=.25) {
             await new Promise(resolve=>{video.onseeked=resolve;video.currentTime=time;});
             await new Promise(resolve=>{video.requestVideoFrameCallback(resolve);setTimeout(resolve,200);});
-            ctx.drawImage(video,0,0,160,90);const pixels=ctx.getImageData(0,0,160,90).data;
+            dc.drawImage(video,0,0);ctx.drawImage(decoded,0,0,160,90);const pixels=ctx.getImageData(0,0,160,90).data;
             let green=0;for(let i=0;i<pixels.length;i+=4)if((i/4)%160>=40 && pixels[i+1]>pixels[i]*1.08 && pixels[i+1]>pixels[i+2]*1.08 && pixels[i+1]>15)green++;
             let hash=2166136261;for(const byte of pixels)hash=Math.imul(hash^byte,16777619);
             frames.push({green:green/(120*90),hash:hash>>>0,time});
             for(const photo of photos) {
               const pad=7*1.2,x=24*1.2+pad,y=1080-64*1.2-photo.h-29*1.2-pad;
-              sc.drawImage(video,x,y,photo.w,photo.h,0,0,32,32);const actual=sc.getImageData(0,0,32,32).data;
+              sc.drawImage(decoded,x,y,photo.w,photo.h,0,0,32,32);const actual=sc.getImageData(0,0,32,32).data;
               let error=0;for(let i=0;i<actual.length;i++)if(i%4!==3)error+=Math.abs(actual[i]-photo.expected[i]);
               error/=32*32*3;if(error<photo.error){photo.error=error;photo.time=time;}
             }
@@ -93,5 +98,5 @@ def run(url, chrome):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5381');parser.add_argument('--chrome');args=parser.parse_args()
-    run(args.url.rstrip('/'),args.chrome)
+    parser=argparse.ArgumentParser();parser.add_argument('--url',default='http://127.0.0.1:5381');parser.add_argument('--chrome');parser.add_argument('--output',type=Path);args=parser.parse_args()
+    run(args.url.rstrip('/'),args.chrome,args.output)

@@ -1,3 +1,5 @@
+import {setLocalMapSource,validateLocalMapSource} from '../map/localMapSource';
+import {readResponse} from '../../shared/http/readResponse';
 import { loadReferenceDataset } from '../geodata/referenceDataset';
 import { loadFieldDataset } from '../landslides/fieldDataset';
 import { apiRepository, preparedRepository, workspaceConfiguration } from '../../data/ScenarioRepository';
@@ -34,7 +36,9 @@ export async function loadWorkspaceDataset(signal: AbortSignal, apiBase = '') {
   if ([terrain,...contextTerrain].some(data => `${data.metadata.crs.authority}:${data.metadata.crs.code}` !== manifest.crs)) {
     throw new Error('Terrain CRS does not match its manifest');
   }
+  const localMap=configuration.offline&&configuration.localMap?validateLocalMapSource(await(await readResponse(configuration.localMap,signal)).json()):null;
   signal.throwIfAborted();
+  setLocalMapSource(localMap);
   const prepared = fieldDataset ? {...fieldDataset, additionalSources:referenceDataset ? [referenceDataset] : []} : referenceDataset;
-  return { manifest, packet, terrain, contextTerrain, fieldDataset:prepared, offline: configuration.offline };
+  return { manifest, packet, terrain, contextTerrain, fieldDataset:prepared, offline: configuration.offline, localMap:!!localMap };
 }

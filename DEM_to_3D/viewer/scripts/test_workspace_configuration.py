@@ -31,3 +31,11 @@ class WorkspaceConfigurationTests(unittest.TestCase):
         self.write_config(offline='true')
         with self.assertRaisesRegex(ValueError, 'offline'):
             workspace_manifest_path(self.root)
+
+    def test_keeps_local_map_catalog_for_the_offline_server(self):
+        self.write_config(offline=True, localMap='/offline-map/map.json')
+        self.assertEqual(workspace_manifest_path(self.root)[1]['localMap'], '/offline-map/map.json')
+        for path in [None, '', 'https://outside.test/map.json', '/offline-map/../map.json', '/offline-map/map.json?q=1']:
+            self.write_config(localMap=path)
+            with self.assertRaises(ValueError):
+                workspace_manifest_path(self.root)

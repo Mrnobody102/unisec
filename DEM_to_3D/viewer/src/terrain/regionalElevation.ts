@@ -1,3 +1,4 @@
+import {localMapSource,tileUrl} from '../features/map/localMapSource';
 import proj4 from 'proj4';
 import type { TerrainMetadata } from '../types/terrain';
 import type { MapTile } from './regionalBasemap';
@@ -39,6 +40,8 @@ export function sampleElevationTiles(tiles: Map<string, ElevationTile>, zoom: nu
 
 /** Display context only. Never added to the analysis grid, measurement raycasts or profile sampler. */
 export function createRegionalElevation(metadata: TerrainMetadata, surfaces: ElevationSurface[], tiles: MapTile[], onReady: () => void) {
+  const local=localMapSource();
+  if(local)tiles=local.elevation.tiles;
   const grids = new Map<string, ElevationTile>();
   const toWgs84 = proj4(metadata.crs.proj4 || `${metadata.crs.authority}:${metadata.crs.code}`, 'EPSG:4326');
   let disposed = false, controller: AbortController | null = null;
@@ -59,7 +62,7 @@ export function createRegionalElevation(metadata: TerrainMetadata, surfaces: Ele
     const timeout = window.setTimeout(() => run.abort(), 20000);
     status = 'loading';
     const queue = tiles.filter(tile => {
-      const saved = cache.get(tileKey(tile));
+      const saved = local?undefined:cache.get(tileKey(tile));
       if (saved) grids.set(tileKey(tile), saved);
       return !grids.has(tileKey(tile));
     });
@@ -69,7 +72,7 @@ export function createRegionalElevation(metadata: TerrainMetadata, surfaces: Ele
         const tile = queue.shift()!;
         let bitmap: ImageBitmap | undefined;
         try {
-          const response = await fetch(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${tile.z}/${tile.x}/${tile.y}.png`, { signal: run.signal });
+          const response = await fetch(local?tileUrl(local.elevation.url,tile):`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${tile.z}/${tile.x}/${tile.y}.png`, { signal: run.signal });
           if (!response.ok) throw new Error('Context elevation unavailable');
           bitmap = await createImageBitmap(await response.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
           if (disposed || run.signal.aborted) continue;
@@ -81,7 +84,7 @@ export function createRegionalElevation(metadata: TerrainMetadata, surfaces: Ele
           const heights = decodeTerrarium(context.getImageData(0, 0, 256, 256).data);
           if (!heights.some(Number.isFinite)) throw new Error('Empty elevation tile');
           const value = { ...tile, heights };
-          grids.set(tileKey(tile), value); cache.set(tileKey(tile), value);
+          grids.set(tileKey(tile), value); if(!local)cache.set(tileKey(tile), value);
           while (cache.size > 64) cache.delete(cache.keys().next().value!);
         } catch {
           if (!grids.size && ++failures >= 4) run.abort();

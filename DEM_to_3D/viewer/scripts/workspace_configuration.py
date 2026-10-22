@@ -17,7 +17,16 @@ def load_workspace_configuration(directory):
         raise ValueError('Invalid workspace manifest URL')
     if 'offline' in value and type(value['offline']) is not bool:
         raise ValueError('Invalid workspace offline setting')
-    return {'dataSource': value['dataSource'], 'manifestUrl': url, 'offline': value.get('offline', False)}
+    local = value.get('localMap')
+    if 'localMap' in value and (not isinstance(local, str) or
+            not re.fullmatch(r'/offline-map/[a-zA-Z0-9._/-]+\.json', local) or
+            '..' in local or '//' in local):
+        raise ValueError('Invalid local map URL')
+    return {
+        'dataSource': value['dataSource'], 'manifestUrl': url, 'offline': value.get('offline', False),
+        **({'localMap': local} if local else {})
+    }
+
 
 
 def workspace_manifest_path(directory):

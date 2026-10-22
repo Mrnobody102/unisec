@@ -149,11 +149,11 @@ export function CitizenWorkspace({
       flood: true,
       staging: true,
       hlz: false,
-      context: !offline,
+      context: !offline || runtime.localMap,
       hillshade: true,
       ...layerOptions,
     }),
-    [offline, layerOptions],
+    [offline, runtime.localMap, layerOptions],
   );
   const draft: GeometryRecord = useMemo(
     () => ({

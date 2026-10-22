@@ -11,7 +11,7 @@ import { PIN, teardropPinSvg } from '../../terrain/pinShape';
 const PLACE_SYMBOL_CLEARANCE = 14;
 import { createTileProgress } from './tileProgress';
 import { retryTileErrors } from './tileRetry';
-import { basemapTileOptions, imagerySource } from './imagerySource';
+import { basemapTileOptions, terrainTileSource, imagerySource } from './imagerySource';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -141,8 +141,7 @@ export function Map2D(props: Props): JSX.Element {
       if (!enabled) { publish('off'); return; }
       const progress = createTileProgress();
       const report = () => { const {status,loaded,total} = progress.snapshot(); publish(status,loaded,total); };
-      const layer = imagery ? 's2cloudless_3857' : 'terrain-light_3857';
-      const tiles = retryTileErrors(L.tileLayer(imagery ? imagerySource.url : `https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/{z}/{y}/{x}.jpg`, { maxNativeZoom: imagery ? imagerySource.maxNativeZoom : 14, maxZoom: 19, noWrap: true, ...basemapTileOptions }));
+      const tiles = retryTileErrors(L.tileLayer(imagery ? imagerySource.url : terrainTileSource().url, { maxNativeZoom: imagery ? imagerySource.maxNativeZoom : terrainTileSource().maxZoom, maxZoom: 19, noWrap: true, ...basemapTileOptions }));
       tileLayer = tiles;
       tiles.on('loading', () => { progress.reset(); publish('loading'); });
       tiles.on('tileloadstart', event => progress.start(event.tile));

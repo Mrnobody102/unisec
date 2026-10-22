@@ -7,7 +7,7 @@ import type { ImageryDetailAtlas } from './imageryAtlas';
 import { createRegionalElevation, type ElevationSurface } from './regionalElevation';
 import * as THREE from 'three';
 import proj4 from 'proj4';
-import { imagerySource } from '../features/map/imagerySource';
+import { imagerySource,terrainTileSource } from '../features/map/imagerySource';
 import { mapLayerOrder } from '../features/map/mapLayerOrder';
 import type { TerrainMetadata } from '../types/terrain';
 import { pixelToProjected, projectedToScene } from './coordinate';
@@ -99,7 +99,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
   const group = new THREE.Group();
   group.name = 'regional-basemap'; group.matrix.copy(transform); group.matrixAutoUpdate = false;
   const tilesFor = (nextStyle: BasemapStyle): MapTile[] => {
-    try { return planBasemapTiles(metadata, nextStyle === 'satellite' ? imagerySource.maxNativeZoom : 14); }
+    try { return planBasemapTiles(metadata, nextStyle === 'satellite' ? imagerySource.maxNativeZoom : terrainTileSource().maxZoom); }
     catch { return []; } // Unlocated/custom models remain usable without a basemap.
   };
   let tiles = tilesFor('satellite');
@@ -140,8 +140,7 @@ export function createRegionalBasemap(metadata: TerrainMetadata, transform: THRE
         const timeout = window.setTimeout(abort, 12000);
         let bitmap: ImageBitmap | undefined;
         try {
-          const layer = runStyle === 'satellite' ? 's2cloudless_3857' : 'terrain-light_3857';
-          const template = runStyle === 'satellite' ? imagerySource.url : `https://tiles.maps.eox.at/wmts/1.0.0/${layer}/default/g/{z}/{y}/{x}.jpg`;
+          const template = runStyle === 'satellite' ? imagerySource.url : terrainTileSource().url;
           const url = template.replaceAll('{z}', String(tile.z)).replaceAll('{y}', String(tile.y)).replaceAll('{x}', String(tile.x));
           const response = await fetch(url, { signal: request.signal });
           if (!response.ok) throw new Error(`Basemap tile ${response.status}`);

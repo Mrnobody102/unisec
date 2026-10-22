@@ -24,6 +24,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
   const [startupError, setStartupError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [offline, setOffline] = useState(false);
+  const [localMap,setLocalMap]=useState(false);
   const [models, setModels] = useState<LoadedModel[]>([]);
   const [mode, setMode] = useState<UploadMode>('single');
   const [geographicMerge, setGeographicMerge] = useState(true);
@@ -83,7 +84,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
       if (mapModeRef.current === '3d') startMesh(dataset.manifest.terrain.glb);
       if (controller.signal.aborted) return;
       preparedTerrain.current = dataset.terrain;
-      setContextTerrain(dataset.contextTerrain);
+      setContextTerrain(dataset.contextTerrain);setLocalMap(dataset.localMap);
       setFieldDataset(dataset.fieldDataset); setPacket(dataset.packet); setManifest(dataset.manifest); setDefaultTerrain(dataset.terrain);
       setOffline(dataset.offline || new URLSearchParams(location.search).get('offline') === '1'); setSnapshotReady(true);
     }).catch(reason => {
@@ -178,7 +179,7 @@ export function useTerrainWorkspace({ mapMode, on3DUnavailable }: Props) {
     } catch { return undefined; }
   }, [mode, geographicMerge, models, manifest]);
 
-  return { packet, manifest, fieldDataset, defaultTerrain, contextTerrain, snapshotReady, startupError, offline, models,
+  return { packet, manifest, fieldDataset, defaultTerrain, contextTerrain, snapshotReady, startupError, offline, localMap, models,
     mode, geographicMerge, fileNames, busy, error, loading3D, progress3D, placements,
     retry, reload, clear, upload, changeMode, changeGeographicMerge };
 }
