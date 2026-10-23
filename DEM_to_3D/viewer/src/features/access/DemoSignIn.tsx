@@ -18,7 +18,7 @@ export function DemoSignIn({
 }): JSX.Element {
   const m = accessMessages[locale];
   const [role, setRole] = useState<DemoRole>('resident'),
-    [name, setName] = useState(''),
+    [name, setName] = useState('A Phủ'),
     [community, setCommunity] = useState('');
   return (
     <main className="demo-entry">

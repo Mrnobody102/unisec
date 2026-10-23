@@ -5,9 +5,11 @@ Gói Windows x64 dùng trên laptop cá nhân, không cần Node.js, Python cài
 ## Mở tại buổi thi
 
 1. Giải nén **toàn bộ** `DEAR-Offline-Windows-x64.zip` vào thư mục có quyền ghi trên ổ máy, không chạy bên trong ZIP.
-2. Mở `Start-DEAR.cmd`. Launcher kiểm tra SHA-256 toàn bộ tệp rồi mở cửa sổ Chrome/Edge với hồ sơ riêng của gói, mở **3D** mặc định và dùng **English** ở lần mở đầu; sau đó nhớ lựa chọn **English/Tiếng Việt** trong **Settings → Language**. Chọn **Response coordinator → Enter app** để trình diễn điều phối, hoặc **Resident** để gửi ghi nhận.
+2. Mở `Start-DEAR.cmd`. Launcher kiểm tra SHA-256 toàn bộ tệp rồi mở cửa sổ Chrome/Edge phóng to với hồ sơ riêng của gói, mở **3D** mặc định và dùng **English** ở lần mở đầu; sau đó nhớ lựa chọn **English/Tiếng Việt** trong **Settings → Language**. Chọn **Response coordinator → Enter app** để trình diễn điều phối, hoặc **Resident** để gửi ghi nhận.
 3. Nếu trình duyệt không tự mở, vào `http://127.0.0.1:5212/`. Launcher mở cửa sổ app riêng và chạy dịch vụ cục bộ ở nền. Nếu cần xem lỗi khởi động, mở `Start-Diagnostics.cmd`; nhật ký ở `user-data/launcher.log`.
 4. Nếu cổng đang được chương trình khác dùng, chạy `powershell -ExecutionPolicy Bypass -File .\Start.ps1 -Port 5213`. Launcher không tắt tiến trình khác.
+
+Vai trò điều phối dùng toàn bộ cửa sổ; khi bấm **Enter app**, trình duyệt được yêu cầu vào toàn màn hình (có thể thoát bằng **Esc**). Nút **Switch role / Đổi vai trò** nằm ngay trên header. Vai trò người dân dùng giao diện mobile, kể cả trên laptop; tên demo **A Phủ** được điền sẵn và sửa được.
 
 Không mở `dist/index.html` bằng double click. Có thể mở lại launcher để quay về app đang chạy; nó chỉ nhận server cùng mã gói. Nếu checksum sai/thiếu tệp, giải nén lại từ ZIP gốc.
 

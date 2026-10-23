@@ -132,6 +132,7 @@ def check_local_map(base, chrome, captures=None):
 def run(archive, chrome=None, captures=None, video=None):
     if os.name != 'nt':
         raise RuntimeError('The bundled Windows runtime must be tested on Windows')
+    from check_role_presentation import run as roles
     from check_route_profile_film import run as profile
     from check_gis_draft_publish import run as gis
     from check_citizen_mobile import run as resident
@@ -203,6 +204,7 @@ def run(archive, chrome=None, captures=None, video=None):
                 Browser.new_context, Browser.new_page, BrowserContext.new_page = new_context, new_page, context_page
                 try:
                     steps = [('English competition startup', lambda: check_english_startup(base, chrome, captures)),
+                             ('role presentation and fullscreen', lambda: roles(base, chrome, captures)),
                              ('local map in all workspaces', lambda: check_local_map(base, chrome, captures)),
                              ('profile and film camera', lambda: profile(base, chrome, captures)),
                              ('GIS edit/publish', lambda: gis(base, chrome, captures)),

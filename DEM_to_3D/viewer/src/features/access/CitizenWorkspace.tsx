@@ -310,11 +310,11 @@ export function CitizenWorkspace({
           <span>{m.communityInformation}</span>
         </div>
         <LanguageSwitch locale={locale} onChange={onChangeLocale} compact/>
-        <button className="button" onClick={() => setHelp(true)}>
-          {m.help}
+        <button className="icon-button" onClick={() => setHelp(true)} aria-label={m.help} title={m.help}>
+          <UiIcon name="help" />
         </button>
         <button className="button" onClick={onSignOut} title={identity.name}>
-          {m.switchRole}
+          <UiIcon name="swap" size={18}/><span>{m.switchRole}</span>
         </button>
       </header>
       <main className="citizen-body">

@@ -46,7 +46,7 @@ def open_demo(url, root):
             profile.mkdir(parents=True, exist_ok=True)
             subprocess.Popen([
                 str(browser), '--user-data-dir=' + str(profile), '--no-first-run',
-                '--no-default-browser-check', '--app=' + url
+                '--no-default-browser-check', '--start-maximized', '--app=' + url
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return
     webbrowser.open(url)

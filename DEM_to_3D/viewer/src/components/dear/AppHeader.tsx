@@ -177,6 +177,16 @@ export const AppHeader: React.FC<Props> = ({
           <span>{t('Ghi nhận', 'Reports')}</span>
           {reportsPending && <span className="unread-indicator" />}
         </button>
+        <button
+          type="button"
+          className="button header-role-button"
+          onClick={onSignOut}
+          title={t('Đổi vai trò', 'Switch role')}
+          aria-label={t('Đổi vai trò', 'Switch role')}
+        >
+          <UiIcon name="swap" />
+          <span>{t('Đổi vai trò', 'Switch role')}</span>
+        </button>
         <div ref={prefRef} className="settings-anchor">
           <button
             className="icon-button"
@@ -221,7 +231,6 @@ export const AppHeader: React.FC<Props> = ({
               <div className="settings-account">
                 <span className="settings-avatar" aria-hidden="true"><UiIcon name="account" size={20}/></span>
                 <span className="settings-account-name"><strong>{identityName}</strong></span>
-                <button className="button settings-switch" onClick={() => {setPrefOpen(false);onSignOut();}}>{t('Đổi vai trò', 'Switch role')}</button>
               </div>
               <div className="settings-group">
                 <strong className="settings-label">

@@ -28,6 +28,16 @@ function ResponseEntry({
 }): JSX.Element {
   const session = useDemoSession();
   const interaction = useWorkspaceInteraction();
+  const switchRole = () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    session.signOut();
+  };
+  const signIn: typeof session.signIn = (role, name, communityId) => {
+    // Fullscreen needs the sign-in click; a restored session still fills the viewport.
+    if (role === 'manager' && document.fullscreenEnabled && !document.fullscreenElement)
+      void document.documentElement.requestFullscreen().catch(() => undefined);
+    session.signIn(role, name, communityId);
+  };
   const runtime = useTerrainWorkspace({
     // Only the coordination workspace shows 3D; residents and the sign-in screen never fetch the mesh.
     mapMode: session.identity?.role === 'manager' ? interaction.mapMode : '2d',
@@ -52,20 +62,22 @@ function ResponseEntry({
         locale={preferences.locale}
         onChangeLocale={preferences.setLocale}
         communities={runtime.packet.communities}
-        onSignIn={session.signIn}
+        onSignIn={signIn}
       />
     );
   if (session.identity.role === 'resident')
     return (
-      <CitizenWorkspace
-        onChangeLocale={preferences.setLocale}
-        published={published.revision}
-        locale={preferences.locale}
-        identity={session.identity}
-        onSignOut={session.signOut}
-        runtime={{ ...runtime, packet }}
-        scenarioEdits={edits.edits}
-      />
+      <div className="citizen-stage">
+        <CitizenWorkspace
+          onChangeLocale={preferences.setLocale}
+          published={published.revision}
+          locale={preferences.locale}
+          identity={session.identity}
+          onSignOut={switchRole}
+          runtime={{ ...runtime, packet }}
+          scenarioEdits={edits.edits}
+        />
+      </div>
     );
   const rename = (type: ScenarioTargetType, id: string, names: [string, string]) => {
     const current = edits.packet ?? packet;
@@ -80,7 +92,7 @@ function ResponseEntry({
       revision={published.revision}
       onReportRevision={published.change}
       identity={session.identity}
-      onSignOut={session.signOut}
+      onSignOut={switchRole}
       onRename={rename}
       scenarioEdits={edits}
       preferences={preferences}

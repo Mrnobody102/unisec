@@ -1,7 +1,17 @@
 @import "./review-status.css";
 
-.citizen-workspace {
+.citizen-stage {
   height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--ws-bg);
+}
+.citizen-workspace {
+  width: min(430px, 100%);
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
   display: flex;
   flex-direction: column;
 }
@@ -9,8 +19,9 @@
   min-height: 64px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 10px 12px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--ws-line);
   background: var(--ws-surface);
 }
@@ -31,7 +42,7 @@
 }
 .citizen-panel {
   flex: none;
-  width: 384px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--ws-line);
@@ -58,7 +69,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 20px;
+  padding: 16px;
 }
 .citizen-panel h1 {
   font-size: 21px;
@@ -258,6 +269,7 @@
   margin-top: 4px;
 }
 .citizen-map {
+  display: none;
   flex: 1;
   min-width: 0;
   position: relative;
@@ -311,45 +323,26 @@
 .citizen-pick-hint button {
   margin-left: auto;
 }
+.citizen-demo-label { display: none; }
+[data-citizen-map="true"] .citizen-panel { display: none; }
+[data-citizen-map="true"] .citizen-map { display: block; }
 .citizen-mobile-switch {
-  display: none;
+  display: flex;
+  flex: none;
+  border-top: 1px solid var(--ws-line);
+  background: var(--ws-surface);
 }
-@media (max-width: 760px) {
-  .citizen-header {
-    padding: 10px 12px;
-    gap: 6px;
-  }
-  .citizen-demo-label {
-    display: none;
-  }
-  .citizen-panel {
-    width: 100%;
-  }
-  .citizen-map {
-    display: none;
-  }
-  [data-citizen-map="true"] .citizen-panel {
-    display: none;
-  }
-  [data-citizen-map="true"] .citizen-map {
-    display: block;
-  }
-  .citizen-mobile-switch {
-    display: flex;
-    border-top: 1px solid var(--ws-line);
-    background: var(--ws-surface);
-  }
-  .citizen-mobile-switch button {
-    flex: 1;
-    min-height: 44px;
-    border: 0;
-    background: transparent;
-  }
-  .citizen-mobile-switch button[aria-pressed="true"] {
-    color: var(--ws-brand);
-    font-weight: 600;
-  }
+.citizen-mobile-switch button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
 }
+.citizen-mobile-switch button[aria-pressed="true"] {
+  color: var(--ws-brand);
+  font-weight: 600;
+}
+
 
 .citizen-submission-text small {
   display: flex;
@@ -522,54 +515,48 @@
 .citizen-panel-scroll section[hidden] {
   display: none;
 }
-@media (max-width: 760px) {
-  .citizen-panel-scroll {
-    padding: 16px;
-  }
-  .citizen-panel select:not([multiple]),
-  .citizen-panel input:not([type="file"]) {
-    min-height: 44px;
-    font-size: 16px;
-  }
-  .citizen-panel textarea {
-    font-size: 16px;
-  }
-  .citizen-panel .button {
-    min-height: 44px;
-    font-size: 15px;
-  }
-  .citizen-panel .geodata-field {
-    font-size: 14px;
-  }
-  .citizen-map-tools .icon-button {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-  }
-  .citizen-pick-hint {
-    top: 68px;
-    font-size: 14px;
-    padding: 12px;
-    gap: 8px;
-  }
-  .citizen-submission-head {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 8px;
-  }
-  .citizen-submission-head > img,
-  .citizen-submission-thumb {
-    width: 40px;
-    height: 40px;
-    grid-row: span 2;
-  }
-  .citizen-submission-head .citizen-review {
-    grid-column: 2;
-    justify-self: start;
-  }
-  .citizen-header {
-    flex-wrap: wrap;
-  }
+
+.citizen-panel select:not([multiple]),
+.citizen-panel input:not([type="file"]) {
+  min-height: 44px;
+  font-size: 16px;
 }
+.citizen-panel textarea {
+  font-size: 16px;
+}
+.citizen-panel .button {
+  min-height: 44px;
+  font-size: 15px;
+}
+.citizen-panel .geodata-field {
+  font-size: 14px;
+}
+.citizen-map-tools .icon-button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+.citizen-pick-hint {
+  top: 68px;
+  font-size: 14px;
+  padding: 12px;
+  gap: 8px;
+}
+.citizen-submission-head {
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 8px;
+}
+.citizen-submission-head > img,
+.citizen-submission-thumb {
+  width: 40px;
+  height: 40px;
+  grid-row: span 2;
+}
+.citizen-submission-head .citizen-review {
+  grid-column: 2;
+  justify-self: start;
+}
+
 
 .citizen-map-layers { position:absolute; top:12px; right:12px; z-index:15; background:var(--ws-surface); border:1px solid var(--ws-line); border-radius:var(--radius-control); box-shadow:var(--shadow-float); font-size:14px; }
 .citizen-map-layers summary { min-height:44px; padding:8px 12px; gap:8px; }
@@ -734,11 +721,11 @@
 .citizen-workspace .citizen-submission-head > img,
 .citizen-workspace .citizen-submission-thumb { border-radius: 6px; }
 
-@media (max-width: 760px) {
+
   .citizen-workspace .citizen-panel-scroll { padding: 12px; }
   .citizen-workspace .citizen-panel .citizen-report-form .field-form-actions { bottom: -12px; margin: 0 -12px -12px; padding: 12px; }
   .citizen-workspace .citizen-card { padding: 14px; }
-}
+
 
 /* Fields sit on the card surface with a visible edge; long location labels get a full row. */
 .citizen-workspace .citizen-panel :is(input:not([type="file"]):not([type="checkbox"]), textarea, select:not([multiple])) { background-color: var(--card); }
@@ -824,3 +811,21 @@
 .citizen-workspace .citizen-place-road[data-status="blocked"] .citizen-place-road-state { color: var(--critical-ink); }
 .citizen-workspace .citizen-place-date { color: var(--ws-muted); font-size: 13px; }
 .citizen-workspace .citizen-place-report { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+
+@media (min-width: 600px) {
+  .citizen-stage > .citizen-workspace {
+    height: min(900px, calc(100dvh - 32px));
+    border: 1px solid var(--ws-line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-overlay);
+  }
+}
+.citizen-header > div { min-width: 0; }
+.citizen-header > div strong { font-size: 16px; }
+.citizen-header > div span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.citizen-header .button, .citizen-header .icon-button { min-height: 44px; }
+.citizen-header .button { gap: 6px; padding-inline: 10px; white-space: nowrap; }
+
+@media (max-width: 360px) {
+  .citizen-header > div span { display: none; }
+}
