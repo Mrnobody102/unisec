@@ -13,7 +13,8 @@ def run(url, chrome, captures):
         page.route('**/*', lambda r: r.continue_() if r.request.url.startswith(url + '/') else r.abort())
         errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))
-        page.goto(url + '/?offline=1&demoRole=manager')
+        # Boundary persistence and Leaflet layer assertions start in an explicit 2D fixture.
+        page.goto(url + '/?map=2d&offline=1&demoRole=manager')
         expect(page.get_by_role('button', name='Chuyển sang 2D', exact=True)).to_have_attribute('aria-pressed', 'true')
         expect(page.locator('.landslide-area')).to_have_count(47, timeout=30000)
         # Same source checksum, older network version, and an operator's edit:

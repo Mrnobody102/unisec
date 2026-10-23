@@ -55,6 +55,7 @@ def run(url, chrome, captures):
         stopped()
         print('CAMERA_CANCEL_CAPTURE_FOCUS_AND_CLEANUP_PASSED',flush=True)
         page.get_by_role('button',name='Thông tin đường',exact=True).click()
+        page.locator('.citizen-mobile-switch').get_by_role('button',name='Bản đồ',exact=True).click()
         expect(page.locator('path.landslide-area')).to_have_count(47)
         record=next(r for r in published_records(page) if r['visible'] and 'dearLandslideArea' in r['feature']['properties'])
         page.locator('path.landslide-area').first.dispatch_event('click')

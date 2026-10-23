@@ -56,6 +56,8 @@ def run(url, captures, chrome=None):
         page.get_by_label('Chọn ảnh hiện trường',exact=True).set_input_files(str(photo))
         expect(page.get_by_label('Vĩ độ ghi nhận',exact=True)).to_have_value('21.783333')
         page.locator('.citizen-report-form').get_by_role('button',name='Gửi báo cáo',exact=True).click()
+        # Residents use the mobile Information/Map navigation at every viewport size.
+        page.locator('.citizen-mobile-switch').get_by_role('button',name='Bản đồ',exact=True).click()
         symbol('.field-map-marker.map-selected-reference')
         oid=page.locator('.field-map-marker [data-field-id]').get_attribute('data-field-id')
         areas(.22)
@@ -67,12 +69,12 @@ def run(url, captures, chrome=None):
         expect(page.locator('.citizen-workspace')).to_be_visible()
         areas(.35)
         page.get_by_role('button',name='Đã gửi',exact=True).click()
+        page.locator('.citizen-mobile-switch').get_by_role('button',name='Bản đồ',exact=True).click()
         symbol('.field-map-marker',False)
         page.locator('.field-map-marker').dispatch_event('click')
         for width in [1440,390,320]:
             page.set_viewport_size({'width':width,'height':900})
-            if width<760:
-                page.locator('.citizen-mobile-switch').get_by_role('button',name='Bản đồ',exact=True).click()
+            page.locator('.citizen-mobile-switch').get_by_role('button',name='Bản đồ',exact=True).click()
             symbol('.field-map-marker.map-selected-reference')
             assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
         page.screenshot(path=str(captures/'resident-mobile.png'))
